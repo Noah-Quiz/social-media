@@ -11,7 +11,7 @@ const baseEntitySchema = new mongoose.Schema(
       default: "active",
     },
   },
-  { _id: false, timestamps: true }
+  { _id: false, timestamps: false }
 );
 
 module.exports = baseEntitySchema;

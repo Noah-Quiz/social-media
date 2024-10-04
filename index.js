@@ -1,8 +1,8 @@
 const dotenv = require("dotenv");
 const express = require("express");
 const cors = require("cors");
+const categoryRoutes = require("./routes/categoryRoutes");
 
-// Initialize application and server
 const app = express();
 
 // Middleware
@@ -16,8 +16,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api", require("./routes/AuthRoute"));
-
+app.use("/api", categoryRoutes);
 // Log API requests
 app.use((req, res, next) => {
   console.log(req.path, req.method);
