@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 require("dotenv").config();
 
 const URI =
@@ -57,4 +57,4 @@ class BaseDatabaseTransaction {
   }
 }
 
-export default BaseDatabaseTransaction;
+module.exports = BaseDatabaseTransaction;

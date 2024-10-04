@@ -1,9 +1,11 @@
-import BaseDatabaseTransaction from "./BaseDatabaseTransaction.js";
+const BaseDatabaseTransaction = require("./BaseDatabaseTransaction.js");
+const MyPlaylistRepository = require("./MyPlaylistRepository.js");
 
 class DatabaseTransaction extends BaseDatabaseTransaction {
   constructor() {
     super();
+    this.myPlaylistRepository = new MyPlaylistRepository();
   }
 }
 
-export default DatabaseTransaction;
+module.exports = DatabaseTransaction;

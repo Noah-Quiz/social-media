@@ -1,6 +1,7 @@
 const dotenv = require('dotenv');
 const express = require('express');
 const cors = require('cors');
+const myPlaylistRoutes = require('./routes/MyPlaylistRoute');
 
 // Initialize application and server
 const app = express();
@@ -21,6 +22,9 @@ app.use((req, res, next) => {
   console.log(req.path, req.method);
   next();
 });
+
+// routers
+app.use("/api", myPlaylistRoutes);
 
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
