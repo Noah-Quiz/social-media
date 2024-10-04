@@ -56,4 +56,5 @@ class BaseDatabaseTransaction {
     }
   }
 }
+
 module.exports = BaseDatabaseTransaction;
