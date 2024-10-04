@@ -2,7 +2,7 @@ const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const bcrypt = require("bcrypt");
 const { validEmail, validPassword } = require("../utils/validator");
 
-const signUp = async (fullName, email, password, ipAddress) => {
+const signUp = async (fullName, email, password) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -19,7 +19,6 @@ const signUp = async (fullName, email, password, ipAddress) => {
       fullName: fullName,
       email: email,
       password: hashedPassword,
-      ipAddress: ipAddress,
     });
 
     return user;
@@ -51,4 +50,42 @@ const login = async (email, password) => {
     throw new Error(`Error when login: ${error.message}`);
   }
 };
-module.exports = { signUp, login };
+
+const loginGoogle = async (user) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const existingUser = await connection.userRepository.findUserByEmail(
+      user.emails[0].value
+    );
+    if (existingUser) {
+      if (existingUser.isActive === false) {
+        existingUser.isActive = true;
+        await existingUser.save();
+      }
+      if (existingUser.verify === false) {
+        existingUser.verify = true;
+        await existingUser.save();
+      }
+      if (existingUser.googleId === "") {
+        existingUser.googleId = user.id;
+        await existingUser.save();
+      }
+      if (existingUser.avatar === "") {
+        existingUser.avatar = user.photos[0].value;
+        await existingUser.save();
+      }
+      return existingUser;
+    }
+    const newUser = await connection.userRepository.createUser({
+      fullName: user.displayName,
+      email: user.emails[0].value,
+      googleId: user.id,
+      avatar: user.photos[0].value,
+      verify: true,
+    });
+    return newUser;
+  } catch (error) {
+    throw new Error(`Error when login with Google: ${error.message}`);
+  }
+};
+module.exports = { signUp, login, loginGoogle };
