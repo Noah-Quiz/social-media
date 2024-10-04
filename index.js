@@ -1,6 +1,6 @@
-const dotenv = require('dotenv');
-const express = require('express');
-const cors = require('cors');
+const dotenv = require("dotenv");
+const express = require("express");
+const cors = require("cors");
 
 // Initialize application and server
 const app = express();
@@ -15,6 +15,8 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use("/api", require("./routes/AuthRoute"));
 
 // Log API requests
 app.use((req, res, next) => {
