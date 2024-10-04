@@ -6,7 +6,8 @@ const session = require("express-session");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const cors = require("cors");
 const categoryRoutes = require("./routes/categoryRoutes");
-const myPlaylistRoutes = require('./routes/MyPlaylistRoute');
+const myPlaylistRoutes = require("./routes/MyPlaylistRoute");
+const authRoutes = require("./routes/AuthRoute");
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use((req, res, next) => {
 });
 
 // routers
+app.use("/api", authRoutes);
 app.use("/api", myPlaylistRoutes);
 app.use("/api", categoryRoutes);
 

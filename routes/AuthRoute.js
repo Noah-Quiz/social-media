@@ -14,8 +14,11 @@ authRoutes.get(
 );
 authRoutes.get(
   "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
+  passport.authenticate("google", { failureRedirect: "/" }),
   authController.loginGoogle
 );
+
+authRoutes.get("/auth/send-verify-email", authController.sendVerificationEmail);
+authRoutes.get("/auth/verify", authController.verifyEmail);
 
 module.exports = authRoutes;

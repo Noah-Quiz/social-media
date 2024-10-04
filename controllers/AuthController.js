@@ -1,4 +1,10 @@
-const { signUp, login, loginGoogle } = require("../services/AuthService");
+const {
+  signUp,
+  login,
+  loginGoogle,
+  sendVerificationEmail,
+  verifyEmail,
+} = require("../services/AuthService");
 const createAccessToken = require("../utils/createAccessToken");
 require("dotenv").config();
 class AuthController {
@@ -6,6 +12,9 @@ class AuthController {
     const { fullName, email, password } = req.body;
     try {
       const user = await signUp(fullName, email, password);
+      if (user) {
+        await sendVerificationEmail(user.email);
+      }
       res.status(201).json({ message: "Signup successfully" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -47,6 +56,28 @@ class AuthController {
       return res.status(500).json({ message: error.message });
     }
   }
+
+  async sendVerificationEmail(req, res) {
+    const { email } = req.query;
+    try {
+      await sendVerificationEmail(email);
+      res.status(200).json({ message: "Email sent successfully" });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async verifyEmail(req, res) {
+    const { token } = req.query;
+    try {
+      const user = await verifyEmail(token);
+      res.status(200).json({ message: "Email verified successfully" });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async resetPassword(req, res) {}
 }
 
 module.exports = AuthController;
