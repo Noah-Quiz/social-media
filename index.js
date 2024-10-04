@@ -5,8 +5,9 @@ const passport = require("passport");
 const session = require("express-session");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const cors = require("cors");
+const categoryRoutes = require("./routes/categoryRoutes");
+const myPlaylistRoutes = require('./routes/MyPlaylistRoute');
 
-// Initialize application and server
 const app = express();
 
 // Middleware
@@ -51,13 +52,15 @@ app.get("/", (req, res) => {
   res.send("<a href='/api/auth/google'>Login with Google</a>");
 });
 
-app.use("/api", require("./routes/AuthRoute"));
-
 // Log API requests
 app.use((req, res, next) => {
   console.log(req.path, req.method);
   next();
 });
+
+// routers
+app.use("/api", myPlaylistRoutes);
+app.use("/api", categoryRoutes);
 
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
