@@ -1,9 +1,10 @@
-import BaseDatabaseTransaction from "./BaseDatabaseTransaction.js";
-
+const BaseDatabaseTransaction = require("./BaseDatabaseTransaction.js");
+const CategoryRepository = require("./CategoryRepository.js");
 class DatabaseTransaction extends BaseDatabaseTransaction {
   constructor() {
     super();
+    this.CategoryRepository = new CategoryRepository();
   }
 }
 
-export default DatabaseTransaction;
+module.exports = DatabaseTransaction;

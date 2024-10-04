@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const baseEntitySchema = new mongoose.Schema(
   {
@@ -7,7 +7,7 @@ const baseEntitySchema = new mongoose.Schema(
     isDeleted: { type: Boolean, default: false },
     status: { type: String, default: "active" },
   },
-  { _id: false, timestamps: true }
+  { _id: false, timestamps: false }
 );
 
-export default baseEntitySchema;
+module.exports = baseEntitySchema;
