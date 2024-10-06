@@ -43,10 +43,6 @@ const userEntitySchema = new mongoose.Schema({
     type: String,
     require: [true, "Password is required"],
   },
-  ipAddress: {
-    type: String,
-    default: "",
-  },
   lastLogin: {
     type: Date,
     default: Date.now,
