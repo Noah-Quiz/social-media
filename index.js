@@ -5,10 +5,10 @@ const passport = require("passport");
 const session = require("express-session");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const cors = require("cors");
-const categoryRoutes = require("./routes/categoryRoutes");
+const categoryRoutes = require("./routes/CategoryRoute");
 const myPlaylistRoutes = require("./routes/MyPlaylistRoute");
 const authRoutes = require("./routes/AuthRoute");
-
+const messageRoutes = require("./routes/MessageRoute");
 const app = express();
 const userRoute = require("./routes/userRoute");
 
@@ -55,6 +55,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/user", userRoute);
+app.use("/api", messageRoutes);
 // Log API requests
 app.use((req, res, next) => {
   console.log(req.path, req.method);
