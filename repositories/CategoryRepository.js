@@ -1,4 +1,4 @@
-const Category = require("../entities/category");
+const Category = require("../entities/CategoryEntity");
 
 class CategoryRepository {
   async createCategory(data, session = null) {
@@ -29,6 +29,7 @@ class CategoryRepository {
   }
 
   async updateCategory(id, data, session = null) {
+    data.lastUpdated = new Date();
     try {
       const category = await Category.findByIdAndUpdate(id, data, {
         new: true,
@@ -43,7 +44,13 @@ class CategoryRepository {
     try {
       const category = await Category.findByIdAndUpdate(
         id,
-        { $set: { isDeleted: true, status: "archived" } },
+        {
+          $set: {
+            isDeleted: true,
+            status: "archived",
+            lastUpdated: new Date(),
+          },
+        },
         { new: true, session } // Returns the updated document
       );
 
@@ -57,7 +64,7 @@ class CategoryRepository {
     try {
       const category = await Category.findByIdAndUpdate(
         id,
-        { status: "archived" },
+        { status: "archived", lastUpdated: new Date() },
         { new: true, session }
       );
       return category;
