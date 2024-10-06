@@ -1,34 +1,39 @@
 const {
-  followAUserService,
-  unfollowAUserService,
-} = require("../service/userService");
+  followAnUserService,
+  unfollowAnUserService,
+  createAnUserService,
+} = require("../services/UserService");
 const mongoose = require("mongoose");
 
 module.exports = {
-  followAUser: async (req, res) => {
-    const { userId, followId } = req.params;
+  createAnUser: async (req, res) => {
+    const result = await createAnUserService(req.body);
+    return res.status(200).json(result);
+  },
+  followAnUser: async (req, res) => {
+    const { userId, followId } = req.query;
     if (
       !mongoose.Types.ObjectId.isValid(userId) ||
       !mongoose.Types.ObjectId.isValid(followId)
     ) {
       return res.status(400).json({ message: "Invalid id" });
     }
-    const result = await followAUserService(userId, followId);
+    const result = await followAnUserService(userId, followId);
     if (result.EC === 1) {
       return res.status(400).json(result);
     }
     return res.status(200).json(result);
   },
 
-  unfollowAUser: async (req, res) => {
-    const { userId, followId } = req.params;
+  unfollowAnUser: async (req, res) => {
+    const { userId, followId } = req.query;
     if (
       !mongoose.Types.ObjectId.isValid(userId) ||
       !mongoose.Types.ObjectId.isValid(followId)
     ) {
       return res.status(400).json({ message: "Invalid id" });
     }
-    const result = await unfollowAUserService(userId, followId);
+    const result = await unfollowAnUserService(userId, followId);
     if (result.EC === 1) {
       return res.status(400).json(result);
     }

@@ -1,12 +1,21 @@
-const userModel = require("../model/userModel");
-const {
-  followAUserRepository,
-  unfollowAUserRepository,
-} = require("../repository/userRepository");
+const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
 module.exports = {
-  followAUserService: async (userId, followId) => {
-    const result = await followAUserRepository(userId, followId);
+  createAnUserService: async (data) => {
+    const connection = new DatabaseTransaction();
+    const user = await connection.UserRepository.createUser(data);
+    if (!user) {
+      return {
+        EC: 1,
+        message: "Create an user unsuccessfully",
+      };
+    }
+    return user;
+  },
+
+  followAnUserService: async (userId, followId) => {
+    const connection = new DatabaseTransaction();
+    const result = connection.UserRepository.followAUser(userId, followId);
     if (result) {
       return {
         EC: 0,
@@ -19,8 +28,9 @@ module.exports = {
     };
   },
 
-  unfollowAUserService: async (userId, followId) => {
-    const result = await unfollowAUserRepository(userId, followId);
+  unfollowAnUserService: async (userId, followId) => {
+    const connection = new DatabaseTransaction();
+    const result = connection.UserRepository.unfollowAnUser(userId, followId);
     if (result) {
       return {
         EC: 0,

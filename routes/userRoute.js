@@ -1,9 +1,13 @@
 const express = require("express");
-const { followAUser, unfollowAUser } = require("../controller/userController");
+const {
+  followAnUser,
+  unfollowAnUser,
+  createAnUser,
+} = require("../controllers/userController");
 
 const route = express.Router();
 
-route.post("/follow/:userId/:followId", followAUser);
-route.post("/unfollow/:userId/:followId", unfollowAUser);
-
+route.post("/follow", followAnUser);
+route.post("/unfollow", unfollowAnUser);
+route.post("/", createAnUser);
 module.exports = route;

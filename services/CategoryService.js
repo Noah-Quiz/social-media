@@ -4,10 +4,11 @@ const createCategory = async (categoryData) => {
   const connection = new DatabaseTransaction();
   try {
     const session = await connection.startTransaction();
-    const category = await connection.CategoryRepository.createCategory(
-      categoryData,
-      session
-    );
+    // const category = await connection.CategoryRepository.createCategory(
+    //   categoryData,
+    //   session
+    // );
+
     await connection.commitTransaction();
     return category;
   } catch (error) {

@@ -4,7 +4,7 @@ const CategoryRepository = require("./CategoryRepository.js");
 class DatabaseTransaction extends BaseDatabaseTransaction {
   constructor() {
     super();
-    this.userRepository = new UserRepository();
+    this.UserRepository = new UserRepository();
     this.CategoryRepository = new CategoryRepository();
   }
 }

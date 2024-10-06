@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const baseEntitySchema = require("./BaseEntity.js");
+const { type } = require("express/lib/response.js");
 
 const userEntitySchema = new mongoose.Schema({
   fullName: {
@@ -68,6 +69,18 @@ const userEntitySchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  follow: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "User",
+    },
+  ],
+  followBy: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "User",
+    },
+  ],
   ...baseEntitySchema.obj,
 });
 
