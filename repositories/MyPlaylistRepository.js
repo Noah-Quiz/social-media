@@ -39,7 +39,7 @@ class MyPlaylistRepository {
             if (updateData.addedVideoIds && updateData.addedVideoIds.length > 0) {
                 await MyPlaylist.updateOne(
                     { _id: playlistId },
-                    { $addToSet: { videoId: { $each: updateData.addedVideoIds } } },
+                    { $addToSet: { videoIds: { $each: updateData.addedVideoIds } } },
                     { runValidators: true }
                 );
             }
@@ -47,7 +47,7 @@ class MyPlaylistRepository {
             if (updateData.removedVideoIds && updateData.removedVideoIds.length > 0) {
                 await MyPlaylist.updateOne(
                     { _id: playlistId },
-                    { $pull: { videoId: { $in: updateData.removedVideoIds } } },
+                    { $pull: { videoIds: { $in: updateData.removedVideoIds } } },
                     { runValidators: true }
                 );
             }
