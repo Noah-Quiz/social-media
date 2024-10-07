@@ -52,28 +52,48 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
       throw new Error("Invalid action");
     }
 
-    const result = await connection.videoRepository.toggleLikeVideoRepository(videoId, userId, action);
-    
+    const result = await connection.videoRepository.toggleLikeVideoRepository(
+      videoId,
+      userId,
+      action
+    );
+
     return result;
   } catch (error) {
     throw new Error(`Error in toggling like/unlike: ${error.message}`);
   }
-}
+};
 
 const viewIncrementService = async (videoId) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const result = await connection.videoRepository.viewIncrementRepository(videoId);
+    const result = await connection.videoRepository.viewIncrementRepository(
+      videoId
+    );
 
     return result;
   } catch (error) {
     throw new Error(`Error in increasing view: ${error.message}`);
   }
-}
+};
+
+const getVideosByUserIdService = async (userId) => {
+  const connection = new DatabaseTransaction();
+  try {
+    const videos = await connection.videoRepository.getVideosByUserIdRepository(
+      userId
+    );
+    return videos;
+  } catch (error) {
+    throw new Error(`Error in get videos by userId ${error.message}`);
+  }
+};
 
 module.exports = {
-  createVideoService, updateAVideoByIdService,
+  createVideoService,
+  updateAVideoByIdService,
   toggleLikeVideoService,
+  getVideosByUserIdService,
   viewIncrementService,
 };

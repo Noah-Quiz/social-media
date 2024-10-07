@@ -19,7 +19,7 @@ class VideoRepository {
       );
 
       if (!updatedVideo) {
-        throw new Error('Video not found');
+        throw new Error("Video not found");
       }
 
       return true;
@@ -28,11 +28,12 @@ class VideoRepository {
     }
   }
 
-  async toggleLikeVideoRepository(videoId, userId, action = 'like') {
+  async toggleLikeVideoRepository(videoId, userId, action = "like") {
     try {
-      const updateAction = action === 'like'
-        ? { $addToSet: { likedBy: userId } }
-        : { $pull: { likedBy: userId } };
+      const updateAction =
+        action === "like"
+          ? { $addToSet: { likedBy: userId } }
+          : { $pull: { likedBy: userId } };
 
       const updatedVideo = await Video.findByIdAndUpdate(
         videoId,
@@ -57,6 +58,17 @@ class VideoRepository {
       return video;
     } catch (error) {
       throw new Error(`Error when update video: ${error.message}`);
+    }
+  }
+
+  async getVideosByUserIdRepository(userId) {
+    try {
+      const videos = await Video.find({ userId: userId, isDeleted: false });
+      return videos;
+    } catch (error) {
+      throw new Error(
+        `Error when fetch all videos by userId: ${error.message}`
+      );
     }
   }
 }

@@ -1,6 +1,9 @@
 const {
-  createVideoService, toggleLikeVideoService, viewIncrementService,
+  createVideoService,
+  toggleLikeVideoService,
+  viewIncrementService,
   updateAVideoByIdService,
+  getVideosByUserIdService,
 } = require("../services/VideoService");
 const { uploadFiles, setThumbnail } = require("../middlewares/LoadFile");
 const createAccessToken = require("../utils/createAccessToken");
@@ -15,7 +18,9 @@ class VideoController {
     try {
       // Kiểm tra xem file video và thumbnail có được gửi lên không
       if (!req.files.videoUrl || !req.files.thumbNailUrl) {
-        return res.status(400).json({ message: "Video and thumbnail files are required." });
+        return res
+          .status(400)
+          .json({ message: "Video and thumbnail files are required." });
       }
 
       // Lấy file video và thumbnail từ req.files
@@ -81,6 +86,20 @@ class VideoController {
       return res
         .status(200)
         .json({ message: "Update video successfully", video });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async getVideosByUserIdController(req, res) {
+    const { userId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "UserId is not an ObjectId" });
+    }
+
+    try {
+      const videos = await getVideosByUserIdService(userId);
+      return res.status(200).json({ message: "Successfully", videos });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }

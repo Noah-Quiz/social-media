@@ -15,6 +15,8 @@ videoRoutes.post(
   videoController.createVideoController
 );
 
+videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
+
 videoRoutes.put(
   "/:videoId",
   upload.fields([{ name: "thumbnailUrl" }]),
