@@ -5,15 +5,17 @@ const {
   sendVerificationEmail,
   verifyEmail,
   loginApple,
+  sendVerificationPhone,
+  verifyPhone,
 } = require("../services/AuthService");
 const createAccessToken = require("../utils/createAccessToken");
 require("dotenv").config();
 
 class AuthController {
   async signUp(req, res) {
-    const { fullName, email, password } = req.body;
+    const { fullName, email, phoneNumber, password } = req.body;
     try {
-      const user = await signUp(fullName, email, password);
+      const user = await signUp(fullName, email, phoneNumber, password);
       if (user) {
         await sendVerificationEmail(user.email);
       }
@@ -97,7 +99,25 @@ class AuthController {
     }
   }
 
-  async resetPassword(req, res) {}
+  async sendVerificationPhone(req, res) {
+    const { phoneNumber } = req.body;
+    try {
+      const status = await sendVerificationPhone(phoneNumber);
+      res.status(200).json({ message: "SMS sent successfully" });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async verifyPhone(req, res) {
+    const { phoneNumber, code } = req.body;
+    try {
+      const status = await verifyPhone(phoneNumber, code);
+      res.status(200).json({ message: "Phone number verified successfully" });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
 }
 
 module.exports = AuthController;
