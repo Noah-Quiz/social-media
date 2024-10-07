@@ -11,7 +11,7 @@ const myPlaylistRoutes = require("./routes/MyPlaylistRoute");
 const authRoutes = require("./routes/AuthRoute");
 const messageRoutes = require("./routes/MessageRoute");
 const app = express();
-const userRoute = require("./routes/userRoute");
+const userRoute = require("./routes/UserRoute");
 
 // Middleware
 app.use(
