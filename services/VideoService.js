@@ -58,26 +58,16 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
       action
     );
 
-    const result = await connection.videoRepository.toggleLikeVideoRepository(
-      videoId,
-      userId,
-      action
-    );
-
     return result;
   } catch (error) {
     throw new Error(`Error in toggling like/unlike: ${error.message}`);
   }
-};
 };
 
 const viewIncrementService = async (videoId) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const result = await connection.videoRepository.viewIncrementRepository(
-      videoId
-    );
     const result = await connection.videoRepository.viewIncrementRepository(
       videoId
     );
