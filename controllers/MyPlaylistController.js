@@ -32,11 +32,11 @@ class MyPlaylistController {
 
     //update playlist
     async updatePlaylistController(req, res) {
-        const { addedVideoIds, removedVideoIds, name } = req.body;
+        const { addedVideoIds, removedVideoIds, playlistName } = req.body;
         const { playlistId } = req.params;
 
         const data = {
-            addedVideoIds, removedVideoIds, name
+            addedVideoIds, removedVideoIds, playlistName
         }
     
         try {
