@@ -60,7 +60,8 @@ class AuthController {
   }
 
   async loginApple(req, res) {
-    const appleUser = req.body.user;
+    const appleUser = JSON.parse(req.body.user);
+    console.log(appleUser);
     const ipAddress = req.ip || req.socket.remoteAddress;
     try {
       const user = await loginApple(appleUser);
