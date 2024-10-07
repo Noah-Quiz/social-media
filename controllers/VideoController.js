@@ -4,6 +4,7 @@ const {
   viewIncrementService,
   updateAVideoByIdService,
   deleteVideo,
+  getVideosByUserIdService,
 } = require("../services/VideoService");
 const { uploadFiles, setThumbnail } = require("../middlewares/LoadFile");
 const createAccessToken = require("../utils/createAccessToken");
@@ -106,6 +107,20 @@ class VideoController {
       res.status(200).json({ message: "Delete Video successfully" });
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getVideosByUserIdController(req, res) {
+    const { userId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "UserId is not an ObjectId" });
+    }
+
+    try {
+      const videos = await getVideosByUserIdService(userId);
+      return res.status(200).json({ message: "Successfully", videos });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
     }
   }
 }

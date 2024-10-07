@@ -80,6 +80,17 @@ class VideoRepository {
       throw new Error(`Error when delete video mongodb: ${error.message}`);
     }
   }
+
+  async getVideosByUserIdRepository(userId) {
+    try {
+      const videos = await Video.find({ userId: userId, isDeleted: false });
+      return videos;
+    } catch (error) {
+      throw new Error(
+        `Error when fetch all videos by userId: ${error.message}`
+      );
+    }
+  }
 }
 
 module.exports = VideoRepository;
