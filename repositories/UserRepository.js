@@ -20,6 +20,17 @@ class UserRepository {
     }
   }
 
+  async findUserByPhoneNumber(phoneNumber) {
+    try {
+      const user = await User.findOne({ phoneNumber });
+      return user;
+    } catch (error) {
+      throw new Error(
+        `Error when finding user by phone number: ${error.message}`
+      );
+    }
+  }
+
   async deleteAnUserByIdRepository(userId) {
     try {
       const user = await User.findByIdAndUpdate(userId, { isDeleted: true });

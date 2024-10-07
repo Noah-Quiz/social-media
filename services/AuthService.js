@@ -1,17 +1,35 @@
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { validEmail, validPassword } = require("../utils/validator");
+const {
+  validEmail,
+  validPassword,
+  validPhoneNumber,
+} = require("../utils/validator");
 const mailer = require("../utils/mailer");
-const signUp = async (fullName, email, password) => {
+const {
+  sendVerificationCode,
+  checkVerification,
+} = require("../utils/phoneVerification");
+const signUp = async (fullName, email, phoneNumber, password) => {
   try {
     const connection = new DatabaseTransaction();
 
     validEmail(email);
     validPassword(password);
+    validPhoneNumber(phoneNumber);
 
-    const existingUser = await connection.userRepository.findUserByEmail(email);
-    if (existingUser) throw new Error("Email is already registered");
+    const existingEmail = await connection.userRepository.findUserByEmail(
+      email
+    );
+    if (existingEmail) throw new Error("Email is already registered");
+
+    const existingPhone = await connection.userRepository.findUserByPhoneNumber(
+      phoneNumber
+    );
+    if (existingPhone) throw new Error("Phone is already registered");
+
+    const formattedPhoneNumber = phoneNumber.replace(/^0/, "+84");
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -19,6 +37,7 @@ const signUp = async (fullName, email, password) => {
     const user = await connection.userRepository.createUser({
       fullName: fullName,
       email: email,
+      phoneNumber: formattedPhoneNumber,
       password: hashedPassword,
     });
 
@@ -190,11 +209,57 @@ const verifyEmail = async (token, res) => {
     throw new Error(`Error when verifying email: ${error.message}`);
   }
 };
+
+const sendVerificationPhone = async (phoneNumber) => {
+  try {
+    const connection = new DatabaseTransaction();
+
+    const user = await connection.userRepository.findUserByPhoneNumber(
+      phoneNumber
+    );
+    if (!user) throw new Error("User not found");
+
+    const status = await sendVerificationCode(phoneNumber);
+    if (status !== "pending") {
+      throw new Error("Error when sending verification code");
+    }
+
+    return status;
+  } catch (error) {
+    throw new Error(`Error when sending verification phone: ${error.message}`);
+  }
+};
+
+const verifyPhone = async (phoneNumber, code) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const user = await connection.userRepository.findUserByPhoneNumber(
+      phoneNumber
+    );
+    if (!user) throw new Error("User not found");
+    if (user.verify === true) throw new Error("User is already verified");
+
+    const status = await checkVerification(phoneNumber, code);
+    if (status !== "approved") {
+      throw new Error("Phone number verification failed");
+    }
+
+    user.verify = true;
+    await user.save();
+
+    return status;
+  } catch (error) {
+    throw new Error(`Error when verifying phone: ${error.message}`);
+  }
+};
+
 module.exports = {
   signUp,
   login,
   loginGoogle,
   loginApple,
   sendVerificationEmail,
+  sendVerificationPhone,
+  verifyPhone,
   verifyEmail,
 };

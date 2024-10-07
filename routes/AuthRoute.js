@@ -22,7 +22,10 @@ authRoutes.get("/auth/apple", passport.authenticate("apple"));
 
 authRoutes.post("/auth/apple/callback", authController.loginApple);
 
-authRoutes.get("/auth/send-verify-email", authController.sendVerificationEmail);
-authRoutes.get("/auth/verify", authController.verifyEmail);
+authRoutes.get("/auth/send/email", authController.sendVerificationEmail);
+authRoutes.get("/auth/verify/email", authController.verifyEmail);
+
+authRoutes.post("/auth/send/phone", authController.sendVerificationPhone)
+authRoutes.post("/auth/verify/phone", authController.verifyPhone)
 
 module.exports = authRoutes;
