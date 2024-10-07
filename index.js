@@ -25,7 +25,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const Vimeo = require('vimeo').Vimeo;
+const Vimeo = require("vimeo").Vimeo;
 
 const vimeoClient = new Vimeo(
   process.env.VIMEO_CLIENT_ID,
@@ -95,12 +95,12 @@ app.use((req, res, next) => {
 });
 
 // routers
-app.use("/api", authRoutes);
-app.use("/api", myPlaylistRoutes);
-app.use("/api", categoryRoutes);
-app.use("/api/user", userRoute);
-app.use("/api", messageRoutes);
-app.use("/api", videoRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/my-playlists", myPlaylistRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/users", userRoute);
+app.use("/api/messages", messageRoutes);
+app.use("/api/videos", videoRoutes);
 
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;

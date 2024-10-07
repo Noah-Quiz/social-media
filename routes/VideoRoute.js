@@ -21,8 +21,16 @@ videoRoutes.put(
   videoController.updateAVideoByIdController
 );
 
-videoRoutes.post("/videos/like/:videoId", AuthMiddleware, videoController.toggleLikeVideoController);
+videoRoutes.post(
+  "/like/:videoId",
+  AuthMiddleware,
+  videoController.toggleLikeVideoController
+);
 
-videoRoutes.post("/videos/view/:videoId", AuthMiddleware, videoController.viewIncrementController);
+videoRoutes.post(
+  "/view/:videoId",
+  AuthMiddleware,
+  videoController.viewIncrementController
+);
 
 module.exports = videoRoutes;
