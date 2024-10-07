@@ -52,7 +52,11 @@ class MyPlaylistRepository {
                 );
             }
     
-            const updatedPlaylist = await MyPlaylist.findById(playlistId);
+            const updatedPlaylist = await MyPlaylist.findByIdAndUpdate(
+                playlistId, 
+                { playlistName: updateData.playlistName },
+                { new: true, runValidators: true }
+            );
     
             return updatedPlaylist;
         } catch (error) {
