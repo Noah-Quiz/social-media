@@ -11,6 +11,7 @@ const authRoutes = require("./routes/AuthRoute");
 const messageRoutes = require("./routes/MessageRoute");
 const app = express();
 const userRoute = require("./routes/userRoute");
+const videoRoutes = require("./routes/VideoRoute");
 
 // Middleware
 app.use(
@@ -23,7 +24,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const Vimeo = require('vimeo').Vimeo;
+const Vimeo = require("vimeo").Vimeo;
 
 const vimeoClient = new Vimeo(
   process.env.VIMEO_CLIENT_ID,
@@ -75,6 +76,7 @@ app.use("/api", myPlaylistRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api/user", userRoute);
 app.use("/api", messageRoutes);
+app.use("/api/video", videoRoutes);
 
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;

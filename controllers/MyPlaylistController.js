@@ -36,26 +36,23 @@ class MyPlaylistController {
     }
   }
 
+  //update playlist
+  async updatePlaylistController(req, res) {
+    const { addedVideoIds, removedVideoIds, playlistName } = req.body;
+    const { playlistId } = req.params;
 
+    const data = {
+      addedVideoIds,
+      removedVideoIds,
+      playlistName,
+    };
 
+    try {
+      const updatedPlaylist = await updatePlaylistService(playlistId, data);
 
-    //update playlist
-    async updatePlaylistController(req, res) {
-        const { addedVideoIds, removedVideoIds, playlistName } = req.body;
-        const { playlistId } = req.params;
-
-        const data = {
-            addedVideoIds, removedVideoIds, playlistName
-        }
-    
-        try {
-            const updatedPlaylist = await updatePlaylistService(playlistId, data);
-    
-            res.status(200).json({ playlist: updatedPlaylist, message: "Success" });
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-        }
-
+      res.status(200).json({ playlist: updatedPlaylist, message: "Success" });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
   }
 
