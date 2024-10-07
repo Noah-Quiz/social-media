@@ -24,13 +24,13 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const Vimeo = require('vimeo').Vimeo;
+// const Vimeo = require("vimeo").Vimeo;
 
-const vimeoClient = new Vimeo(
-  process.env.VIMEO_CLIENT_ID,
-  process.env.VIMEO_CLIENT_SECRET,
-  process.env.VIMEO_ACCESS_TOKEN
-);
+// const vimeoClient = new Vimeo(
+//   process.env.VIMEO_CLIENT_ID,
+//   process.env.VIMEO_CLIENT_SECRET,
+//   process.env.VIMEO_ACCESS_TOKEN
+// );
 
 app.use(
   session({
@@ -61,9 +61,11 @@ passport.use(
     {
       clientID: process.env.APPLE_CLIENT_ID,
       teamID: process.env.APPLE_TEAM_ID,
-      callbackURL: "https://local.apple-signin.mydomain.com:4000/api/auth/apple/callback",
+      callbackURL:
+        "https://social-media-ofm3.onrender.com/api/auth/apple/callback",
       keyID: process.env.APPLE_KEY_ID,
-      privateKeyLocation: `./config/AuthKey_${process.env.APPLE_KEY_ID}.p8`,
+      // privateKeyLocation: `./config/AuthKey_${process.env.APPLE_KEY_ID}.p8`,
+      privateKeyString: process.env.APPLE_PRIVATE_KEY,
       passReqToCallback: true,
     },
     (req, accessToken, refreshToken, idToken, profile, done) => {
