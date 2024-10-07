@@ -1,6 +1,7 @@
 const { signUp, login } = require("../services/AuthService");
 const createAccessToken = require("../utils/createAccessToken");
 require("dotenv").config();
+
 class AuthController {
   async signUp(req, res) {
     const { fullName, email, password } = req.body;

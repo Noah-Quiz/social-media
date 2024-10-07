@@ -1,9 +1,18 @@
 const dotenv = require("dotenv");
+dotenv.config();
 const express = require("express");
 const cors = require("cors");
+const Vimeo = require('vimeo').Vimeo;
+
+const vimeoClient = new Vimeo(
+  process.env.VIMEO_CLIENT_ID,
+  process.env.VIMEO_CLIENT_SECRET,
+  process.env.VIMEO_ACCESS_TOKEN
+);
 
 // Initialize application and server
 const app = express();
+
 
 // Middleware
 app.use(
@@ -17,6 +26,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", require("./routes/AuthRoute"));
+app.use("/api", require("./routes/VideoRoute"));
 
 // Log API requests
 app.use((req, res, next) => {
