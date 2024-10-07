@@ -65,7 +65,6 @@ class UserRepository {
     const user = await User.findOne({ _id: userId });
     const follow = await User.findOne({ _id: followId });
     if (!user || !follow) {
-      console.log(`User ${userId} or user ${followId} does not exist`);
       return false;
     }
 
@@ -83,7 +82,6 @@ class UserRepository {
       console.log(`User ${userId} follows user ${followId} successfully`);
       return true;
     } catch (error) {
-      console.log("Error at followAUserRepository");
       return false;
     }
   }
@@ -93,7 +91,6 @@ class UserRepository {
     const follow = await User.findOne({ _id: followId });
     console.log(user);
     if (!user || !follow) {
-      console.log(`User ${userId} or user ${followId} does not exist`);
       return false;
     }
 
@@ -102,10 +99,8 @@ class UserRepository {
 
       await User.updateOne({ _id: followId }, { $pull: { followBy: userId } });
 
-      console.log(`User ${userId} unfollows user ${followId} successfully`);
       return true;
     } catch (error) {
-      console.log("Error at unfollowAUserRepository");
       return false;
     }
   }

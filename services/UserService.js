@@ -49,7 +49,7 @@ module.exports = {
 
   followAnUserService: async (userId, followId) => {
     const connection = new DatabaseTransaction();
-    const result = await connection.userRepository.followAUser(
+    const result = await connection.userRepository.followAnUserRepository(
       userId,
       followId
     );
@@ -67,7 +67,7 @@ module.exports = {
 
   unfollowAnUserService: async (userId, followId) => {
     const connection = new DatabaseTransaction();
-    const result = await connection.userRepository.unfollowAnUser(
+    const result = await connection.userRepository.unfollowAnUserRepository(
       userId,
       followId
     );

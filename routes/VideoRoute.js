@@ -8,6 +8,6 @@ const upload = require("../utils/validatorFile");
 const videoRoutes = express.Router();
 const videoController = new VideoController();
 
-videoRoutes.post("/video/createVideo", upload.fields([{ name: 'size' },{ name: 'videoUrl' }, { name: 'thumbNailUrl' }]), AuthMiddleware, videoController.createVideoControll);
+videoRoutes.post("/video/createVideo", upload.fields([{ name: 'size' },{ name: 'videoUrl' }, { name: 'thumbNailUrl' }]), AuthMiddleware, videoController.createVideoController);
 
 module.exports = videoRoutes;

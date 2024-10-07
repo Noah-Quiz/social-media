@@ -4,7 +4,7 @@ const createAccessToken = require("../utils/createAccessToken");
 require("dotenv").config();
 
 class VideoController {
-  async createVideoControll(req, res) {
+  async createVideoController(req, res) {
     const { title, description, enumMode, categoryIds } = req.body;
     const userId = req.userId;
 
