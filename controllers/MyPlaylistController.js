@@ -57,33 +57,34 @@ class MyPlaylistController {
         }
 
     }
+    async deletePlaylist(req, res) {
+      const { playlistId } = req.params;
+  
+      try {
+        await deletePlaylistService(playlistId);
+  
+        res.status(200).json({ message: "Success" });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  
+    async createAPlaylist(req, res) {
+      const { playlistName } = req.body;
+      const userId = req.userId;
+  
+      try {
+        const playlist = await createAPlaylistService(userId, playlistName);
+  
+        res.status(200).json({ playlist, message: "Success" });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    }
   }
+
 
   // delete a playlist
-  async deletePlaylist(req, res) {
-    const { playlistId } = req.params;
-
-    try {
-      await deletePlaylistService(playlistId);
-
-      res.status(200).json({ message: "Success" });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  }
-
-  async createAPlaylist(req, res) {
-    const { playlistName } = req.body;
-    const userId = req.userId;
-
-    try {
-      const playlist = await createAPlaylistService(userId, playlistName);
-
-      res.status(200).json({ playlist, message: "Success" });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  }
-}
+ 
 
 module.exports = MyPlaylistController;
