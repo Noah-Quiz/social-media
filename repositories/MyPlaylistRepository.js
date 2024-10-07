@@ -69,10 +69,7 @@ class MyPlaylistRepository {
         try {
             const playlist = await MyPlaylist.findByIdAndUpdate(
                 playlistId,
-                { 
-                    isDeleted: true,
-                    status: "archived",
-                },
+                { isDeleted: true },
                 { new: true, runValidators: true, session }
             );
 
@@ -89,7 +86,7 @@ class MyPlaylistRepository {
     // Get all user's own playlists
     async getAllMyPlaylistsRepository(data) {
         try {
-            const playlists = await MyPlaylist.find({ userId: data.userId, isDeleted: false, status: "active" })
+            const playlists = await MyPlaylist.find({ userId: data.userId, isDeleted: false })
             .populate('videos')
             
             return playlists;
