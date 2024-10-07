@@ -4,6 +4,7 @@ const {
   loginGoogle,
   sendVerificationEmail,
   verifyEmail,
+  loginApple,
 } = require("../services/AuthService");
 const createAccessToken = require("../utils/createAccessToken");
 require("dotenv").config();
@@ -60,7 +61,20 @@ class AuthController {
 
   async loginApple(req, res) {
     const appleUser = req.body.user;
-    res.status(200).json({ message: "Login with Apple successfully", appleUser });
+    const ipAddress = req.ip || req.socket.remoteAddress;
+    try {
+      const user = await loginApple(appleUser);
+      const accessToken = createAccessToken(
+        { _id: user._id, ip: ipAddress },
+        process.env.ACCESS_TOKEN_SECRET,
+        process.env.ACCESS_TOKEN_EXPIRE
+      );
+      res
+        .status(200)
+        .json({ accessToken, message: "Login with Apple successfully" });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
   }
 
   async sendVerificationEmail(req, res) {

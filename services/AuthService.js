@@ -89,6 +89,32 @@ const loginGoogle = async (user) => {
     throw new Error(`Error when login with Google: ${error.message}`);
   }
 };
+const loginApple = async (user) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const existingUser = await connection.userRepository.findUserByEmail(
+      user.email
+    );
+    if (existingUser) {
+      if (existingUser.isActive === false) {
+        existingUser.isActive = true;
+        await existingUser.save();
+      }
+      if (existingUser.verify === false) {
+        existingUser.verify = true;
+        await existingUser.save();
+      }
+    }
+    const newUser = await connection.userRepository.createUser({
+      fullName: user.name.firstName + " " + user.name.lastName,
+      email: user.email,
+      verify: true,
+    });
+    return newUser;
+  } catch (error) {
+    throw new Error(`Error when login with Apple: ${error.message}`);
+  }
+};
 
 const sendVerificationEmail = async (email) => {
   try {
@@ -163,4 +189,11 @@ const verifyEmail = async (token, res) => {
     throw new Error(`Error when verifying email: ${error.message}`);
   }
 };
-module.exports = { signUp, login, loginGoogle, sendVerificationEmail,verifyEmail };
+module.exports = {
+  signUp,
+  login,
+  loginGoogle,
+  loginApple,
+  sendVerificationEmail,
+  verifyEmail,
+};
