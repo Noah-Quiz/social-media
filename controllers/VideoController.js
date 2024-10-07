@@ -3,6 +3,7 @@ const {
   toggleLikeVideoService,
   viewIncrementService,
   updateAVideoByIdService,
+  deleteVideo,
   getVideosByUserIdService,
 } = require("../services/VideoService");
 const { uploadFiles, setThumbnail } = require("../middlewares/LoadFile");
@@ -88,6 +89,24 @@ class VideoController {
         .json({ message: "Update video successfully", video });
     } catch (error) {
       return res.status(500).json({ message: error.message });
+    }
+  }
+  async deleteVideo(req, res) {
+    const id = req.params;
+    const userId = req.userId;
+    if (!id) {
+      res.status(500).json({ error: "Id required" });
+      return;
+    }
+    if (!userId) {
+      res.status(500).json({ error: "userId required" });
+      return;
+    }
+    try {
+      const video = await deleteVideo(id, userId);
+      res.status(200).json({ message: "Delete Video successfully" });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
   }
 

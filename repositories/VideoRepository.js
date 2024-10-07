@@ -60,6 +60,26 @@ class VideoRepository {
       throw new Error(`Error when update video: ${error.message}`);
     }
   }
+  async getVideoRepository(id, session) {
+    try {
+      const video = await Video.findOne({ _id: id }, { session });
+      return video;
+    } catch (error) {
+      throw new Error(`Error when getting video: ${error.message}`);
+    }
+  }
+  async deleteVideoRepository(id, session) {
+    try {
+      const video = await Video.findByIdAndUpdate(
+        { _id: id },
+        { isDeleted: true, lastUpdated: new Date() },
+        { new: true, runValidators: true, session }
+      );
+      return video;
+    } catch (error) {
+      throw new Error(`Error when delete video mongodb: ${error.message}`);
+    }
+  }
 
   async getVideosByUserIdRepository(userId) {
     try {
