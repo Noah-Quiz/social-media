@@ -1,16 +1,47 @@
 const {
   followAnUserService,
   unfollowAnUserService,
-  createAnUserService,
+  getAllUsersService,
+  getAnUserByIdService,
+  updateAnUserByIdService,
 } = require("../services/UserService");
 const mongoose = require("mongoose");
 
-module.exports = {
-  createAnUser: async (req, res) => {
-    const result = await createAnUserService(req.body);
+class UserController {
+  async getAllUsersController(req, res) {
+    const result = await getAllUsersService();
     return res.status(200).json(result);
-  },
-  followAnUser: async (req, res) => {
+  }
+
+  async getAnUserByIdController(req, res) {
+    const { userId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(500).json({ error: "UserId is not an ObjectId" });
+    }
+    try {
+      const result = await getAnUserByIdService(userId);
+      return res.status(200).json(result);
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+  async updateAnUserByIdController(req, res) {
+    const { userId } = req.params;
+    const data = req.body;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(500).json({ error: "UserId is not an ObjectId" });
+    }
+
+    try {
+      const result = await updateAnUserByIdService(userId, data);
+      return res.status(200).json(result);
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async followAnUserController(req, res) {
     const { userId, followId } = req.query;
     if (
       !mongoose.Types.ObjectId.isValid(userId) ||
@@ -23,9 +54,9 @@ module.exports = {
       return res.status(400).json(result);
     }
     return res.status(200).json(result);
-  },
+  }
 
-  unfollowAnUser: async (req, res) => {
+  async unfollowAnUserController(req, res) {
     const { userId, followId } = req.query;
     if (
       !mongoose.Types.ObjectId.isValid(userId) ||
@@ -38,5 +69,7 @@ module.exports = {
       return res.status(400).json(result);
     }
     return res.status(200).json(result);
-  },
-};
+  }
+}
+
+module.exports = UserController;
