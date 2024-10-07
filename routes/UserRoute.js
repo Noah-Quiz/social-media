@@ -10,6 +10,6 @@ route.post("/unfollow", userController.unfollowAnUserController);
 route.get("/", userController.getAllUsersController);
 route.get("/:userId", userController.getAnUserByIdController);
 route.put("/:userId", userController.updateAnUserByIdController);
-route.delete("/:userId");
+route.delete("/:userId", userController.deleteAnUserByIdController);
 
 module.exports = route;

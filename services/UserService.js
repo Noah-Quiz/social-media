@@ -18,6 +18,21 @@ module.exports = {
     return user;
   },
 
+  deleteAnUserByIdService: async (userId) => {
+    const connection = new DatabaseTransaction();
+    try {
+      const user = await connection.userRepository.deleteAnUserByIdRepository(
+        userId
+      );
+      if (user)
+        return {
+          message: `Delete user ${userId} successfully`,
+        };
+    } catch (error) {
+      throw new Error(`Error when delete an user by id: ${error.message}`);
+    }
+  },
+
   updateAnUserByIdService: async (userId, data) => {
     const connection = new DatabaseTransaction();
 

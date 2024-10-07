@@ -4,6 +4,7 @@ const {
   getAllUsersService,
   getAnUserByIdService,
   updateAnUserByIdService,
+  deleteAnUserByIdService,
 } = require("../services/UserService");
 const mongoose = require("mongoose");
 
@@ -11,6 +12,19 @@ class UserController {
   async getAllUsersController(req, res) {
     const result = await getAllUsersService();
     return res.status(200).json(result);
+  }
+
+  async deleteAnUserByIdController(req, res) {
+    const { userId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(500).json({ error: "UserId is not an ObjectId" });
+    }
+    try {
+      const result = await deleteAnUserByIdService(userId);
+      return res.status(200).json(result);
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
   }
 
   async getAnUserByIdController(req, res) {

@@ -20,6 +20,15 @@ class UserRepository {
     }
   }
 
+  async deleteAnUserByIdRepository(userId) {
+    try {
+      const user = await User.findByIdAndUpdate(userId, { isDeleted: true });
+      return true;
+    } catch (error) {
+      throw new Error(`Error when delete an user by id: ${error.message}`);
+    }
+  }
+
   async updateAnUserByIdRepository(userId, data) {
     try {
       const user = await User.findByIdAndUpdate(userId, data).select(
