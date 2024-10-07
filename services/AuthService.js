@@ -93,7 +93,7 @@ const loginApple = async (user) => {
   try {
     const connection = new DatabaseTransaction();
     const existingUser = await connection.userRepository.findUserByEmail(
-      user.email
+      user.appleUser.email
     );
     if (existingUser) {
       if (existingUser.isActive === false) {
