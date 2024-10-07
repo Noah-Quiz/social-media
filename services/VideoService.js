@@ -2,7 +2,7 @@ const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const { validEmail, validPassword } = require("../utils/validator");
-
+const axios = require("axios");
 const createVideoService = async (
   userId,
   { title, description, videoUrl, enumMode, thumbNailUrl, categoryIds }
@@ -52,28 +52,86 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
       throw new Error("Invalid action");
     }
 
-    const result = await connection.videoRepository.toggleLikeVideoRepository(videoId, userId, action);
-    
+    const result = await connection.videoRepository.toggleLikeVideoRepository(
+      videoId,
+      userId,
+      action
+    );
+
     return result;
   } catch (error) {
     throw new Error(`Error in toggling like/unlike: ${error.message}`);
   }
-}
+};
 
 const viewIncrementService = async (videoId) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const result = await connection.videoRepository.viewIncrementRepository(videoId);
+    const result = await connection.videoRepository.viewIncrementRepository(
+      videoId
+    );
 
     return result;
   } catch (error) {
     throw new Error(`Error in increasing view: ${error.message}`);
   }
-}
+};
+const deleteVideo = async (id, userId) => {
+  const connection = new DatabaseTransaction();
+
+  try {
+    const session = await connection.startTransaction();
+
+    const video = await connection.videoRepository.getVideoRepository(
+      id,
+      session
+    );
+
+    if (!video) {
+      throw new Error(`No video found for id: ${id}`);
+    }
+
+    if (video.userId.toString() !== userId) {
+      throw new Error("You are not the owner of this video.");
+    }
+    const videoId = video.videoUrl.split("/").pop();
+
+    const response = await axios.delete(
+      `https://api.vimeo.com/videos/${videoId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.VIMEO_ACCESS_TOKEN}`, // assuming the token is stored in env variables
+        },
+      }
+    );
+
+    if (response.status !== 204) {
+      throw new Error("Failed to delete video on Vimeo.");
+    }
+    const repo = await connection.videoRepository.deleteVideoRepository(
+      video._id,
+      session
+    );
+
+    if (!repo) {
+      throw new Error("Failed to delete video in the database.");
+    }
+
+    await connection.commitTransaction();
+
+    return repo;
+  } catch (error) {
+    // Abort the transaction in case of an error
+    await connection.abortTransaction();
+    throw new Error(`Error when deleting video: ${error.message}`);
+  }
+};
 
 module.exports = {
-  createVideoService, updateAVideoByIdService,
+  createVideoService,
+  updateAVideoByIdService,
   toggleLikeVideoService,
   viewIncrementService,
+  deleteVideo,
 };

@@ -32,5 +32,5 @@ videoRoutes.post(
   AuthMiddleware,
   videoController.viewIncrementController
 );
-
+videoRoutes.delete("/delete/:id", AuthMiddleware, videoController.deleteVideo);
 module.exports = videoRoutes;
