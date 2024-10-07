@@ -1,15 +1,12 @@
-import mongoose from 'mongoose';
-import baseEntitySchema from './BaseEntity.js';
+const mongoose = require("mongoose");
+const baseEntitySchema = require("./BaseEntity");
 
 const categorySchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    imageUrl: String,
-    idDeleted: {type: String, default: false},
-    status: String,
-    
-    ...baseEntitySchema.obj // Spread operator to include base entity fields
+  name: { type: String, required: true },
+  imageUrl: String,
+  ...baseEntitySchema.obj, // Spread operator to include base entity fields
 });
 
-const Category = mongoose.model('Category', categorySchema);
+const Category = mongoose.model("Category", categorySchema);
 
-export default Category;
+module.exports = Category;
