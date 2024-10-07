@@ -104,6 +104,7 @@ const loginApple = async (user) => {
         existingUser.verify = true;
         await existingUser.save();
       }
+      return existingUser;
     }
     const newUser = await connection.userRepository.createUser({
       fullName: user.name.firstName + " " + user.name.lastName,
