@@ -20,7 +20,7 @@ authRoutes.get(
 
 authRoutes.get("/auth/apple", passport.authenticate("apple"));
 
-authRoutes.get("/auth/apple/callback", authController.loginApple);
+authRoutes.post("/auth/apple/callback", authController.loginApple);
 
 authRoutes.get("/auth/send-verify-email", authController.sendVerificationEmail);
 authRoutes.get("/auth/verify", authController.verifyEmail);
