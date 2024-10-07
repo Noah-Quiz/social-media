@@ -54,8 +54,6 @@ app.get("/", (req, res) => {
   res.send("<a href='/api/auth/google'>Login with Google</a>");
 });
 
-app.use("/api/user", userRoute);
-app.use("/api", messageRoutes);
 // Log API requests
 app.use((req, res, next) => {
   console.log(req.path, req.method);
@@ -66,6 +64,8 @@ app.use((req, res, next) => {
 app.use("/api", authRoutes);
 app.use("/api", myPlaylistRoutes);
 app.use("/api", categoryRoutes);
+app.use("/api/user", userRoute);
+app.use("/api", messageRoutes);
 
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;

@@ -86,7 +86,8 @@ class MyPlaylistRepository {
     async getAllMyPlaylistsRepository(data) {
         try {
             const playlists = await MyPlaylist.find({ userId: data.userId, isDeleted: false, status: "active" })
-
+            .populate('videos')
+            
             return playlists;
         } catch (error) {
             throw new Error(`Error fetching streams: ${error.message}`);

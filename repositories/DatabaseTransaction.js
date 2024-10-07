@@ -6,10 +6,10 @@ const MessageRepository = require("./MessageRepository.js");
 class DatabaseTransaction extends BaseDatabaseTransaction {
   constructor() {
     super();
-    this.UserRepository = new UserRepository();
-    this.CategoryRepository = new CategoryRepository();
+    this.userRepository = new UserRepository();
+    this.categoryRepository = new CategoryRepository();
     this.myPlaylistRepository = new MyPlaylistRepository();
-    this.MessageRepository = new MessageRepository();
+    this.messageRepository = new MessageRepository();
   }
 }
 

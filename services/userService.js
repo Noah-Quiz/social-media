@@ -3,7 +3,7 @@ const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 module.exports = {
   createAnUserService: async (data) => {
     const connection = new DatabaseTransaction();
-    const user = await connection.UserRepository.createUser(data);
+    const user = await connection.userRepository.createUser(data);
     if (!user) {
       return {
         EC: 1,
@@ -15,7 +15,7 @@ module.exports = {
 
   followAnUserService: async (userId, followId) => {
     const connection = new DatabaseTransaction();
-    const result = connection.UserRepository.followAUser(userId, followId);
+    const result = connection.userRepository.followAUser(userId, followId);
     if (result) {
       return {
         EC: 0,
@@ -30,7 +30,7 @@ module.exports = {
 
   unfollowAnUserService: async (userId, followId) => {
     const connection = new DatabaseTransaction();
-    const result = connection.UserRepository.unfollowAnUser(userId, followId);
+    const result = connection.userRepository.unfollowAnUser(userId, followId);
     if (result) {
       return {
         EC: 0,

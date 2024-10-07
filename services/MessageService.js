@@ -4,7 +4,7 @@ const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const findMessage = async (messageId) => {
   try {
     const connection = new DatabaseTransaction();
-    const message = await connection.MessageRepository.getMessageById(
+    const message = await connection.messageRepository.getMessageById(
       messageId
     );
     return message;
@@ -17,7 +17,7 @@ const findAllMessagesByRoomId = async (id) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const messages = await connection.MessageRepository.getAllMessagesByRoomId(
+    const messages = await connection.messageRepository.getAllMessagesByRoomId(
       id
     );
 
@@ -31,7 +31,7 @@ const updateMessageService = async (messageId, updateData) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const message = await connection.MessageRepository.updateMessage(
+    const message = await connection.messageRepository.updateMessage(
       messageId,
       updateData
     );
@@ -48,7 +48,7 @@ const deleteMessageService = async (messageId) => {
     if (!mongoose.Types.ObjectId.isValid(messageId)) {
       console.log("ko valid");
     }
-    const message = await connection.MessageRepository.deleteMessage(messageId);
+    const message = await connection.messageRepository.deleteMessage(messageId);
     return message;
   } catch (error) {
     throw new Error(error.message);
@@ -58,7 +58,7 @@ const deleteMessageService = async (messageId) => {
 const createAMessageService = async (userId, roomId, content) => {
   try {
     const connection = new DatabaseTransaction();
-    const response = await connection.MessageRepository.createMessage({
+    const response = await connection.messageRepository.createMessage({
       userId,
       roomId,
       content,
