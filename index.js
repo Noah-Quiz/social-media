@@ -25,6 +25,14 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const Vimeo = require('vimeo').Vimeo;
+
+const vimeoClient = new Vimeo(
+  process.env.VIMEO_CLIENT_ID,
+  process.env.VIMEO_CLIENT_SECRET,
+  process.env.VIMEO_ACCESS_TOKEN
+);
+
 app.use(
   session({
     secret: "secret",

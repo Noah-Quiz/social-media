@@ -49,6 +49,16 @@ class VideoRepository {
       throw new Error(`Error in toggling like/unlike: ${error.message}`);
     }
   }
+
+  async updateAVideoByIdRepository(videoId, data) {
+    try {
+      await Video.findByIdAndUpdate(videoId, data);
+      const video = await Video.findById(videoId);
+      return video;
+    } catch (error) {
+      throw new Error(`Error when update video: ${error.message}`);
+    }
+  }
 }
 
 module.exports = VideoRepository;
