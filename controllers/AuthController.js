@@ -57,6 +57,11 @@ class AuthController {
     }
   }
 
+  async loginApple(req, res) {
+    const appleUser = req.body.user;
+    res.status(200).json({ message: "Login with Apple successfully", appleUser });
+  }
+
   async sendVerificationEmail(req, res) {
     const { email } = req.query;
     try {

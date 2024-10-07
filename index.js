@@ -4,6 +4,7 @@ const express = require("express");
 const passport = require("passport");
 const session = require("express-session");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const AppleStrategy = require("passport-apple");
 const cors = require("cors");
 const categoryRoutes = require("./routes/CategoryRoute");
 const myPlaylistRoutes = require("./routes/MyPlaylistRoute");
@@ -32,6 +33,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Google OAuth
 passport.use(
   new GoogleStrategy(
     {
@@ -44,6 +46,23 @@ passport.use(
     }
   )
 );
+
+passport.use(
+  new AppleStrategy(
+    {
+      clientID: process.env.APPLE_CLIENT_ID,
+      teamID: process.env.APPLE_TEAM_ID,
+      callbackURL: "https://local.apple-signin.mydomain.com:4000/api/auth/apple/callback",
+      keyID: process.env.APPLE_KEY_ID,
+      privateKeyLocation: `./config/AuthKey_${process.env.APPLE_KEY_ID}.p8`,
+      passReqToCallback: true,
+    },
+    (req, accessToken, refreshToken, idToken, profile, done) => {
+      return done(null, profile);
+    }
+  )
+);
+
 passport.serializeUser((user, done) => {
   done(null, user);
 });
@@ -51,7 +70,10 @@ passport.deserializeUser((user, done) => {
   done(null, user);
 });
 app.get("/", (req, res) => {
-  res.send("<a href='/api/auth/google'>Login with Google</a>");
+  res.send(
+    "<a href='/api/auth/google'>Login with Google</a><br>" +
+      "<a href='/api/auth/apple'>Login with Apple</a>"
+  );
 });
 
 // Log API requests
