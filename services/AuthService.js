@@ -93,7 +93,7 @@ const loginApple = async (user) => {
   try {
     const connection = new DatabaseTransaction();
     const existingUser = await connection.userRepository.findUserByEmail(
-      user.appleUser.email
+      user.email
     );
     if (existingUser) {
       if (existingUser.isActive === false) {
@@ -107,7 +107,7 @@ const loginApple = async (user) => {
     }
     const newUser = await connection.userRepository.createUser({
       fullName: user.appleUser.name.firstName + " " + user.appleUser.name.lastName,
-      email: user.appleUser.email,
+      email: user.email,
       verify: true,
     });
     return newUser;
