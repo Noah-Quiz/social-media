@@ -4,6 +4,7 @@ const AuthMiddleware = require("../middlewares/AuthMiddleware");
 
 // Thiết lập multer cho việc upload video và hình ảnh
 const upload = require("../utils/validatorFile");
+const { getVideo } = require("../middlewares/LoadFile");
 
 const videoRoutes = express.Router();
 const videoController = new VideoController();
@@ -14,6 +15,8 @@ videoRoutes.post(
   AuthMiddleware,
   videoController.createVideoController
 );
+
+videoRoutes.get("/vimeo", getVideo);
 
 videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
 

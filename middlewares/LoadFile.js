@@ -16,6 +16,31 @@ if (!vimeoClient || !vimeoClient.upload) {
     throw new Error('Vimeo client is not initialized correctly');
 }
 
+const getVideo = async (videoId) => {
+    try {
+        const vimeoResponse = await new Promise((resolve, reject) => {
+            vimeoClient.request(
+                {
+                    method: 'GET',
+                    path: `/videos/${videoId}`,
+                },
+                (error, body) => {
+                    if (error) {
+                        console.error("Vimeo video fetch error:", error);
+                        reject(new Error(`Error fetching video from Vimeo: ${error.message || 'Unknown error'}`));
+                    } else {
+                        console.log(`Video fetched successfully. Response body:`, body);
+                        resolve(body); // Resolved with the video data
+                    }
+                }
+            );
+        });
+        return vimeoResponse;
+    } catch (error) {
+        console.error("Error fetching video:", error);
+    }
+};
+
 // Upload video lên Vimeo từ Buffer
 const uploadVideo = async (file) => {
     try {
@@ -130,5 +155,6 @@ const uploadFiles = async (videoFile, thumbNailFile) => {
 module.exports = {
     uploadVideo,
     setThumbnail,
-    uploadFiles
+    uploadFiles,
+    getVideo,
 };
