@@ -19,11 +19,11 @@ const fileFilter = (req, file, cb) => {
     }
   } 
   // Kiểm tra file hình ảnh
-  else if (file.fieldname === 'thumbNailUrl') { 
+  else if (file.fieldname === 'thumbnailUrl') { 
     const filetypes = /\.(svg|jpg|jpeg|png)$/i;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
 
-    // console.log('thumbNailUrl - extname:', path.extname(file.originalname).toLowerCase());
+    // console.log('thumbnailUrl - extname:', path.extname(file.originalname).toLowerCase());
 
     if (extname) {
       return cb(null, true);

@@ -17,7 +17,7 @@ const videoSchema = new mongoose.Schema({
         enum: ['public', 'private', 'unlisted'],
         default: 'public'
     },
-    thumbNailUrl: {type: String, default: ''},
+    thumbnailUrl: {type: String, default: ''},
     categoryIds: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',

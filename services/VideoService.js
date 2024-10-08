@@ -6,7 +6,7 @@ const axios = require("axios");
 
 const createVideoService = async (
   userId,
-  { title, description, videoUrl, enumMode, thumbNailUrl, categoryIds }
+  { title, description, videoUrl, embedUrl, enumMode, thumbnailUrl, categoryIds }
 ) => {
   try {
     const connection = new DatabaseTransaction();
@@ -28,7 +28,8 @@ const createVideoService = async (
       categoryIds: categoryObjectIds,
       enumMode,
       videoUrl,
-      thumbNailUrl,
+      embedUrl,
+      thumbnailUrl,
       categoryIds: categoryObjectIds,
     });
 

@@ -1,5 +1,3 @@
-const { createVideoService, deleteVideo } = require("../services/VideoService");
-const { uploadFiles } = require("../middlewares/LoadFile");
 const {
   createVideoService,
   toggleLikeVideoService,
@@ -20,16 +18,16 @@ class VideoController {
 
     try {
       
-      if (!req.files.videoUrl || !req.files.thumbNailUrl) {
+      if (!req.files.videoUrl || !req.files.thumbnailUrl) {
         return res
           .status(400)
           .json({ message: "Video and thumbnail files are required." });
       }
 
       const videoFile = req.files.videoUrl[0];
-      const thumbNailFile = req.files.thumbNailUrl[0];
+      const thumbnailFile = req.files.thumbnailUrl[0];
 
-      const { videoUrl, imgUrl } = await uploadFiles(videoFile, thumbNailFile);
+      const { videoUrl, embedUrl, thumbnailUrl } = await uploadFiles(videoFile, thumbnailFile);
 
       const video = await createVideoService(userId, {
         title,
@@ -37,7 +35,8 @@ class VideoController {
         categoryIds,
         enumMode,
         videoUrl,
-        thumbNailUrl: imgUrl, 
+        embedUrl,
+        thumbnailUrl,
       });
 
       res.status(201).json({ message: "Create Video successfully", video });

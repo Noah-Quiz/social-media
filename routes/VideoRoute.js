@@ -10,13 +10,11 @@ const videoRoutes = express.Router();
 const videoController = new VideoController();
 
 videoRoutes.post(
-  "/createVideo",
-  upload.fields([{ name: "videoUrl" }, { name: "thumbNailUrl" }]),
+  "/",
+  upload.fields([{ name: "videoUrl" }, { name: "thumbnailUrl" }]),
   AuthMiddleware,
   videoController.createVideoController
 );
-
-videoRoutes.get("/vimeo", getVideo);
 
 videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
 
