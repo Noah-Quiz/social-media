@@ -10,10 +10,15 @@ const createVideoService = async (
   try {
     const connection = new DatabaseTransaction();
 
-    // Chuyển đổi từng giá trị của categoryIds thành ObjectId
-    const categoryObjectIds = categoryIds.map((id) =>
-      mongoose.Types.ObjectId(id)
-    );
+    let categoryObjectIds = [];
+
+    if (typeof categoryIds === 'string') {
+      categoryObjectIds = categoryIds
+        .replace(/[\[\]\s]/g, '')
+        .split(',')
+        .filter(id => mongoose.Types.ObjectId.isValid(id))
+        .map(id => new mongoose.Types.ObjectId(id));
+    }
 
     const video = await connection.videoRepository.createVideoRepository({
       userId,
@@ -22,7 +27,7 @@ const createVideoService = async (
       videoUrl,
       enumMode,
       thumbNailUrl,
-      categoryIds: categoryObjectIds, // sử dụng ObjectId đúng cách
+      categoryIds: categoryObjectIds,
     });
 
     return video;

@@ -12,7 +12,7 @@ class CategoryController {
     try {
       const category = req.body;
       const result = await createCategory(category);
-      res.status(201).json({ result });
+      res.status(201).json({ result, message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -28,7 +28,7 @@ class CategoryController {
       if (!category) {
         return res
           .status(404)
-          .json({ message: `No category found for id: ${id}` });
+          .json({ message: `Category not found` });
       }
       return res.status(200).json({ category });
     } catch (error) {
@@ -50,7 +50,7 @@ class CategoryController {
       const { id } = req.params;
       const categoryData = req.body;
       const result = await updateCategory(id, categoryData);
-      res.status(200).json({ result });
+      res.status(200).json({ result, message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -60,7 +60,7 @@ class CategoryController {
     try {
       const { id } = req.params;
       const result = await deactivateCategory(id);
-      res.status(200).json({ result });
+      res.status(200).json({ result, message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -69,8 +69,8 @@ class CategoryController {
   async deleteCategory(req, res) {
     try {
       const { id } = req.params;
-      const result = await deleteCategory(id);
-      res.status(200).json({ result });
+      await deleteCategory(id);
+      res.status(200).json({ message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

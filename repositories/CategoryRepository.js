@@ -12,7 +12,7 @@ class CategoryRepository {
 
   async getCategory(id) {
     try {
-      const category = await Category.findOne({ _id: id, status: "active" });
+      const category = await Category.findOne({ _id: id, isDeleted: "false" });
       return category;
     } catch (error) {
       throw new Error(`Error getting category: ${error.message}`);
@@ -21,7 +21,7 @@ class CategoryRepository {
 
   async getAllCategory() {
     try {
-      const categories = await Category.find({ status: "active" });
+      const categories = await Category.find({ isDeleted: "false" });
       return categories;
     } catch (error) {
       throw new Error(`Error getting all categories: ${error.message}`);
@@ -40,6 +40,7 @@ class CategoryRepository {
       throw new Error(`Error updating category: ${error.message}`);
     }
   }
+
   async deleteCategory(id, session = null) {
     try {
       const category = await Category.findByIdAndUpdate(
@@ -47,29 +48,15 @@ class CategoryRepository {
         {
           $set: {
             isDeleted: true,
-            status: "archived",
             lastUpdated: new Date(),
           },
         },
-        { new: true, session } // Returns the updated document
+        { session }
       );
 
       return category;
     } catch (error) {
-      throw new Error(`Error archiving category: ${error.message}`);
-    }
-  }
-
-  async deactivateCategory(id, session = null) {
-    try {
-      const category = await Category.findByIdAndUpdate(
-        id,
-        { status: "archived", lastUpdated: new Date() },
-        { new: true, session }
-      );
-      return category;
-    } catch (error) {
-      throw new Error(`Error deactivating category: ${error.message}`);
+      throw new Error(`Error deleting category: ${error.message}`);
     }
   }
 }

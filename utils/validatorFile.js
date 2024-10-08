@@ -10,7 +10,7 @@ const fileFilter = (req, file, cb) => {
     const filetypes = /\.(mp4)$/i;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
 
-    console.log('videoUrl - extname:', path.extname(file.originalname).toLowerCase());
+    // console.log('videoUrl - extname:', path.extname(file.originalname).toLowerCase());
 
     if (extname) {
       return cb(null, true);
@@ -23,7 +23,7 @@ const fileFilter = (req, file, cb) => {
     const filetypes = /\.(svg|jpg|jpeg|png)$/i;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
 
-    console.log('thumbNailUrl - extname:', path.extname(file.originalname).toLowerCase());
+    // console.log('thumbNailUrl - extname:', path.extname(file.originalname).toLowerCase());
 
     if (extname) {
       return cb(null, true);
