@@ -10,9 +10,10 @@ const categoryRoutes = require("./routes/CategoryRoute");
 const myPlaylistRoutes = require("./routes/MyPlaylistRoute");
 const authRoutes = require("./routes/AuthRoute");
 const messageRoutes = require("./routes/MessageRoute");
-const app = express();
-const userRoute = require("./routes/UserRoute");
 const videoRoutes = require("./routes/VideoRoute");
+const userRoute = require("./routes/UserRoute");
+
+const app = express();
 
 // Middleware
 app.use(
