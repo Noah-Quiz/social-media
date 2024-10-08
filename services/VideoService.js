@@ -12,12 +12,12 @@ const createVideoService = async (
 
     let categoryObjectIds = [];
 
-    if (typeof categoryIds === 'string') {
+    if (typeof categoryIds === "string") {
       categoryObjectIds = categoryIds
-        .replace(/[\[\]\s]/g, '')
-        .split(',')
-        .filter(id => mongoose.Types.ObjectId.isValid(id))
-        .map(id => new mongoose.Types.ObjectId(id));
+        .replace(/[\[\]\s]/g, "")
+        .split(",")
+        .filter((id) => mongoose.Types.ObjectId.isValid(id))
+        .map((id) => new mongoose.Types.ObjectId(id));
     }
 
     const video = await connection.videoRepository.createVideoRepository({

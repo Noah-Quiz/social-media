@@ -13,7 +13,6 @@ const messageRoutes = require("./routes/MessageRoute");
 const videoRoutes = require("./routes/VideoRoute");
 const app = express();
 const userRoute = require("./routes/UserRoute");
-const videoRoutes = require("./routes/VideoRoute");
 
 // Middleware
 app.use(
