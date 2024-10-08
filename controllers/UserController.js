@@ -13,7 +13,7 @@ class UserController {
     try {
       const result = await getAllUsersService();
 
-      return res.status(200).json({ user: result });
+      return res.status(200).json({ user: result, message: "Success" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
@@ -41,7 +41,7 @@ class UserController {
     }
     try {
       const result = await getAnUserByIdService(userId);
-      return res.status(200).json({ user: result });
+      return res.status(200).json({ user: result, message: "Success" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
@@ -55,41 +55,41 @@ class UserController {
 
     try {
       const result = await updateAnUserByIdService(userId, data);
-      return res.status(200).json({ user: result });
+      return res.status(200).json({ user: result, message: "Success" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   }
 
-  async followAnUserController(req, res) {
-    const { userId, followId } = req.query;
-    if (
-      !mongoose.Types.ObjectId.isValid(userId) ||
-      !mongoose.Types.ObjectId.isValid(followId)
-    ) {
-      return res.status(400).json({ message: "Invalid id" });
+  async toggleFollowController(req, res) {
+    const { userId, followId, action } = req.query;
+    console.log(req.query)
+  
+    if (!['follow', 'unfollow'].includes(action)) {
+      return res.status(400).json({ message: "Invalid action" });
     }
-    const result = await followAnUserService(userId, followId);
-    if (result.EC === 1) {
-      return res.status(400).json({ message: "Failed to follow" });
+  
+    if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(followId)) {
+      return res.status(400).json({ message: "Invalid ID" });
     }
-    return res.status(200).json({ message: "Follow success" });
-  }
-
-  async unfollowAnUserController(req, res) {
-    const { userId, followId } = req.query;
-    if (
-      !mongoose.Types.ObjectId.isValid(userId) ||
-      !mongoose.Types.ObjectId.isValid(followId)
-    ) {
-      return res.status(400).json({ message: "Invalid id" });
+  
+    let result;
+    try {
+      if (action === 'follow') {
+        result = await followAnUserService(userId, followId);
+      } else if (action === 'unfollow') {
+        result = await unfollowAnUserService(userId, followId);
+      }
+  
+      if (result.EC === 1) {
+        return res.status(400).json({ message: `Failed to ${action}` });
+      }
+  
+      return res.status(200).json({ message: `${action.charAt(0).toUpperCase() + action.slice(1)} success` });
+    } catch (error) {
+      return res.status(500).json({ message: `Error during ${action}: ${error.message}` });
     }
-    const result = await unfollowAnUserService(userId, followId);
-    if (result.EC === 1) {
-      return res.status(400).json({ message: "Failed to unfollow" });
-    }
-    return res.status(200).json({ message: "Unfollow success" });
-  }
+  }  
 }
 
 module.exports = UserController;

@@ -13,7 +13,7 @@ module.exports = {
       userId
     );
     if (!user) {
-      throw new Error(`User ${userId} not found`);
+      throw new Error(`User not found`);
     }
     return user;
   },
