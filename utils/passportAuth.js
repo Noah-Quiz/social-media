@@ -1,10 +1,9 @@
 require("dotenv").config();
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const AppleStrategy = require("passport-apple");
-const jwt = require("jsonwebtoken");
-const assert = require("node:assert");
-const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const AppleStrategy = require("custom-passport-apple");
+const fs = require("fs");
+const path = require("path");
 passport.use(
   new GoogleStrategy(
     {
@@ -23,16 +22,15 @@ passport.use(
     {
       clientID: process.env.APPLE_CLIENT_ID,
       teamID: process.env.APPLE_TEAM_ID,
-      callbackURL:
-        "https://redirectmeto.com/http://localhost:4000/api/auth/apple/callback",
+      callbackURL: process.env.APPLE_CLIENT_URL,
       keyID: process.env.APPLE_KEY_ID,
-      // privateKeyLocation: `./config/AuthKey_${process.env.APPLE_KEY_ID}.p8`,
-      privateKeyString: process.env.APPLE_PRIVATE_KEY,
-      passReqToCallback: true,
+      key: fs.readFileSync(path.join("./config", "AuthKey_QF8K99G583.p8")),
+      scope: ["name", "email"],
+      // privateKeyString: process.env.APPLE_PRIVATE_KEY,
+      // passReqToCallback: true,
     },
-    async (req, accessToken, refreshToken, idToken, profile, done) => {
-     
-      return done(null, idToken);
+    function (req, accessToken, refreshToken, idToken, profile, done) {
+      return done(null, profile);
     }
   )
 );

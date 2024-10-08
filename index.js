@@ -29,12 +29,6 @@ const vimeoClient = new Vimeo(
   process.env.VIMEO_ACCESS_TOKEN
 );
 
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
-passport.deserializeUser((user, done) => {
-  done(null, user);
-});
 app.get("/", (req, res) => {
   res.send(
     "<a href='/api/auth/google'>Login with Google</a><br>" +
@@ -64,6 +58,6 @@ app.listen(port, (err) => {
     console.error("Failed to start server:", err);
     process.exit(1);
   } else {
-    console.log(`Server started! Listening on port ${port}`);
+    console.log(`Server started! http://localhost:${port}/`);
   }
 });

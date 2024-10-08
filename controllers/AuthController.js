@@ -27,7 +27,8 @@ class AuthController {
 
   async login(req, res) {
     const { email, password } = req.body;
-    const ipAddress = req.ip || req.socket.remoteAddress;
+    const ipAddress =
+      req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
     try {
       const user = await login(email, password);
@@ -45,7 +46,8 @@ class AuthController {
 
   async loginGoogle(req, res) {
     const googleUser = req.user;
-    const ipAddress = req.ip || req.socket.remoteAddress;
+    const ipAddress =
+      req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     try {
       const user = await loginGoogle(googleUser);
       const accessToken = createAccessToken(
@@ -72,15 +74,16 @@ class AuthController {
         user.name = JSON.parse(
           req.body.user.name.firstName + " " + req.body.user.name.lastName
         );
+      } else {
+        const jwtClaims = await verifyAppleToken({
+          idToken: req.body.id_token,
+          clientId: process.env.APPLE_CLIENT_ID,
+        });
+        user.email = jwtClaims.email;
       }
-      const jwtClaims = await verifyAppleToken({
-        idToken: req.body.id_token,
-        clientId: process.env.APPLE_CLIENT_ID,
-      });
-      user.email = jwtClaims.email;
-      console.log("Decode:" + jwtClaims.email);
 
-      const ipAddress = req.ip || req.socket.remoteAddress;
+      const ipAddress =
+        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
       const loggedUser = await loginApple(user);
       const accessToken = createAccessToken(
         { _id: loggedUser._id, ip: ipAddress },
