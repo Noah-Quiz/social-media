@@ -1,4 +1,5 @@
 const Video = require("../entities/VideoEntity");
+const mongoose = require("mongoose");
 
 class VideoRepository {
   async createVideoRepository(videoData, session) {
@@ -60,9 +61,15 @@ class VideoRepository {
       throw new Error(`Error when update video: ${error.message}`);
     }
   }
-  async getVideoRepository(id, session) {
+
+  async getVideoRepository(id) {
     try {
-      const video = await Video.findOne({ _id: id }, { session });
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error("Invalid ObjectId");
+      }
+      const objectId = new mongoose.Types.ObjectId(id);
+      const video = await Video.findOne({ _id: objectId });
+
       return video;
     } catch (error) {
       throw new Error(`Error when getting video: ${error.message}`);
