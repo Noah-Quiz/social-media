@@ -1,8 +1,19 @@
 const express = require("express");
 const passport = require("passport");
 const AuthController = require("../controllers/AuthController");
+const session = require("express-session");
 const authRoutes = express.Router();
 const authController = new AuthController();
+require("../utils/passportAuth");
+authRoutes.use(
+  session({
+    secret: "secret",
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+authRoutes.use(passport.initialize());
+authRoutes.use(passport.session());
 
 authRoutes.post("/signup", authController.signUp);
 
@@ -19,8 +30,11 @@ authRoutes.get(
 );
 
 authRoutes.get("/apple", passport.authenticate("apple"));
-
-authRoutes.post("/apple/callback", authController.loginApple);
+authRoutes.post(
+  "/apple/callback",
+  express.urlencoded({ extended: true }),
+  authController.loginApple
+);
 
 authRoutes.get("/send/email", authController.sendVerificationEmail);
 authRoutes.get("/verify/email", authController.verifyEmail);
