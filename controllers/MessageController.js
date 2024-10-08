@@ -21,9 +21,9 @@ class MessageController {
           .status(404)
           .json({ message: `No message found for id: ${messageId}` });
       }
-      res.status(200).json({ data: message, message: "Success" });
+      res.status(200).json({ message, message: "Success" });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ message: error.message });
     }
   }
 
@@ -59,7 +59,7 @@ class MessageController {
 
       res.status(200).json({ data: message, message: "Success" });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ message: error.message });
     }
   }
 
@@ -69,7 +69,7 @@ class MessageController {
       await deleteMessageService(messageId);
       res.status(200).json({ message: "Success" });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ message: error.message });
     }
   }
 
@@ -79,7 +79,7 @@ class MessageController {
       const message = await createAMessageService(userId, roomId, content);
       res.status(200).json({ message: "Success" });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ message: error.message });
     }
   }
 }

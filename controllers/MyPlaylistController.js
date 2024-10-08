@@ -1,4 +1,10 @@
-const { createAPlaylistService, getAPlaylistService, deletePlaylistService, getAllMyPlaylistsService, updatePlaylistService } = require("../services/MyPlaylistService");
+const {
+    createAPlaylistService,
+    getAPlaylistService,
+    deletePlaylistService,
+    getAllMyPlaylistsService,
+    updatePlaylistService,
+} = require("../services/MyPlaylistService");
 
 class MyPlaylistController {
     // get a playlist
@@ -10,7 +16,7 @@ class MyPlaylistController {
 
             res.status(200).json({ playlist, message: "Success" });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ message: error.message });
         }
     }
 
@@ -19,33 +25,34 @@ class MyPlaylistController {
         const query = {};
         const userId = req.userId;
 
-        const data = { query, userId }
+        const data = { query, userId };
 
         try {
             const playlists = await getAllMyPlaylistsService(data);
 
             res.status(200).json({ playlists, message: "Success" });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ message: error.message });
         }
     }
 
-    //update playlist
-    async updatePlaylistController(req, res) {
-        const { addedVideoIds, removedVideoIds, playlistName } = req.body;
-        const { playlistId } = req.params;
+  //update playlist
+  async updatePlaylistController(req, res) {
+    const { addedVideoIds, removedVideoIds, playlistName } = req.body;
+    const { playlistId } = req.params;
 
         const data = {
             addedVideoIds, removedVideoIds, playlistName
         }
-    
+
         try {
             const updatedPlaylist = await updatePlaylistService(playlistId, data);
-    
+
             res.status(200).json({ playlist: updatedPlaylist, message: "Success" });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ message: error.message });
         }
+
     }
 
     // delete a playlist
@@ -57,20 +64,20 @@ class MyPlaylistController {
 
             res.status(200).json({ message: "Success" });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ message: error.message });
         }
     }
 
     async createAPlaylist(req, res) {
         const { playlistName } = req.body;
         const userId = req.userId;
-        
+
         try {
             const playlist = await createAPlaylistService(userId, playlistName);
 
             res.status(200).json({ playlist, message: "Success" });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ message: error.message });
         }
     }
 }

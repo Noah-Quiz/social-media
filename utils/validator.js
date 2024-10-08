@@ -19,4 +19,10 @@ const validPassword = (password) => {
       "Password is invalid. It must be at least 8 characters, 1 lowercase, 1 uppercase, 1 number, and 1 symbol"
     );
 };
-module.exports = { validEmail, validPassword };
+
+const validPhoneNumber = (phoneNumber) => {
+  if (!phoneNumber) throw new Error("Phone number is required");
+  if (!validator.isMobilePhone(phoneNumber, "vi-VN"))
+    throw new Error("Phone number is invalid");
+};
+module.exports = { validEmail, validPassword, validPhoneNumber };

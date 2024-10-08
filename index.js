@@ -4,6 +4,7 @@ const express = require("express");
 const passport = require("passport");
 const session = require("express-session");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const AppleStrategy = require("passport-apple");
 const cors = require("cors");
 const categoryRoutes = require("./routes/CategoryRoute");
 const myPlaylistRoutes = require("./routes/MyPlaylistRoute");
@@ -11,7 +12,8 @@ const authRoutes = require("./routes/AuthRoute");
 const messageRoutes = require("./routes/MessageRoute");
 const videoRoutes = require("./routes/VideoRoute");
 const app = express();
-const userRoute = require("./routes/userRoute");
+const userRoute = require("./routes/UserRoute");
+const videoRoutes = require("./routes/VideoRoute");
 
 // Middleware
 app.use(
@@ -24,6 +26,14 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const Vimeo = require("vimeo").Vimeo;
+
+const vimeoClient = new Vimeo(
+  process.env.VIMEO_CLIENT_ID,
+  process.env.VIMEO_CLIENT_SECRET,
+  process.env.VIMEO_ACCESS_TOKEN
+);
+
 app.use(
   session({
     secret: "secret",
@@ -34,6 +44,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Google OAuth
 passport.use(
   new GoogleStrategy(
     {
@@ -46,6 +57,25 @@ passport.use(
     }
   )
 );
+
+passport.use(
+  new AppleStrategy(
+    {
+      clientID: process.env.APPLE_CLIENT_ID,
+      teamID: process.env.APPLE_TEAM_ID,
+      callbackURL:
+        "https://social-media-ofm3.onrender.com/api/auth/apple/callback",
+      keyID: process.env.APPLE_KEY_ID,
+      // privateKeyLocation: `./config/AuthKey_${process.env.APPLE_KEY_ID}.p8`,
+      privateKeyString: process.env.APPLE_PRIVATE_KEY,
+      passReqToCallback: true,
+    },
+    (req, accessToken, refreshToken, idToken, profile, done) => {
+      return done(null, profile);
+    }
+  )
+);
+
 passport.serializeUser((user, done) => {
   done(null, user);
 });
@@ -53,7 +83,10 @@ passport.deserializeUser((user, done) => {
   done(null, user);
 });
 app.get("/", (req, res) => {
-  res.send("<a href='/api/auth/google'>Login with Google</a>");
+  res.send(
+    "<a href='/api/auth/google'>Login with Google</a><br>" +
+      "<a href='/api/auth/apple'>Login with Apple</a>"
+  );
 });
 
 // Log API requests
@@ -63,12 +96,12 @@ app.use((req, res, next) => {
 });
 
 // routers
-app.use("/api", authRoutes);
-app.use("/api", myPlaylistRoutes);
-app.use("/api", categoryRoutes);
-app.use("/api/user", userRoute);
-app.use("/api", messageRoutes);
-app.use("/api", videoRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/my-playlists", myPlaylistRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/users", userRoute);
+app.use("/api/messages", messageRoutes);
+app.use("/api/videos", videoRoutes);
 
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;

@@ -20,11 +20,65 @@ class UserRepository {
     }
   }
 
-  async followAnUser(userId, followId) {
+  async findUserByPhoneNumber(phoneNumber) {
+    try {
+      const user = await User.findOne({ phoneNumber });
+      return user;
+    } catch (error) {
+      throw new Error(
+        `Error when finding user by phone number: ${error.message}`
+      );
+    }
+  }
+
+  async deleteAnUserByIdRepository(userId) {
+    try {
+      const user = await User.findByIdAndUpdate(userId, { isDeleted: true });
+      return true;
+    } catch (error) {
+      throw new Error(`Error when delete an user by id: ${error.message}`);
+    }
+  }
+
+  async updateAnUserByIdRepository(userId, data) {
+    try {
+      const user = await User.findByIdAndUpdate(userId, data, {
+        new: true,
+        select: "email fullName",
+      });
+      return user;
+    } catch (error) {
+      throw new Error(`Error when updating user by id: ${error.message}`);
+    }
+  }
+  
+
+  async getAnUserByIdRepository(userId) {
+    try {
+      const user = await User.findOne({ _id: userId, isDeleted: false }).select("email fullName nickName follow followBy avatar phoneNumber");
+      if (user) {
+        return user;
+      }
+      return false;
+    } catch (error) {
+      throw new Error(`Error when getting a user by id: ${error.message}`);
+    }
+  }
+
+
+  async getAllUsersRepository() {
+    try {
+      const users = await User.find({ isDeleted: false }).select("email fullName nickName follow followBy avatar phoneNumber");
+      return users;
+    } catch (error) {
+      throw new Error(`Error when getting all users: ${error.message}`);
+    }
+  }  
+
+  async followAnUserRepository(userId, followId) {
     const user = await User.findOne({ _id: userId });
     const follow = await User.findOne({ _id: followId });
     if (!user || !follow) {
-      console.log(`User ${userId} or user ${followId} does not exist`);
       return false;
     }
 
@@ -42,17 +96,15 @@ class UserRepository {
       console.log(`User ${userId} follows user ${followId} successfully`);
       return true;
     } catch (error) {
-      console.log("Error at followAUserRepository");
       return false;
     }
   }
 
-  async unfollowAnUser(userId, followId) {
+  async unfollowAnUserRepository(userId, followId) {
     const user = await User.findOne({ _id: userId });
     const follow = await User.findOne({ _id: followId });
     console.log(user);
     if (!user || !follow) {
-      console.log(`User ${userId} or user ${followId} does not exist`);
       return false;
     }
 
@@ -61,10 +113,8 @@ class UserRepository {
 
       await User.updateOne({ _id: followId }, { $pull: { followBy: userId } });
 
-      console.log(`User ${userId} unfollows user ${followId} successfully`);
       return true;
     } catch (error) {
-      console.log("Error at unfollowAUserRepository");
       return false;
     }
   }
