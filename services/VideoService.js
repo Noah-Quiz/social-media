@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const { validEmail, validPassword } = require("../utils/validator");
 const axios = require("axios");
+
 const createVideoService = async (
   userId,
   { title, description, videoUrl, enumMode, thumbNailUrl, categoryIds }
@@ -10,19 +11,23 @@ const createVideoService = async (
   try {
     const connection = new DatabaseTransaction();
 
-    // Chuyển đổi từng giá trị của categoryIds thành ObjectId
-    const categoryObjectIds = categoryIds.map((id) =>
-      mongoose.Types.ObjectId(id)
-    );
+    let categoryObjectIds = [];
+    if (typeof categoryIds === 'string') {
+      categoryObjectIds = categoryIds
+        .replace(/[\[\]\s]/g, '')
+        .split(',')
+        .filter(id => mongoose.Types.ObjectId.isValid(id))
+        .map(id => new mongoose.Types.ObjectId(id));
+    }
 
     const video = await connection.videoRepository.createVideoRepository({
       userId,
       title,
       description,
-      videoUrl,
+      categoryIds: categoryObjectIds,
       enumMode,
+      videoUrl,
       thumbNailUrl,
-      categoryIds: categoryObjectIds, // sử dụng ObjectId đúng cách
     });
 
     return video;

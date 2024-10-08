@@ -10,7 +10,7 @@ const videoController = new VideoController();
 
 videoRoutes.post(
   "/createVideo",
-  upload.fields([{ name: "videoUrl" }, { name: "thumbnailUrl" }]),
+  upload.fields([{ name: "videoUrl" }, { name: "thumbNailUrl" }]),
   AuthMiddleware,
   videoController.createVideoController
 );

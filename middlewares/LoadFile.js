@@ -1,8 +1,9 @@
 const { Vimeo } = require('vimeo');
 require('dotenv').config();
-const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
+const stream = require('stream');
 
 const vimeoClient = new Vimeo(
     process.env.VIMEO_CLIENT_ID,
@@ -16,22 +17,26 @@ if (!vimeoClient || !vimeoClient.upload) {
 }
 
 
+// Upload video lên Vimeo từ Buffer
 const uploadVideo = async (file) => {
     try {
         if (!file || !file.buffer || file.buffer.length === 0) {
             throw new Error("File is undefined, missing, or empty.");
         }
-        
+
         if (!Buffer.isBuffer(file.buffer)) {
             throw new Error("File buffer is not a valid Buffer.");
         }
 
-        console.log('File object:', file);
-        console.log('Uploading video of size:', file.buffer.length);
-        
+        // Ghi buffer video tạm thời ra file hệ thống
+        const tempFilePath = path.join(os.tmpdir(), file.originalname);
+        await fs.promises.writeFile(tempFilePath, file.buffer);
+
+        // console.log('Uploading video of size:', file.buffer.length);
+
         const vimeoResponse = await new Promise((resolve, reject) => {
             vimeoClient.upload(
-                file.buffer,
+                tempFilePath,
                 {
                     privacy: {
                         view: 'anybody',
@@ -39,8 +44,9 @@ const uploadVideo = async (file) => {
                     },
                 },
                 (uri) => {
-                    console.log(`Video uploaded successfully. URI: ${uri}`);
-                    resolve({ link: uri }); // Trả về đường dẫn video
+                    const videoId = uri.split('/').pop();
+                    const fullVideoUrl = `https://vimeo.com/${videoId}`;
+                    resolve({ link: fullVideoUrl });
                 },
                 (bytesUploaded, bytesTotal) => {
                     const percentage = (bytesUploaded / bytesTotal * 100).toFixed(2);
@@ -53,6 +59,9 @@ const uploadVideo = async (file) => {
             );
         });
 
+        // Xóa file tạm sau khi upload xong
+        await fs.promises.unlink(tempFilePath);
+
         return vimeoResponse.link; // URL của video trên Vimeo
     } catch (error) {
         console.error("Upload video error:", error.message);
@@ -60,31 +69,60 @@ const uploadVideo = async (file) => {
     }
 };
 
-
-const setThumbnail = async (videoUri, imgFile) => {
+const setThumbnail = async ( videoUri, imgBuffer ) => {
+    console.log("Video URI", videoUri);
+    
     try {
-        if (!imgFile || !imgFile.buffer) {
-            throw new Error("Thumbnail file is undefined or missing.");
+        if (!imgBuffer || imgBuffer.length === 0) {
+            throw new Error("Image buffer is undefined, missing, or empty.");
         }
 
-        const thumbnailResponse = await vimeoClient.request({
-            method: 'POST',
-            path: `${videoUri}/pictures`,
-            query: { active: true },
-            fileData: imgFile.buffer // Truyền Buffer của hình ảnh
+        if (!Buffer.isBuffer(imgBuffer)) {
+            throw new Error("Image buffer is not a valid Buffer.");
+        }
+
+        const thumbnailStream = new stream.PassThrough();
+        thumbnailStream.end(imgBuffer);
+
+        const thumbnailResponse = await new Promise((resolve, reject) => {
+            vimeoClient.request(
+                {
+                    method: 'POST',
+                    path: `${videoUri}/pictures`,
+                    query: { active: true },
+                    body: {
+                        file: thumbnailStream,
+                    },
+                },
+                (uri, body) => {
+                    console.log(`Thumbnail uploaded successfully. URI: ${uri}, Response body:`, body);
+                    resolve({ link: body.link });
+                },
+                (bytesUploaded, bytesTotal) => {
+                    const percentage = (bytesUploaded / bytesTotal * 100).toFixed(2);
+                    console.log(`${percentage}% thumbnail uploaded`);
+                },
+                (error) => {
+                    console.error("Vimeo thumbnail upload error:", error);
+                    reject(new Error(`Error uploading thumbnail to Vimeo: ${error.message || 'Unknown error'}`));
+                }
+            );
         });
-        return thumbnailResponse.link;
+
+        return thumbnailResponse.link; // URL của thumbnail trên Vimeo
     } catch (error) {
         throw new Error(`Error setting thumbnail: ${error.message}`);
     }
-}
+};
+
+
 
 // Upload video và thiết lập thumbnail
 const uploadFiles = async (videoFile, thumbNailFile) => {
     try {
-        const videoUrl = await uploadVideo(videoFile); // Đảm bảo videoFile là đối tượng có buffer
-        const imgUrl = await setThumbnail(thumbNailFile); // Đảm bảo thumbNailFile là đối tượng có buffer
-        return { videoUrl, imgUrl }; // Trả về URL của video và thumbnail
+        const videoUrl = await uploadVideo(videoFile);
+        const imgUrl = await setThumbnail(videoUrl, thumbNailFile.buffer);
+        return { videoUrl, imgUrl };
     } catch (error) {
         console.error(error.message);
         throw error;
