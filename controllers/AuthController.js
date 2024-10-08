@@ -16,9 +16,6 @@ class AuthController {
     const { fullName, email, phoneNumber, password } = req.body;
     try {
       const user = await signUp(fullName, email, phoneNumber, password);
-      if (user) {
-        await sendVerificationEmail(user.email);
-      }
       res.status(201).json({ message: "Signup successfully" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -62,9 +59,10 @@ class AuthController {
   }
 
   async loginApple(req, res) {
-    const appleUser = JSON.parse(req.body.user);
-    const ipAddress = req.ip || req.socket.remoteAddress;
     try {
+      const appleUser = JSON.parse(req.body.user || "{}");
+      console.log("Apple User:", appleUser);
+      const ipAddress = req.ip || req.socket.remoteAddress;
       const user = await loginApple(appleUser);
       const accessToken = createAccessToken(
         { _id: user._id, ip: ipAddress },

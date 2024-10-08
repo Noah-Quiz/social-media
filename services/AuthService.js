@@ -200,6 +200,7 @@ const verifyEmail = async (token, res) => {
     if (!user || user.verifyToken !== token) {
       throw new Error("Invalid token");
     }
+    if (user.verify === true) throw new Error("User is already verified");
 
     user.verify = true;
     user.verifyToken = null;
@@ -218,6 +219,7 @@ const sendVerificationPhone = async (phoneNumber) => {
       phoneNumber
     );
     if (!user) throw new Error("User not found");
+    if (user.verify === true) throw new Error("User is already verified");
 
     const status = await sendVerificationCode(phoneNumber);
     if (status !== "pending") {

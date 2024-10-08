@@ -19,7 +19,6 @@ authRoutes.get(
 );
 
 authRoutes.get("/apple", passport.authenticate("apple"));
-
 authRoutes.post("/apple/callback", authController.loginApple);
 
 authRoutes.get("/send/email", authController.sendVerificationEmail);
