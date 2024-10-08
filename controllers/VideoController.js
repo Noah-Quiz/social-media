@@ -104,6 +104,9 @@ class VideoController {
     }
     try {
       const video = await deleteVideo(id, userId);
+      if (!video) {
+        res.status(404).json({ message: "no video" });
+      }
       res.status(200).json({ message: "Delete Video successfully" });
     } catch (error) {
       res.status(500).json({ error: error.message });
