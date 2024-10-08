@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const { validEmail, validPassword } = require("../utils/validator");
 const axios = require("axios");
+
 const createVideoService = async (
   userId,
   { title, description, videoUrl, enumMode, thumbNailUrl, categoryIds }
@@ -12,20 +13,21 @@ const createVideoService = async (
 
     let categoryObjectIds = [];
 
-    if (typeof categoryIds === 'string') {
+    if (typeof categoryIds === "string") {
       categoryObjectIds = categoryIds
-        .replace(/[\[\]\s]/g, '')
-        .split(',')
-        .filter(id => mongoose.Types.ObjectId.isValid(id))
-        .map(id => new mongoose.Types.ObjectId(id));
+        .replace(/[\[\]\s]/g, "")
+        .split(",")
+        .filter((id) => mongoose.Types.ObjectId.isValid(id))
+        .map((id) => new mongoose.Types.ObjectId(id));
     }
 
     const video = await connection.videoRepository.createVideoRepository({
       userId,
       title,
       description,
-      videoUrl,
+      categoryIds: categoryObjectIds,
       enumMode,
+      videoUrl,
       thumbNailUrl,
       categoryIds: categoryObjectIds,
     });
@@ -101,11 +103,14 @@ const deleteVideo = async (id, userId) => {
   try {
     const session = await connection.startTransaction();
 
+    // Log the ID being searched for
+    console.log(`Attempting to find video with ID: ${id}`);
+
     const video = await connection.videoRepository.getVideoRepository(
       id,
       session
     );
-
+    console.log(video);
     if (!video) {
       throw new Error(`No video found for id: ${id}`);
     }
@@ -113,20 +118,33 @@ const deleteVideo = async (id, userId) => {
     if (video.userId.toString() !== userId) {
       throw new Error("You are not the owner of this video.");
     }
+
     const videoId = video.videoUrl.split("/").pop();
+
+    // Log the Vimeo video ID being deleted
+    console.log(`Attempting to delete Vimeo video with ID: ${videoId}`);
 
     const response = await axios.delete(
       `https://api.vimeo.com/videos/${videoId}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.VIMEO_ACCESS_TOKEN}`, // assuming the token is stored in env variables
+          Authorization: `Bearer ${process.env.VIMEO_ACCESS_TOKEN}`,
         },
       }
     );
+    console.log(response);
+    // Log Vimeo response
+    console.log(`Vimeo delete response status: ${response.status}`);
 
     if (response.status !== 204) {
       throw new Error("Failed to delete video on Vimeo.");
     }
+
+    // Log the database delete operation
+    console.log(
+      `Attempting to soft-delete video with ID: ${video._id} from the database`
+    );
+
     const repo = await connection.videoRepository.deleteVideoRepository(
       video._id,
       session
@@ -142,7 +160,10 @@ const deleteVideo = async (id, userId) => {
   } catch (error) {
     // Abort the transaction in case of an error
     await connection.abortTransaction();
-    throw new Error(`Error when deleting video: ${error.message}`);
+
+    throw new Error(
+      `Error when deleting video service layer: ${error.message}`
+    );
   }
 };
 
