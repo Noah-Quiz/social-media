@@ -9,6 +9,9 @@ const {
   verifyPhone,
 } = require("../services/AuthService");
 const createAccessToken = require("../utils/createAccessToken");
+const passport = require("passport");
+const verifyAppleToken = require("verify-apple-id-token").default;
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 class AuthController {
@@ -58,13 +61,29 @@ class AuthController {
     }
   }
 
-  async loginApple(req, res) {
+  async loginApple(req, res, next) {
     try {
-      const appleUser = JSON.parse(req.body.user || "{}");
+      const user = {
+        email: "",
+        name: "",
+      };
+      if (req.body.user) {
+        user.email = JSON.parse(req.body.user.email);
+        user.name = JSON.parse(
+          req.body.user.name.firstName + " " + req.body.user.name.lastName
+        );
+      }
+      const jwtClaims = await verifyAppleToken({
+        idToken: req.body.id_token,
+        clientId: process.env.APPLE_CLIENT_ID,
+      });
+      user.email = jwtClaims.email;
+      console.log("Decode:" + jwtClaims.email);
+
       const ipAddress = req.ip || req.socket.remoteAddress;
-      const user = await loginApple(appleUser);
+      const loggedUser = await loginApple(user);
       const accessToken = createAccessToken(
-        { _id: user._id, ip: ipAddress },
+        { _id: loggedUser._id, ip: ipAddress },
         process.env.ACCESS_TOKEN_SECRET,
         process.env.ACCESS_TOKEN_EXPIRE
       );

@@ -30,7 +30,11 @@ authRoutes.get(
 );
 
 authRoutes.get("/apple", passport.authenticate("apple"));
-authRoutes.post("/apple/callback", authController.loginApple);
+authRoutes.post(
+  "/apple/callback",
+  express.urlencoded({ extended: true }),
+  authController.loginApple
+);
 
 authRoutes.get("/send/email", authController.sendVerificationEmail);
 authRoutes.get("/verify/email", authController.verifyEmail);
