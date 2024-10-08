@@ -24,7 +24,7 @@ passport.use(
       teamID: process.env.APPLE_TEAM_ID,
       callbackURL: process.env.APPLE_CLIENT_URL,
       keyID: process.env.APPLE_KEY_ID,
-      key: fs.readFileSync(path.join("./config", "AuthKey_QF8K99G583.p8")),
+      key: fs.readFileSync(path.join("./config", ".env.AuthKey_QF8K99G583.p8")),
       scope: ["name", "email"],
       // privateKeyString: process.env.APPLE_PRIVATE_KEY,
       // passReqToCallback: true,
