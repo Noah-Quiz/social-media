@@ -1,5 +1,5 @@
 const { createVideoService } = require("../services/VideoService");
-const { uploadFiles } = require("../middlewares/LoadFile");
+const { uploadVideo, setThumbnail, uploadFiles } = require("../middlewares/LoadFile");
 const createAccessToken = require("../utils/createAccessToken");
 require("dotenv").config();
 
@@ -9,19 +9,20 @@ class VideoController {
     const userId = req.userId;
 
     try {
-        // Kiểm tra xem file video và thumbnail có được gửi lên không
         if (!req.files.videoUrl || !req.files.thumbNailUrl) {
             return res.status(400).json({ message: "Video and thumbnail files are required." });
         }
 
-        // Lấy file video và thumbnail từ req.files
         const videoFile = req.files.videoUrl[0];
         const thumbNailFile = req.files.thumbNailUrl[0];
 
-        // Gọi hàm uploadFiles để tải video và thumbnail lên Vimeo
         const { videoUrl, imgUrl } = await uploadFiles(videoFile, thumbNailFile);
 
-        // Gọi hàm createVideoService để lưu thông tin video vào cơ sở dữ liệu
+        // Kiểm tra xem videoUrl và imgUrl có hợp lệ không
+        if (!videoUrl || !imgUrl) {
+          return res.status(500).json({ message: "Failed to upload video or thumbnail." });
+        }
+
         const video = await createVideoService(userId, {
             title,
             description,
