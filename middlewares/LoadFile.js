@@ -31,7 +31,7 @@ const uploadVideo = async (file) => {
         const tempFilePath = path.join(os.tmpdir(), file.originalname);
         await fs.promises.writeFile(tempFilePath, file.buffer);
 
-        // console.log('Uploading video of size:', file.buffer.length);
+        // console.log('Uploading video of size:', file);
 
         const vimeoResponse = await new Promise((resolve, reject) => {
             vimeoClient.upload(
@@ -46,7 +46,7 @@ const uploadVideo = async (file) => {
                     console.log(`Video uploaded successfully. URI: ${uri}`);
                     const videoId = uri.split('/').pop();
                     const fullVideoUrl = `https://vimeo.com/${videoId}`;
-                    resolve({ link: fullVideoUrl });
+                    resolve({ link: fullVideoUrl});
                 },
                 (bytesUploaded, bytesTotal) => {
                     const percentage = (bytesUploaded / bytesTotal * 100).toFixed(2);
@@ -58,7 +58,6 @@ const uploadVideo = async (file) => {
                 }
             );
         });
-
         // Xóa file tạm sau khi upload xong
         await fs.promises.unlink(tempFilePath);
 
@@ -70,33 +69,31 @@ const uploadVideo = async (file) => {
 };
 
 
-const setThumbnail = async (videoUri, imgBuffer) => {
+const setThumbnail = async (videoUri, thumbNailFile) => {
 
     console.log("Video URI", videoUri);
     
-
     try {
-        if (!imgBuffer || imgBuffer.length === 0) {
+        if (!thumbNailFile || !thumbNailFile.buffer || thumbNailFile.buffer.length === 0) {
             throw new Error("File buffer is undefined, missing, or empty.");
         }
-
-        const thumbnailStream = new stream.PassThrough();
-        thumbnailStream.end(imgBuffer);
-        console.log("Thumbnail Buffer Length:", imgBuffer.length);
         
+        const tempThumbFilePath = path.join(os.tmpdir(), thumbNailFile.originalname);
+        await fs.promises.writeFile(tempThumbFilePath, thumbNailFile.buffer);
+
+        // Bước 1: Tải lên thumbnail
         const thumbnailResponse = await new Promise((resolve, reject) => {
             vimeoClient.request(
                 {
                     method: 'POST',
                     path: `${videoUri}/pictures`,
-                    query: { active: true },
                     body: {
-                        file: thumbnailStream,
+                        file: fs.createReadStream(tempThumbFilePath),
                     },
                 },
                 (uri, body) => {
                     console.log(`Thumbnail uploaded successfully. URI: ${uri}, Response body:`, body);
-                    resolve({ link: body.link });
+                    resolve(body);
                 },
                 (bytesUploaded, bytesTotal) => {
                     const percentage = (bytesUploaded / bytesTotal * 100).toFixed(2);
@@ -109,7 +106,52 @@ const setThumbnail = async (videoUri, imgBuffer) => {
             );
         });
 
-        return thumbnailResponse.link; // URL của thumbnail trên Vimeo
+        // Bước 2: Đặt hình thu nhỏ là hình thu nhỏ hoạt động
+        const thumbnailUri = thumbnailResponse.uri; // Lấy URI thumbnail từ phản hồi
+
+        const setActiveResponse = await new Promise((resolve, reject) => {
+            vimeoClient.request(
+                {
+                    method: 'POST',
+                    path: thumbnailUri,
+                    body: {
+                        active: true,
+                    },
+                },
+                (uri, body) => {
+                    console.log(`Thumbnail set to active successfully. URI: ${uri}, Response body:`, body);
+                    resolve(body.link); // Trả về link thumbnail
+                },
+                (error) => {
+                    console.error("Vimeo set active thumbnail error:", error);
+                    reject(new Error(`Error setting thumbnail active: ${error.message || 'Unknown error'}`));
+                }
+            );
+        });
+
+        const postActiveResponse = await new Promise((resolve, reject) => {
+            vimeoClient.request(
+                {
+                    method: 'PUT',
+                    path: setActiveResponse.link,
+                    body: {
+                        thumbNailFile
+                    },
+                },
+                (uri, body) => {
+                    console.log(`Thumbnail set to active successfully. URI: ${uri}, Response body:`, body);
+                    resolve(body.link); // Trả về link thumbnail
+                },
+                (error) => {
+                    console.error("Vimeo set active thumbnail error:", error);
+                    reject(new Error(`Error setting thumbnail active: ${error.message || 'Unknown error'}`));
+                }
+            );
+        });
+
+        await fs.promises.unlink(tempThumbFilePath);
+
+        return setActiveResponse; // URL của thumbnail trên Vimeo
     } catch (error) {
         throw new Error(`Error setting thumbnail: ${error.message}`);
     }
@@ -119,7 +161,9 @@ const setThumbnail = async (videoUri, imgBuffer) => {
 const uploadFiles = async (videoFile, thumbNailFile) => {
     try {
         const videoUrl = await uploadVideo(videoFile);
-        const imgUrl = await setThumbnail(videoUrl, thumbNailFile.buffer);
+        const videoUri = `/videos/${videoUrl.split('/').pop()}`;
+        
+        const imgUrl = await setThumbnail(videoUri, thumbNailFile);
         return { videoUrl, imgUrl };
     } catch (error) {
         console.error(error.message);
