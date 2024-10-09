@@ -11,7 +11,7 @@ const {
   sendVerificationCode,
   checkVerification,
 } = require("../utils/phoneVerification");
-const signUp = async (fullName, email, phoneNumber, password) => {
+const signUpService = async (fullName, email, phoneNumber, password) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -47,7 +47,7 @@ const signUp = async (fullName, email, phoneNumber, password) => {
   }
 };
 
-const login = async (email, password) => {
+const loginService = async (email, password) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -71,7 +71,7 @@ const login = async (email, password) => {
   }
 };
 
-const loginGoogle = async (user) => {
+const loginGoogleService = async (user) => {
   try {
     const connection = new DatabaseTransaction();
     const existingUser = await connection.userRepository.findUserByEmail(
@@ -108,7 +108,7 @@ const loginGoogle = async (user) => {
     throw new Error(`Error when login with Google: ${error.message}`);
   }
 };
-const loginApple = async (user) => {
+const loginAppleService = async (user) => {
   try {
     const connection = new DatabaseTransaction();
     const existingUser = await connection.userRepository.findUserByEmail(
@@ -136,7 +136,7 @@ const loginApple = async (user) => {
   }
 };
 
-const sendVerificationEmail = async (email) => {
+const sendVerificationEmailService = async (email) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -190,7 +190,7 @@ const sendVerificationEmail = async (email) => {
   }
 };
 
-const verifyEmail = async (token, res) => {
+const verifyEmailService = async (token, res) => {
   try {
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     const email = decodedToken.email;
@@ -211,7 +211,7 @@ const verifyEmail = async (token, res) => {
   }
 };
 
-const sendVerificationPhone = async (phoneNumber) => {
+const sendVerificationPhoneService = async (phoneNumber) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -232,7 +232,7 @@ const sendVerificationPhone = async (phoneNumber) => {
   }
 };
 
-const verifyPhone = async (phoneNumber, code) => {
+const verifyPhoneService = async (phoneNumber, code) => {
   try {
     const connection = new DatabaseTransaction();
     const user = await connection.userRepository.findUserByPhoneNumber(
@@ -255,7 +255,7 @@ const verifyPhone = async (phoneNumber, code) => {
   }
 };
 
-const createResetPasswordToken = async (email) => {
+const createResetPasswordTokenService = async (email) => {
   try {
     const connection = new DatabaseTransaction();
     const user = await connection.userRepository.findUserByEmail(email);
@@ -309,7 +309,7 @@ const createResetPasswordToken = async (email) => {
   }
 };
 
-const resetPassword = async (token, newPassword) => {
+const resetPasswordService = async (token, newPassword) => {
   try {
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     const email = decodedToken.email;
@@ -335,14 +335,14 @@ const resetPassword = async (token, newPassword) => {
 };
 
 module.exports = {
-  signUp,
-  login,
-  loginGoogle,
-  loginApple,
-  sendVerificationEmail,
-  sendVerificationPhone,
-  verifyPhone,
-  verifyEmail,
-  createResetPasswordToken,
-  resetPassword,
+  signUpService,
+  loginService,
+  loginGoogleService,
+  loginAppleService,
+  sendVerificationEmailService,
+  sendVerificationPhoneService,
+  verifyPhoneService,
+  verifyEmailService,
+  createResetPasswordTokenService,
+  resetPasswordService,
 };
