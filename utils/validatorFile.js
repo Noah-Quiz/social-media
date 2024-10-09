@@ -5,42 +5,41 @@ const storage = multer.memoryStorage();
 
 // Hàm kiểm tra loại tệp tin
 const fileFilter = (req, file, cb) => {
-  // Kiểm tra file video .mp4
-  if (file.fieldname === 'videoUrl') { 
-    const filetypes = /\.(mp4)$/i;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
 
-    // console.log('videoUrl - extname:', path.extname(file.originalname).toLowerCase());
+  // Kiểm tra file video .mp4
+  if (file.fieldname === 'videoUrl') {
+    const filetypes = /\.(mp4|mov|avi|mkv|wmv|flv)$/i;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
 
     if (extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Chỉ chấp nhận file video định dạng mp4'));
+      cb(new Error('Only accept video format mp4, mov, avi, mkv, wmv, or flv')); 
     }
-  } 
+  }
+
   // Kiểm tra file hình ảnh
-  else if (file.fieldname === 'thumbnailUrl') { 
+  else if (file.fieldname === 'thumbnailUrl') {
     const filetypes = /\.(svg|jpg|jpeg|png)$/i;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
 
-    // console.log('thumbnailUrl - extname:', path.extname(file.originalname).toLowerCase());
-
     if (extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Chỉ chấp nhận file ảnh svg, jpg, jpeg, hoặc png'));
+      cb(new Error('Only accept file format svg, jpg, jpeg, or png'));
     }
-  } 
+  }
+
   // Nếu không phải video hoặc ảnh
   else {
-    return cb(new Error('Loại tệp không được chấp nhận'));
+    return cb(new Error('Invalid file type'));
   }
 };
 
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 500000000 } // Giới hạn kích thước file 500MB
+  limits: { fileSize: 500000000 }
 });
 
 module.exports = upload;

@@ -3,8 +3,8 @@ const {
   toggleLikeVideoService,
   viewIncrementService,
   updateAVideoByIdService,
-  deleteVideo,
   getVideosByUserIdService,
+  deleteVideoService,
 } = require("../services/VideoService");
 const { uploadFiles } = require("../middlewares/LoadFile");
 const createAccessToken = require("../utils/createAccessToken");
@@ -89,25 +89,26 @@ class VideoController {
       return res.status(500).json({ message: error.message });
     }
   }
-  async deleteVideo(req, res) {
-    const id = req.params;
+
+  async deleteVideoController(req, res) {
+    const { videoId } = req.params;
     const userId = req.userId;
-    if (!id) {
-      res.status(500).json({ error: "Id required" });
+
+    if (!videoId) {
+      res.status(500).json({ message: "Video ID required" });
       return;
     }
-    if (!userId) {
-      res.status(500).json({ error: "userId required" });
-      return;
-    }
+
     try {
-      const video = await deleteVideo(id, userId);
+      const video = await deleteVideoService(videoId, userId);
+
       if (!video) {
-        res.status(404).json({ message: "no video" });
+        res.status(404).json({ message: "No video found" });
       }
+
       res.status(200).json({ message: "Delete Video successfully" });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ message: error.message });
     }
   }
 

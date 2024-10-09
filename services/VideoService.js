@@ -98,22 +98,19 @@ const getVideosByUserIdService = async (userId) => {
   }
 };
 
-const deleteVideo = async (id, userId) => {
+const deleteVideoService = async (videoId, userId) => {
   const connection = new DatabaseTransaction();
 
   try {
     const session = await connection.startTransaction();
 
-    // Log the ID being searched for
-    console.log(`Attempting to find video with ID: ${id}`);
-
     const video = await connection.videoRepository.getVideoRepository(
-      id,
+      videoId,
       session
     );
-    console.log(video);
+
     if (!video) {
-      throw new Error(`No video found for id: ${id}`);
+      throw new Error(`No video found`);
     }
 
     if (video.userId.toString() !== userId) {
@@ -121,10 +118,6 @@ const deleteVideo = async (id, userId) => {
     }
 
     const videoId = video.videoUrl.split("/").pop();
-
-    // Log the Vimeo video ID being deleted
-    console.log(`Attempting to delete Vimeo video with ID: ${videoId}`);
-
     const response = await axios.delete(
       `https://api.vimeo.com/videos/${videoId}`,
       {
@@ -133,18 +126,10 @@ const deleteVideo = async (id, userId) => {
         },
       }
     );
-    console.log(response);
-    // Log Vimeo response
-    console.log(`Vimeo delete response status: ${response.status}`);
 
     if (response.status !== 204) {
       throw new Error("Failed to delete video on Vimeo.");
     }
-
-    // Log the database delete operation
-    console.log(
-      `Attempting to soft-delete video with ID: ${video._id} from the database`
-    );
 
     const repo = await connection.videoRepository.deleteVideoRepository(
       video._id,
@@ -159,9 +144,7 @@ const deleteVideo = async (id, userId) => {
 
     return repo;
   } catch (error) {
-    // Abort the transaction in case of an error
     await connection.abortTransaction();
-
     throw new Error(
       `Error when deleting video service layer: ${error.message}`
     );
@@ -176,5 +159,5 @@ module.exports = {
   toggleLikeVideoService,
   getVideosByUserIdService,
   viewIncrementService,
-  deleteVideo,
+  deleteVideoService,
 };
