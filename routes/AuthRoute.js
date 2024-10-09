@@ -20,9 +20,9 @@ authRoutes.use(
 authRoutes.use(passport.initialize());
 authRoutes.use(passport.session());
 
-authRoutes.post("/signup", authController.signUp);
+authRoutes.post("/signup", authController.signUpController);
 
-authRoutes.post("/login", authController.login);
+authRoutes.post("/login", authController.loginController);
 
 authRoutes.get(
   "/google",
@@ -31,23 +31,29 @@ authRoutes.get(
 authRoutes.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
-  authController.loginGoogle
+  authController.loginGoogleController
 );
 
 authRoutes.get("/apple", passport.authenticate("apple"));
 authRoutes.post(
   "/apple/callback",
   express.urlencoded({ extended: true }),
-  authController.loginApple
+  authController.loginAppleController
 );
 
-authRoutes.get("/send/email", authController.sendVerificationEmail);
-authRoutes.get("/verify/email", authController.verifyEmail);
+authRoutes.get("/send/email", authController.sendVerificationEmailController);
+authRoutes.get("/verify/email", authController.verifyEmailController);
 
-authRoutes.post("/send/phone", authController.sendVerificationPhone);
-authRoutes.post("/verify/phone", authController.verifyPhone);
+authRoutes.post("/send/phone", authController.sendVerificationPhoneController);
+authRoutes.post("/verify/phone", authController.verifyPhoneController);
 
-authRoutes.post("/reset-password", authController.createResetPasswordToken);
-authRoutes.post("/reset-password/:token", authController.resetPassword);
+authRoutes.post(
+  "/reset-password",
+  authController.createResetPasswordTokenController
+);
+authRoutes.post(
+  "/reset-password/:token",
+  authController.resetPasswordController
+);
 
 module.exports = authRoutes;
