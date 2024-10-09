@@ -255,6 +255,85 @@ const verifyPhone = async (phoneNumber, code) => {
   }
 };
 
+const createResetPasswordToken = async (email) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const user = await connection.userRepository.findUserByEmail(email);
+    if (!user) throw new Error("User not found");
+    if (user.verify === false) throw new Error("User is not verified");
+
+    const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: process.env.RESET_PASSWORD_EXPIRE,
+    });
+    user.passwordResetToken = token;
+    await user.save();
+
+    const mailBody = `
+    <div style="width: 40vw;">
+<table>
+  <tr>
+    <td>
+      <img src="https://amazingtech.vn/Content/amazingtech/assets/img/logo-color.png" width="350" alt="Logo" />
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <p>
+        You have requested to reset your password, click the link below to reset your password. And please note that your link <strong>will be expired in 1 hour</strong> for security reasons.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="http://localhost:4000/api/auth/reset-password/${token}">Click here to reset your password</a>
+    </td>
+  </tr> 
+  <tr>
+    <td>
+      <p style="color: grey;">Please check your spam folder if you don't see the email immediately</p>
+    </td>
+  </tr>
+</table>
+</div>
+  `;
+
+    mailer.sendMail(
+      email,
+      "Reset your password",
+      "Click the link below to reset your password",
+      mailBody
+    );
+    return user;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const resetPassword = async (token, newPassword) => {
+  try {
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const email = decodedToken.email;
+
+    const connection = new DatabaseTransaction();
+    const user = await connection.userRepository.findUserByEmail(email);
+
+    if (!user || user.passwordResetToken !== token) {
+      throw new Error("Invalid token");
+    }
+
+    const salt = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedPassword;
+    user.passwordResetToken = null;
+    await user.save();
+
+    return user;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 module.exports = {
   signUp,
   login,
@@ -264,4 +343,6 @@ module.exports = {
   sendVerificationPhone,
   verifyPhone,
   verifyEmail,
+  createResetPasswordToken,
+  resetPassword,
 };

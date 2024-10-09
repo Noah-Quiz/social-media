@@ -7,6 +7,8 @@ const {
   loginApple,
   sendVerificationPhone,
   verifyPhone,
+  createResetPasswordToken,
+  resetPassword,
 } = require("../services/AuthService");
 const createAccessToken = require("../utils/createAccessToken");
 const passport = require("passport");
@@ -133,6 +135,34 @@ class AuthController {
     try {
       const status = await verifyPhone(phoneNumber, code);
       res.status(200).json({ message: "Phone number verified successfully" });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async createResetPasswordToken(req, res) {
+    const { email } = req.body;
+    try {
+      const user = await createResetPasswordToken(email);
+      if (user) {
+        res
+          .status(201)
+          .json({ message: "Reset password token created successfully" });
+      }
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async resetPassword(req, res) {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    try {
+      const user = await resetPassword(token, newPassword);
+      if (user) {
+        res.status(200).json({ message: "Reset password successfully  " });
+      }
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
