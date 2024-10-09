@@ -5,9 +5,10 @@ const {
   updateAVideoByIdService,
   getVideosByUserIdService,
   deleteVideoService,
+  getVideoService,
+  getVideosService,
 } = require("../services/VideoService");
 const { uploadFiles } = require("../middlewares/LoadFile");
-const createAccessToken = require("../utils/createAccessToken");
 const { default: mongoose } = require("mongoose");
 require("dotenv").config();
 
@@ -73,15 +74,20 @@ class VideoController {
 
   async updateAVideoByIdController(req, res) {
     const { videoId } = req.params;
+
     if (!mongoose.Types.ObjectId.isValid(videoId)) {
-      return res.status(400).json({ message: "VideoId is not an ObjectId" });
+      return res.status(400).json({ message: "Invalid video ID" });
     }
-    // const thumbnail = req.files.thumbnailUrl[0];
-    // const thumbnailUrl = await setThumbnail(thumbnail);
+
+    let thumbnailFile = null;
+    if (req.files && req.files.thumbnailUrl) {
+      thumbnailFile = req.files.thumbnailUrl[0];
+    }
+
     const data = req.body;
 
     try {
-      const video = await updateAVideoByIdService(videoId, data);
+      const video = await updateAVideoByIdService(videoId, data, thumbnailFile);
       return res
         .status(200)
         .json({ message: "Update video successfully", video });
@@ -114,13 +120,50 @@ class VideoController {
 
   async getVideosByUserIdController(req, res) {
     const { userId } = req.params;
+
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "UserId is not an ObjectId" });
+      return res.status(400).json({ message: "Invalid user ID" });
     }
 
     try {
       const videos = await getVideosByUserIdService(userId);
-      return res.status(200).json({ message: "Successfully", videos });
+
+      return res.status(200).json({ message: "Success", videos });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async getVideoController(req, res) {
+    const { videoId } = req.params;
+  
+    if (!mongoose.Types.ObjectId.isValid(videoId)) {
+      return res.status(400).json({ message: "Invalid video ID" });
+    }
+
+    try {
+      const video = await getVideoService(videoId);
+
+      return res.status(200).json({ message: "Success", video });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async getVideosController(req, res) {
+    const query = req.query;
+
+    try {
+      if (query.page < 1) {
+        return res.status(400).json({ message: "Page cannot be less than 1" })
+      }
+      if (query.title) {
+        query.title = { $regex: query.title, $options: "i" };
+      }
+
+      const { videos, totalDocuments, currentPage, totalPages } = await getVideosService(query);
+
+      return res.status(200).json({ message: "Success", videos, totalDocuments, currentPage, totalPages });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }

@@ -97,7 +97,6 @@ const uploadThumbnail = async (videoUri, thumbnailFile) => {
         });
 
         let thumbnailUri = response.metadata.connections.pictures.uri;
-        console.log(thumbnailUri)
         if (!thumbnailUri) {
             throw new Error("Thumbnail URI not found in video metadata.");
         }

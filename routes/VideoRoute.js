@@ -7,9 +7,13 @@ const videoController = new VideoController();
 
 videoRoutes.post("/", upload.fields([{ name: "videoUrl" }, { name: "thumbnailUrl" }]), AuthMiddleware, videoController.createVideoController);
 
+videoRoutes.get("/", AuthMiddleware,videoController.getVideosController);
+
 videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
 
-videoRoutes.put("/:videoId", upload.fields([{ name: "thumbnailUrl" }]), videoController.updateAVideoByIdController);
+videoRoutes.put("/:videoId",  AuthMiddleware, upload.fields([{ name: "thumbnailUrl" }]), videoController.updateAVideoByIdController);
+
+videoRoutes.get("/:videoId", AuthMiddleware, videoController.getVideoController);
 
 videoRoutes.post("/like/:videoId", AuthMiddleware, videoController.toggleLikeVideoController);
 
