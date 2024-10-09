@@ -14,8 +14,8 @@ const mongoose = require("mongoose");
 class UserController {
   async getAllUsersController(req, res) {
     try {
-      const result = await getAllUsersService();
-
+      const { page, size } = req.query;
+      const result = await getAllUsersService(page || 1, size || 5);
       return res.status(200).json({ user: result, message: "Success" });
     } catch (error) {
       return res.status(500).json({ message: error.message });

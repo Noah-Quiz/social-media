@@ -5,9 +5,12 @@ const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const { validFullName, validEmail } = require("../utils/validator");
 
 module.exports = {
-  getAllUsersService: async () => {
+  getAllUsersService: async (page, size) => {
     const connection = new DatabaseTransaction();
-    const users = await connection.userRepository.getAllUsersRepository();
+    const users = await connection.userRepository.getAllUsersRepository(
+      page,
+      size
+    );
     return users;
   },
 
