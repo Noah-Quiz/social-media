@@ -9,7 +9,7 @@ const authRoutes = require("./routes/AuthRoute");
 const messageRoutes = require("./routes/MessageRoute");
 const videoRoutes = require("./routes/VideoRoute");
 const userRoute = require("./routes/UserRoute");
-
+const roomRoutes = require("./routes/RoomRoute");
 const app = express();
 
 // Middleware
@@ -50,7 +50,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/users", userRoute);
 app.use("/api/messages", messageRoutes);
 app.use("/api/videos", videoRoutes);
-
+app.use("/api/rooms", roomRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 
