@@ -1,10 +1,17 @@
 const validator = require("validator");
-const validEmail = (email) => {
+
+const validFullName = async (fullName) => {
+  if (!fullName) throw new Error("Full name is required");
+  if (!validator.isLength(fullName, { min: 6, max: 50 }))
+    throw new Error("Full name must be between 6 and 50 characters");
+};
+
+const validEmail = async (email) => {
   if (!email) throw new Error("Email is required");
   if (!validator.isEmail(email)) throw new Error("Email is invalid");
 };
 
-const validPassword = (password) => {
+const validPassword = async (password) => {
   if (!password) throw new Error("Password is required");
   if (
     !validator.isStrongPassword(password, {
@@ -20,9 +27,9 @@ const validPassword = (password) => {
     );
 };
 
-const validPhoneNumber = (phoneNumber) => {
+const validPhoneNumber = async (phoneNumber) => {
   if (!phoneNumber) throw new Error("Phone number is required");
   if (!validator.isMobilePhone(phoneNumber, "vi-VN"))
     throw new Error("Phone number is invalid");
 };
-module.exports = { validEmail, validPassword, validPhoneNumber };
+module.exports = { validFullName, validEmail, validPassword, validPhoneNumber };

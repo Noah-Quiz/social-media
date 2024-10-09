@@ -13,9 +13,9 @@ route.post("/follow", userController.toggleFollowController);
 
 route.get("/:userId", userController.getAnUserByIdController);
 
-route.put("/update/profile/:userId", userController.updateUserProfileByIdController);
-route.put("/update/email/:userId", userController.updateUserEmailByIdController);
+route.put("/profile/:userId", userController.updateUserProfileByIdController);
+route.put("/email/:userId", userController.updateUserEmailByIdController);
 
-route.delete("/:userId", userController.deleteAnUserByIdController);
+route.delete("/:userId", userController.deleteUserByIdController);
 
 module.exports = route;

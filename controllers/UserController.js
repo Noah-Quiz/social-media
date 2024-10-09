@@ -7,7 +7,7 @@ const {
   getAnUserByIdService,
   updateUserProfileByIdService,
   updateUserEmailByIdService,
-  deleteAnUserByIdService,
+  deleteUserByIdService,
 } = require("../services/UserService");
 const mongoose = require("mongoose");
 
@@ -22,17 +22,26 @@ class UserController {
     }
   }
 
-  async deleteAnUserByIdController(req, res) {
+  async deleteUserByIdController(req, res) {
     const { userId } = req.params;
+    const adminId = req.userId;
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(500).json({ message: "UserId is not an ObjectId" });
+      return res
+        .status(StatusCodeEnums.InternalServerError_500)
+        .json({ message: "UserId is not an ObjectId" });
     }
     try {
-      const result = await deleteAnUserByIdService(userId);
+      const result = await deleteUserByIdService(userId, adminId);
 
-      return res.status(200).json({ message: "Success" });
+      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 

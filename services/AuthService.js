@@ -15,9 +15,9 @@ const signUpService = async (fullName, email, phoneNumber, password) => {
   try {
     const connection = new DatabaseTransaction();
 
-    validEmail(email);
-    validPassword(password);
-    validPhoneNumber(phoneNumber);
+    await validEmail(email);
+    await validPassword(password);
+    await validPhoneNumber(phoneNumber);
 
     const existingEmail = await connection.userRepository.findUserByEmail(
       email
@@ -51,7 +51,7 @@ const loginService = async (email, password) => {
   try {
     const connection = new DatabaseTransaction();
 
-    validEmail(email);
+   await validEmail(email);
 
     const user = await connection.userRepository.findUserByEmail(email);
     if (user.isActive === false) throw new Error("User is not active");

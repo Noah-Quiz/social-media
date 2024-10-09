@@ -1,8 +1,8 @@
-const { verify } = require("jsonwebtoken");
 const StatusCodeEnum = require("../enums/StatusCodeEnum");
+const UserEnum = require("../enums/UserEnum");
 const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
-const { sendVerificationEmailService } = require("./AuthService");
+const { validFullName, validEmail } = require("../utils/validator");
 
 module.exports = {
   getAllUsersService: async () => {
@@ -22,18 +22,46 @@ module.exports = {
     return user;
   },
 
-  deleteAnUserByIdService: async (userId) => {
+  deleteUserByIdService: async (userId, adminId) => {
     const connection = new DatabaseTransaction();
     try {
-      const user = await connection.userRepository.deleteAnUserByIdRepository(
+      const admin = await connection.userRepository.findUserById(adminId);
+      if (!admin) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "Admin not found");
+      }
+      if (admin.role !== UserEnum.ADMIN) {
+        throw new CoreException(
+          StatusCodeEnum.Forbidden_403,
+          "You are not allowed to delete user"
+        );
+      }
+
+      const user = await connection.userRepository.findUserById(userId);
+      if (!user) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
+      if (user.role === UserEnum.ADMIN) {
+        throw new CoreException(
+          StatusCodeEnum.Forbidden_403,
+          "You are not allowed to delete admin account"
+        );
+      }
+      if (user.isDeleted === true) {
+        throw new CoreException(
+          StatusCodeEnum.NotFound_404,
+          "User has been deleted"
+        );
+      }
+
+      const result = await connection.userRepository.deleteAnUserByIdRepository(
         userId
       );
-      if (user)
+      if (result)
         return {
           message: `Delete user ${userId} successfully`,
         };
     } catch (error) {
-      throw new Error(`Error when delete an user by id: ${error.message}`);
+      throw error;
     }
   },
 
@@ -45,6 +73,8 @@ module.exports = {
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
       }
+
+      await validFullName(data.fullName);
 
       const result = await connection.userRepository.updateAnUserByIdRepository(
         userId,
@@ -69,6 +99,8 @@ module.exports = {
           "Email is the same as the current email"
         );
       }
+
+      await validEmail(email);
 
       const result = await connection.userRepository.updateAnUserByIdRepository(
         userId,
