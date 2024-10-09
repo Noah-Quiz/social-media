@@ -14,25 +14,42 @@ const createAccessToken = require("../utils/createAccessToken");
 const passport = require("passport");
 const verifyAppleToken = require("verify-apple-id-token").default;
 const jwt = require("jsonwebtoken");
+const LoginDto = require("../dtos/Auth/LoginDto");
+const SignupDto = require("../dtos/Auth/SignupDto");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 require("dotenv").config();
 
 class AuthController {
   async signUpController(req, res) {
-    const { fullName, email, phoneNumber, password } = req.body;
     try {
+    const { fullName, email, phoneNumber, password } = req.body;
+    const signupDto = new SignupDto(fullName, email, phoneNumber, password);
+    await signupDto.validate();
       const user = await signUpService(fullName, email, phoneNumber, password);
-      res.status(201).json({ message: "Signup successfully" });
+      res
+        .status(StatusCodeEnums.Created_201)
+        .json({ message: "Signup successfully" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 
   async loginController(req, res) {
-    const { email, password } = req.body;
-    const ipAddress =
-      req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-
     try {
+      const { email, password } = req.body;
+      const ipAddress =
+        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+      const loginDto = new LoginDto(email, password);
+      await loginDto.validate();
+
       const user = await loginService(email, password);
       const accessToken = createAccessToken(
         { _id: user._id, ip: ipAddress },
@@ -40,9 +57,17 @@ class AuthController {
         process.env.ACCESS_TOKEN_EXPIRE
       );
 
-      res.status(200).json({ accessToken, message: "Login successfully" });
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ accessToken, message: "Login successfully" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 
