@@ -1,4 +1,8 @@
+const { verify } = require("jsonwebtoken");
+const StatusCodeEnum = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const { sendVerificationEmailService } = require("./AuthService");
 
 module.exports = {
   getAllUsersService: async () => {
@@ -33,17 +37,46 @@ module.exports = {
     }
   },
 
-  updateAnUserByIdService: async (userId, data) => {
-    const connection = new DatabaseTransaction();
-
+  updateUserProfileByIdService: async (userId, data) => {
     try {
-      const user = await connection.userRepository.updateAnUserByIdRepository(
+      const connection = new DatabaseTransaction();
+
+      const user = await connection.userRepository.findUserById(userId);
+      if (!user) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
+
+      const result = await connection.userRepository.updateAnUserByIdRepository(
         userId,
         data
       );
-      return user;
+      return result;
     } catch (error) {
-      throw new Error(`Error when update user by id: ${error.message}`);
+      throw error;
+    }
+  },
+
+  updateUserEmailByIdService: async (userId, email) => {
+    try {
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.findUserById(userId);
+      if (!user) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
+      if (user.email === email) {
+        throw new CoreException(
+          StatusCodeEnum.Conflict_409,
+          "Email is the same as the current email"
+        );
+      }
+
+      const result = await connection.userRepository.updateAnUserByIdRepository(
+        userId,
+        { email, verify: false }
+      );
+      return result;
+    } catch (error) {
+      throw error;
     }
   },
 

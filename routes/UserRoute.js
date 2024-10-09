@@ -13,7 +13,8 @@ route.post("/follow", userController.toggleFollowController);
 
 route.get("/:userId", userController.getAnUserByIdController);
 
-route.put("/:userId", userController.updateAnUserByIdController);
+route.put("/update/profile/:userId", userController.updateUserProfileByIdController);
+route.put("/update/email/:userId", userController.updateUserEmailByIdController);
 
 route.delete("/:userId", userController.deleteAnUserByIdController);
 
