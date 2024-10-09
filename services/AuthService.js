@@ -11,7 +11,7 @@ const {
   sendVerificationCode,
   checkVerification,
 } = require("../utils/phoneVerification");
-const signUp = async (fullName, email, phoneNumber, password) => {
+const signUpService = async (fullName, email, phoneNumber, password) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -47,7 +47,7 @@ const signUp = async (fullName, email, phoneNumber, password) => {
   }
 };
 
-const login = async (email, password) => {
+const loginService = async (email, password) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -71,7 +71,7 @@ const login = async (email, password) => {
   }
 };
 
-const loginGoogle = async (user) => {
+const loginGoogleService = async (user) => {
   try {
     const connection = new DatabaseTransaction();
     const existingUser = await connection.userRepository.findUserByEmail(
@@ -108,7 +108,7 @@ const loginGoogle = async (user) => {
     throw new Error(`Error when login with Google: ${error.message}`);
   }
 };
-const loginApple = async (user) => {
+const loginAppleService = async (user) => {
   try {
     const connection = new DatabaseTransaction();
     const existingUser = await connection.userRepository.findUserByEmail(
@@ -126,7 +126,7 @@ const loginApple = async (user) => {
       return existingUser;
     }
     const newUser = await connection.userRepository.createUser({
-      fullName: user.name.firstName + " " + user.name.lastName,
+      fullName: user.name,
       email: user.email,
       verify: true,
     });
@@ -136,7 +136,7 @@ const loginApple = async (user) => {
   }
 };
 
-const sendVerificationEmail = async (email) => {
+const sendVerificationEmailService = async (email) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -190,7 +190,7 @@ const sendVerificationEmail = async (email) => {
   }
 };
 
-const verifyEmail = async (token, res) => {
+const verifyEmailService = async (token, res) => {
   try {
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     const email = decodedToken.email;
@@ -200,6 +200,7 @@ const verifyEmail = async (token, res) => {
     if (!user || user.verifyToken !== token) {
       throw new Error("Invalid token");
     }
+    if (user.verify === true) throw new Error("User is already verified");
 
     user.verify = true;
     user.verifyToken = null;
@@ -210,7 +211,7 @@ const verifyEmail = async (token, res) => {
   }
 };
 
-const sendVerificationPhone = async (phoneNumber) => {
+const sendVerificationPhoneService = async (phoneNumber) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -218,6 +219,7 @@ const sendVerificationPhone = async (phoneNumber) => {
       phoneNumber
     );
     if (!user) throw new Error("User not found");
+    if (user.verify === true) throw new Error("User is already verified");
 
     const status = await sendVerificationCode(phoneNumber);
     if (status !== "pending") {
@@ -230,7 +232,7 @@ const sendVerificationPhone = async (phoneNumber) => {
   }
 };
 
-const verifyPhone = async (phoneNumber, code) => {
+const verifyPhoneService = async (phoneNumber, code) => {
   try {
     const connection = new DatabaseTransaction();
     const user = await connection.userRepository.findUserByPhoneNumber(
@@ -253,13 +255,94 @@ const verifyPhone = async (phoneNumber, code) => {
   }
 };
 
+const createResetPasswordTokenService = async (email) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const user = await connection.userRepository.findUserByEmail(email);
+    if (!user) throw new Error("User not found");
+    if (user.verify === false) throw new Error("User is not verified");
+
+    const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: process.env.RESET_PASSWORD_EXPIRE,
+    });
+    user.passwordResetToken = token;
+    await user.save();
+
+    const mailBody = `
+    <div style="width: 40vw;">
+<table>
+  <tr>
+    <td>
+      <img src="https://amazingtech.vn/Content/amazingtech/assets/img/logo-color.png" width="350" alt="Logo" />
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <p>
+        You have requested to reset your password, click the link below to reset your password. And please note that your link <strong>will be expired in 1 hour</strong> for security reasons.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="http://localhost:4000/api/auth/reset-password/${token}">Click here to reset your password</a>
+    </td>
+  </tr> 
+  <tr>
+    <td>
+      <p style="color: grey;">Please check your spam folder if you don't see the email immediately</p>
+    </td>
+  </tr>
+</table>
+</div>
+  `;
+
+    mailer.sendMail(
+      email,
+      "Reset your password",
+      "Click the link below to reset your password",
+      mailBody
+    );
+    return user;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const resetPasswordService = async (token, newPassword) => {
+  try {
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const email = decodedToken.email;
+
+    const connection = new DatabaseTransaction();
+    const user = await connection.userRepository.findUserByEmail(email);
+
+    if (!user || user.passwordResetToken !== token) {
+      throw new Error("Invalid token");
+    }
+
+    const salt = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedPassword;
+    user.passwordResetToken = null;
+    await user.save();
+
+    return user;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 module.exports = {
-  signUp,
-  login,
-  loginGoogle,
-  loginApple,
-  sendVerificationEmail,
-  sendVerificationPhone,
-  verifyPhone,
-  verifyEmail,
+  signUpService,
+  loginService,
+  loginGoogleService,
+  loginAppleService,
+  sendVerificationEmailService,
+  sendVerificationPhoneService,
+  verifyPhoneService,
+  verifyEmailService,
+  createResetPasswordTokenService,
+  resetPasswordService,
 };

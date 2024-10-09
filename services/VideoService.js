@@ -3,9 +3,10 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const { validEmail, validPassword } = require("../utils/validator");
 const axios = require("axios");
+
 const createVideoService = async (
   userId,
-  { title, description, videoUrl, enumMode, thumbNailUrl, categoryIds }
+  { title, description, videoUrl, embedUrl, enumMode, thumbnailUrl, categoryIds }
 ) => {
   try {
     const connection = new DatabaseTransaction();
@@ -24,9 +25,11 @@ const createVideoService = async (
       userId,
       title,
       description,
-      videoUrl,
+      categoryIds: categoryObjectIds,
       enumMode,
-      thumbNailUrl,
+      videoUrl,
+      embedUrl,
+      thumbnailUrl,
       categoryIds: categoryObjectIds,
     });
 

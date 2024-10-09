@@ -1,36 +1,39 @@
 const {
-  signUp,
-  login,
-  loginGoogle,
-  sendVerificationEmail,
-  verifyEmail,
-  loginApple,
-  sendVerificationPhone,
-  verifyPhone,
+  signUpService,
+  loginService,
+  loginGoogleService,
+  sendVerificationEmailService,
+  verifyEmailService,
+  loginAppleService,
+  sendVerificationPhoneService,
+  verifyPhoneService,
+  createResetPasswordTokenService,
+  resetPasswordService,
 } = require("../services/AuthService");
 const createAccessToken = require("../utils/createAccessToken");
+const passport = require("passport");
+const verifyAppleToken = require("verify-apple-id-token").default;
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 class AuthController {
-  async signUp(req, res) {
+  async signUpController(req, res) {
     const { fullName, email, phoneNumber, password } = req.body;
     try {
-      const user = await signUp(fullName, email, phoneNumber, password);
-      if (user) {
-        await sendVerificationEmail(user.email);
-      }
+      const user = await signUpService(fullName, email, phoneNumber, password);
       res.status(201).json({ message: "Signup successfully" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   }
 
-  async login(req, res) {
+  async loginController(req, res) {
     const { email, password } = req.body;
-    const ipAddress = req.ip || req.socket.remoteAddress;
+    const ipAddress =
+      req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
     try {
-      const user = await login(email, password);
+      const user = await loginService(email, password);
       const accessToken = createAccessToken(
         { _id: user._id, ip: ipAddress },
         process.env.ACCESS_TOKEN_SECRET,
@@ -43,11 +46,12 @@ class AuthController {
     }
   }
 
-  async loginGoogle(req, res) {
+  async loginGoogleController(req, res) {
     const googleUser = req.user;
-    const ipAddress = req.ip || req.socket.remoteAddress;
+    const ipAddress =
+      req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     try {
-      const user = await loginGoogle(googleUser);
+      const user = await loginGoogleService(googleUser);
       const accessToken = createAccessToken(
         { _id: user._id, ip: ipAddress },
         process.env.ACCESS_TOKEN_SECRET,
@@ -61,13 +65,30 @@ class AuthController {
     }
   }
 
-  async loginApple(req, res) {
-    const appleUser = JSON.parse(req.body.user);
-    const ipAddress = req.ip || req.socket.remoteAddress;
+  async loginAppleController(req, res, next) {
     try {
-      const user = await loginApple(appleUser);
+      const user = {
+        email: "",
+        name: "",
+      };
+      if (req.body.user) {
+        user.email = JSON.parse(req.body.user.email);
+        user.name = JSON.parse(
+          req.body.user.name.firstName + " " + req.body.user.name.lastName
+        );
+      } else {
+        const jwtClaims = await verifyAppleToken({
+          idToken: req.body.id_token,
+          clientId: process.env.APPLE_CLIENT_ID,
+        });
+        user.email = jwtClaims.email;
+      }
+
+      const ipAddress =
+        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+      const loggedUser = await loginAppleService(user);
       const accessToken = createAccessToken(
-        { _id: user._id, ip: ipAddress },
+        { _id: loggedUser._id, ip: ipAddress },
         process.env.ACCESS_TOKEN_SECRET,
         process.env.ACCESS_TOKEN_EXPIRE
       );
@@ -79,41 +100,69 @@ class AuthController {
     }
   }
 
-  async sendVerificationEmail(req, res) {
+  async sendVerificationEmailController(req, res) {
     const { email } = req.query;
     try {
-      await sendVerificationEmail(email);
+      await sendVerificationEmailService(email);
       res.status(200).json({ message: "Email sent successfully" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   }
 
-  async verifyEmail(req, res) {
+  async verifyEmailController(req, res) {
     const { token } = req.query;
     try {
-      const user = await verifyEmail(token);
+      const user = await verifyEmailService(token);
       res.status(200).json({ message: "Email verified successfully" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   }
 
-  async sendVerificationPhone(req, res) {
+  async sendVerificationPhoneController(req, res) {
     const { phoneNumber } = req.body;
     try {
-      const status = await sendVerificationPhone(phoneNumber);
+      const status = await sendVerificationPhoneService(phoneNumber);
       res.status(200).json({ message: "SMS sent successfully" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   }
 
-  async verifyPhone(req, res) {
+  async verifyPhoneController(req, res) {
     const { phoneNumber, code } = req.body;
     try {
-      const status = await verifyPhone(phoneNumber, code);
+      const status = await verifyPhoneService(phoneNumber, code);
       res.status(200).json({ message: "Phone number verified successfully" });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async createResetPasswordTokenController(req, res) {
+    const { email } = req.body;
+    try {
+      const user = await createResetPasswordTokenService(email);
+      if (user) {
+        res
+          .status(201)
+          .json({ message: "Reset password token created successfully" });
+      }
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async resetPasswordController(req, res) {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    try {
+      const user = await resetPasswordService(token, newPassword);
+      if (user) {
+        res.status(200).json({ message: "Reset password successfully  " });
+      }
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }

@@ -1,9 +1,8 @@
 let Vimeo = require('vimeo').Vimeo;
 require('dotenv').config();
-const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const stream = require('stream'); // Thêm dòng này
+const fs = require('fs');
 const axios = require('axios');
 
 let vimeoClient = new Vimeo(
@@ -16,7 +15,7 @@ if (!vimeoClient || !vimeoClient.upload) {
     throw new Error('Vimeo client is not initialized correctly');
 }
 
-// Upload video lên Vimeo từ Buffer
+// Upload video using Vimeo client
 const uploadVideo = async (file) => {
     try {
         if (!file || !file.buffer || file.buffer.length === 0) {
@@ -27,15 +26,12 @@ const uploadVideo = async (file) => {
             throw new Error("File buffer is not a valid Buffer.");
         }
 
-        // Ghi buffer video tạm thời ra file hệ thống
         const tempFilePath = path.join(os.tmpdir(), file.originalname);
         await fs.promises.writeFile(tempFilePath, file.buffer);
 
-        // console.log('Uploading video of size:', file.buffer.length);
-
         const vimeoResponse = await new Promise((resolve, reject) => {
             vimeoClient.upload(
-                tempFilePath, // Sử dụng đường dẫn tệp tạm thời
+                tempFilePath,
                 {
                     privacy: {
                         view: 'anybody',
@@ -43,84 +39,123 @@ const uploadVideo = async (file) => {
                     },
                 },
                 (uri) => {
-                    console.log(`Video uploaded successfully. URI: ${uri}`);
-                    const videoId = uri.split('/').pop();
-                    const fullVideoUrl = `https://vimeo.com/${videoId}`;
-                    resolve({ link: fullVideoUrl });
+                    vimeoClient.request({ method: 'GET', path: uri }, (error, body) => {
+                        if (error) {
+                            reject(new Error(`Error retrieving video details: ${error.message}`));
+                        } else {
+                            resolve(body);
+                        }
+                    });
                 },
                 (bytesUploaded, bytesTotal) => {
                     const percentage = (bytesUploaded / bytesTotal * 100).toFixed(2);
                     console.log(`${percentage}% uploaded`);
                 },
                 (error) => {
-                    console.error("Vimeo upload error:", error);
-                    reject(new Error(`Error uploading video to Vimeo: ${error.message || 'Unknown error'}`));
+                    reject(new Error(`Error uploading video: ${error.message}`));
                 }
             );
         });
 
-        // Xóa file tạm sau khi upload xong
         await fs.promises.unlink(tempFilePath);
-
-        return vimeoResponse.link; // URL của video trên Vimeo
+        return vimeoResponse;
     } catch (error) {
-        console.error("Upload video error:", error.message);
-        throw new Error(`Error uploading video to Vimeo: ${error.message}`);
+        throw new Error(`Error uploading video: ${error.message}`);
     }
 };
 
-
-const setThumbnail = async (videoUri, imgBuffer) => {
-
-    console.log("Video URI", videoUri);
-    
-
+const uploadThumbnail = async (videoUri, thumbnailFile) => {
     try {
-        if (!imgBuffer || imgBuffer.length === 0) {
-            throw new Error("File buffer is undefined, missing, or empty.");
+        if (!thumbnailFile || !thumbnailFile.buffer) {
+            throw new Error("Thumbnail file or its buffer is missing.");
         }
 
-        const thumbnailStream = new stream.PassThrough();
-        thumbnailStream.end(imgBuffer);
-        console.log("Thumbnail Buffer Length:", imgBuffer.length);
-        
+        const tempThumbFilePath = path.join(os.tmpdir(), thumbnailFile.originalname);
+        // Write the buffer to a temporary file
+        await fs.promises.writeFile(tempThumbFilePath, thumbnailFile.buffer);
+
+        const response = await new Promise((resolve, reject) => {
+            vimeoClient.request(
+                {
+                    method: 'GET',
+                    path: videoUri,
+                    headers: {
+                        Accept: 'application/vnd.vimeo.*+json;version=3.4',
+                    },
+                    query: {
+                        fields: 'metadata.connections.pictures.uri',
+                    },
+                },
+                (error, body) => {
+                    if (error) {
+                        reject(new Error(`Error fetching video metadata: ${error.message}`));
+                    } else {
+                        resolve(body);
+                    }
+                }
+            );
+        });
+
+        let thumbnailUri = response.metadata.connections.pictures.uri;
+        console.log(thumbnailUri)
+        if (!thumbnailUri) {
+            throw new Error("Thumbnail URI not found in video metadata.");
+        }
+
+        // Step 1: Create a thumbnail resource on Vimeo
         const thumbnailResponse = await new Promise((resolve, reject) => {
             vimeoClient.request(
                 {
                     method: 'POST',
-                    path: `${videoUri}/pictures`,
-                    query: { active: true },
-                    body: {
-                        file: thumbnailStream,
-                    },
+                    path: thumbnailUri,
                 },
-                (uri, body) => {
-                    console.log(`Thumbnail uploaded successfully. URI: ${uri}, Response body:`, body);
-                    resolve({ link: body.link });
-                },
-                (bytesUploaded, bytesTotal) => {
-                    const percentage = (bytesUploaded / bytesTotal * 100).toFixed(2);
-                    console.log(`${percentage}% thumbnail uploaded`);
-                },
-                (error) => {
-                    console.error("Vimeo thumbnail upload error:", error);
-                    reject(new Error(`Error uploading thumbnail to Vimeo: ${error.message || 'Unknown error'}`));
+                (error, body) => {
+                    if (error) {
+                        return reject(new Error(`Error creating thumbnail resource: ${error.message}`));
+                    }
+                    resolve(body);
                 }
             );
         });
 
-        return thumbnailResponse.link; // URL của thumbnail trên Vimeo
+        const uploadLink = thumbnailResponse.link;
+        thumbnailUri = thumbnailResponse.uri;
+        const thumbnailUrl = thumbnailResponse.base_link;
+
+        const vimeoAccessToken = process.env.VIMEO_ACCESS_TOKEN;
+
+        // Step 2: Upload the thumbnail image to the received link
+        const thumbnailUploadResponse = await axios({
+            method: 'PUT',
+            url: uploadLink,
+            headers: {
+                Authorization: `Bearer ${vimeoAccessToken}`,
+            },
+            data: thumbnailFile.buffer,
+        });
+
+        // Clean up temporary file
+        await fs.promises.unlink(tempThumbFilePath);
+
+        return thumbnailUrl;
     } catch (error) {
-        throw new Error(`Error setting thumbnail: ${error.message}`);
+        throw new Error(`Error uploading and setting thumbnail: ${error.message}`);
     }
 };
 
-// Upload video và thiết lập thumbnail
-const uploadFiles = async (videoFile, thumbNailFile) => {
+// Upload video and thumbnail
+const uploadFiles = async (videoFile, thumbnailFile) => {
     try {
-        const videoUrl = await uploadVideo(videoFile);
-        const imgUrl = await setThumbnail(videoUrl, thumbNailFile.buffer);
-        return { videoUrl, imgUrl };
+        const videoResponse = await uploadVideo(videoFile);
+        const videoUri = videoResponse.uri;
+
+        const thumbnailUrl = await uploadThumbnail(videoUri, thumbnailFile);
+
+        return {
+            videoUrl: videoResponse.link,
+            embedUrl: videoResponse.player_embed_url,
+            thumbnailUrl,
+        };
     } catch (error) {
         console.error(error.message);
         throw error;
@@ -129,6 +164,6 @@ const uploadFiles = async (videoFile, thumbNailFile) => {
 
 module.exports = {
     uploadVideo,
-    setThumbnail,
-    uploadFiles
+    uploadThumbnail,
+    uploadFiles,
 };

@@ -5,6 +5,7 @@ const videoSchema = new mongoose.Schema({
     title: { type: String, required: true },
     description: { type: String, default: '' },
     videoUrl: { type: String, required: true },
+    embedUrl: { type: String, default: '' },
     numOfViews: { type: Number, default: 0 },
     likedBy: [{ 
         type: mongoose.Schema.Types.ObjectId,
@@ -16,7 +17,7 @@ const videoSchema = new mongoose.Schema({
         enum: ['public', 'private', 'unlisted'],
         default: 'public'
     },
-    thumbNailUrl: {type: String, default: ''},
+    thumbnailUrl: {type: String, default: ''},
     categoryIds: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
