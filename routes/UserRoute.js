@@ -7,11 +7,10 @@ const route = express.Router();
 
 route.use(AuthMiddleware);
 
-route.get("/", userController.getAllUsersController);
-
 route.post("/follow", userController.toggleFollowController);
 
-route.get("/:userId", userController.getAnUserByIdController);
+route.get("/", userController.getAllUsersController);
+route.get("/:userId", userController.getUserByIdController);
 
 route.put("/profile/:userId", userController.updateUserProfileByIdController);
 route.put("/email/:userId", userController.updateUserEmailByIdController);

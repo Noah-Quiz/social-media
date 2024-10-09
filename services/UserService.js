@@ -14,15 +14,19 @@ module.exports = {
     return users;
   },
 
-  getAnUserByIdService: async (userId) => {
-    const connection = new DatabaseTransaction();
-    const user = await connection.userRepository.getAnUserByIdRepository(
-      userId
-    );
-    if (!user) {
-      throw new Error(`User not found`);
+  getUserByIdService: async (userId) => {
+    try {
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
+      if (!user) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
+      return user;
+    } catch (error) {
+      throw error;
     }
-    return user;
   },
 
   deleteUserByIdService: async (userId, adminId) => {
@@ -115,39 +119,82 @@ module.exports = {
     }
   },
 
-  followAnUserService: async (userId, followId) => {
-    const connection = new DatabaseTransaction();
-    const result = await connection.userRepository.followAnUserRepository(
-      userId,
-      followId
-    );
-    if (result) {
-      return {
-        EC: 0,
-        message: "Follow successfully",
-      };
+  followUserService: async (userId, followId) => {
+    try {
+      const connection = new DatabaseTransaction();
+
+      const user = await connection.userRepository.findUserById(userId);
+      if (!user) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
+
+      const follow = await connection.userRepository.findUserById(followId);
+      if (!follow) {
+        throw new CoreException(
+          StatusCodeEnum.NotFound_404,
+          "User to follow not found"
+        );
+      }
+
+      if (userId === followId) {
+        throw new CoreException(
+          StatusCodeEnum.BadRequest_400,
+          "You can't follow yourself"
+        );
+      }
+
+      const result = await connection.userRepository.followAnUserRepository(
+        userId,
+        followId
+      );
+      if (!result) {
+        throw new CoreException(
+          StatusCodeEnum.Conflict_409,
+          "Follow unsuccessfully"
+        );
+      }
+      return result;
+    } catch (error) {
+      throw error;
     }
-    return {
-      EC: 1,
-      message: "Follow unsuccessfully",
-    };
   },
 
-  unfollowAnUserService: async (userId, followId) => {
-    const connection = new DatabaseTransaction();
-    const result = await connection.userRepository.unfollowAnUserRepository(
-      userId,
-      followId
-    );
-    if (result) {
-      return {
-        EC: 0,
-        message: "Unfollow successfully",
-      };
+  unfollowUserService: async (userId, followId) => {
+    try {
+      const connection = new DatabaseTransaction();
+
+      const user = await connection.userRepository.findUserById(userId);
+      if (!user) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
+      const follow = await connection.userRepository.findUserById(followId);
+      if (!follow) {
+        throw new CoreException(
+          StatusCodeEnum.NotFound_404,
+          "User to follow not found"
+        );
+      }
+
+      if (userId === followId) {
+        throw new CoreException(
+          StatusCodeEnum.BadRequest_400,
+          "You can't unfollow yourself"
+        );
+      }
+
+      const result = await connection.userRepository.unfollowAnUserRepository(
+        userId,
+        followId
+      );
+      if (!result) {
+        throw new CoreException(
+          StatusCodeEnum.Conflict_409,
+          "Unfollow unsuccessfully"
+        );
+      }
+      return result;
+    } catch (error) {
+      throw error;
     }
-    return {
-      EC: 1,
-      message: "Unfollow unsuccessfully",
-    };
   },
 };

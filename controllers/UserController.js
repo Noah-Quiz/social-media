@@ -1,10 +1,10 @@
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const {
-  followAnUserService,
-  unfollowAnUserService,
+  followUserService,
+  unfollowUserService,
   getAllUsersService,
-  getAnUserByIdService,
+  getUserByIdService,
   updateUserProfileByIdService,
   updateUserEmailByIdService,
   deleteUserByIdService,
@@ -16,9 +16,11 @@ class UserController {
     try {
       const { page, size } = req.query;
       const result = await getAllUsersService(page || 1, size || 5);
-      return res.status(200).json({ user: result, message: "Success" });
+      return res.status(StatusCodeEnums.OK_200).json(result);
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      return res
+        .status(StatusCodeEnums.InternalServerError_500)
+        .json({ message: error.message });
     }
   }
 
@@ -45,17 +47,27 @@ class UserController {
     }
   }
 
-  async getAnUserByIdController(req, res) {
+  async getUserByIdController(req, res) {
     const { userId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(500).json({ message: "UserId is not an ObjectId" });
+      return res
+        .status(StatusCodeEnums.InternalServerError_500)
+        .json({ message: "UserId is not an ObjectId" });
     }
     try {
-      const result = await getAnUserByIdService(userId);
-      return res.status(200).json({ user: result, message: "Success" });
+      const result = await getUserByIdService(userId);
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ user: result, message: "Get user successfully" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
   async updateUserProfileByIdController(req, res) {
@@ -87,7 +99,9 @@ class UserController {
       if (error instanceof CoreException) {
         res.status(error.code).json({ message: error.message });
       } else {
-        res.status(500).json({ message: error.message });
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
@@ -117,45 +131,52 @@ class UserController {
       if (error instanceof CoreException) {
         res.status(error.code).json({ message: error.message });
       } else {
-        res.status(500).json({ message: error.message });
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
 
   async toggleFollowController(req, res) {
-    const { userId, followId, action } = req.query;
-    console.log(req.query);
+    const { userId, followId, action } = req.body;
 
     if (!["follow", "unfollow"].includes(action)) {
-      return res.status(400).json({ message: "Invalid action" });
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Invalid action" });
     }
 
-    if (
-      !mongoose.Types.ObjectId.isValid(userId) ||
-      !mongoose.Types.ObjectId.isValid(followId)
-    ) {
-      return res.status(400).json({ message: "Invalid ID" });
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Invalid userId" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(followId)) {
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Invalid followId" });
     }
 
     let result;
     try {
       if (action === "follow") {
-        result = await followAnUserService(userId, followId);
+        result = await followUserService(userId, followId);
       } else if (action === "unfollow") {
-        result = await unfollowAnUserService(userId, followId);
+        result = await unfollowUserService(userId, followId);
       }
 
-      if (result.EC === 1) {
-        return res.status(400).json({ message: `Failed to ${action}` });
-      }
-
-      return res.status(200).json({
+      return res.status(StatusCodeEnums.OK_200).json({
         message: `${action.charAt(0).toUpperCase() + action.slice(1)} success`,
       });
     } catch (error) {
-      return res
-        .status(500)
-        .json({ message: `Error during ${action}: ${error.message}` });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 }
