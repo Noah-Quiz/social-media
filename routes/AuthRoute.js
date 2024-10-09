@@ -47,4 +47,7 @@ authRoutes.get("/verify/email", authController.verifyEmail);
 authRoutes.post("/send/phone", authController.sendVerificationPhone);
 authRoutes.post("/verify/phone", authController.verifyPhone);
 
+authRoutes.post("/reset-password", authController.createResetPasswordToken);
+authRoutes.post("/reset-password/:token", authController.resetPassword);
+
 module.exports = authRoutes;
