@@ -8,7 +8,6 @@ const {
   getVideoService,
   getVideosService,
 } = require("../services/VideoService");
-const { uploadFiles } = require("../middlewares/LoadFile");
 const { default: mongoose } = require("mongoose");
 require("dotenv").config();
 
@@ -18,7 +17,6 @@ class VideoController {
     const userId = req.userId;
 
     try {
-      
       if (!req.files.videoUrl || !req.files.thumbnailUrl) {
         return res
           .status(400)
@@ -28,16 +26,11 @@ class VideoController {
       const videoFile = req.files.videoUrl[0];
       const thumbnailFile = req.files.thumbnailUrl[0];
 
-      const { videoUrl, embedUrl, thumbnailUrl } = await uploadFiles(videoFile, thumbnailFile);
-
-      const video = await createVideoService(userId, {
+      const video = await createVideoService(userId, videoFile, thumbnailFile, {
         title,
         description,
         categoryIds,
         enumMode,
-        videoUrl,
-        embedUrl,
-        thumbnailUrl,
       });
 
       res.status(201).json({ message: "Create Video successfully", video });

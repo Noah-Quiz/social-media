@@ -1,16 +1,17 @@
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-const { validEmail, validPassword } = require("../utils/validator");
 const axios = require("axios");
-const { uploadThumbnail } = require("../middlewares/LoadFile");
+const { uploadThumbnail, uploadFiles } = require("../middlewares/LoadFile");
 
 const createVideoService = async (
-  userId,
-  { title, description, videoUrl, embedUrl, enumMode, thumbnailUrl, categoryIds }
+  userId, videoFile, thumbnailFile,
+  { title, description, enumMode, categoryIds }
 ) => {
   try {
-    const connection = new DatabaseTransaction();
+    if (["public", "private", "unlisted"].includes(enumMode)) {
+      throw new Error('Invalid video accessibility');
+    }
     
     if (categoryIds && !Array.isArray(categoryIds)) {
       throw new Error('CategoryIds must be an array');
@@ -22,6 +23,10 @@ const createVideoService = async (
         }
       })
     }
+
+    const connection = new DatabaseTransaction();
+
+    const { videoUrl, embedUrl, thumbnailUrl } = await uploadFiles(videoFile, thumbnailFile);
 
     const video = await connection.videoRepository.createVideoRepository({
       userId,
@@ -42,10 +47,11 @@ const createVideoService = async (
 
 const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
   try {
-    const connection = new DatabaseTransaction();
-
-    const categoryIds = data.categoryIds;
+    if (!["public", "private", "unlisted"].includes(data.enumMode)) {
+      throw new Error('Invalid video accessibility');
+    }
     
+    const categoryIds = data.categoryIds;
     if (categoryIds && !Array.isArray(categoryIds)) {
       throw new Error('CategoryIds must be an array');
     }
@@ -56,6 +62,8 @@ const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
         }
       })
     }
+
+    const connection = new DatabaseTransaction();
 
     const video = await connection.videoRepository.getVideoRepository(videoId);
     if (!video) {
