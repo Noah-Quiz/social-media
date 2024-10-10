@@ -3,8 +3,9 @@ const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
 const createCategoryService = async (categoryData) => {
-  const connection = new DatabaseTransaction();
   try {
+    const connection = new DatabaseTransaction();
+
     const session = await connection.startTransaction();
 
     const category = await connection.categoryRepository.createCategoryRepository(
@@ -20,18 +21,26 @@ const createCategoryService = async (categoryData) => {
   }
 };
 
-const getCategoryService = async (id) => {
-  const connection = new DatabaseTransaction();
+const getCategoryService = async (categoryId) => {
   try {
-    return await connection.categoryRepository.getCategoryRepository(id);
+    const connection = new DatabaseTransaction();
+
+    const category = await connection.categoryRepository.getCategoryRepository(categoryId);
+
+    if (!category) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, `Category not found` );
+    }
+
+    return category;
   } catch (error) {
     throw error;
   }
 };
 
 const getAllCategoryService = async () => {
-  const connection = new DatabaseTransaction();
   try {
+    const connection = new DatabaseTransaction();
+
     return await connection.categoryRepository.getAllCategoryRepository();
   } catch (error) {
     throw error;
@@ -39,8 +48,9 @@ const getAllCategoryService = async () => {
 };
 
 const updateCategoryService = async (categoryId, categoryData) => {
-  const connection = new DatabaseTransaction();
   try {
+    const connection = new DatabaseTransaction();
+    
     const session = await connection.startTransaction();
 
     const updatedCategory = await connection.categoryRepository.updateCategoryRepository(

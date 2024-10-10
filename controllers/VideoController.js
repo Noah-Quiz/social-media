@@ -123,11 +123,7 @@ class VideoController {
     }
 
     try {
-      const video = await deleteVideoService(videoId, userId);
-
-      if (!video) {
-        return res.status(StatusCodeEnums.NotFound_404).json({ message: "No video found" });
-      }
+      await deleteVideoService(videoId, userId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
