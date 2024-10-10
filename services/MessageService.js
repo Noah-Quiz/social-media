@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
-const findMessage = async (messageId) => {
+const findMessageService = async (messageId) => {
   try {
     const connection = new DatabaseTransaction();
     const message = await connection.messageRepository.getMessageById(
@@ -13,7 +13,7 @@ const findMessage = async (messageId) => {
   }
 };
 
-const findAllMessagesByRoomId = async (id) => {
+const findAllMessagesByRoomIdService = async (id) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -70,8 +70,8 @@ const createAMessageService = async (userId, roomId, content) => {
 
 module.exports = {
   createAMessageService,
-  findMessage,
-  findAllMessagesByRoomId,
+  findMessageService,
+  findAllMessagesByRoomIdService,
   updateMessageService,
   deleteMessageService,
 };
