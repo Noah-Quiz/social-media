@@ -12,7 +12,7 @@ const {
 
 class RoomController {
   // 1. Global Chat Room
-  async GlobalChat(req, res) {
+  async GlobalChatController(req, res) {
     try {
       const globalRoom = await getGlobalRoom();
       return res.status(200).json({ data: globalRoom, message: "Success" });
@@ -22,7 +22,7 @@ class RoomController {
   }
 
   // 2. Direct Message Room
-  async DirectMessage(req, res) {
+  async DirectMessageController(req, res) {
     const currentUserId = req.userId;
     const targetedUserId = req.query.userId;
     try {
@@ -39,7 +39,7 @@ class RoomController {
   }
 
   // 3. Video Chat Room
-  async VideoChat(req, res) {
+  async VideoChatController(req, res) {
     const videoId = req.query.videoId;
     try {
       const roomVideoId = await getRoomVideoId(videoId);
@@ -50,7 +50,7 @@ class RoomController {
   }
 
   // 4. Create a Room
-  async CreateRoom(req, res) {
+  async CreateRoomController(req, res) {
     const roomData = req.body;
     try {
       const newRoom = await createRoom(roomData);
@@ -63,7 +63,7 @@ class RoomController {
   }
 
   // 5. Get a Specific Room by ID
-  async GetRoom(req, res) {
+  async GetRoomController(req, res) {
     const roomId = req.params.id;
     try {
       const room = await getRoom(roomId);
@@ -77,7 +77,7 @@ class RoomController {
   }
 
   // 6. Get All Rooms
-  async GetAllRooms(req, res) {
+  async GetAllRoomsController(req, res) {
     try {
       const rooms = await getAllRooms();
       return res.status(200).json({ data: rooms, message: "Success" });
@@ -87,7 +87,7 @@ class RoomController {
   }
 
   // 7. Update a Room by ID
-  async UpdateRoom(req, res) {
+  async UpdateRoomController(req, res) {
     const roomId = req.params.id;
     const roomData = req.body;
     try {
@@ -104,7 +104,7 @@ class RoomController {
   }
 
   // 8. Delete a Room by ID (Soft Delete)
-  async DeleteRoom(req, res) {
+  async DeleteRoomController(req, res) {
     const roomId = req.params.id;
     try {
       const deletedRoom = await deleteRoom(roomId);
@@ -120,7 +120,7 @@ class RoomController {
   }
   //9. Get all direct message by userID
 
-  async UserChatRooms(req, res) {
+  async UserChatRoomsController(req, res) {
     const userId = req.userId;
     try {
       const rooms = await getRoomUserId(userId);

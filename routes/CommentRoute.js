@@ -5,20 +5,20 @@ const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const router = express.Router();
 const commentController = new CommentController();
 router.use(AuthMiddleware);
-router.post("/", commentController.createComment);
+router.post("/", commentController.createCommentController);
 
-router.get("/children", commentController.getChildrenComments);
+router.get("/children", commentController.getChildrenCommentsController);
 
-router.get("/video/:videoId", commentController.getVideoComments);
+router.get("/video/:videoId", commentController.getVideoCommentsController);
 
-router.put("/like/:id", commentController.likeComment);
+router.put("/like/:id", commentController.likeCommentController);
 
-router.put("/unlike/:id", commentController.unlikeComment);
+router.put("/unlike/:id", commentController.unlikeCommentController);
 
-router.get("/:id", commentController.getComment);
+router.get("/:id", commentController.getCommentController);
 
-router.put("/:id", commentController.updateComment);
+router.put("/:id", commentController.updateCommentController);
 
-router.delete("/:id", commentController.deleteComment);
+router.delete("/:id", commentController.deleteCommentController);
 
 module.exports = router;

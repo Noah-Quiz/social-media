@@ -1,6 +1,6 @@
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
-const createComment = async (userId, videoId, content, responseTo) => {
+const createCommentService = async (userId, videoId, content, responseTo) => {
   const connection = new DatabaseTransaction();
   try {
     let newContent = content;
@@ -32,7 +32,7 @@ const createComment = async (userId, videoId, content, responseTo) => {
   }
 };
 
-const getComment = async (id) => {
+const getCommentService = async (id) => {
   const connection = new DatabaseTransaction();
   try {
     const comment = await connection.commentRepository.getComment(id);
@@ -41,7 +41,7 @@ const getComment = async (id) => {
     throw new Error(error.message);
   }
 };
-const getVideoComments = async (videoId) => {
+const getVideoCommentsService = async (videoId) => {
   const connection = new DatabaseTransaction();
   try {
     const comment = await connection.commentRepository.getAllCommentVideoId(
@@ -52,9 +52,18 @@ const getVideoComments = async (videoId) => {
     throw new Error(error.message);
   }
 };
-const updateComment = async (id, commentData) => {
+
+//comment owner update duoc
+const updateCommentService = async (userId, id, commentData) => {
   const connection = new DatabaseTransaction();
   try {
+    const originalComment = await connection.commentRepository.getComment(id);
+    let notCommentOwner =
+      originalComment[0].userId.toString() !== userId.toString();
+    if (notCommentOwner) {
+      throw new Error("You can not update other people comment");
+    }
+
     const comment = await connection.commentRepository.updateComment(
       id,
       commentData
@@ -64,16 +73,32 @@ const updateComment = async (id, commentData) => {
     throw new Error(error.message);
   }
 };
-const softDeleteComment = async (id) => {
+
+//video owner xoa dc, comment owner xoa duoc
+const softDeleteCommentService = async (userId, id) => {
+  console.log("service: ", userId, id);
   const connection = new DatabaseTransaction();
   try {
+    const originalComment = await connection.commentRepository.getComment(id);
+    if (!originalComment) {
+      throw new Error("Comment not found");
+    }
+    const video = await connection.videoRepository.getVideoRepository(
+      originalComment[0].videoId
+    );
+    let notCommentOwner =
+      originalComment[0].userId.toString() !== userId.toString();
+    let notVideoOwner = userId.toString() !== video.userId.toString();
+    if (notCommentOwner && notVideoOwner) {
+      throw new Error("Not authorized to delete this comment");
+    }
     const comment = await connection.commentRepository.softDeleteComment(id);
     return comment;
   } catch (error) {
     throw new Error(error.message);
   }
 };
-const like = async (userId, commentId) => {
+const likeService = async (userId, commentId) => {
   const connection = new DatabaseTransaction();
   try {
     const comment = await connection.commentRepository.like(userId, commentId);
@@ -82,7 +107,7 @@ const like = async (userId, commentId) => {
     throw new Error(error.message);
   }
 };
-const unlike = async (userId, commentId) => {
+const unlikeService = async (userId, commentId) => {
   const connection = new DatabaseTransaction();
   try {
     const comment = await connection.commentRepository.dislike(
@@ -94,7 +119,7 @@ const unlike = async (userId, commentId) => {
     throw new Error(error.message);
   }
 };
-const getChildrenComments = async (commentId, limit) => {
+const getChildrenCommentsService = async (commentId, limit) => {
   const connection = new DatabaseTransaction();
 
   try {
@@ -112,12 +137,12 @@ const getChildrenComments = async (commentId, limit) => {
   }
 };
 module.exports = {
-  createComment,
-  getComment,
-  getVideoComments,
-  updateComment,
-  softDeleteComment,
-  like,
-  unlike,
-  getChildrenComments,
+  createCommentService,
+  getCommentService,
+  getVideoCommentsService,
+  updateCommentService,
+  softDeleteCommentService,
+  likeService,
+  unlikeService,
+  getChildrenCommentsService,
 };
