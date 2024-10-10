@@ -128,6 +128,7 @@ app.use("/api/comments", commentRoutes);
 const port = process.env.DEVELOPMENT_PORT || 4000;
 
 server.listen(port, (err) => {
+  const logger = getLogger("APP");
   if (err) {
     logger.error("Failed to start server:", err);
     process.exit(1);
