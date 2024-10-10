@@ -65,6 +65,26 @@ authRoutes.post("/signup", authController.signUpController);
  */
 authRoutes.post("/login", authController.loginController);
 
+/**
+ * @swagger
+ * /api/auth/google:
+ *   get:
+ *     summary: Login with Google
+ *     description: Initiates the Google OAuth login flow. Redirects the user to the Google login page.
+ *     tags: [Auth]
+ *     responses:
+ *       302:
+ *         description: Redirect to Google for authentication
+ *         headers:
+ *           Location:
+ *             description: URL to Google's OAuth 2.0 login page
+ *             schema:
+ *               type: string
+ *               example: https://accounts.google.com/o/oauth2/auth
+ *       500:
+ *         description: Internal server error
+ *
+ */
 authRoutes.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
@@ -82,16 +102,150 @@ authRoutes.post(
   authController.loginAppleController
 );
 
-authRoutes.get("/send/email", authController.sendVerificationEmailController);
-authRoutes.get("/verify/email", authController.verifyEmailController);
+/**
+ * @swagger
+ * /api/auth/send/email/{email}:
+ *   get:
+ *     summary: Send verification email to user
+ *     tags: [Auth]
+ *     parameters:
+ *      - in: path
+ *        name: email
+ *        schema:
+ *         type: string
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Send verification email successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
+authRoutes.get(
+  "/send/email/:email",
+  authController.sendVerificationEmailController
+);
 
+/**
+ * @swagger
+ * /api/auth/verify/email:
+ *   post:
+ *     summary: Verify user email
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/VerifyEmailDto'
+ *     responses:
+ *       200:
+ *         description: Verify email successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
+authRoutes.post("/verify/email", authController.verifyEmailController);
+
+/**
+ * @swagger
+ * /api/auth/send/phone:
+ *   post:
+ *     summary: Send verification SMS to user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SendVerificationPhoneDto'
+ *     responses:
+ *       200:
+ *         description: Send verification SMS successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
 authRoutes.post("/send/phone", authController.sendVerificationPhoneController);
+
+/**
+ * @swagger
+ * /api/auth/verify/phone:
+ *   post:
+ *     summary: Verify user phone number
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/VerifyPhoneDto'
+ *     responses:
+ *       200:
+ *         description: Verify phone number successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
 authRoutes.post("/verify/phone", authController.verifyPhoneController);
 
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: Create reset password token
+ *     description: Send reset password token to user email
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateResetPasswordTokenDto'
+ *     responses:
+ *       200:
+ *         description: Create reset password token successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
 authRoutes.post(
   "/reset-password",
   authController.createResetPasswordTokenController
 );
+
+/**
+ * @swagger
+ * /api/auth/reset-password/{token}:
+ *   post:
+ *     summary: Reset password
+ *     description: Reset user password by token
+ *     tags: [Auth]
+ *     parameters:
+ *      - in: path
+ *        name: token
+ *        schema:
+ *         type: string
+ *         required: true
+ *     requestBody:
+ *      required: true
+ *      content:
+ *       application/json:
+ *        schema:
+ *         $ref: '#/components/schemas/ResetPasswordDto'
+ *     responses:
+ *       200:
+ *         description: Reset password successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
 authRoutes.post(
   "/reset-password/:token",
   authController.resetPasswordController

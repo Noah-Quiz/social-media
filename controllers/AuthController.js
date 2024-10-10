@@ -18,14 +18,17 @@ const LoginDto = require("../dtos/Auth/LoginDto");
 const SignupDto = require("../dtos/Auth/SignupDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
+const SendVerificationEmailDto = require("../dtos/Auth/SendVerificationEmailDto");
+const SendVerificationPhoneDto = require("../dtos/Auth/SendVerificationPhoneDto");
+const CreateResetPasswordTokenDto = require("../dtos/Auth/CreateResetPasswordTokenDto");
 require("dotenv").config();
 
 class AuthController {
   async signUpController(req, res) {
     try {
-    const { fullName, email, phoneNumber, password } = req.body;
-    const signupDto = new SignupDto(fullName, email, phoneNumber, password);
-    await signupDto.validate();
+      const { fullName, email, phoneNumber, password } = req.body;
+      const signupDto = new SignupDto(fullName, email, phoneNumber, password);
+      await signupDto.validate();
       const user = await signUpService(fullName, email, phoneNumber, password);
       res
         .status(StatusCodeEnums.Created_201)
@@ -126,12 +129,23 @@ class AuthController {
   }
 
   async sendVerificationEmailController(req, res) {
-    const { email } = req.query;
     try {
+      const { email } = req.params;
+      const sendVerificationEmailDto = new SendVerificationEmailDto(email);
+      await sendVerificationEmailDto.validate();
+
       await sendVerificationEmailService(email);
-      res.status(200).json({ message: "Email sent successfully" });
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Email sent successfully" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 
@@ -141,17 +155,35 @@ class AuthController {
       const user = await verifyEmailService(token);
       res.status(200).json({ message: "Email verified successfully" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 
   async sendVerificationPhoneController(req, res) {
-    const { phoneNumber } = req.body;
     try {
+      const { phoneNumber } = req.body;
+      const sendVerificationPhoneDto = new SendVerificationPhoneDto(
+        phoneNumber
+      );
+      await sendVerificationPhoneDto.validate();
       const status = await sendVerificationPhoneService(phoneNumber);
-      res.status(200).json({ message: "SMS sent successfully" });
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "SMS sent successfully" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 
@@ -159,37 +191,64 @@ class AuthController {
     const { phoneNumber, code } = req.body;
     try {
       const status = await verifyPhoneService(phoneNumber, code);
-      res.status(200).json({ message: "Phone number verified successfully" });
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Phone number verified successfully" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 
   async createResetPasswordTokenController(req, res) {
-    const { email } = req.body;
     try {
+      const { email } = req.body;
+      const createResetPasswordTokenDto = new CreateResetPasswordTokenDto(
+        email
+      );
+      await createResetPasswordTokenDto.validate();
+      
       const user = await createResetPasswordTokenService(email);
       if (user) {
         res
-          .status(201)
+          .status(StatusCodeEnums.Created_201)
           .json({ message: "Reset password token created successfully" });
       }
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 
   async resetPasswordController(req, res) {
-    const { token } = req.params;
-    const { newPassword } = req.body;
-
     try {
+      const { token } = req.params;
+      const { newPassword } = req.body;
+
       const user = await resetPasswordService(token, newPassword);
       if (user) {
-        res.status(200).json({ message: "Reset password successfully  " });
+        res
+          .status(StatusCodeEnums.OK_200)
+          .json({ message: "Reset password successfully  " });
       }
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 }
