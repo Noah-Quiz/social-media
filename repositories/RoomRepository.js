@@ -14,7 +14,9 @@ class RoomRepository {
   // Get a room by its ID
   async getRoomById(roomId) {
     try {
-      return await Room.findById(roomId).populate("videoId");
+      return await Room.findOne({ _id: roomId, isDeleted: false }).populate(
+        "videoId"
+      );
     } catch (error) {
       throw new Error(
         `Error retrieving room with ID ${roomId}: ${error.message}`

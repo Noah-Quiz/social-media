@@ -1,21 +1,21 @@
 const mongoose = require("mongoose");
 const {
   deleteMessageService,
-  findMessage,
-  findAllMessagesByRoomId,
+  findMessageService,
+  findAllMessagesByRoomIdService,
   createAMessageService,
   updateMessageService,
 } = require("../services/MessageService");
 
 class MessageController {
-  async getMessage(req, res) {
+  async getMessageController(req, res) {
     const { messageId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(messageId)) {
       return res.status(400).json({ error: "Invalid message ID" });
     }
     try {
-      const message = await findMessage(messageId);
+      const message = await findMessageService(messageId);
       if (!message) {
         res
           .status(404)
@@ -27,7 +27,7 @@ class MessageController {
     }
   }
 
-  async getMessages(req, res) {
+  async getMessagesController(req, res) {
     const { roomId } = req.query; // Extract roomId from the query
 
     if (!roomId) {
@@ -35,7 +35,7 @@ class MessageController {
     }
 
     try {
-      const messages = await findAllMessagesByRoomId(roomId);
+      const messages = await findAllMessagesByRoomIdService(roomId);
       if (!messages || messages.length === 0) {
         return res
           .status(404)
@@ -49,7 +49,7 @@ class MessageController {
     }
   }
 
-  async updateMessage(req, res) {
+  async updateMessageController(req, res) {
     const { messageId } = req.params;
     const { content } = req.body;
     const updateData = { content };
@@ -63,7 +63,7 @@ class MessageController {
     }
   }
 
-  async deleteMessage(req, res) {
+  async deleteMessageController(req, res) {
     const { messageId } = req.params;
     try {
       await deleteMessageService(messageId);
@@ -73,7 +73,7 @@ class MessageController {
     }
   }
 
-  async createAMessage(req, res) {
+  async createAMessageController(req, res) {
     const { userId, roomId, content } = req.body;
     try {
       const message = await createAMessageService(userId, roomId, content);
