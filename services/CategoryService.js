@@ -1,6 +1,6 @@
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
-const createCategory = async (categoryData) => {
+const createCategoryService = async (categoryData) => {
   const connection = new DatabaseTransaction();
   try {
     const session = await connection.startTransaction();
@@ -17,7 +17,7 @@ const createCategory = async (categoryData) => {
   }
 };
 
-const getCategory = async (id) => {
+const getCategoryService = async (id) => {
   const connection = new DatabaseTransaction();
   try {
     return await connection.categoryRepository.getCategory(id);
@@ -26,7 +26,7 @@ const getCategory = async (id) => {
   }
 };
 
-const getAllCategory = async () => {
+const getAllCategoryService = async () => {
   const connection = new DatabaseTransaction();
   try {
     return await connection.categoryRepository.getAllCategory();
@@ -35,7 +35,7 @@ const getAllCategory = async () => {
   }
 };
 
-const updateCategory = async (id, categoryData) => {
+const updateCategoryService = async (id, categoryData) => {
   const connection = new DatabaseTransaction();
   try {
     const session = await connection.startTransaction();
@@ -52,7 +52,7 @@ const updateCategory = async (id, categoryData) => {
   }
 };
 
-const deleteCategory = async (id) => {
+const deleteCategoryService = async (id) => {
   const connection = new DatabaseTransaction();
   try {
     const session = await connection.startTransaction();
@@ -68,7 +68,7 @@ const deleteCategory = async (id) => {
   }
 };
 
-const deactivateCategory = async (id) => {
+const deactivateCategoryService = async (id) => {
   const connection = new DatabaseTransaction();
   try {
     const session = await connection.startTransaction();
@@ -85,10 +85,10 @@ const deactivateCategory = async (id) => {
 };
 
 module.exports = {
-  createCategory,
-  getAllCategory,
-  getCategory,
-  deactivateCategory,
-  deleteCategory,
-  updateCategory,
+  createCategoryService,
+  getAllCategoryService,
+  getCategoryService,
+  deactivateCategoryService,
+  deleteCategoryService,
+  updateCategoryService,
 };

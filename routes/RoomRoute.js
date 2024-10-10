@@ -9,15 +9,15 @@ const route = express.Router();
 route.use(AuthMiddleware);
 
 // Room routes
-route.get("/global-chat", roomController.GlobalChat);
-route.get("/dm-room", roomController.DirectMessage);
-route.get("/video-chat", roomController.VideoChat);
-route.post("/create", roomController.CreateRoom);
-route.get("/get-one/:id", roomController.GetRoom);
-route.get("/all-room", roomController.GetAllRooms);
-route.put("/:id", roomController.UpdateRoom);
-route.delete("/:id", roomController.DeleteRoom);
-route.get("/all-dm-room", roomController.UserChatRooms);
+route.get("/global-chat", roomController.GlobalChatController);
+route.get("/dm-room", roomController.DirectMessageController);
+route.get("/video-chat", roomController.VideoChatController);
+route.post("/create", roomController.CreateRoomController);
+route.get("/get-one/:id", roomController.GetRoomController);
+route.get("/all-room", roomController.GetAllRoomsController);
+route.put("/:id", roomController.UpdateRoomController);
+route.delete("/:id", roomController.DeleteRoomController);
+route.get("/all-dm-room", roomController.UserChatRoomsController);
 
 route.put("/group-chat/member", roomController.handleMemberGroupChatController);
 

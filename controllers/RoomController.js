@@ -1,13 +1,13 @@
 const {
-  createRoom,
-  deleteRoom,
-  getAllRooms,
-  getRoom,
-  updateRoom,
-  DirectMessage,
-  getRoomUserId,
-  getRoomVideoId,
-  getGlobalRoom,
+  createRoomService,
+  deleteRoomService,
+  getAllRoomsService,
+  getRoomService,
+  updateRoomService,
+  DirectMessageService,
+  getRoomUserIdService,
+  getRoomVideoIdService,
+  getGlobalRoomService,
   handleMemberGroupChatService,
 } = require("../services/RoomService");
 
@@ -15,9 +15,9 @@ const mongoose = require("mongoose");
 
 class RoomController {
   // 1. Global Chat Room
-  async GlobalChat(req, res) {
+  async GlobalChatController(req, res) {
     try {
-      const globalRoom = await getGlobalRoom();
+      const globalRoom = await getGlobalRoomService();
       return res.status(200).json({ data: globalRoom, message: "Success" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -25,11 +25,11 @@ class RoomController {
   }
 
   // 2. Direct Message Room
-  async DirectMessage(req, res) {
+  async DirectMessageController(req, res) {
     const currentUserId = req.userId;
     const targetedUserId = req.query.userId;
     try {
-      const directMessageRoom = await DirectMessage(
+      const directMessageRoom = await DirectMessageService(
         currentUserId,
         targetedUserId
       );
@@ -42,10 +42,10 @@ class RoomController {
   }
 
   // 3. Video Chat Room
-  async VideoChat(req, res) {
+  async VideoChatController(req, res) {
     const videoId = req.query.videoId;
     try {
-      const roomVideoId = await getRoomVideoId(videoId);
+      const roomVideoId = await getRoomVideoIdService(videoId);
       return res.status(200).json({ data: roomVideoId, message: "Success" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -53,10 +53,10 @@ class RoomController {
   }
 
   // 4. Create a Room
-  async CreateRoom(req, res) {
+  async CreateRoomController(req, res) {
     const roomData = req.body;
     try {
-      const newRoom = await createRoom(roomData);
+      const newRoom = await createRoomService(roomData);
       return res
         .status(201)
         .json({ data: newRoom, message: "Room created successfully!" });
@@ -66,10 +66,10 @@ class RoomController {
   }
 
   // 5. Get a Specific Room by ID
-  async GetRoom(req, res) {
+  async GetRoomController(req, res) {
     const roomId = req.params.id;
     try {
-      const room = await getRoom(roomId);
+      const room = await getRoomService(roomId);
       if (!room) {
         return res.status(404).json({ message: "Room not found" });
       }
@@ -80,9 +80,9 @@ class RoomController {
   }
 
   // 6. Get All Rooms
-  async GetAllRooms(req, res) {
+  async GetAllRoomsController(req, res) {
     try {
-      const rooms = await getAllRooms();
+      const rooms = await getAllRoomsService();
       return res.status(200).json({ data: rooms, message: "Success" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -90,11 +90,11 @@ class RoomController {
   }
 
   // 7. Update a Room by ID
-  async UpdateRoom(req, res) {
+  async UpdateRoomController(req, res) {
     const roomId = req.params.id;
     const roomData = req.body;
     try {
-      const updatedRoom = await updateRoom(roomId, roomData);
+      const updatedRoom = await updateRoomService(roomId, roomData);
       if (!updatedRoom) {
         return res.status(404).json({ message: "Room not found" });
       }
@@ -107,10 +107,10 @@ class RoomController {
   }
 
   // 8. Delete a Room by ID (Soft Delete)
-  async DeleteRoom(req, res) {
+  async DeleteRoomController(req, res) {
     const roomId = req.params.id;
     try {
-      const deletedRoom = await deleteRoom(roomId);
+      const deletedRoom = await deleteRoomService(roomId);
       if (!deletedRoom) {
         return res.status(404).json({ message: "Room not found" });
       }
@@ -123,10 +123,10 @@ class RoomController {
   }
   //9. Get all direct message by userID
 
-  async UserChatRooms(req, res) {
+  async UserChatRoomsController(req, res) {
     const userId = req.userId;
     try {
-      const rooms = await getRoomUserId(userId);
+      const rooms = await getRoomUserIdService(userId);
       res
         .status(200)
         .json({ data: rooms, size: rooms.length, message: "Success" });

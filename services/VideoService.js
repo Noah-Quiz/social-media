@@ -1,36 +1,42 @@
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-const { validEmail, validPassword } = require("../utils/validator");
 const axios = require("axios");
+const { uploadThumbnail, uploadFiles } = require("../middlewares/LoadFile");
 
 const createVideoService = async (
-  userId,
-  { title, description, videoUrl, embedUrl, enumMode, thumbnailUrl, categoryIds }
+  userId, videoFile, thumbnailFile,
+  { title, description, enumMode, categoryIds }
 ) => {
   try {
+    if (["public", "private", "unlisted"].includes(enumMode)) {
+      throw new Error('Invalid video accessibility');
+    }
+    
+    if (categoryIds && !Array.isArray(categoryIds)) {
+      throw new Error('CategoryIds must be an array');
+    }
+    if (categoryIds && categoryIds.length !== 0) {
+      categoryIds.forEach(id => {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          throw new Error(`Invalid category ID: ${id}. Cannot add`);
+        }
+      })
+    }
+
     const connection = new DatabaseTransaction();
 
-    let categoryObjectIds = [];
-
-    if (typeof categoryIds === "string") {
-      categoryObjectIds = categoryIds
-        .replace(/[\[\]\s]/g, "")
-        .split(",")
-        .filter((id) => mongoose.Types.ObjectId.isValid(id))
-        .map((id) => new mongoose.Types.ObjectId(id));
-    }
+    const { videoUrl, embedUrl, thumbnailUrl } = await uploadFiles(videoFile, thumbnailFile);
 
     const video = await connection.videoRepository.createVideoRepository({
       userId,
       title,
       description,
-      categoryIds: categoryObjectIds,
+      categoryIds,
       enumMode,
       videoUrl,
       embedUrl,
       thumbnailUrl,
-      categoryIds: categoryObjectIds,
     });
 
     return video;
@@ -39,14 +45,43 @@ const createVideoService = async (
   }
 };
 
-const updateAVideoByIdService = async (videoId, data) => {
-  const connection = new DatabaseTransaction();
+const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
   try {
-    const video = await connection.videoRepository.updateAVideoByIdRepository(
+    if (!["public", "private", "unlisted"].includes(data.enumMode)) {
+      throw new Error('Invalid video accessibility');
+    }
+    
+    const categoryIds = data.categoryIds;
+    if (categoryIds && !Array.isArray(categoryIds)) {
+      throw new Error('CategoryIds must be an array');
+    }
+    if (categoryIds && categoryIds.length !== 0) {
+      categoryIds.forEach(id => {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          throw new Error(`Invalid category ID: ${id}. Cannot add`);
+        }
+      })
+    }
+
+    const connection = new DatabaseTransaction();
+
+    const video = await connection.videoRepository.getVideoRepository(videoId);
+    if (!video) {
+      throw new Error("Video not found")
+    }
+
+    if (thumbnailFile && thumbnailFile.buffer) {
+      const vimeoVideoId = video.videoUrl.split("/").pop();
+      const thumbnailUrl = await uploadThumbnail(`/videos/${vimeoVideoId}`, thumbnailFile);
+      data.thumbnailUrl = thumbnailUrl;
+    }
+
+    const updatedVideo = await connection.videoRepository.updateAVideoByIdRepository(
       videoId,
       data
     );
-    return video;
+
+    return updatedVideo;
   } catch (error) {
     throw new Error(`Error when update a video: ${error.message}`);
   }
@@ -94,57 +129,66 @@ const getVideosByUserIdService = async (userId) => {
     );
     return videos;
   } catch (error) {
-    throw new Error(`Error in get videos by userId ${error.message}`);
+    throw new Error(`Error getting video: ${error.message}`);
   }
 };
 
-const deleteVideo = async (id, userId) => {
+const getVideoService = async (userId) => {
+  try {
+    const connection = new DatabaseTransaction();
+
+    const video = await connection.videoRepository.getVideoRepository(userId);
+
+    return video;
+  } catch (error) {
+    throw new Error(`Error getting video: ${error.message}`);
+  }
+};
+
+const getVideosService = async (query) => {
+  try {
+    const connection = new DatabaseTransaction();
+
+    const { videos, totalDocuments, currentPage, totalPages } = await connection.videoRepository.getAllVideosRepository(query);
+
+    return { videos, totalDocuments, currentPage, totalPages };
+  } catch (error) {
+    throw new Error(`Error getting video: ${error.message}`);
+  }
+};
+
+const deleteVideoService = async (videoId, userId) => {
   const connection = new DatabaseTransaction();
 
   try {
     const session = await connection.startTransaction();
 
-    // Log the ID being searched for
-    console.log(`Attempting to find video with ID: ${id}`);
-
     const video = await connection.videoRepository.getVideoRepository(
-      id,
+      videoId,
       session
     );
-    console.log(video);
+
     if (!video) {
-      throw new Error(`No video found for id: ${id}`);
+      throw new Error(`No video found`);
     }
 
     if (video.userId.toString() !== userId) {
       throw new Error("You are not the owner of this video.");
     }
 
-    const videoId = video.videoUrl.split("/").pop();
-
-    // Log the Vimeo video ID being deleted
-    console.log(`Attempting to delete Vimeo video with ID: ${videoId}`);
-
+    let vimeoVideoId = video.videoUrl.split("/").pop();
     const response = await axios.delete(
-      `https://api.vimeo.com/videos/${videoId}`,
+      `https://api.vimeo.com/videos/${vimeoVideoId}`,
       {
         headers: {
           Authorization: `Bearer ${process.env.VIMEO_ACCESS_TOKEN}`,
         },
       }
     );
-    console.log(response);
-    // Log Vimeo response
-    console.log(`Vimeo delete response status: ${response.status}`);
 
     if (response.status !== 204) {
       throw new Error("Failed to delete video on Vimeo.");
     }
-
-    // Log the database delete operation
-    console.log(
-      `Attempting to soft-delete video with ID: ${video._id} from the database`
-    );
 
     const repo = await connection.videoRepository.deleteVideoRepository(
       video._id,
@@ -159,9 +203,7 @@ const deleteVideo = async (id, userId) => {
 
     return repo;
   } catch (error) {
-    // Abort the transaction in case of an error
     await connection.abortTransaction();
-
     throw new Error(
       `Error when deleting video service layer: ${error.message}`
     );
@@ -176,5 +218,7 @@ module.exports = {
   toggleLikeVideoService,
   getVideosByUserIdService,
   viewIncrementService,
-  deleteVideo,
+  deleteVideoService,
+  getVideoService,
+  getVideosService,
 };

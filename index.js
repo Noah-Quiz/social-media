@@ -1,7 +1,8 @@
 const dotenv = require("dotenv");
 require("dotenv").config();
 const express = require("express");
-const passport = require("passport");
+const getLogger = require("./utils/logger");
+const swaggerDoc = require("./utils/swagger");
 const cors = require("cors");
 const categoryRoutes = require("./routes/CategoryRoute");
 const myPlaylistRoutes = require("./routes/MyPlaylistRoute");
@@ -12,6 +13,7 @@ const userRoute = require("./routes/UserRoute");
 const roomRoutes = require("./routes/RoomRoute");
 const { createAMessageService } = require("./services/MessageService");
 const { getAnUserByIdService } = require("./services/UserService");
+const commentRoutes = require("./routes/CommentRoute");
 const app = express();
 const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
@@ -31,6 +33,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 const Vimeo = require("vimeo").Vimeo;
 
 const vimeoClient = new Vimeo(
@@ -107,7 +110,8 @@ app.get("/", (req, res) => {
 
 // Log API requests
 app.use((req, res, next) => {
-  console.log(req.path, req.method);
+  const logger = getLogger("API");
+  logger.info(req.path, req.method);
   next();
 });
 
@@ -119,14 +123,16 @@ app.use("/api/users", userRoute);
 app.use("/api/messages", messageRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/rooms", roomRoutes);
+app.use("/api/comments", commentRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 
 server.listen(port, (err) => {
   if (err) {
-    console.error("Failed to start server:", err);
+    logger.error("Failed to start server:", err);
     process.exit(1);
   } else {
-    console.log(`Server started! http://localhost:${port}/`);
+    logger.info(`Server is running at: http://localhost:${port}`);
+    swaggerDoc(app, port);
   }
 });
