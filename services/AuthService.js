@@ -11,23 +11,29 @@ const {
   sendVerificationCode,
   checkVerification,
 } = require("../utils/phoneVerification");
+const CoreException = require("../exceptions/CoreException");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const signUpService = async (fullName, email, phoneNumber, password) => {
   try {
     const connection = new DatabaseTransaction();
 
-    validEmail(email);
-    validPassword(password);
-    validPhoneNumber(phoneNumber);
-
     const existingEmail = await connection.userRepository.findUserByEmail(
       email
     );
-    if (existingEmail) throw new Error("Email is already registered");
+    if (existingEmail)
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Email is already registered"
+      );
 
     const existingPhone = await connection.userRepository.findUserByPhoneNumber(
       phoneNumber
     );
-    if (existingPhone) throw new Error("Phone is already registered");
+    if (existingPhone)
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Phone number is already registered"
+      );
 
     const formattedPhoneNumber = phoneNumber.replace(/^0/, "+84");
 
@@ -43,7 +49,7 @@ const signUpService = async (fullName, email, phoneNumber, password) => {
 
     return user;
   } catch (error) {
-    throw new Error(`Error when signing up: ${error.message}`);
+    throw error;
   }
 };
 
@@ -51,15 +57,21 @@ const loginService = async (email, password) => {
   try {
     const connection = new DatabaseTransaction();
 
-    validEmail(email);
-
     const user = await connection.userRepository.findUserByEmail(email);
-    if (user.isActive === false) throw new Error("User is not active");
-    if (!user) throw new Error("User not found");
+    if (!user)
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    if (user.isActive === false)
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "User is not active"
+      );
 
     const isPasswordMath = bcrypt.compare(password, user.password);
     if (!isPasswordMath) {
-      throw new Error("Password is incorrect");
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Password is incorrect"
+      );
     }
 
     user.lastLogin = Date.now();
@@ -67,7 +79,7 @@ const loginService = async (email, password) => {
 
     return user;
   } catch (error) {
-    throw new Error(`Error when login: ${error.message}`);
+    throw error;
   }
 };
 

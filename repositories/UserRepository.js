@@ -11,6 +11,15 @@ class UserRepository {
     }
   }
 
+  async findUserById(userId) {
+    try {
+      const user = await User.findById(userId);
+      return user;
+    } catch (error) {
+      throw new Error(`Error when finding user by id: ${error.message}`);
+    }
+  }
+
   async findUserByEmail(email) {
     try {
       const user = await User.findOne({ email });
@@ -51,11 +60,12 @@ class UserRepository {
       throw new Error(`Error when updating user by id: ${error.message}`);
     }
   }
-  
 
   async getAnUserByIdRepository(userId) {
     try {
-      const user = await User.findOne({ _id: userId, isDeleted: false }).select("email fullName nickName follow followBy avatar phoneNumber");
+      const user = await User.findOne({ _id: userId, isDeleted: false }).select(
+        "email fullName nickName follow followBy avatar phoneNumber"
+      );
       if (user) {
         return user;
       }
@@ -65,15 +75,26 @@ class UserRepository {
     }
   }
 
-
-  async getAllUsersRepository() {
+  async getAllUsersRepository(page, size) {
     try {
-      const users = await User.find({ isDeleted: false }).select("email fullName nickName follow followBy avatar phoneNumber");
-      return users;
+      const query = { isDeleted: false };
+      const skip = (page - 1) * size;
+      const users = await User.find(query)
+        .select("email fullName nickName follow followBy avatar phoneNumber")
+        .skip(skip)
+        .limit(size);
+      const totalUsers = await User.countDocuments(query);
+      return {
+        data: users,
+        message: "Get all users successfully",
+        page: page,
+        total: totalUsers,
+        totalPages: Math.ceil(totalUsers / size),
+      };
     } catch (error) {
       throw new Error(`Error when getting all users: ${error.message}`);
     }
-  }  
+  }
 
   async followAnUserRepository(userId, followId) {
     const user = await User.findOne({ _id: userId });

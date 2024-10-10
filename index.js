@@ -1,10 +1,8 @@
 const dotenv = require("dotenv");
 require("dotenv").config();
 const express = require("express");
-const passport = require("passport");
-const session = require("express-session");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const AppleStrategy = require("passport-apple");
+const getLogger = require("./utils/logger");
+const swaggerDoc = require("./utils/swagger");
 const cors = require("cors");
 const categoryRoutes = require("./routes/CategoryRoute");
 const myPlaylistRoutes = require("./routes/MyPlaylistRoute");
@@ -92,7 +90,8 @@ app.get("/", (req, res) => {
 
 // Log API requests
 app.use((req, res, next) => {
-  console.log(req.path, req.method);
+  const logger = getLogger("API");
+  logger.info(req.path, req.method);
   next();
 });
 
@@ -109,10 +108,12 @@ app.use("/api/comments", commentRoutes);
 const port = process.env.DEVELOPMENT_PORT || 4000;
 
 app.listen(port, (err) => {
+  const logger = getLogger("APP");
   if (err) {
-    console.error("Failed to start server:", err);
+    logger.error("Failed to start server:", err);
     process.exit(1);
   } else {
-    console.log(`Server started! Listening on port ${port}`);
+    logger.info(`Server is running at: http://localhost:${port}`);
+    swaggerDoc(app, port);
   }
 });
