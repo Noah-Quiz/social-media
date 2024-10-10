@@ -11,7 +11,7 @@ class CategoryController {
   async createCategoryController(req, res) {
     try {
       const category = req.body;
-      const result = await createCategory(category);
+      const result = await createCategoryService(category);
       res.status(201).json({ result, message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -24,7 +24,7 @@ class CategoryController {
       if (!id) {
         return res.status(400).json({ message: "id is required" });
       }
-      const category = await getCategory(id);
+      const category = await getCategoryService(id);
       if (!category) {
         return res.status(404).json({ message: `Category not found` });
       }
@@ -36,7 +36,7 @@ class CategoryController {
 
   async getAllCategoryController(req, res) {
     try {
-      const categories = await getAllCategory();
+      const categories = await getAllCategoryService();
       res.status(200).json(categories);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -47,7 +47,7 @@ class CategoryController {
     try {
       const { id } = req.params;
       const categoryData = req.body;
-      const result = await updateCategory(id, categoryData);
+      const result = await updateCategoryService(id, categoryData);
       res.status(200).json({ result, message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -57,7 +57,7 @@ class CategoryController {
   async deactivateCategoryController(req, res) {
     try {
       const { id } = req.params;
-      const result = await deactivateCategory(id);
+      const result = await deactivateCategoryService(id);
       res.status(200).json({ result, message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -67,7 +67,7 @@ class CategoryController {
   async deleteCategoryController(req, res) {
     try {
       const { id } = req.params;
-      await deleteCategory(id);
+      await deleteCategoryService(id);
       res.status(200).json({ message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
