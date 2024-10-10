@@ -27,10 +27,16 @@ const findAllMessagesByRoomIdService = async (id) => {
   }
 };
 
-const updateMessageService = async (messageId, updateData) => {
+//only message owner can update
+const updateMessageService = async (userId, messageId, updateData) => {
   try {
     const connection = new DatabaseTransaction();
-
+    const originalMessage = await connection.messageRepository.getMessageById(
+      messageId
+    );
+    if (originalMessage.userId.toString() !== userId.toString()) {
+      throw new Error("You are not the owner of this message");
+    }
     const message = await connection.messageRepository.updateMessage(
       messageId,
       updateData
@@ -42,9 +48,15 @@ const updateMessageService = async (messageId, updateData) => {
   }
 };
 
-const deleteMessageService = async (messageId) => {
+const deleteMessageService = async (userId, messageId) => {
   try {
     const connection = new DatabaseTransaction();
+    const originalMessage = await connection.messageRepository.getMessageById(
+      messageId
+    );
+    if (originalMessage.userId.toString() !== userId.toString()) {
+      throw new Error("You are not the owner of this message");
+    }
     if (!mongoose.Types.ObjectId.isValid(messageId)) {
       console.log("ko valid");
     }
@@ -63,6 +75,7 @@ const createAMessageService = async (userId, roomId, content) => {
       roomId,
       content,
     });
+    return response;
   } catch (error) {
     throw new Error(error.message);
   }

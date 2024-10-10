@@ -1,8 +1,10 @@
 const express = require("express");
 const MessageController = require("../controllers/MessageController");
+const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const messageController = new MessageController();
 
 const messageRoutes = express.Router();
+messageRoutes.use(AuthMiddleware);
 
 messageRoutes.post("/", messageController.createAMessageController);
 
