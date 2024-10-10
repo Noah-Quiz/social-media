@@ -1,30 +1,22 @@
 const express = require("express");
 const CategoryController = require("../controllers/CategoryController");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
+const requireRole = require("../middlewares/requireRole");
+const UserEnum = require("../enums/UserEnum");
 
 const router = express.Router();
 const categoryController = new CategoryController();
 
 router.use(AuthMiddleware);
 
-router.post("/", (req, res) =>
-  categoryController.createCategoryController(req, res)
-);
+router.post("/", requireRole(UserEnum.ADMIN), categoryController.createCategoryController);
 
-router.get("/:id", (req, res) =>
-  categoryController.getCategoryController(req, res)
-);
+router.get("/", categoryController.getAllCategoryController);
 
-router.get("/", (req, res) =>
-  categoryController.getAllCategoryController(req, res)
-);
+router.get("/:categoryId", categoryController.getCategoryController);
 
-router.put("/:id", (req, res) =>
-  categoryController.updateCategoryController(req, res)
-);
+router.put("/:categoryId", requireRole(UserEnum.ADMIN), categoryController.updateCategoryController);
 
-router.delete("/:id", (req, res) =>
-  categoryController.deleteCategoryController(req, res)
-);
+router.delete("/:categoryId", requireRole(UserEnum.ADMIN), categoryController.deleteCategoryController);
 
 module.exports = router;

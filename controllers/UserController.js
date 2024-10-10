@@ -14,35 +14,37 @@ const mongoose = require("mongoose");
 class UserController {
   async getAllUsersController(req, res) {
     try {
-      const { page, size } = req.query;
-      const result = await getAllUsersService(page || 1, size || 5);
+      const { page, size, name } = req.query;
+
+      const result = await getAllUsersService(page || 1, size || 10, name || '');
+
       return res.status(StatusCodeEnums.OK_200).json(result);
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+      }
     }
   }
 
   async deleteUserByIdController(req, res) {
     const { userId } = req.params;
-    const adminId = req.userId;
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res
         .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: "UserId is not an ObjectId" });
+        .json({ message: "Valid user ID is required" });
     }
     try {
-      const result = await deleteUserByIdService(userId, adminId);
+      const result = await deleteUserByIdService(userId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
       if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
+        return res.status(error.code).json({ message: error.message });
       } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
       }
     }
   }
@@ -50,10 +52,10 @@ class UserController {
   async getUserByIdController(req, res) {
     const { userId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: "UserId is not an ObjectId" });
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Valid user ID is required" });
     }
     try {
       const result = await getUserByIdService(userId);
@@ -62,11 +64,9 @@ class UserController {
         .json({ user: result, message: "Get user successfully" });
     } catch (error) {
       if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
+        return res.status(error.code).json({ message: error.message });
       } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
       }
     }
   }
@@ -82,8 +82,8 @@ class UserController {
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: "UserId is not an ObjectId" });
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Invalid user ID" });
     }
 
     try {
@@ -97,11 +97,9 @@ class UserController {
         .json({ user: result, message: "Success" });
     } catch (error) {
       if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
+        return res.status(error.code).json({ message: error.message });
       } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
       }
     }
   }
@@ -118,22 +116,20 @@ class UserController {
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: "UserId is not an ObjectId" });
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Invalid user ID" });
     }
 
     try {
       const result = await updateUserEmailByIdService(userId, email);
-      res
+      return res
         .status(StatusCodeEnums.OK_200)
         .json({ user: result, message: "Success" });
     } catch (error) {
       if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
+        return res.status(error.code).json({ message: error.message });
       } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
       }
     }
   }
@@ -171,11 +167,9 @@ class UserController {
       });
     } catch (error) {
       if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
+        return res.status(error.code).json({ message: error.message });
       } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
       }
     }
   }
