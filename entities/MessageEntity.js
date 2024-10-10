@@ -12,7 +12,7 @@ const messageSchema = new Schema({
     default: "",
   },
   roomId: {
-    type: String,
+    type: mongoose.Types.ObjectId,
     required: true,
   },
   userId: {

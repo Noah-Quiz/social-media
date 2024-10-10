@@ -18,7 +18,7 @@ const roomSchema = new Schema({
   },
   type: {
     type: String,
-    enum: ["private", "video", "public"],
+    enum: ["private", "video", "public", "group"],
     required: true,
   },
   participants: [

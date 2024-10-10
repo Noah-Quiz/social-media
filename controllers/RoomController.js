@@ -8,7 +8,10 @@ const {
   getRoomUserId,
   getRoomVideoId,
   getGlobalRoom,
+  handleMemberGroupChatService,
 } = require("../services/RoomService");
+
+const mongoose = require("mongoose");
 
 class RoomController {
   // 1. Global Chat Room
@@ -127,6 +130,33 @@ class RoomController {
       res
         .status(200)
         .json({ data: rooms, size: rooms.length, message: "Success" });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async handleMemberGroupChatController(req, res) {
+    const { roomId, memberId, action } = req.body;
+    const room = await getRoom(roomId);
+    console.log(room);
+    if (
+      !mongoose.Types.ObjectId.isValid(roomId) ||
+      !mongoose.Types.ObjectId.isValid(memberId)
+    ) {
+      return res
+        .status(500)
+        .json({ message: "RoomId and userId is not an ObjectId" });
+    }
+    if (room.type !== "group") {
+      return res.status(400).json({ message: "This room type is not group" });
+    }
+    try {
+      const result = await handleMemberGroupChatService(
+        roomId,
+        memberId,
+        action
+      );
+      res.status(200).json({ message: "Success", data: result });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }

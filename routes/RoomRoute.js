@@ -19,4 +19,6 @@ route.put("/:id", roomController.UpdateRoom);
 route.delete("/:id", roomController.DeleteRoom);
 route.get("/all-dm-room", roomController.UserChatRooms);
 
+route.put("/group-chat/member", roomController.handleMemberGroupChatController);
+
 module.exports = route;
