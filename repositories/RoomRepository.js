@@ -120,6 +120,35 @@ class RoomRepository {
       throw new Error(`Error finding public chat room: ${error.message}`);
     }
   }
+
+  async handleMemberGroupChatRepository(roomId, memberId, action) {
+    try {
+      let updateQuery;
+
+      if (action === "DELETE") {
+        updateQuery = { $pull: { participants: memberId } };
+      } else if (action === "ADD") {
+        updateQuery = { $addToSet: { participants: memberId } };
+      } else {
+        throw new Error("Invalid action. Only 'ADD' and 'DELETE' are allowed.");
+      }
+
+      // Update the room document
+      const room = await Room.findByIdAndUpdate(roomId, updateQuery, {
+        new: true,
+      });
+
+      if (!room) {
+        throw new Error(`Room with id ${roomId} not found.`);
+      }
+
+      return room;
+    } catch (error) {
+      throw new Error(
+        `Error handling members for room ${roomId}: ${error.message}`
+      );
+    }
+  }
 }
 
 module.exports = RoomRepository;

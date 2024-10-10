@@ -130,6 +130,21 @@ const getGlobalRoomService = async () => {
   }
 };
 
+const handleMemberGroupChatService = async (roomId, memberId, action) => {
+  const connection = new DatabaseTransaction();
+  try {
+    const room =
+      await connection.roomRepository.handleMemberGroupChatRepository(
+        roomId,
+        memberId,
+        action
+      );
+    return room;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 module.exports = {
   createRoomService,
   deleteRoomService,
@@ -140,4 +155,5 @@ module.exports = {
   getRoomUserIdService,
   getRoomVideoIdService,
   getGlobalRoomService,
+  handleMemberGroupChatService,
 };
