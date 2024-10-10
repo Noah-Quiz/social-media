@@ -1,14 +1,14 @@
 const {
-  createCategory,
-  getAllCategory,
-  getCategory,
-  deactivateCategory,
-  deleteCategory,
-  updateCategory,
+  createCategoryService,
+  getAllCategoryService,
+  getCategoryService,
+  deactivateCategoryService,
+  deleteCategoryService,
+  updateCategoryService,
 } = require("../services/CategoryService");
 
 class CategoryController {
-  async createCategory(req, res) {
+  async createCategoryController(req, res) {
     try {
       const category = req.body;
       const result = await createCategory(category);
@@ -18,7 +18,7 @@ class CategoryController {
     }
   }
 
-  async getCategory(req, res) {
+  async getCategoryController(req, res) {
     try {
       const { id } = req.params;
       if (!id) {
@@ -26,9 +26,7 @@ class CategoryController {
       }
       const category = await getCategory(id);
       if (!category) {
-        return res
-          .status(404)
-          .json({ message: `Category not found` });
+        return res.status(404).json({ message: `Category not found` });
       }
       return res.status(200).json({ category });
     } catch (error) {
@@ -36,7 +34,7 @@ class CategoryController {
     }
   }
 
-  async getAllCategory(req, res) {
+  async getAllCategoryController(req, res) {
     try {
       const categories = await getAllCategory();
       res.status(200).json(categories);
@@ -45,7 +43,7 @@ class CategoryController {
     }
   }
 
-  async updateCategory(req, res) {
+  async updateCategoryController(req, res) {
     try {
       const { id } = req.params;
       const categoryData = req.body;
@@ -56,7 +54,7 @@ class CategoryController {
     }
   }
 
-  async deactivateCategory(req, res) {
+  async deactivateCategoryController(req, res) {
     try {
       const { id } = req.params;
       const result = await deactivateCategory(id);
@@ -66,7 +64,7 @@ class CategoryController {
     }
   }
 
-  async deleteCategory(req, res) {
+  async deleteCategoryController(req, res) {
     try {
       const { id } = req.params;
       await deleteCategory(id);
