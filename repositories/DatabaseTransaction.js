@@ -5,6 +5,7 @@ const MyPlaylistRepository = require("./MyPlaylistRepository.js");
 const MessageRepository = require("./MessageRepository.js");
 const VideoRepository = require("./VideoRepository.js");
 const RoomRepository = require("./RoomRepository.js");
+const CommentRepository = require("./CommentRepository.js");
 class DatabaseTransaction extends BaseDatabaseTransaction {
   constructor() {
     super();
@@ -14,6 +15,7 @@ class DatabaseTransaction extends BaseDatabaseTransaction {
     this.messageRepository = new MessageRepository();
     this.videoRepository = new VideoRepository();
     this.roomRepository = new RoomRepository();
+    this.commentRepository = new CommentRepository();
   }
 }
 

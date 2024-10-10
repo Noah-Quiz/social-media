@@ -11,6 +11,7 @@ const messageRoutes = require("./routes/MessageRoute");
 const videoRoutes = require("./routes/VideoRoute");
 const userRoute = require("./routes/UserRoute");
 const roomRoutes = require("./routes/RoomRoute");
+const commentRoutes = require("./routes/CommentRoute");
 const app = express();
 
 // Middleware
@@ -23,6 +24,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 const Vimeo = require("vimeo").Vimeo;
 
 const vimeoClient = new Vimeo(
@@ -53,6 +55,7 @@ app.use("/api/users", userRoute);
 app.use("/api/messages", messageRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/rooms", roomRoutes);
+app.use("/api/comments", commentRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 
