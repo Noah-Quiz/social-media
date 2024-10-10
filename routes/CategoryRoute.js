@@ -1,8 +1,11 @@
 const express = require("express");
 const CategoryController = require("../controllers/CategoryController");
+const AuthMiddleware = require("../middlewares/AuthMiddleware");
 
 const router = express.Router();
 const categoryController = new CategoryController();
+
+router.use(AuthMiddleware);
 
 router.post("/", (req, res) =>
   categoryController.createCategoryController(req, res)

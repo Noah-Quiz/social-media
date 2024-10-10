@@ -21,7 +21,7 @@ class MessageController {
           .status(404)
           .json({ message: `No message found for id: ${messageId}` });
       }
-      res.status(200).json({ message, message: "Success" });
+      res.status(200).json({ data: message, message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -52,10 +52,11 @@ class MessageController {
   async updateMessageController(req, res) {
     const { messageId } = req.params;
     const { content } = req.body;
+    const userId = req.userId;
     const updateData = { content };
 
     try {
-      const message = await updateMessageService(messageId, updateData);
+      const message = await updateMessageService(userId, messageId, updateData);
 
       res.status(200).json({ data: message, message: "Success" });
     } catch (error) {
@@ -65,8 +66,9 @@ class MessageController {
 
   async deleteMessageController(req, res) {
     const { messageId } = req.params;
+    const userId = req.userId;
     try {
-      await deleteMessageService(messageId);
+      await deleteMessageService(userId, messageId);
       res.status(200).json({ message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -74,10 +76,11 @@ class MessageController {
   }
 
   async createAMessageController(req, res) {
-    const { userId, roomId, content } = req.body;
+    const { roomId, content } = req.body;
+    const userId = req.userId;
     try {
       const message = await createAMessageService(userId, roomId, content);
-      res.status(200).json({ message: "Success" });
+      res.status(200).json({ data: message, message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
