@@ -153,8 +153,13 @@ const sendVerificationEmailService = async (email) => {
     const connection = new DatabaseTransaction();
 
     const user = await connection.userRepository.findUserByEmail(email);
-    if (!user) throw new Error("User not found");
-    if (user.verify === true) throw new Error("User is already verified");
+    if (!user)
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    if (user.verify === true)
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "User is already verified"
+      );
 
     const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
       expiresIn: process.env.EMAIL_VERIFICATION_EXPIRE || "1d",
@@ -198,7 +203,7 @@ const sendVerificationEmailService = async (email) => {
       mailBody
     );
   } catch (error) {
-    throw new Error(`Error when sending verification email: ${error.message}`);
+    throw error;
   }
 };
 
@@ -210,16 +215,20 @@ const verifyEmailService = async (token, res) => {
     const connection = new DatabaseTransaction();
     const user = await connection.userRepository.findUserByEmail(email);
     if (!user || user.verifyToken !== token) {
-      throw new Error("Invalid token");
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid token");
     }
-    if (user.verify === true) throw new Error("User is already verified");
+    if (user.verify === true)
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "User is already verified"
+      );
 
     user.verify = true;
     user.verifyToken = null;
     await user.save();
     return user;
   } catch (error) {
-    throw new Error(`Error when verifying email: ${error.message}`);
+    throw error;
   }
 };
 
@@ -230,17 +239,22 @@ const sendVerificationPhoneService = async (phoneNumber) => {
     const user = await connection.userRepository.findUserByPhoneNumber(
       phoneNumber
     );
-    if (!user) throw new Error("User not found");
-    if (user.verify === true) throw new Error("User is already verified");
+    if (!user)
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    if (user.verify === true)
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "User is already verified"
+      );
 
     const status = await sendVerificationCode(phoneNumber);
     if (status !== "pending") {
-      throw new Error("Error when sending verification code");
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "SMS failed");
     }
 
     return status;
   } catch (error) {
-    throw new Error(`Error when sending verification phone: ${error.message}`);
+    throw error;
   }
 };
 
@@ -250,12 +264,17 @@ const verifyPhoneService = async (phoneNumber, code) => {
     const user = await connection.userRepository.findUserByPhoneNumber(
       phoneNumber
     );
-    if (!user) throw new Error("User not found");
-    if (user.verify === true) throw new Error("User is already verified");
+    if (!user)
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    if (user.verify === true)
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "User is already verified"
+      );
 
     const status = await checkVerification(phoneNumber, code);
     if (status !== "approved") {
-      throw new Error("Phone number verification failed");
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid code");
     }
 
     user.verify = true;
@@ -263,7 +282,7 @@ const verifyPhoneService = async (phoneNumber, code) => {
 
     return status;
   } catch (error) {
-    throw new Error(`Error when verifying phone: ${error.message}`);
+    throw error;
   }
 };
 
@@ -271,8 +290,13 @@ const createResetPasswordTokenService = async (email) => {
   try {
     const connection = new DatabaseTransaction();
     const user = await connection.userRepository.findUserByEmail(email);
-    if (!user) throw new Error("User not found");
-    if (user.verify === false) throw new Error("User is not verified");
+    if (!user)
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    if (user.verify === false)
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "User is not verified"
+      );
 
     const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
       expiresIn: process.env.RESET_PASSWORD_EXPIRE,
@@ -317,7 +341,7 @@ const createResetPasswordTokenService = async (email) => {
     );
     return user;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -330,7 +354,7 @@ const resetPasswordService = async (token, newPassword) => {
     const user = await connection.userRepository.findUserByEmail(email);
 
     if (!user || user.passwordResetToken !== token) {
-      throw new Error("Invalid token");
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid token");
     }
 
     const salt = 10;
@@ -342,7 +366,7 @@ const resetPasswordService = async (token, newPassword) => {
 
     return user;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 

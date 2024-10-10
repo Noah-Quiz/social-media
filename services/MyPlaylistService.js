@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const UserEnum = require("../enums/UserEnum");
 
 const createAPlaylistService = async (userId, playlistName) => {
   try {
@@ -55,16 +56,33 @@ const updatePlaylistService = async (userId, playlistId, updateData) => {
     const { addedVideoIds, removedVideoIds } = updateData;
 
     const connection = new DatabaseTransaction();
-    const playlists =
+
+    const user = await connection.userRepository.findUserById(userId);
+    if (!user) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
+    if (user.role !== UserEnum.ADMIN && user.role !== UserEnum.USER) {
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "You are not allowed to update playlist"
+      );
+    }
+
+    const userPlaylists =
       await connection.myPlaylistRepository.getAllMyPlaylistsRepository({
         userId,
       });
-    const playlist = playlists.find((playlist) => playlist._id == playlistId);
-    if (!playlist) {
-      throw new CoreException(
-        StatusCodeEnums.Conflict_409,
-        "Playlist not belong to you"
+
+    if (user.role === UserEnum.USER) {
+      const checkPlaylist = userPlaylists.find(
+        (playlist) => playlist._id == playlistId
       );
+      if (!checkPlaylist) {
+        throw new CoreException(
+          StatusCodeEnums.Conflict_409,
+          "Playlist not belong to you"
+        );
+      }
     }
     const updatedPlaylist =
       await connection.myPlaylistRepository.updatePlaylistRepository(
@@ -74,8 +92,8 @@ const updatePlaylistService = async (userId, playlistId, updateData) => {
 
     if (!updatedPlaylist) {
       throw new CoreException(
-        StatusCodeEnums.NotFound_404,
-        "Playlist not found"
+        StatusCodeEnums.BadRequest_400,
+        "Update playlist failed"
       );
     }
 
@@ -91,18 +109,30 @@ const deletePlaylistService = async (userId, playlistId) => {
     const user = await connection.userRepository.findUserById(userId);
     if (!user)
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+
+    if (user.role !== UserEnum.ADMIN && user.role !== UserEnum.USER) {
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "You are not allowed to update playlist"
+      );
+    }
+
     const userPlaylists =
       await connection.myPlaylistRepository.getAllMyPlaylistsRepository({
         userId,
       });
-    const checkPlaylist = userPlaylists.find(
-      (playlist) => playlist._id == playlistId
-    );
-    if (!checkPlaylist)
-      throw new CoreException(
-        StatusCodeEnums.NotFound_404,
-        "Playlist not found"
+
+    if (user.role === UserEnum.USER) {
+      const checkPlaylist = userPlaylists.find(
+        (playlist) => playlist._id == playlistId
       );
+      if (!checkPlaylist)
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Playlist not found"
+        );
+    }
+
     const playlist =
       await connection.myPlaylistRepository.deletePlaylistRepository(
         playlistId
