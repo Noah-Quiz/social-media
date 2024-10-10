@@ -4,18 +4,18 @@ const messageController = new MessageController();
 
 const messageRoutes = express.Router();
 
-messageRoutes.post("/", messageController.createAMessage);
+messageRoutes.post("/", messageController.createAMessageController);
 
-messageRoutes.get("/room-messages", messageController.getMessages);
+messageRoutes.get("/room-messages", messageController.getMessagesController);
 
-messageRoutes.delete("/:messageId", messageController.deleteMessage);
+messageRoutes.delete("/:messageId", messageController.deleteMessageController);
 
 messageRoutes.get(
   "/:messageId",
 
-  messageController.getMessage
+  messageController.getMessageController
 );
 
-messageRoutes.put("/:messageId", messageController.updateMessage);
+messageRoutes.put("/:messageId", messageController.updateMessageController);
 
 module.exports = messageRoutes;

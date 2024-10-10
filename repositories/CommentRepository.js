@@ -33,7 +33,10 @@ class CommentRepository {
 
   async getAllCommentVideoId(videoId) {
     try {
-      const comments = await Comment.find({ videoId: videoId });
+      const comments = await Comment.find({
+        videoId: videoId,
+        isDeleted: false,
+      });
       return comments;
     } catch (error) {
       throw new Error(error.message);
@@ -83,7 +86,14 @@ class CommentRepository {
   async getCommentThread(commentId, limit) {
     const numericLimit = parseInt(limit, 10); // Ensure limit is a number
     return Comment.aggregate([
-      { $match: { _id: new mongoose.Types.ObjectId(commentId) } }, // Match the specific comment with 'new'
+      // Match the parent comment and ensure it is not deleted
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(commentId),
+          isDeleted: false,
+        },
+      },
+
       {
         $graphLookup: {
           from: "comments",
@@ -95,14 +105,29 @@ class CommentRepository {
           depthField: "level",
         },
       },
-      // Filter out deleted comments
+
+      // Filter out deleted comments in the replies (children)
       {
         $addFields: {
           children: {
-            $sortArray: { input: "$children", sortBy: { level: 1 } }, // Change to { level: -1 } for descending order
+            $filter: {
+              input: "$children",
+              as: "child",
+              cond: { $eq: ["$$child.isDeleted", false] }, // Filter where isDeleted is false
+            },
           },
         },
       },
+
+      // Sort by level (optional)
+      {
+        $addFields: {
+          children: {
+            $sortArray: { input: "$children", sortBy: { level: 1 } }, // Sort replies in ascending order of depth
+          },
+        },
+      },
+
       // Limit the total number of replies returned
       { $addFields: { children: { $slice: ["$children", numericLimit] } } }, // Use numericLimit here
     ]);
