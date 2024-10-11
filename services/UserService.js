@@ -65,9 +65,6 @@ module.exports = {
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
       }
-
-      await validFullName(data.fullName);
-
       const result = await connection.userRepository.updateAnUserByIdRepository(
         userId,
         data
@@ -121,13 +118,6 @@ module.exports = {
         );
       }
 
-      if (userId === followId) {
-        throw new CoreException(
-          StatusCodeEnum.BadRequest_400,
-          "You can't follow yourself"
-        );
-      }
-
       const result = await connection.userRepository.followAnUserRepository(
         userId,
         followId
@@ -157,13 +147,6 @@ module.exports = {
         throw new CoreException(
           StatusCodeEnum.NotFound_404,
           "User to follow not found"
-        );
-      }
-
-      if (userId === followId) {
-        throw new CoreException(
-          StatusCodeEnum.BadRequest_400,
-          "You can't unfollow yourself"
         );
       }
 

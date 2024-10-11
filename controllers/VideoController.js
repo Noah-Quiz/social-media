@@ -12,8 +12,6 @@ const {
   getVideosService,
 } = require("../services/VideoService");
 const { default: mongoose } = require("mongoose");
-const StatusCodeEnums = require("../enums/StatusCodeEnum");
-const CoreException = require("../exceptions/CoreException");
 require("dotenv").config();
 
 class VideoController {
