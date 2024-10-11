@@ -159,6 +159,19 @@ const getVideosService = async (query) => {
   }
 };
 
+const getVideosByPlaylistIdService = async (playlistId) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const videos =
+      await connection.videoRepository.getVideosByPlaylistIdRepository(
+        playlistId
+      );
+    return videos;
+  } catch (error) {
+    throw error;
+  }
+};
+
 const deleteVideoService = async (videoId, userId) => {
   const connection = new DatabaseTransaction();
 
@@ -217,6 +230,7 @@ module.exports = {
   updateAVideoByIdService,
   toggleLikeVideoService,
   getVideosByUserIdService,
+  getVideosByPlaylistIdService,
   viewIncrementService,
   deleteVideoService,
   getVideoService,

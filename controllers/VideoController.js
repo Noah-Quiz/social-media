@@ -6,11 +6,14 @@ const {
   viewIncrementService,
   updateAVideoByIdService,
   getVideosByUserIdService,
+  getVideosByPlaylistIdService,
   deleteVideoService,
   getVideoService,
   getVideosService,
 } = require("../services/VideoService");
 const { default: mongoose } = require("mongoose");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 require("dotenv").config();
 
 class VideoController {
@@ -197,6 +200,29 @@ class VideoController {
         return res.status(error.code).json({ message: error.message });
       } else {
         return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+      }
+    }
+  }
+
+  async getVideosByPlaylistIdController(req, res) {
+    try {
+      const { playlistId } = req.params;
+      if (!mongoose.Types.ObjectId.isValid(playlistId)) {
+        return res
+          .status(StatusCodeEnums.BadRequest_400)
+          .json({ message: "PlaylistId is not an ObjectId" });
+      }
+      const videos = await getVideosByPlaylistIdService(playlistId);
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Get videos successfully", videos });
+    } catch (error) {
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }

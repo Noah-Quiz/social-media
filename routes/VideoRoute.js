@@ -11,6 +11,8 @@ videoRoutes.get("/", AuthMiddleware, videoController.getVideosController);
 
 videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
 
+videoRoutes.get("/my-playlist/:playlistId", videoController.getVideosByPlaylistIdController);
+
 videoRoutes.put("/:videoId",  AuthMiddleware, upload.fields([{ name: "thumbnailUrl" }]), videoController.updateAVideoByIdController);
 
 videoRoutes.get("/:videoId", AuthMiddleware, videoController.getVideoController);
