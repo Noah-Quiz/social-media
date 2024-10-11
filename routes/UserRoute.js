@@ -10,6 +10,10 @@ const route = express.Router();
 
 route.use(AuthMiddleware);
 
+route.get("/wallet", userController.getUserWalletController);
+
+route.put("/update-wallet", userController.updateUserWalletController);
+
 route.post("/follow", userController.toggleFollowController);
 
 route.get("/", userController.getAllUsersController);

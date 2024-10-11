@@ -90,6 +90,16 @@ const userEntitySchema = new mongoose.Schema({
       ref: "User",
     },
   ],
+  wallet: {
+    balance: {
+      type: Number,
+      default: 0,
+    },
+    coin: {
+      type: Number,
+      default: 0,
+    },
+  },
   ...baseEntitySchema.obj,
 });
 

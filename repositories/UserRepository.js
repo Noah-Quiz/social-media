@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const User = require("../entities/UserEntity");
 
 class UserRepository {
@@ -78,22 +79,22 @@ class UserRepository {
   async getAllUsersRepository(page, size, name) {
     try {
       const query = { isDeleted: false };
-  
+
       if (name) {
         query.$or = [
           { fullName: { $regex: name, $options: "i" } },
           { nickName: { $regex: name, $options: "i" } },
         ];
       }
-  
+
       const skip = (page - 1) * size;
       const users = await User.find(query)
         .select("email fullName nickName follow followBy avatar phoneNumber")
         .skip(skip)
         .limit(size);
-  
+
       const totalUsers = await User.countDocuments(query);
-  
+
       return {
         data: users,
         message: "Get all users successfully",
@@ -105,7 +106,6 @@ class UserRepository {
       throw new Error(`Error when getting all users: ${error.message}`);
     }
   }
-  
 
   async followAnUserRepository(userId, followId) {
     const user = await User.findOne({ _id: userId });
@@ -152,7 +152,6 @@ class UserRepository {
   }
 
   async notifiFollowRepository(userId, followId) {
-
     try {
       const user = await User.findOne({ _id: userId });
       const follow = await User.findOne({ _id: followId });
@@ -169,22 +168,20 @@ class UserRepository {
         seen: false,
         createdAt: new Date(),
       };
-  
+
       await User.updateOne(
         { _id: followId },
         { $push: { notifications: notificationObject } }
       );
-  
+
       console.log(`Notification sent to user ${followId} successfully`);
       return true;
-
     } catch (error) {
       return false;
     }
   }
 
   async notifiLikeVideoRepository(videoOwnerId, notificationObject) {
-
     try {
       const videoOfUser = await User.findOne({ _id: videoOwnerId });
 
@@ -192,16 +189,15 @@ class UserRepository {
         console.log("Video not found");
         return false;
       }
-  
+
       // Đẩy thông báo vào danh sách notifications của người được follow
       await User.updateOne(
         { _id: videoOwnerId },
         { $push: { notifications: notificationObject } }
       );
-  
+
       console.log(`Notification sent to user ${followId} successfully`);
       return true;
-
     } catch (error) {
       return false;
     }
@@ -225,17 +221,110 @@ class UserRepository {
       console.log("UserId:", userId);
       const user = await User.findById(userId);
       if (!user) throw new Error("User not found");
-  
+
       user.notifications.push(notification);
-      
+
       await user.save();
-
-
     } catch (error) {
       throw new Error(error.message);
     }
   }
-  
+
+  async getUserWallet(userId) {
+    const defaultWallet = {
+      balance: 0,
+      coin: 0,
+    };
+    try {
+      const user = await User.findOne({ _id: userId, isDeleted: false });
+      if (!user) {
+        throw new Error("No user found");
+      }
+      if (!user.wallet) {
+        return defaultWallet;
+      }
+      const userWallet = {
+        ...user.wallet,
+        formatedBalance: user.wallet.balance.toLocaleString(),
+        formatedCoin: user.wallet.coin.toLocaleString(),
+      };
+      return userWallet;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+  async topUpUserBalance(userId, amount) {
+    try {
+      const user = await User.findOne({ _id: userId, isDeleted: false });
+      if (!user) {
+        throw new Error("User not found");
+      }
+      if (!user.wallet) {
+        user.wallet = { balance: 0, coin: 0 };
+      }
+      user.wallet.balance += amount;
+
+      await user.save();
+      return user.wallet;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  //exchange rate: 1000vnd => 1 balance => 1000 coin: default
+  async updateUserWalletRepository(
+    userId,
+    actionCurrencyType,
+    amount,
+    exchangeRate
+  ) {
+    try {
+      const user = await User.findOne({ _id: userId, isDeleted: false });
+      if (!user) {
+        throw new Error("User not found");
+      }
+      if (!user.wallet) {
+        user.wallet = { balance: 0, coin: 0 };
+      }
+
+      switch (actionCurrencyType) {
+        case "SpendBalance":
+          if (user.wallet.balance < amount) {
+            throw new Error("Insufficient balance");
+          }
+          user.wallet.balance -= amount;
+          break;
+
+        case "SpendCoin":
+          if (user.wallet.coin < amount) {
+            throw new Error("Insufficient coin");
+          }
+          user.wallet.coin -= amount;
+          break;
+
+        case "ExchangeBalanceToCoin":
+          if (user.wallet.balance < amount) {
+            throw new Error("Insufficient balance");
+          }
+          user.wallet.balance -= amount;
+          user.wallet.coin += amount * exchangeRate;
+          break;
+
+        default:
+          throw new Error("Invalid action currency type");
+      }
+
+      await user.save();
+      const userWallet = {
+        ...user.wallet,
+        formatedBalance: user.wallet.balance.toLocaleString(),
+        formatedCoin: user.wallet.coin.toLocaleString(),
+      };
+      return userWallet;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
 }
 
 module.exports = UserRepository;
