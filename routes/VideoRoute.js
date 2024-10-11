@@ -18,6 +18,11 @@ videoRoutes.post(
 
 videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
 
+videoRoutes.get(
+  "/my-playlist/:playlistId",
+  videoController.getVideosByPlaylistIdController
+);
+
 videoRoutes.put(
   "/:videoId",
   upload.fields([{ name: "thumbnailUrl" }]),

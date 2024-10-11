@@ -68,6 +68,15 @@ const updatePlaylistService = async (userId, playlistId, updateData) => {
       );
     }
 
+    const playlist =
+      await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
+    if (!playlist) {
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Playlist not found"
+      );
+    }
+
     const userPlaylists =
       await connection.myPlaylistRepository.getAllMyPlaylistsRepository({
         userId,
@@ -117,6 +126,15 @@ const deletePlaylistService = async (userId, playlistId) => {
       );
     }
 
+    const playlist =
+      await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
+    if (!playlist) {
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Playlist not found"
+      );
+    }
+
     const userPlaylists =
       await connection.myPlaylistRepository.getAllMyPlaylistsRepository({
         userId,
@@ -133,18 +151,18 @@ const deletePlaylistService = async (userId, playlistId) => {
         );
     }
 
-    const playlist =
+    const deletedPlaylist =
       await connection.myPlaylistRepository.deletePlaylistRepository(
         playlistId
       );
-    if (!playlist) {
+    if (!deletedPlaylist) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Delete playlist failed"
       );
     }
 
-    return playlist;
+    return deletedPlaylist;
   } catch (error) {
     throw error;
   }

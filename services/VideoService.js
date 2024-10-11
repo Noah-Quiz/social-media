@@ -6,7 +6,15 @@ const axios = require("axios");
 
 const createVideoService = async (
   userId,
-  { title, description, videoUrl, embedUrl, enumMode, thumbnailUrl, categoryIds }
+  {
+    title,
+    description,
+    videoUrl,
+    embedUrl,
+    enumMode,
+    thumbnailUrl,
+    categoryIds,
+  }
 ) => {
   try {
     const connection = new DatabaseTransaction();
@@ -98,6 +106,19 @@ const getVideosByUserIdService = async (userId) => {
   }
 };
 
+const getVideosByPlaylistIdService = async (playlistId) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const videos =
+      await connection.videoRepository.getVideosByPlaylistIdRepository(
+        playlistId
+      );
+    return videos;
+  } catch (error) {
+    throw error;
+  }
+};
+
 const deleteVideo = async (id, userId) => {
   const connection = new DatabaseTransaction();
 
@@ -175,6 +196,7 @@ module.exports = {
   updateAVideoByIdService,
   toggleLikeVideoService,
   getVideosByUserIdService,
+  getVideosByPlaylistIdService,
   viewIncrementService,
   deleteVideo,
 };

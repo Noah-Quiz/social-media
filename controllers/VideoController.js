@@ -5,10 +5,13 @@ const {
   updateAVideoByIdService,
   deleteVideo,
   getVideosByUserIdService,
+  getVideosByPlaylistIdService,
 } = require("../services/VideoService");
 const { uploadFiles } = require("../middlewares/LoadFile");
 const createAccessToken = require("../utils/createAccessToken");
 const { default: mongoose } = require("mongoose");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 require("dotenv").config();
 
 class VideoController {
@@ -17,7 +20,6 @@ class VideoController {
     const userId = req.userId;
 
     try {
-      
       if (!req.files.videoUrl || !req.files.thumbnailUrl) {
         return res
           .status(400)
@@ -27,7 +29,10 @@ class VideoController {
       const videoFile = req.files.videoUrl[0];
       const thumbnailFile = req.files.thumbnailUrl[0];
 
-      const { videoUrl, embedUrl, thumbnailUrl } = await uploadFiles(videoFile, thumbnailFile);
+      const { videoUrl, embedUrl, thumbnailUrl } = await uploadFiles(
+        videoFile,
+        thumbnailFile
+      );
 
       const video = await createVideoService(userId, {
         title,
@@ -122,6 +127,29 @@ class VideoController {
       return res.status(200).json({ message: "Successfully", videos });
     } catch (error) {
       return res.status(500).json({ message: error.message });
+    }
+  }
+
+  async getVideosByPlaylistIdController(req, res) {
+    try {
+      const { playlistId } = req.params;
+      if (!mongoose.Types.ObjectId.isValid(playlistId)) {
+        return res
+          .status(StatusCodeEnums.BadRequest_400)
+          .json({ message: "PlaylistId is not an ObjectId" });
+      }
+      const videos = await getVideosByPlaylistIdService(playlistId);
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Get videos successfully", videos });
+    } catch (error) {
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 }
