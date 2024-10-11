@@ -97,6 +97,15 @@ class VideoRepository {
     }
   }
 
+  async getVideoByIdRepository(videoId) {
+    try {
+      const video = await Video.findOne({ _id: videoId, isDeleted: false });
+      return video;
+    } catch (error) {
+      throw new Error(`Error when fetching video by videoId: ${error.message}`);
+    }
+  }
+  
   async getVideosByPlaylistIdRepository(playlistId) {
     try {
       const playlist = await MyPlaylist.findById(playlistId);
@@ -137,7 +146,6 @@ class VideoRepository {
       throw new Error(`Error when fetching all videos: ${error.message}`);
     }
   }
-  
 }
 
 module.exports = VideoRepository;

@@ -26,11 +26,63 @@ const createCommentService = async (userId, videoId, content, responseTo) => {
       responseTo,
     };
     const comment = await connection.commentRepository.createComment(data);
+
+    // Gửi thông báo
+    await sendNotificationsForComment(videoId, userId, responseTo);
     return comment;
   } catch (error) {
     throw new Error(error.message);
   }
 };
+
+const sendNotificationsForComment = async (videoId, commentUserId, responseTo) => {
+  const connection = new DatabaseTransaction();
+
+  // Lấy thông tin video
+  const video = await connection.videoRepository.getVideoByIdRepository(videoId);
+  if (!video) throw new Error("Video not found");
+
+  const videoOwnerId = video.userId;
+
+  const commentUser = await connection.userRepository.findUserById(commentUserId);
+
+  const notificationForVideoOwner = {
+    avatar: commentUser.avatar,
+    content: `${commentUser.fullName} đã bình luận về video của bạn`,
+    check: null,
+    seen: false,
+    createdAt: new Date(),
+    videoId: videoId,
+  };
+
+  if (!responseTo) {
+    await connection.userRepository.notifiCommentRepository(videoOwnerId, {
+      ...notificationForVideoOwner,
+      check: null 
+    });
+  } else {
+    const parentComment = await connection.commentRepository.getComment(responseTo);
+    if (parentComment) {
+      const parentCommentOwnerId = parentComment.userId;
+
+      const notificationForParentCommentOwner = {
+        avatar: commentUser.avatar,
+        content: `${commentUser.fullName} đã trả lời bình luận của bạn`,
+        check: responseTo,
+        seen: false,
+        createdAt: new Date(),
+        videoId: videoId,
+      };
+
+      await connection.userRepository.notifiCommentRepository(videoOwnerId, {
+        ...notificationForVideoOwner,
+        check: null
+      });
+      await connection.userRepository.notifiCommentRepository(parentCommentOwnerId, notificationForParentCommentOwner);
+    }
+  }
+};
+
 
 const getCommentService = async (id) => {
   const connection = new DatabaseTransaction();
@@ -100,13 +152,33 @@ const softDeleteCommentService = async (userId, id) => {
 };
 const likeService = async (userId, commentId) => {
   const connection = new DatabaseTransaction();
+
   try {
     const comment = await connection.commentRepository.like(userId, commentId);
+
+    if (!comment) {
+      throw new Error("Comment not found");
+    }
+
+    const commentOwnerId = comment.userId;
+
+    const user = await connection.userRepository.findUserById(userId);
+
+    const notification = {
+      avatar: user.avatar,
+      content: `${user.fullName} đã like bình luận của bạn`,
+      seen: false,
+      createdAt: new Date(),
+    };
+
+    await connection.userRepository.notifiLikeCommentRepository(commentOwnerId, notification);
+
     return comment;
   } catch (error) {
     throw new Error(error.message);
   }
 };
+
 const unlikeService = async (userId, commentId) => {
   const connection = new DatabaseTransaction();
   try {

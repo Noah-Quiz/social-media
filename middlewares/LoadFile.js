@@ -105,7 +105,7 @@ const uploadThumbnail = async (videoUri, thumbnailFile) => {
         const thumbnailResponse = await new Promise((resolve, reject) => {
             vimeoClient.request(
                 {
-                    method: 'POST',
+                    method: 'PATCH', // Sửa thành PATCH để cập nhật trạng thái active
                     path: thumbnailUri,
                 },
                 (error, body) => {
