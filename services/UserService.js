@@ -128,6 +128,17 @@ module.exports = {
           "Follow unsuccessfully"
         );
       }
+
+      const notification = {
+        avatar: user.avatar,
+        content: `${user.fullName} đang follow bạn`,
+        check: user,
+        seen: false,
+        createdAt: new Date(),
+      }
+
+       await connection.userRepository.notifiCommentRepository(userId, followId);
+
       return result;
     } catch (error) {
       throw error;
@@ -160,6 +171,7 @@ module.exports = {
           "Unfollow unsuccessfully"
         );
       }
+      
       return result;
     } catch (error) {
       throw error;

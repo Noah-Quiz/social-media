@@ -150,6 +150,92 @@ class UserRepository {
       return false;
     }
   }
+
+  async notifiFollowRepository(userId, followId) {
+
+    try {
+      const user = await User.findOne({ _id: userId });
+      const follow = await User.findOne({ _id: followId });
+
+      if (!follow) {
+        console.log("User to follow not found");
+        return false;
+      }
+
+      const notificationObject = {
+        avatar: user.avatar,
+        content: `${user.fullName} đang follow bạn`,
+        check: userId,
+        seen: false,
+        createdAt: new Date(),
+      };
+  
+      await User.updateOne(
+        { _id: followId },
+        { $push: { notifications: notificationObject } }
+      );
+  
+      console.log(`Notification sent to user ${followId} successfully`);
+      return true;
+
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async notifiLikeVideoRepository(videoOwnerId, notificationObject) {
+
+    try {
+      const videoOfUser = await User.findOne({ _id: videoOwnerId });
+
+      if (!videoOfUser) {
+        console.log("Video not found");
+        return false;
+      }
+  
+      // Đẩy thông báo vào danh sách notifications của người được follow
+      await User.updateOne(
+        { _id: videoOwnerId },
+        { $push: { notifications: notificationObject } }
+      );
+  
+      console.log(`Notification sent to user ${followId} successfully`);
+      return true;
+
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async notifiLikeCommentRepository(userId, notification) {
+    try {
+      await User.updateOne(
+        { _id: userId },
+        { $push: { notifications: notification } }
+      );
+      console.log(`Notification sent to user ${userId} successfully`);
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to send notification: ${error.message}`);
+    }
+  }
+
+  async notifiCommentRepository(userId, notification) {
+    try {
+      console.log("UserId:", userId);
+      const user = await User.findById(userId);
+      if (!user) throw new Error("User not found");
+  
+      user.notifications.push(notification);
+      
+      await user.save();
+
+
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+  
 }
 
 module.exports = UserRepository;
