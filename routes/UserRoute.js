@@ -7,12 +7,18 @@ const route = express.Router();
 
 route.use(AuthMiddleware);
 
+route.get("/wallet", userController.getUserWalletController);
+
+route.put("/update-wallet", userController.updateUserWalletController);
+
 route.post("/follow", userController.toggleFollowController);
 
 route.get("/", userController.getAllUsersController);
+
 route.get("/:userId", userController.getUserByIdController);
 
 route.put("/profile/:userId", userController.updateUserProfileByIdController);
+
 route.put("/email/:userId", userController.updateUserEmailByIdController);
 
 route.delete("/:userId", userController.deleteUserByIdController);

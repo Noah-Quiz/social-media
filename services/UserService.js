@@ -197,4 +197,49 @@ module.exports = {
       throw error;
     }
   },
+  getUserWalletService: async (userId) => {
+    try {
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.getUserWallet(userId);
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateUserWalletService: async (
+    userId,
+    actionCurrencyType,
+    amount,
+    exchangeRate
+  ) => {
+    let rate;
+    if (!exchangeRate) {
+      rate = 1000; //default
+    } else {
+      rate = parseFloat(exchangeRate);
+    }
+
+    try {
+      const parseAmount = parseFloat(amount);
+      if (parseFloat <= 0) {
+        throw error("Invalid amount");
+      }
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.updateUserWalletRepository(
+        userId,
+        actionCurrencyType,
+        parseAmount,
+        rate
+      );
+      if (!user) {
+        throw new CoreException(
+          StatusCodeEnum.NotFound_404,
+          "User not found or update failed"
+        );
+      }
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  },
 };

@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const User = require("../entities/UserEntity");
 
 class UserRepository {
@@ -137,6 +138,91 @@ class UserRepository {
       return true;
     } catch (error) {
       return false;
+    }
+  }
+  async getUserWallet(userId) {
+    const defaultWallet = {
+      balance: 0,
+      coin: 0,
+    };
+    try {
+      const user = await User.findOne({ _id: userId, isDeleted: false });
+      if (!user) {
+        throw new Error("No user found");
+      }
+      if (!user.wallet) {
+        return defaultWallet;
+      }
+      return user.wallet;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+  async topUpUserBalance(userId, amount) {
+    try {
+      const user = await User.findOne({ _id: userId, isDeleted: false });
+      if (!user) {
+        throw new Error("User not found");
+      }
+      if (!user.wallet) {
+        user.wallet = { balance: 0, coin: 0 };
+      }
+      user.wallet.balance += amount;
+
+      await user.save();
+      return user;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  //exchange rate: 1000vnd => 1 balance => 1000 coin: default
+  async updateUserWalletRepository(
+    userId,
+    actionCurrencyType,
+    amount,
+    exchangeRate
+  ) {
+    try {
+      const user = await User.findOne({ _id: userId, isDeleted: false });
+      if (!user) {
+        throw new Error("User not found");
+      }
+      if (!user.wallet) {
+        user.wallet = { balance: 0, coin: 0 };
+      }
+
+      switch (actionCurrencyType) {
+        case "SpendBalance":
+          if (user.wallet.balance < amount) {
+            throw new Error("Insufficient balance");
+          }
+          user.wallet.balance -= amount;
+          break;
+
+        case "SpendCoin":
+          if (user.wallet.coin < amount) {
+            throw new Error("Insufficient coin");
+          }
+          user.wallet.coin -= amount;
+          break;
+
+        case "ExchangeBalanceToCoin":
+          if (user.wallet.balance < amount) {
+            throw new Error("Insufficient balance");
+          }
+          user.wallet.balance -= amount;
+          user.wallet.coin += amount * exchangeRate;
+          break;
+
+        default:
+          throw new Error("Invalid action currency type");
+      }
+
+      await user.save();
+      return user;
+    } catch (error) {
+      throw new Error(error.message);
     }
   }
 }

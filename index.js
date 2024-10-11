@@ -14,6 +14,7 @@ const roomRoutes = require("./routes/RoomRoute");
 const { createAMessageService } = require("./services/MessageService");
 const { getAnUserByIdService } = require("./services/UserService");
 const commentRoutes = require("./routes/CommentRoute");
+const vnpayRoutes = require("./routes/VnpayRoute");
 const app = express();
 const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
@@ -124,6 +125,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/vnpay", vnpayRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 
