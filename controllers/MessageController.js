@@ -1,33 +1,33 @@
 const mongoose = require("mongoose");
 const {
   deleteMessageService,
-  findMessage,
-  findAllMessagesByRoomId,
+  findMessageService,
+  findAllMessagesByRoomIdService,
   createAMessageService,
   updateMessageService,
 } = require("../services/MessageService");
 
 class MessageController {
-  async getMessage(req, res) {
+  async getMessageController(req, res) {
     const { messageId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(messageId)) {
       return res.status(400).json({ error: "Invalid message ID" });
     }
     try {
-      const message = await findMessage(messageId);
+      const message = await findMessageService(messageId);
       if (!message) {
         res
           .status(404)
           .json({ message: `No message found for id: ${messageId}` });
       }
-      res.status(200).json({ message, message: "Success" });
+      res.status(200).json({ data: message, message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   }
 
-  async getMessages(req, res) {
+  async getMessagesController(req, res) {
     const { roomId } = req.query; // Extract roomId from the query
 
     if (!roomId) {
@@ -35,7 +35,7 @@ class MessageController {
     }
 
     try {
-      const messages = await findAllMessagesByRoomId(roomId);
+      const messages = await findAllMessagesByRoomIdService(roomId);
       if (!messages || messages.length === 0) {
         return res
           .status(404)
@@ -49,13 +49,14 @@ class MessageController {
     }
   }
 
-  async updateMessage(req, res) {
+  async updateMessageController(req, res) {
     const { messageId } = req.params;
     const { content } = req.body;
+    const userId = req.userId;
     const updateData = { content };
 
     try {
-      const message = await updateMessageService(messageId, updateData);
+      const message = await updateMessageService(userId, messageId, updateData);
 
       res.status(200).json({ data: message, message: "Success" });
     } catch (error) {
@@ -63,21 +64,23 @@ class MessageController {
     }
   }
 
-  async deleteMessage(req, res) {
+  async deleteMessageController(req, res) {
     const { messageId } = req.params;
+    const userId = req.userId;
     try {
-      await deleteMessageService(messageId);
+      await deleteMessageService(userId, messageId);
       res.status(200).json({ message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   }
 
-  async createAMessage(req, res) {
-    const { userId, roomId, content } = req.body;
+  async createAMessageController(req, res) {
+    const { roomId, content } = req.body;
+    const userId = req.userId;
     try {
       const message = await createAMessageService(userId, roomId, content);
-      res.status(200).json({ message: "Success" });
+      res.status(200).json({ data: message, message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

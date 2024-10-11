@@ -87,9 +87,6 @@ class MyPlaylistRepository {
     async getAllMyPlaylistsRepository(data) {
         try {
             const playlists = await MyPlaylist.find({ userId: data.userId, isDeleted: false })
-            .populate({
-                path: "videoIds"
-            })
             
             return playlists;
         } catch (error) {

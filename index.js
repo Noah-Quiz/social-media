@@ -1,10 +1,8 @@
 const dotenv = require("dotenv");
 require("dotenv").config();
 const express = require("express");
-const passport = require("passport");
-const session = require("express-session");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const AppleStrategy = require("passport-apple");
+const getLogger = require("./utils/logger");
+const swaggerDoc = require("./utils/swagger");
 const cors = require("cors");
 const categoryRoutes = require("./routes/CategoryRoute");
 const myPlaylistRoutes = require("./routes/MyPlaylistRoute");
@@ -12,8 +10,18 @@ const authRoutes = require("./routes/AuthRoute");
 const messageRoutes = require("./routes/MessageRoute");
 const videoRoutes = require("./routes/VideoRoute");
 const userRoute = require("./routes/UserRoute");
-
+const roomRoutes = require("./routes/RoomRoute");
+const { createAMessageService } = require("./services/MessageService");
+const { getAnUserByIdService } = require("./services/UserService");
+const commentRoutes = require("./routes/CommentRoute");
 const app = express();
+const server = require("http").createServer(app);
+const io = require("socket.io")(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
 
 // Middleware
 app.use(
@@ -34,54 +42,65 @@ const vimeoClient = new Vimeo(
   process.env.VIMEO_ACCESS_TOKEN
 );
 
-app.use(
-  session({
-    secret: "secret",
-    resave: false,
-    saveUninitialized: true,
-  })
-);
-app.use(passport.initialize());
-app.use(passport.session());
+function handleLeaveRoom(socket, roomId) {
+  socket.leave(roomId);
+  console.log(`User left room: ${roomId}`);
+}
 
-// Google OAuth
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:4000/api/auth/google/callback",
-    },
-    (accessToken, refreshToken, profile, done) => {
-      return done(null, profile);
-    }
-  )
-);
+// Listen for socket connections
+io.on("connection", (socket) => {
+  console.log(`User connected: ${socket.id}`);
 
-passport.use(
-  new AppleStrategy(
-    {
-      clientID: process.env.APPLE_CLIENT_ID,
-      teamID: process.env.APPLE_TEAM_ID,
-      callbackURL:
-        "https://social-media-ofm3.onrender.com/api/auth/apple/callback",
-      keyID: process.env.APPLE_KEY_ID,
-      // privateKeyLocation: `./config/AuthKey_${process.env.APPLE_KEY_ID}.p8`,
-      privateKeyString: process.env.APPLE_PRIVATE_KEY,
-      passReqToCallback: true,
-    },
-    (req, accessToken, refreshToken, idToken, profile, done) => {
-      return done(null, profile);
-    }
-  )
-);
+  // Public Chat: Joining a default room
+  socket.on("join_public_chat", () => {
+    const room = "public_room";
+    socket.join(room);
+    console.log(`${socket.id} joined public room`);
+  });
 
-passport.serializeUser((user, done) => {
-  done(null, user);
+  // Private Chat: Join a private room between two users
+  socket.on("join_private_chat", (roomId) => {
+    socket.join(roomId);
+    console.log(`${socket.id} joined private room: ${roomId}`);
+  });
+
+  // Group Chat: Join a group room
+  socket.on("join_group_chat", (groupId) => {
+    socket.join(groupId);
+    console.log(`${socket.id} joined group room: ${room}`);
+  });
+
+  // Livestreaming Chat: Join livestream room
+  socket.on("join_livestream_chat", (streamId) => {
+    const room = `livestream_${streamId}`;
+    socket.join(room);
+    console.log(`${socket.id} joined livestream room: ${room}`);
+  });
+
+  // Sending messages
+  socket.on("send_message", async ({ roomId, userId, message }) => {
+    await createAMessageService(userId, roomId, message);
+    const user = await getAnUserByIdService(userId);
+    io.to(roomId).emit("receive_message", {
+      sender: user.fullName,
+      message,
+      avatar: user.avatar,
+    });
+    console.log(`Message sent to ${room}: ${message}`);
+  });
+
+  // Leaving a room (for private, group, livestream chat)
+  socket.on("leave_room", (room) => {
+    socket.leave(room);
+    console.log(`${socket.id} left room: ${room}`);
+  });
+
+  // Disconnect event
+  socket.on("disconnect", () => {
+    console.log(`User disconnected: ${socket.id}`);
+  });
 });
-passport.deserializeUser((user, done) => {
-  done(null, user);
-});
+
 app.get("/", (req, res) => {
   res.send(
     "<a href='/api/auth/google'>Login with Google</a><br>" +
@@ -91,7 +110,8 @@ app.get("/", (req, res) => {
 
 // Log API requests
 app.use((req, res, next) => {
-  console.log(req.path, req.method);
+  const logger = getLogger("API");
+  logger.info(req.path, req.method);
   next();
 });
 
@@ -102,15 +122,18 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/users", userRoute);
 app.use("/api/messages", messageRoutes);
 app.use("/api/videos", videoRoutes);
-
+app.use("/api/rooms", roomRoutes);
+app.use("/api/comments", commentRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 
-app.listen(port, (err) => {
+server.listen(port, (err) => {
+  const logger = getLogger("APP");
   if (err) {
-    console.error("Failed to start server:", err);
+    logger.error("Failed to start server:", err);
     process.exit(1);
   } else {
-    console.log(`Server started! Listening on port ${port}`);
+    logger.info(`Server is running at: http://localhost:${port}`);
+    swaggerDoc(app, port);
   }
 });

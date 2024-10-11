@@ -1,20 +1,24 @@
 const express = require("express");
 const UserController = require("../controllers/UserController");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
+const requireRole = require("../middlewares/requireRole");
+const UserEnum = require("../enums/UserEnum");
 const userController = new UserController();
 
 const route = express.Router();
 
 route.use(AuthMiddleware);
 
-route.get("/", userController.getAllUsersController);
-
 route.post("/follow", userController.toggleFollowController);
 
-route.get("/:userId", userController.getAnUserByIdController);
+route.get("/", userController.getAllUsersController);
 
-route.put("/:userId", userController.updateAnUserByIdController);
+route.get("/:userId", userController.getUserByIdController);
 
-route.delete("/:userId", userController.deleteAnUserByIdController);
+route.put("/profile/:userId", userController.updateUserProfileByIdController);
+
+route.put("/email/:userId", userController.updateUserEmailByIdController);
+
+route.delete("/:userId", requireRole(UserEnum.ADMIN), userController.deleteUserByIdController);
 
 module.exports = route;

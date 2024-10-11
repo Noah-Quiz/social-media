@@ -1,53 +1,91 @@
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-const { validEmail, validPassword } = require("../utils/validator");
 const axios = require("axios");
+const { uploadThumbnail, uploadFiles } = require("../middlewares/LoadFile");
+const CoreException = require("../exceptions/CoreException");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 
 const createVideoService = async (
-  userId,
-  { title, description, videoUrl, enumMode, thumbNailUrl, categoryIds }
+  userId, videoFile, thumbnailFile,
+  { title, description, enumMode, categoryIds }
 ) => {
   try {
+    if (["public", "private", "unlisted"].includes(enumMode)) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, 'Invalid video accessibility');
+    }
+    
+    if (categoryIds && !Array.isArray(categoryIds)) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, 'CategoryIds must be an array');
+    }
+    if (categoryIds && categoryIds.length !== 0) {
+      categoryIds.forEach(id => {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          throw new CoreException(StatusCodeEnums.BadRequest_400, `Invalid category ID`);
+        }
+      })
+    }
+
     const connection = new DatabaseTransaction();
 
-    let categoryObjectIds = [];
-
-    if (typeof categoryIds === "string") {
-      categoryObjectIds = categoryIds
-        .replace(/[\[\]\s]/g, "")
-        .split(",")
-        .filter((id) => mongoose.Types.ObjectId.isValid(id))
-        .map((id) => new mongoose.Types.ObjectId(id));
-    }
+    const { videoUrl, embedUrl, thumbnailUrl } = await uploadFiles(videoFile, thumbnailFile);
 
     const video = await connection.videoRepository.createVideoRepository({
       userId,
       title,
       description,
-      categoryIds: categoryObjectIds,
+      categoryIds,
       enumMode,
       videoUrl,
-      thumbNailUrl,
-      categoryIds: categoryObjectIds,
+      embedUrl,
+      thumbnailUrl,
     });
 
     return video;
   } catch (error) {
-    throw new Error(`Error when signing up: ${error.message}`);
+    throw error;
   }
 };
 
-const updateAVideoByIdService = async (videoId, data) => {
-  const connection = new DatabaseTransaction();
+const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
   try {
-    const video = await connection.videoRepository.updateAVideoByIdRepository(
+    if (!["public", "private", "unlisted"].includes(data.enumMode)) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, 'Invalid video accessibility');
+    }
+    
+    const categoryIds = data.categoryIds;
+    if (categoryIds && !Array.isArray(categoryIds)) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, 'CategoryIds must be an array');
+    }
+    if (categoryIds && categoryIds.length !== 0) {
+      categoryIds.forEach(id => {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          throw new CoreException(StatusCodeEnums.BadRequest_400, `Invalid category ID`);
+        }
+      })
+    }
+
+    const connection = new DatabaseTransaction();
+
+    const video = await connection.videoRepository.getVideoRepository(videoId);
+    if (!video) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found")
+    }
+
+    if (thumbnailFile && thumbnailFile.buffer) {
+      const vimeoVideoId = video.videoUrl.split("/").pop();
+      const thumbnailUrl = await uploadThumbnail(`/videos/${vimeoVideoId}`, thumbnailFile);
+      data.thumbnailUrl = thumbnailUrl;
+    }
+
+    const updatedVideo = await connection.videoRepository.updateAVideoByIdRepository(
       videoId,
       data
     );
-    return video;
+
+    return updatedVideo;
   } catch (error) {
-    throw new Error(`Error when update a video: ${error.message}`);
+    throw error;
   }
 };
 const toggleLikeVideoService = async (videoId, userId, action) => {
@@ -56,7 +94,7 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
 
     const allowedActions = ["like", "unlike"];
     if (!allowedActions.includes(action)) {
-      throw new Error("Invalid action");
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid action");
     }
 
     const result = await connection.videoRepository.toggleLikeVideoRepository(
@@ -67,7 +105,7 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
 
     return result;
   } catch (error) {
-    throw new Error(`Error in toggling like/unlike: ${error.message}`);
+    throw error;
   }
 };
 
@@ -81,89 +119,107 @@ const viewIncrementService = async (videoId) => {
 
     return result;
   } catch (error) {
-    throw new Error(`Error in increasing view: ${error.message}`);
+    throw error;
   }
 };
 
 const getVideosByUserIdService = async (userId) => {
-  const connection = new DatabaseTransaction();
   try {
-    const videos = await connection.videoRepository.getVideosByUserIdRepository(
-      userId
-    );
+    const connection = new DatabaseTransaction();
+
+    const videos = await connection.videoRepository.getVideosByUserIdRepository(userId);
+    
     return videos;
   } catch (error) {
-    throw new Error(`Error in get videos by userId ${error.message}`);
+    throw error;
   }
 };
 
-const deleteVideo = async (id, userId) => {
+const getVideoService = async (userId) => {
+  try {
+    const connection = new DatabaseTransaction();
+
+    const video = await connection.videoRepository.getVideoRepository(userId);
+
+    return video;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getVideosService = async (query) => {
+  try {
+    const connection = new DatabaseTransaction();
+
+    const { videos, total, page, totalPages} = await connection.videoRepository.getAllVideosRepository(query);
+
+    return { videos, total, page, totalPages };
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getVideosByPlaylistIdService = async (playlistId) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const videos =
+      await connection.videoRepository.getVideosByPlaylistIdRepository(
+        playlistId
+      );
+    return videos;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const deleteVideoService = async (videoId, userId) => {
   const connection = new DatabaseTransaction();
 
   try {
     const session = await connection.startTransaction();
 
-    // Log the ID being searched for
-    console.log(`Attempting to find video with ID: ${id}`);
-
     const video = await connection.videoRepository.getVideoRepository(
-      id,
+      videoId,
       session
     );
-    console.log(video);
-    if (!video) {
-      throw new Error(`No video found for id: ${id}`);
+
+    if (!video || video.isDeleted === true) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, `Video not found`);
     }
 
     if (video.userId.toString() !== userId) {
-      throw new Error("You are not the owner of this video.");
+      throw new CoreException(StatusCodeEnums.Forbidden_403, "You do not have permission to perform this action");
     }
 
-    const videoId = video.videoUrl.split("/").pop();
-
-    // Log the Vimeo video ID being deleted
-    console.log(`Attempting to delete Vimeo video with ID: ${videoId}`);
-
+    let vimeoVideoId = video.videoUrl.split("/").pop();
     const response = await axios.delete(
-      `https://api.vimeo.com/videos/${videoId}`,
+      `https://api.vimeo.com/videos/${vimeoVideoId}`,
       {
         headers: {
           Authorization: `Bearer ${process.env.VIMEO_ACCESS_TOKEN}`,
         },
       }
     );
-    console.log(response);
-    // Log Vimeo response
-    console.log(`Vimeo delete response status: ${response.status}`);
 
     if (response.status !== 204) {
-      throw new Error("Failed to delete video on Vimeo.");
+      throw new CoreException(StatusCodeEnums.NoContent_204, "Failed to delete video on Vimeo. Video not found");
     }
 
-    // Log the database delete operation
-    console.log(
-      `Attempting to soft-delete video with ID: ${video._id} from the database`
-    );
-
-    const repo = await connection.videoRepository.deleteVideoRepository(
+    const result = await connection.videoRepository.deleteVideoRepository(
       video._id,
       session
     );
 
-    if (!repo) {
-      throw new Error("Failed to delete video in the database.");
+    if (result.deletedCount = 0) {
+      throw new CoreException(StatusCodeEnums.NoContent_204, "Failed to delete video. Video not found");
     }
 
     await connection.commitTransaction();
 
-    return repo;
+    return result;
   } catch (error) {
-    // Abort the transaction in case of an error
     await connection.abortTransaction();
-
-    throw new Error(
-      `Error when deleting video service layer: ${error.message}`
-    );
+    throw error;
   }
 };
 
@@ -174,6 +230,9 @@ module.exports = {
   updateAVideoByIdService,
   toggleLikeVideoService,
   getVideosByUserIdService,
+  getVideosByPlaylistIdService,
   viewIncrementService,
-  deleteVideo,
+  deleteVideoService,
+  getVideoService,
+  getVideosService,
 };

@@ -1,4 +1,5 @@
 const Video = require("../entities/VideoEntity");
+const MyPlaylist = require("../entities/MyPlaylistEntity");
 const mongoose = require("mongoose");
 
 class VideoRepository {
@@ -62,19 +63,16 @@ class VideoRepository {
     }
   }
 
-  async getVideoRepository(id) {
+  async getVideoRepository(videoId) {
     try {
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new Error("Invalid ObjectId");
-      }
-      const objectId = new mongoose.Types.ObjectId(id);
-      const video = await Video.findOne({ _id: objectId });
+      const video = await Video.findOne({ _id: videoId });
 
       return video;
     } catch (error) {
       throw new Error(`Error when getting video: ${error.message}`);
     }
   }
+
   async deleteVideoRepository(id, session) {
     try {
       const video = await Video.findByIdAndUpdate(
@@ -84,7 +82,7 @@ class VideoRepository {
       );
       return video;
     } catch (error) {
-      throw new Error(`Error when delete video mongodb: ${error.message}`);
+      throw new Error(`Error when deleting video: ${error.message}`);
     }
   }
 
@@ -98,6 +96,48 @@ class VideoRepository {
       );
     }
   }
+
+  async getVideosByPlaylistIdRepository(playlistId) {
+    try {
+      const playlist = await MyPlaylist.findById(playlistId);
+      if (!playlist) {
+        throw new Error("Playlist not found");
+      }
+      const videos = playlist.videoIds.map((video) => video.toString());
+      return videos;
+    } catch (error) {
+      throw new Error(
+        `Error when fetch all videos by playlistId: ${error.message}`
+      );
+    }
+  }
+  async getAllVideosRepository(query) {
+    try {
+      const skip = (query.page - 1) * query.size;
+  
+      const searchQuery = { isDeleted: false };
+  
+      if (query.title) {
+        searchQuery.title = query.title; 
+      }
+  
+      const totalVideos = await Video.countDocuments(searchQuery);
+  
+      const videos = await Video.find(searchQuery)
+        .limit(query.size)
+        .skip(skip);
+  
+      return {
+        videos,
+        total: totalVideos,
+        page: query.page,
+        totalPages: Math.ceil(totalVideos / query.size),
+      };
+    } catch (error) {
+      throw new Error(`Error when fetching all videos: ${error.message}`);
+    }
+  }
+  
 }
 
 module.exports = VideoRepository;

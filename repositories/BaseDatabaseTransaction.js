@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
-
+const getLoggers = require("../utils/logger");
+const logger = getLoggers("MONGOOSE");
 const URI =
   process.env.DATABASE_URI ||
   "mongodb+srv://tamlqhse182931:6Pikk8NHRgL2RcZ7@cluster0.dielg.mongodb.net/";
@@ -16,7 +17,7 @@ class BaseDatabaseTransaction {
   async connect() {
     try {
       await mongoose.connect(URI, { dbName: DBName });
-      console.log(`Successfully connected to the database ${DBName}`);
+      logger.info(`Successfully connected to the database ${DBName}`);
     } catch (error) {
       throw new Error(error.message);
     }
@@ -37,7 +38,7 @@ class BaseDatabaseTransaction {
       if (this.session) {
         await this.session.commitTransaction();
         this.session.endSession();
-        console.log("Commit change to database successfully!");
+        logger.info("Commit change to database successfully!");
       }
     } catch (error) {
       throw new Error(error.message);
@@ -49,7 +50,7 @@ class BaseDatabaseTransaction {
       if (this.session) {
         await this.session.abortTransaction();
         this.session.endSession();
-        console.log("Abort change to database!");
+        logger.info("Abort change to database!");
       }
     } catch (error) {
       throw new Error(error.message);
