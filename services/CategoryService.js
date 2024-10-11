@@ -1,10 +1,14 @@
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
 const createCategoryService = async (categoryData) => {
-  const connection = new DatabaseTransaction();
   try {
+    const connection = new DatabaseTransaction();
+
     const session = await connection.startTransaction();
-    const category = await connection.categoryRepository.createCategory(
+
+    const category = await connection.categoryRepository.createCategoryRepository(
       categoryData,
       session
     );
@@ -13,74 +17,77 @@ const createCategoryService = async (categoryData) => {
     return category;
   } catch (error) {
     await connection.abortTransaction();
-    throw new Error(error.message);
+    throw error;
   }
 };
 
-const getCategoryService = async (id) => {
-  const connection = new DatabaseTransaction();
+const getCategoryService = async (categoryId) => {
   try {
-    return await connection.categoryRepository.getCategory(id);
+    const connection = new DatabaseTransaction();
+
+    const category = await connection.categoryRepository.getCategoryRepository(categoryId);
+
+    if (!category) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, `Category not found` );
+    }
+
+    return category;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
 const getAllCategoryService = async () => {
-  const connection = new DatabaseTransaction();
   try {
-    return await connection.categoryRepository.getAllCategory();
+    const connection = new DatabaseTransaction();
+
+    return await connection.categoryRepository.getAllCategoryRepository();
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
-const updateCategoryService = async (id, categoryData) => {
-  const connection = new DatabaseTransaction();
+const updateCategoryService = async (categoryId, categoryData) => {
   try {
+    const connection = new DatabaseTransaction();
+    
     const session = await connection.startTransaction();
-    const category = await connection.categoryRepository.updateCategory(
-      id,
+
+    const updatedCategory = await connection.categoryRepository.updateCategoryRepository(
+      categoryId,
       categoryData,
       session
     );
+
     await connection.commitTransaction();
-    return category;
+    return updatedCategory;
   } catch (error) {
     await connection.abortTransaction();
-    throw new Error(error.message);
+    throw error;
   }
 };
 
-const deleteCategoryService = async (id) => {
+const deleteCategoryService = async (categoryId) => {
   const connection = new DatabaseTransaction();
   try {
     const session = await connection.startTransaction();
-    const category = await connection.categoryRepository.deleteCategory(
-      id,
-      session
-    );
-    await connection.commitTransaction();
-    return category;
-  } catch (error) {
-    await connection.abortTransaction();
-    throw new Error(error.message);
-  }
-};
 
-const deactivateCategoryService = async (id) => {
-  const connection = new DatabaseTransaction();
-  try {
-    const session = await connection.startTransaction();
-    const category = await connection.categoryRepository.deactivateCategory(
-      id,
+    const category = await connection.categoryRepository.getCategoryRepository(categoryId);
+
+    if (!category || category.isDeleted === true) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Category not found")
+    }
+
+    const deletedCategory = await connection.categoryRepository.deleteCategoryRepository(
+      categoryId,
       session
     );
+    
     await connection.commitTransaction();
-    return category;
+    return deletedCategory;
   } catch (error) {
     await connection.abortTransaction();
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -88,7 +95,6 @@ module.exports = {
   createCategoryService,
   getAllCategoryService,
   getCategoryService,
-  deactivateCategoryService,
   deleteCategoryService,
   updateCategoryService,
 };

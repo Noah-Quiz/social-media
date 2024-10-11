@@ -1,76 +1,104 @@
+const { default: mongoose } = require("mongoose");
 const {
   createCategoryService,
   getAllCategoryService,
-  getCategoryService,
-  deactivateCategoryService,
   deleteCategoryService,
   updateCategoryService,
+  getCategoryService,
 } = require("../services/CategoryService");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 
 class CategoryController {
   async createCategoryController(req, res) {
     try {
       const category = req.body;
+      
       const result = await createCategoryService(category);
-      res.status(201).json({ result, message: "Success" });
+      
+      return res.status(StatusCodeEnums.Created_201).json({ category: result, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+      }
     }
   }
 
   async getCategoryController(req, res) {
     try {
-      const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({ message: "id is required" });
+      const { categoryId } = req.params;
+
+      if (!categoryId || !mongoose.Types.ObjectId.isValid(categoryId)) {
+        return res.status(StatusCodeEnums.BadRequest_400).json({ message: "Valid category ID is required" });
       }
-      const category = await getCategoryService(id);
-      if (!category) {
-        return res.status(404).json({ message: `Category not found` });
-      }
-      return res.status(200).json({ category });
+
+      const category = await getCategoryService(categoryId);
+
+      return res.status(StatusCodeEnums.OK_200).json({ category, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+      }
     }
   }
 
   async getAllCategoryController(req, res) {
     try {
       const categories = await getAllCategoryService();
-      res.status(200).json(categories);
+
+      return res.status(StatusCodeEnums.OK_200).json({ categories, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+      }
     }
   }
 
   async updateCategoryController(req, res) {
     try {
-      const { id } = req.params;
-      const categoryData = req.body;
-      const result = await updateCategoryService(id, categoryData);
-      res.status(200).json({ result, message: "Success" });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  }
+      const { categoryId } = req.params;
+      const { name, imageUrl } = req.body;
+      const categoryData = { name, imageUrl };
 
-  async deactivateCategoryController(req, res) {
-    try {
-      const { id } = req.params;
-      const result = await deactivateCategoryService(id);
-      res.status(200).json({ result, message: "Success" });
+      if (!categoryId || !mongoose.Types.ObjectId.isValid(categoryId)) {
+        return res.status(StatusCodeEnums.BadRequest_400).json({ message: "Valid category ID is required" });
+      }
+
+      const result = await updateCategoryService(categoryId, categoryData);
+      
+      return res.status(StatusCodeEnums.OK_200).json({ category: result, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+      }
     }
   }
 
   async deleteCategoryController(req, res) {
     try {
-      const { id } = req.params;
-      await deleteCategoryService(id);
-      res.status(200).json({ message: "Success" });
+      const { categoryId } = req.params;
+
+      if (!categoryId || !mongoose.Types.ObjectId.isValid(categoryId)) {
+        return res.status(StatusCodeEnums.BadRequest_400).json({ message: "Valid category ID is required" });
+      }
+
+      await deleteCategoryService(categoryId);
+
+      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+      }
     }
   }
 }

@@ -1,4 +1,5 @@
 const Video = require("../entities/VideoEntity");
+const MyPlaylist = require("../entities/MyPlaylistEntity");
 const mongoose = require("mongoose");
 
 class VideoRepository {
@@ -96,9 +97,23 @@ class VideoRepository {
     }
   }
 
+  async getVideosByPlaylistIdRepository(playlistId) {
+    try {
+      const playlist = await MyPlaylist.findById(playlistId);
+      if (!playlist) {
+        throw new Error("Playlist not found");
+      }
+      const videos = playlist.videoIds.map((video) => video.toString());
+      return videos;
+    } catch (error) {
+      throw new Error(
+        `Error when fetch all videos by playlistId: ${error.message}`
+      );
+    }
+  }
   async getAllVideosRepository(query) {
     try {
-      const skip = (query.page - 1) * query.limit;
+      const skip = (query.page - 1) * query.size;
   
       const searchQuery = { isDeleted: false };
   
@@ -106,17 +121,17 @@ class VideoRepository {
         searchQuery.title = query.title; 
       }
   
-      const totalDocuments = await Video.countDocuments(searchQuery);
+      const totalVideos = await Video.countDocuments(searchQuery);
   
       const videos = await Video.find(searchQuery)
-        .limit(query.limit)
+        .limit(query.size)
         .skip(skip);
   
       return {
         videos,
-        totalDocuments,
-        currentPage: query.page,
-        totalPages: Math.ceil(totalDocuments / query.limit),
+        total: totalVideos,
+        page: query.page,
+        totalPages: Math.ceil(totalVideos / query.size),
       };
     } catch (error) {
       throw new Error(`Error when fetching all videos: ${error.message}`);
