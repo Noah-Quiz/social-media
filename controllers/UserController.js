@@ -1,3 +1,5 @@
+const ToggleFollowDto = require("../dtos/User/ToggleFollowDto");
+const UpdateUserProfileDto = require("../dtos/User/UpdateUserProfileDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const {
@@ -16,14 +18,20 @@ class UserController {
     try {
       const { page, size, name } = req.query;
 
-      const result = await getAllUsersService(page || 1, size || 10, name || '');
+      const result = await getAllUsersService(
+        page || 1,
+        size || 10,
+        name || ""
+      );
 
       return res.status(StatusCodeEnums.OK_200).json(result);
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
@@ -44,7 +52,9 @@ class UserController {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
@@ -66,27 +76,29 @@ class UserController {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
   async updateUserProfileByIdController(req, res) {
-    const { userId } = req.params;
-    const { fullName, nickName, avatar } = req.body;
-
-    if (req.userId !== userId) {
-      return res
-        .status(StatusCodeEnums.Forbidden_403)
-        .json({ message: "Forbidden access" });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Invalid user ID" });
-    }
-
     try {
+      const { userId } = req.params;
+      const { fullName, nickName } = req.query;
+      let avatar = req.file ? req.file.path : null;
+      const updateUserProfileDto = new UpdateUserProfileDto(
+        userId,
+        fullName,
+        nickName
+      );
+      await updateUserProfileDto.validate();
+      if (req.userId !== userId) {
+        return res
+          .status(StatusCodeEnums.Forbidden_403)
+          .json({ message: "Forbidden access" });
+      }
+
       const result = await updateUserProfileByIdService(userId, {
         fullName,
         nickName,
@@ -99,7 +111,9 @@ class UserController {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
@@ -129,33 +143,20 @@ class UserController {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
 
   async toggleFollowController(req, res) {
-    const { userId, followId, action } = req.body;
-
-    if (!["follow", "unfollow"].includes(action)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Invalid action" });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Invalid userId" });
-    }
-    if (!mongoose.Types.ObjectId.isValid(followId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Invalid followId" });
-    }
-
-    let result;
     try {
+      let result;
+      const { userId, followId, action } = req.body;
+      const toggleFollowDto = new ToggleFollowDto(userId, followId, action);
+      await toggleFollowDto.validate();
+
       if (action === "follow") {
         result = await followUserService(userId, followId);
       } else if (action === "unfollow") {
@@ -169,7 +170,9 @@ class UserController {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }

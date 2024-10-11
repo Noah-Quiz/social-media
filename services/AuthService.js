@@ -1,11 +1,6 @@
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const {
-  validEmail,
-  validPassword,
-  validPhoneNumber,
-} = require("../utils/validator");
 const mailer = require("../utils/mailer");
 const {
   sendVerificationCode,
