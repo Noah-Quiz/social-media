@@ -92,6 +92,14 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
   try {
     const connection = new DatabaseTransaction();
 
+    const video = await connection.videoRepository.getVideoByIdRepository(videoId);
+    
+    if (!video) {
+      throw new CoreException(StatusCodeEnum.NotFound_404, "Video not found");
+    }
+
+    const videoOwnerId = video.userId;
+
     const allowedActions = ["like", "unlike"];
     if (!allowedActions.includes(action)) {
       throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid action");
@@ -102,6 +110,18 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
       userId,
       action
     );
+
+    const user = await connection.userRepository.findUserById(userId);
+
+    const notification = {
+      avatar: user.avatar,
+      content: `${user.fullName} đã like video của bạn`,
+      check: videoId,
+      seen: false,
+      createdAt: new Date(),
+    }
+
+    await connection.userRepository.notifiLikeVideoRepository(videoOwnerId, notification);
 
     return result;
   } catch (error) {

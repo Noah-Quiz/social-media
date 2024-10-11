@@ -8,7 +8,11 @@ module.exports = {
   getAllUsersService: async (page, size, name) => {
     const connection = new DatabaseTransaction();
 
-    const users = await connection.userRepository.getAllUsersRepository(page, size, name);
+    const users = await connection.userRepository.getAllUsersRepository(
+      page,
+      size,
+      name
+    );
 
     return users;
   },
@@ -17,7 +21,9 @@ module.exports = {
     try {
       const connection = new DatabaseTransaction();
 
-      const user = await connection.userRepository.getAnUserByIdRepository(userId);
+      const user = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
 
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
@@ -46,7 +52,9 @@ module.exports = {
         );
       }
 
-      const result = await connection.userRepository.deleteAnUserByIdRepository(userId);
+      const result = await connection.userRepository.deleteAnUserByIdRepository(
+        userId
+      );
 
       if (result)
         return {
@@ -128,6 +136,17 @@ module.exports = {
           "Follow unsuccessfully"
         );
       }
+
+      const notification = {
+        avatar: user.avatar,
+        content: `${user.fullName} đang follow bạn`,
+        check: user,
+        seen: false,
+        createdAt: new Date(),
+      }
+
+       await connection.userRepository.notifiCommentRepository(userId, followId);
+
       return result;
     } catch (error) {
       throw error;
@@ -160,7 +179,53 @@ module.exports = {
           "Unfollow unsuccessfully"
         );
       }
+      
       return result;
+    } catch (error) {
+      throw error;
+    }
+  },
+  getUserWalletService: async (userId) => {
+    try {
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.getUserWallet(userId);
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateUserWalletService: async (
+    userId,
+    actionCurrencyType,
+    amount,
+    exchangeRate
+  ) => {
+    let rate;
+    if (!exchangeRate) {
+      rate = 1000; //default
+    } else {
+      rate = parseFloat(exchangeRate);
+    }
+
+    try {
+      const parseAmount = parseFloat(amount);
+      if (parseFloat <= 0) {
+        throw error("Invalid amount");
+      }
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.updateUserWalletRepository(
+        userId,
+        actionCurrencyType,
+        parseAmount,
+        rate
+      );
+      if (!user) {
+        throw new CoreException(
+          StatusCodeEnum.NotFound_404,
+          "User not found or update failed"
+        );
+      }
+      return user;
     } catch (error) {
       throw error;
     }
