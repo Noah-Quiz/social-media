@@ -1,6 +1,6 @@
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
-const createRoom = async (roomData) => {
+const createRoomService = async (roomData) => {
   const connection = new DatabaseTransaction();
   try {
     const room = await connection.roomRepository.createRoom(roomData);
@@ -10,7 +10,7 @@ const createRoom = async (roomData) => {
   }
 };
 
-const getRoom = async (id) => {
+const getRoomService = async (id) => {
   const connection = new DatabaseTransaction();
   try {
     const room = await connection.roomRepository.getRoomById(id);
@@ -20,7 +20,7 @@ const getRoom = async (id) => {
   }
 };
 
-const getAllRooms = async () => {
+const getAllRoomsService = async () => {
   const connection = new DatabaseTransaction();
   try {
     const rooms = await connection.roomRepository.getAllRooms();
@@ -30,7 +30,7 @@ const getAllRooms = async () => {
   }
 };
 
-const deleteRoom = async (id) => {
+const deleteRoomService = async (id) => {
   const connection = new DatabaseTransaction();
   try {
     const room = await connection.roomRepository.deleteRoomById(id);
@@ -40,7 +40,7 @@ const deleteRoom = async (id) => {
   }
 };
 
-const updateRoom = async (id, roomData) => {
+const updateRoomService = async (id, roomData) => {
   const connection = new DatabaseTransaction();
   try {
     const room = await connection.roomRepository.updateRoomById(id, roomData);
@@ -50,7 +50,7 @@ const updateRoom = async (id, roomData) => {
   }
 };
 
-const DirectMessage = async (userIdA, userIdB) => {
+const DirectMessageService = async (userIdA, userIdB) => {
   const connection = new DatabaseTransaction();
   try {
     const user = await connection.userRepository.getAnUserByIdRepository(
@@ -77,7 +77,7 @@ const DirectMessage = async (userIdA, userIdB) => {
   }
 };
 
-const getRoomUserId = async (userId) => {
+const getRoomUserIdService = async (userId) => {
   const connection = new DatabaseTransaction();
   try {
     const rooms = await connection.roomRepository.findChatRoomUserId(userId);
@@ -87,7 +87,7 @@ const getRoomUserId = async (userId) => {
   }
 };
 
-const getRoomVideoId = async (videoId) => {
+const getRoomVideoIdService = async (videoId) => {
   const connection = new DatabaseTransaction();
   try {
     const video = await connection.videoRepository.getVideoRepository(videoId);
@@ -112,7 +112,7 @@ const getRoomVideoId = async (videoId) => {
   }
 };
 
-const getGlobalRoom = async () => {
+const getGlobalRoomService = async () => {
   const connection = new DatabaseTransaction();
   try {
     const existingRoom = await connection.roomRepository.findPublicChatRoom();
@@ -130,14 +130,30 @@ const getGlobalRoom = async () => {
   }
 };
 
+const handleMemberGroupChatService = async (roomId, memberId, action) => {
+  const connection = new DatabaseTransaction();
+  try {
+    const room =
+      await connection.roomRepository.handleMemberGroupChatRepository(
+        roomId,
+        memberId,
+        action
+      );
+    return room;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 module.exports = {
-  createRoom,
-  deleteRoom,
-  getAllRooms,
-  getRoom,
-  updateRoom,
-  DirectMessage,
-  getRoomUserId,
-  getRoomVideoId,
-  getGlobalRoom,
+  createRoomService,
+  deleteRoomService,
+  getAllRoomsService,
+  getRoomService,
+  updateRoomService,
+  DirectMessageService,
+  getRoomUserIdService,
+  getRoomVideoIdService,
+  getGlobalRoomService,
+  handleMemberGroupChatService,
 };

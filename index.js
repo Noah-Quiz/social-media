@@ -11,7 +11,17 @@ const messageRoutes = require("./routes/MessageRoute");
 const videoRoutes = require("./routes/VideoRoute");
 const userRoute = require("./routes/UserRoute");
 const roomRoutes = require("./routes/RoomRoute");
+const { createAMessageService } = require("./services/MessageService");
+const { getAnUserByIdService } = require("./services/UserService");
+const commentRoutes = require("./routes/CommentRoute");
 const app = express();
+const server = require("http").createServer(app);
+const io = require("socket.io")(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
 
 // Middleware
 app.use(
@@ -23,6 +33,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 const Vimeo = require("vimeo").Vimeo;
 
 const vimeoClient = new Vimeo(
@@ -30,6 +41,65 @@ const vimeoClient = new Vimeo(
   process.env.VIMEO_CLIENT_SECRET,
   process.env.VIMEO_ACCESS_TOKEN
 );
+
+function handleLeaveRoom(socket, roomId) {
+  socket.leave(roomId);
+  console.log(`User left room: ${roomId}`);
+}
+
+// Listen for socket connections
+io.on("connection", (socket) => {
+  console.log(`User connected: ${socket.id}`);
+
+  // Public Chat: Joining a default room
+  socket.on("join_public_chat", () => {
+    const room = "public_room";
+    socket.join(room);
+    console.log(`${socket.id} joined public room`);
+  });
+
+  // Private Chat: Join a private room between two users
+  socket.on("join_private_chat", (roomId) => {
+    socket.join(roomId);
+    console.log(`${socket.id} joined private room: ${roomId}`);
+  });
+
+  // Group Chat: Join a group room
+  socket.on("join_group_chat", (groupId) => {
+    socket.join(groupId);
+    console.log(`${socket.id} joined group room: ${room}`);
+  });
+
+  // Livestreaming Chat: Join livestream room
+  socket.on("join_livestream_chat", (streamId) => {
+    const room = `livestream_${streamId}`;
+    socket.join(room);
+    console.log(`${socket.id} joined livestream room: ${room}`);
+  });
+
+  // Sending messages
+  socket.on("send_message", async ({ roomId, userId, message }) => {
+    await createAMessageService(userId, roomId, message);
+    const user = await getAnUserByIdService(userId);
+    io.to(roomId).emit("receive_message", {
+      sender: user.fullName,
+      message,
+      avatar: user.avatar,
+    });
+    console.log(`Message sent to ${room}: ${message}`);
+  });
+
+  // Leaving a room (for private, group, livestream chat)
+  socket.on("leave_room", (room) => {
+    socket.leave(room);
+    console.log(`${socket.id} left room: ${room}`);
+  });
+
+  // Disconnect event
+  socket.on("disconnect", () => {
+    console.log(`User disconnected: ${socket.id}`);
+  });
+});
 
 app.get("/", (req, res) => {
   res.send(
@@ -53,10 +123,11 @@ app.use("/api/users", userRoute);
 app.use("/api/messages", messageRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/rooms", roomRoutes);
+app.use("/api/comments", commentRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 
-app.listen(port, (err) => {
+server.listen(port, (err) => {
   const logger = getLogger("APP");
   if (err) {
     logger.error("Failed to start server:", err);

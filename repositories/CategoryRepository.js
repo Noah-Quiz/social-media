@@ -1,7 +1,7 @@
 const Category = require("../entities/CategoryEntity");
 
 class CategoryRepository {
-  async createCategory(data, session = null) {
+  async createCategoryRepository(data, session = null) {
     try {
       const category = await Category.create([data], { session });
       return category[0];
@@ -10,7 +10,7 @@ class CategoryRepository {
     }
   }
 
-  async getCategory(id) {
+  async getCategoryRepository(id) {
     try {
       const category = await Category.findOne({ _id: id, isDeleted: "false" });
       return category;
@@ -19,7 +19,7 @@ class CategoryRepository {
     }
   }
 
-  async getAllCategory() {
+  async getAllCategoryRepository() {
     try {
       const categories = await Category.find({ isDeleted: "false" });
       return categories;
@@ -28,10 +28,10 @@ class CategoryRepository {
     }
   }
 
-  async updateCategory(id, data, session = null) {
-    data.lastUpdated = new Date();
+  async updateCategoryRepository(categoryId, categoryData, session = null) {
+    categoryData.lastUpdated = new Date();
     try {
-      const category = await Category.findByIdAndUpdate(id, data, {
+      const category = await Category.findByIdAndUpdate(categoryId, categoryData, {
         new: true,
         session,
       });
@@ -41,7 +41,7 @@ class CategoryRepository {
     }
   }
 
-  async deleteCategory(id, session = null) {
+  async deleteCategoryRepository(id, session = null) {
     try {
       const category = await Category.findByIdAndUpdate(
         id,

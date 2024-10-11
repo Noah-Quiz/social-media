@@ -97,7 +97,6 @@ const uploadThumbnail = async (videoUri, thumbnailFile) => {
         });
 
         let thumbnailUri = response.metadata.connections.pictures.uri;
-        console.log(thumbnailUri)
         if (!thumbnailUri) {
             throw new Error("Thumbnail URI not found in video metadata.");
         }
@@ -139,9 +138,32 @@ const uploadThumbnail = async (videoUri, thumbnailFile) => {
 
         return thumbnailUrl;
     } catch (error) {
-        throw new Error(`Error uploading and setting thumbnail: ${error.message}`);
+        throw new Error(`Error uploading thumbnail: ${error.message}`);
     }
 };
+
+const deleteVimeoVideo = async (videoId) => {
+    try {
+        const response = await new Promise((resolve, reject) => {
+            vimeoClient.request(
+                {
+                    method: 'DELETE',
+                    path: `/videos/${videoId}`,
+                },
+                (error, body) => {
+                    if (error) {
+                        return reject(new Error(`Error deleting video: ${error.message}`));
+                    }
+                    resolve(body);
+                }
+            );
+        });
+
+        return true;
+    } catch (error) {
+        throw new Error(`Error deleting video: ${error.message}`)
+    }
+}
 
 // Upload video and thumbnail
 const uploadFiles = async (videoFile, thumbnailFile) => {
@@ -157,7 +179,6 @@ const uploadFiles = async (videoFile, thumbnailFile) => {
             thumbnailUrl,
         };
     } catch (error) {
-        console.error(error.message);
         throw error;
     }
 };
@@ -166,4 +187,5 @@ module.exports = {
     uploadVideo,
     uploadThumbnail,
     uploadFiles,
+    deleteVimeoVideo,
 };
