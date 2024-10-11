@@ -14,6 +14,10 @@ const {
   updateUserWalletService,
 } = require("../services/UserService");
 const mongoose = require("mongoose");
+const {
+  deleteFile,
+  checkFileSuccess,
+} = require("../utils/stores/storeImage");
 
 class UserController {
   async getAllUsersController(req, res) {
@@ -87,7 +91,7 @@ class UserController {
   async updateUserProfileByIdController(req, res) {
     try {
       const { userId } = req.params;
-      const { fullName, nickName } = req.query;
+      const { fullName, nickName } = req.body;
       let avatar = req.file ? req.file.path : null;
       const updateUserProfileDto = new UpdateUserProfileDto(
         userId,
@@ -106,10 +110,12 @@ class UserController {
         nickName,
         avatar,
       });
+      await checkFileSuccess(avatar);
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ user: result, message: "Success" });
+        .json({ user: result, message: "Update user profile successfully" });
     } catch (error) {
+      await deleteFile(req.file.path);
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
