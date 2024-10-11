@@ -28,12 +28,14 @@ route.get("/:userId", userController.getUserByIdController);
 
 route.put(
   "/profile/:userId",
-//   calculateFileSize,
+  //   calculateFileSize,
   uploadImage.single("avatar"),
   userController.updateUserProfileByIdController
 );
 
 route.put("/email/:userId", userController.updateUserEmailByIdController);
+
+route.put("/password/:userId", userController.updateUserPasswordByIdController);
 
 route.delete(
   "/:userId",
