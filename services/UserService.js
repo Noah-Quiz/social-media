@@ -3,12 +3,16 @@ const UserEnum = require("../enums/UserEnum");
 const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const { validFullName, validEmail } = require("../utils/validator");
-
+const bcrypt = require("bcrypt");
 module.exports = {
   getAllUsersService: async (page, size, name) => {
     const connection = new DatabaseTransaction();
 
-    const users = await connection.userRepository.getAllUsersRepository(page, size, name);
+    const users = await connection.userRepository.getAllUsersRepository(
+      page,
+      size,
+      name
+    );
 
     return users;
   },
@@ -17,7 +21,9 @@ module.exports = {
     try {
       const connection = new DatabaseTransaction();
 
-      const user = await connection.userRepository.getAnUserByIdRepository(userId);
+      const user = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
 
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
@@ -46,7 +52,9 @@ module.exports = {
         );
       }
 
-      const result = await connection.userRepository.deleteAnUserByIdRepository(userId);
+      const result = await connection.userRepository.deleteAnUserByIdRepository(
+        userId
+      );
 
       if (result)
         return {
@@ -94,6 +102,35 @@ module.exports = {
       const result = await connection.userRepository.updateAnUserByIdRepository(
         userId,
         { email, verify: false }
+      );
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateUserPasswordByIdService: async (userId, data) => {
+    try {
+      const connection = new DatabaseTransaction();
+
+      const user = await connection.userRepository.findUserById(userId);
+      if (!user) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
+
+      const isMatch = bcrypt.compare(data.oldPassword, user.password);
+      if (!isMatch) {
+        throw new CoreException(
+          StatusCodeEnum.BadRequest_400,
+          "Old password is incorrect"
+        );
+      }
+
+      const salt = 10;
+      const hashedNewPassword = await bcrypt.hash(data.newPassword, salt);
+
+      const result = await connection.userRepository.updateAnUserByIdRepository(
+        userId,
+        { password: hashedNewPassword }
       );
       return result;
     } catch (error) {

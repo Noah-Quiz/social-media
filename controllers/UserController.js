@@ -10,12 +10,12 @@ const {
   updateUserProfileByIdService,
   updateUserEmailByIdService,
   deleteUserByIdService,
+  updateUserPasswordByIdService,
 } = require("../services/UserService");
 const mongoose = require("mongoose");
-const {
-  deleteFile,
-  checkFileSuccess,
-} = require("../utils/stores/storeImage");
+const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
+const UpdateUserPasswordDto = require("../dtos/User/UpdateUserPasswordDto");
+const UpdateUserEmailDto = require("../dtos/User/UpdateUserEmailDto");
 
 class UserController {
   async getAllUsersController(req, res) {
@@ -134,17 +134,14 @@ class UserController {
         .json({ message: "Forbidden access" });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Invalid user ID" });
-    }
+    const updateUserEmailDto = new UpdateUserEmailDto(userId, email);
+    await updateUserEmailDto.validate();
 
     try {
       const result = await updateUserEmailByIdService(userId, email);
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ user: result, message: "Success" });
+        .json({ user: result, message: "Update user email successfully" });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
@@ -156,6 +153,41 @@ class UserController {
     }
   }
 
+  async updateUserPasswordByIdController(req, res) {
+    try {
+      const { userId } = req.params;
+      const { oldPassword, newPassword } = req.body;
+
+      if (req.userId !== userId) {
+        return res
+          .status(StatusCodeEnums.Forbidden_403)
+          .json({ message: "Forbidden access" });
+      }
+      const updateUserPasswordDto = new UpdateUserPasswordDto(
+        userId,
+        oldPassword,
+        newPassword
+      );
+      await updateUserPasswordDto.validate();
+
+      const result = await updateUserPasswordByIdService(userId, {
+        oldPassword,
+        newPassword,
+      });
+
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Update user password successfully" });
+    } catch (error) {
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
+    }
+  }
   async toggleFollowController(req, res) {
     try {
       let result;

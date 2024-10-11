@@ -3,7 +3,7 @@ const UserController = require("../controllers/UserController");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const requireRole = require("../middlewares/requireRole");
 const UserEnum = require("../enums/UserEnum");
-const {uploadImage} = require("../utils/stores/storeImage");
+const { uploadImage } = require("../utils/stores/storeImage");
 const userController = new UserController();
 
 const route = express.Router();
@@ -18,12 +18,14 @@ route.get("/:userId", userController.getUserByIdController);
 
 route.put(
   "/profile/:userId",
-//   calculateFileSize,
+  //   calculateFileSize,
   uploadImage.single("avatar"),
   userController.updateUserProfileByIdController
 );
 
 route.put("/email/:userId", userController.updateUserEmailByIdController);
+
+route.put("/password/:userId", userController.updateUserPasswordByIdController);
 
 route.delete(
   "/:userId",
