@@ -79,22 +79,22 @@ class UserRepository {
   async getAllUsersRepository(page, size, name) {
     try {
       const query = { isDeleted: false };
-  
+
       if (name) {
         query.$or = [
           { fullName: { $regex: name, $options: "i" } },
           { nickName: { $regex: name, $options: "i" } },
         ];
       }
-  
+
       const skip = (page - 1) * size;
       const users = await User.find(query)
         .select("email fullName nickName follow followBy avatar phoneNumber")
         .skip(skip)
         .limit(size);
-  
+
       const totalUsers = await User.countDocuments(query);
-  
+
       return {
         data: users,
         message: "Get all users successfully",
@@ -106,7 +106,6 @@ class UserRepository {
       throw new Error(`Error when getting all users: ${error.message}`);
     }
   }
-  
 
   async followAnUserRepository(userId, followId) {
     const user = await User.findOne({ _id: userId });
@@ -164,7 +163,12 @@ class UserRepository {
       if (!user.wallet) {
         return defaultWallet;
       }
-      return user.wallet;
+      const userWallet = {
+        ...user.wallet,
+        formatedBalance: user.wallet.balance.toLocaleString(),
+        formatedCoin: user.wallet.coin.toLocaleString(),
+      };
+      return userWallet;
     } catch (error) {
       throw new Error(error.message);
     }
@@ -181,7 +185,7 @@ class UserRepository {
       user.wallet.balance += amount;
 
       await user.save();
-      return user;
+      return user.wallet;
     } catch (error) {
       throw new Error(error.message);
     }
@@ -231,7 +235,12 @@ class UserRepository {
       }
 
       await user.save();
-      return user;
+      const userWallet = {
+        ...user.wallet,
+        formatedBalance: user.wallet.balance.toLocaleString(),
+        formatedCoin: user.wallet.coin.toLocaleString(),
+      };
+      return userWallet;
     } catch (error) {
       throw new Error(error.message);
     }

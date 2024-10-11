@@ -8,7 +8,11 @@ module.exports = {
   getAllUsersService: async (page, size, name) => {
     const connection = new DatabaseTransaction();
 
-    const users = await connection.userRepository.getAllUsersRepository(page, size, name);
+    const users = await connection.userRepository.getAllUsersRepository(
+      page,
+      size,
+      name
+    );
 
     return users;
   },
@@ -17,7 +21,9 @@ module.exports = {
     try {
       const connection = new DatabaseTransaction();
 
-      const user = await connection.userRepository.getAnUserByIdRepository(userId);
+      const user = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
 
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
@@ -46,7 +52,9 @@ module.exports = {
         );
       }
 
-      const result = await connection.userRepository.deleteAnUserByIdRepository(userId);
+      const result = await connection.userRepository.deleteAnUserByIdRepository(
+        userId
+      );
 
       if (result)
         return {

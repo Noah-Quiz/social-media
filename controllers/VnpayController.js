@@ -84,9 +84,22 @@ exports.vnpayReturn = async (req, res) => {
       const connection = new DatabaseTransaction();
       const result = await connection.userRepository.topUpUserBalance(
         userId,
-        amount / 1000
-      ); //1000VND = 1 balance
-
+        amount
+      ); //1VND = 1 balance
+      const receipt =
+        await connection.receiptRepository.createReceiptRepository(
+          userId,
+          (paymentMethod = "Online Payment"),
+          (paymentPort = "VNPAY"),
+          (bankCode = vnp_Params.vnp_BankCode),
+          amount,
+          (transactionId = vnp_Params.vnp_TxnRef)
+        );
+      if (!receipt) {
+        return res.status(400).json({ message: "Failed to create receipt" });
+      } else {
+        console.log("receipt generated");
+      }
       console.log(
         `Top-up successful for User ID: ${userId}, Amount: ${amount} VND`
       );
