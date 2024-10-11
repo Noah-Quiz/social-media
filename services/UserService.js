@@ -165,6 +165,17 @@ module.exports = {
           "Follow unsuccessfully"
         );
       }
+
+      const notification = {
+        avatar: user.avatar,
+        content: `${user.fullName} đang follow bạn`,
+        check: user,
+        seen: false,
+        createdAt: new Date(),
+      }
+
+       await connection.userRepository.notifiCommentRepository(userId, followId);
+
       return result;
     } catch (error) {
       throw error;
@@ -197,7 +208,53 @@ module.exports = {
           "Unfollow unsuccessfully"
         );
       }
+      
       return result;
+    } catch (error) {
+      throw error;
+    }
+  },
+  getUserWalletService: async (userId) => {
+    try {
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.getUserWallet(userId);
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateUserWalletService: async (
+    userId,
+    actionCurrencyType,
+    amount,
+    exchangeRate
+  ) => {
+    let rate;
+    if (!exchangeRate) {
+      rate = 1000; //default
+    } else {
+      rate = parseFloat(exchangeRate);
+    }
+
+    try {
+      const parseAmount = parseFloat(amount);
+      if (parseFloat <= 0) {
+        throw error("Invalid amount");
+      }
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.updateUserWalletRepository(
+        userId,
+        actionCurrencyType,
+        parseAmount,
+        rate
+      );
+      if (!user) {
+        throw new CoreException(
+          StatusCodeEnum.NotFound_404,
+          "User not found or update failed"
+        );
+      }
+      return user;
     } catch (error) {
       throw error;
     }

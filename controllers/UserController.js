@@ -11,6 +11,8 @@ const {
   updateUserEmailByIdService,
   deleteUserByIdService,
   updateUserPasswordByIdService,
+  getUserWalletService,
+  updateUserWalletService,
 } = require("../services/UserService");
 const mongoose = require("mongoose");
 const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
@@ -212,6 +214,44 @@ class UserController {
           .status(StatusCodeEnums.InternalServerError_500)
           .json({ message: error.message });
       }
+    }
+  }
+  async getUserWalletController(req, res) {
+    const userId = req.userId;
+    console.log(userId);
+    try {
+      const wallet = await getUserWalletService(userId);
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ wallet: wallet, message: "Success" });
+    } catch (error) {
+      return res
+        .status(StatusCodeEnums.InternalServerError_500)
+        .json({ message: error.message });
+    }
+  }
+  async updateUserWalletController(req, res) {
+    const userId = req.userId;
+    const { amount, actionCurrencyType, exchangeRate } = req.body;
+    if (!amount || !actionCurrencyType || !userId) {
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json("Missing field: amount, actionCurrencyType");
+    }
+    try {
+      const user = await updateUserWalletService(
+        userId,
+        actionCurrencyType,
+        amount,
+        exchangeRate
+      );
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ user: user, message: "Success" });
+    } catch (error) {
+      return res
+        .status(StatusCodeEnums.InternalServerError_500)
+        .json({ message: error.message });
     }
   }
 }
