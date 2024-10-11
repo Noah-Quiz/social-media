@@ -65,6 +65,19 @@ const userEntitySchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  notifications: {
+    type: [
+      {
+        avatar: String,
+        content: String,
+        check: String,
+        checkCmt: String,
+        seen: { type: Boolean, default: false },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  },
   follow: [
     {
       type: mongoose.Types.ObjectId,
