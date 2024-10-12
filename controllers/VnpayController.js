@@ -3,7 +3,8 @@ const config = require("../vnpay/vnpay.config.js");
 const moment = require("moment");
 const crypto = require("crypto");
 const querystring = require("qs");
-
+const { createReceiptService } = require("../services/ReceiptService.js");
+const { topUpUserService } = require("../services/UserService.js");
 // Utility function to sort object keys
 function sortObject(obj) {
   const sorted = {};
@@ -81,20 +82,16 @@ exports.vnpayReturn = async (req, res) => {
     const userId = orderInfo.slice(0, 24);
     const amount = parseFloat(orderInfo.slice(27).trim());
     try {
-      const connection = new DatabaseTransaction();
-      const result = await connection.userRepository.topUpUserBalance(
+      const result = await topUpUserService(userId, amount); //1VND = 1 balance
+
+      const receipt = await createReceiptService(
         userId,
-        amount
-      ); //1VND = 1 balance
-      const receipt =
-        await connection.receiptRepository.createReceiptRepository(
-          userId,
-          (paymentMethod = "Online Payment"),
-          (paymentPort = "VNPAY"),
-          (bankCode = vnp_Params.vnp_BankCode),
-          amount,
-          (transactionId = vnp_Params.vnp_TxnRef)
-        );
+        (paymentMethod = vnp_Params.vnp_CardType),
+        (paymentPort = "VNPAY"),
+        (bankCode = vnp_Params.vnp_BankCode),
+        amount,
+        (transactionId = vnp_Params.vnp_TxnRef)
+      );
       if (!receipt) {
         return res.status(400).json({ message: "Failed to create receipt" });
       } else {
