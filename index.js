@@ -113,7 +113,7 @@ app.get("/", (req, res) => {
 // Log API requests
 app.use((req, res, next) => {
   const logger = getLogger("API");
-  logger.info(req.path, req.method);
+  logger.info(req.method + " " + req.path);
   next();
 });
 
