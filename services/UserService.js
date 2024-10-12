@@ -172,9 +172,9 @@ module.exports = {
         check: user,
         seen: false,
         createdAt: new Date(),
-      }
+      };
 
-       await connection.userRepository.notifiCommentRepository(userId, followId);
+      await connection.userRepository.notifiCommentRepository(userId, followId);
 
       return result;
     } catch (error) {
@@ -208,7 +208,7 @@ module.exports = {
           "Unfollow unsuccessfully"
         );
       }
-      
+
       return result;
     } catch (error) {
       throw error;
@@ -254,6 +254,18 @@ module.exports = {
           "User not found or update failed"
         );
       }
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  },
+  async topUpUserService(userId, amount) {
+    try {
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.topUpUserBalance(
+        userId,
+        amount
+      );
       return user;
     } catch (error) {
       throw error;
