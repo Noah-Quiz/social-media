@@ -172,9 +172,9 @@ module.exports = {
         check: user,
         seen: false,
         createdAt: new Date(),
-      }
+      };
 
-       await connection.userRepository.notifiCommentRepository(userId, followId);
+      await connection.userRepository.notifiCommentRepository(userId, followId);
 
       return result;
     } catch (error) {
@@ -208,7 +208,7 @@ module.exports = {
           "Unfollow unsuccessfully"
         );
       }
-      
+
       return result;
     } catch (error) {
       throw error;
