@@ -8,7 +8,7 @@ const userController = new UserController();
 
 const route = express.Router();
 
-route.use(AuthMiddleware);
+// route.use(AuthMiddleware);
 
 route.post("/follow", userController.toggleFollowController);
 
@@ -29,5 +29,7 @@ route.delete(
   requireRole(UserEnum.ADMIN),
   userController.deleteUserByIdController
 );
+
+route.put("/watch-time", userController.updateTotalWatchTimeController);
 
 module.exports = route;

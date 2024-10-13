@@ -77,6 +77,14 @@ const userEntitySchema = new mongoose.Schema({
       ref: "User",
     },
   ],
+  totalWatchTime: {
+    type: Number,
+    default: 0,
+  },
+  point: {
+    type: Number,
+    default: 0,
+  },
   ...baseEntitySchema.obj,
 });
 

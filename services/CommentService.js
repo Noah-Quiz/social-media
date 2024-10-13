@@ -41,11 +41,12 @@ const getCommentService = async (id) => {
     throw new Error(error.message);
   }
 };
-const getVideoCommentsService = async (videoId) => {
+const getVideoCommentsService = async (videoId, sortBy) => {
   const connection = new DatabaseTransaction();
   try {
     const comment = await connection.commentRepository.getAllCommentVideoId(
-      videoId
+      videoId,
+      sortBy
     );
     return comment;
   } catch (error) {

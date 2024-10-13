@@ -78,22 +78,22 @@ class UserRepository {
   async getAllUsersRepository(page, size, name) {
     try {
       const query = { isDeleted: false };
-  
+
       if (name) {
         query.$or = [
           { fullName: { $regex: name, $options: "i" } },
           { nickName: { $regex: name, $options: "i" } },
         ];
       }
-  
+
       const skip = (page - 1) * size;
       const users = await User.find(query)
         .select("email fullName nickName follow followBy avatar phoneNumber")
         .skip(skip)
         .limit(size);
-  
+
       const totalUsers = await User.countDocuments(query);
-  
+
       return {
         data: users,
         message: "Get all users successfully",
@@ -105,7 +105,6 @@ class UserRepository {
       throw new Error(`Error when getting all users: ${error.message}`);
     }
   }
-  
 
   async followAnUserRepository(userId, followId) {
     const user = await User.findOne({ _id: userId });
@@ -149,6 +148,30 @@ class UserRepository {
     } catch (error) {
       return false;
     }
+  }
+
+  async updateTotalWatchTimeRepository(userId, watchTime) {
+    try {
+      const user = await User.findByIdAndUpdate(
+        userId,
+        {
+          $inc: { totalWatchTime: watchTime },
+        },
+        {
+          new: true,
+        }
+      );
+      await User.findByIdAndUpdate(userId, {
+        point: this.calculatePoint(user.totalWatchTime),
+      });
+      return true;
+    } catch (error) {
+      console.error("Error updating total watch time:", error);
+    }
+  }
+
+  calculatePoint(totalWatchTime) {
+    return Math.floor(totalWatchTime / 60);
   }
 }
 

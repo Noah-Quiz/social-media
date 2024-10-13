@@ -31,28 +31,47 @@ class CommentRepository {
     }
   }
 
-  async getAllCommentVideoId(videoId) {
+  async getAllCommentVideoId(videoId, sortBy) {
     try {
-      const comments = await Comment.find({
-        videoId: videoId,
-        isDeleted: false,
-      });
-      return comments;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  }
+      let comments;
 
-  async softDeleteComment(id) {
-    try {
-      const comment = await Comment.findByIdAndUpdate(
-        id,
-        {
-          $set: { isDeleted: true, lastUpdated: new Date() },
-        },
-        { new: true }
-      );
-      return comment;
+      if (sortBy && sortBy === "like") {
+        comments = await Comment.aggregate([
+          {
+            $match: {
+              videoId: new mongoose.Types.ObjectId(videoId),
+              isDeleted: false,
+            },
+          },
+          {
+            $addFields: {
+              length: {
+                $size: "$likeBy",
+              },
+            },
+          },
+          {
+            $sort: {
+              length: -1,
+              dateCreated: -1,
+            },
+          },
+          {
+            $project: {
+              length: 0,
+            },
+          },
+        ]);
+      } else {
+        comments = await Comment.find({
+          videoId: videoId,
+          isDeleted: false,
+        }).sort({
+          dateCreated: -1,
+        });
+      }
+
+      return comments;
     } catch (error) {
       throw new Error(error.message);
     }

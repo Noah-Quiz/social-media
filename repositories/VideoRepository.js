@@ -86,9 +86,43 @@ class VideoRepository {
     }
   }
 
-  async getVideosByUserIdRepository(userId) {
+  async getVideosByUserIdRepository(userId, sortBy) {
     try {
-      const videos = await Video.find({ userId: userId, isDeleted: false });
+      let videos;
+      if (sortBy && sortBy === "like") {
+        videos = await Video.aggregate([
+          {
+            $match: {
+              userId: new mongoose.Types.ObjectId(userId),
+              isDeleted: false,
+            },
+          },
+          {
+            $addFields: {
+              length: {
+                $size: "$likedBy",
+              },
+            },
+          },
+          {
+            $sort: {
+              length: -1,
+              dateCreated: -1,
+            },
+          },
+          {
+            $project: {
+              length: 0,
+            },
+          },
+        ]);
+      } else {
+        videos = await Video.find({
+          userId: userId,
+          isDeleted: false,
+        }).sort({ dateCreated: -1 });
+      }
+
       return videos;
     } catch (error) {
       throw new Error(
@@ -114,19 +148,46 @@ class VideoRepository {
   async getAllVideosRepository(query) {
     try {
       const skip = (query.page - 1) * query.size;
-  
+
       const searchQuery = { isDeleted: false };
-  
+
       if (query.title) {
-        searchQuery.title = query.title; 
+        searchQuery.title = query.title;
       }
-  
+
       const totalVideos = await Video.countDocuments(searchQuery);
-  
-      const videos = await Video.find(searchQuery)
-        .limit(query.size)
-        .skip(skip);
-  
+      let videos;
+      if (query.sortBy && query.sortBy === "like") {
+        console.log("da toi day");
+        videos = await Video.aggregate([
+          {
+            $match: {
+              isDeleted: false,
+            },
+          },
+          {
+            $addFields: {
+              length: {
+                $size: "$likedBy",
+              },
+            },
+          },
+          {
+            $sort: {
+              length: -1,
+              dateCreated: -1,
+            },
+          },
+        ])
+          .skip(skip)
+          .limit(+query.size);
+      } else {
+        videos = await Video.find(searchQuery)
+          .sort({ dateCreated: -1 })
+          .limit(query.size)
+          .skip(skip);
+      }
+
       return {
         videos,
         total: totalVideos,
@@ -137,7 +198,6 @@ class VideoRepository {
       throw new Error(`Error when fetching all videos: ${error.message}`);
     }
   }
-  
 }
 
 module.exports = VideoRepository;
