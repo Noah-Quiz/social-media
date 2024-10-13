@@ -10,7 +10,7 @@ const historyController = new HistoryController();
 
 const route = express.Router();
 
-route.use(AuthMiddleware);
+// route.use(AuthMiddleware);
 
 /**
  * @swagger
@@ -233,5 +233,9 @@ route.post("/history", historyController.createHistoryRecordController);
 route.get("/history", historyController.getAllHistoryRecordsController);
 
 route.delete("/history", historyController.clearAllHistoryRecordsController);
+
+route.delete("/history/:historyId", historyController.deleteHistoryRecordController);
+
+route.put("/watch-time", userController.updateTotalWatchTimeController);
 
 module.exports = route;

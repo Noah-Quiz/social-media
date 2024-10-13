@@ -161,7 +161,7 @@ class VideoController {
 
   async getVideosByUserIdController(req, res) {
     const { userId } = req.params;
-
+    const { sortBy } = req.query;
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res
         .status(StatusCodeEnums.BadRequest_400)
@@ -169,7 +169,7 @@ class VideoController {
     }
 
     try {
-      const videos = await getVideosByUserIdService(userId);
+      const videos = await getVideosByUserIdService(userId, sortBy);
 
       return res
         .status(StatusCodeEnums.OK_200)

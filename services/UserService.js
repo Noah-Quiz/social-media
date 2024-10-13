@@ -214,6 +214,19 @@ module.exports = {
       throw error;
     }
   },
+
+  updateTotalWatchTimeService: async (userId, watchTime) => {
+    const connection = new DatabaseTransaction();
+    try {
+      await connection.userRepository.updateTotalWatchTimeRepository(
+        userId,
+        watchTime
+      );
+      return;
+    } catch (error) {
+      throw error;
+    }
+  },
   getUserWalletService: async (userId) => {
     try {
       const connection = new DatabaseTransaction();
@@ -254,6 +267,18 @@ module.exports = {
           "User not found or update failed"
         );
       }
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  },
+  async topUpUserService(userId, amount) {
+    try {
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.topUpUserBalance(
+        userId,
+        amount
+      );
       return user;
     } catch (error) {
       throw error;

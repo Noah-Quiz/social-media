@@ -30,8 +30,32 @@ const deleteReceiptService = async (id) => {
     throw new Error(error.message);
   }
 };
+const createReceiptService = async (
+  userId,
+  paymentMethod,
+  paymentPort,
+  bankCode,
+  amount,
+  transactionId
+) => {
+  const connection = new DatabaseTransaction();
+  try {
+    const receipt = await connection.receiptRepository.createReceiptRepository(
+      userId,
+      paymentMethod,
+      paymentPort,
+      bankCode,
+      amount,
+      transactionId
+    );
+    return receipt;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
 module.exports = {
   getReceiptService,
   getAllUserReceiptService,
   deleteReceiptService,
+  createReceiptService,
 };

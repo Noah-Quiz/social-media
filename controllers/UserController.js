@@ -10,6 +10,7 @@ const {
   updateUserProfileByIdService,
   updateUserEmailByIdService,
   deleteUserByIdService,
+  updateTotalWatchTimeService,
   updateUserPasswordByIdService,
   getUserWalletService,
   updateUserWalletService,
@@ -268,6 +269,25 @@ class UserController {
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ user: user, message: "Success" });
+    } catch (error) {
+      return res
+        .status(StatusCodeEnums.InternalServerError_500)
+        .json({ message: error.message });
+    }
+  }
+
+  async updateTotalWatchTimeController(req, res) {
+    const { userId, watchTime } = req.body;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Valid user ID is required" });
+    }
+    try {
+      const result = await updateTotalWatchTimeService(userId, watchTime);
+      return res.status(StatusCodeEnums.OK_200).json({
+        message: "Update watch time successfully",
+      });
     } catch (error) {
       return res
         .status(StatusCodeEnums.InternalServerError_500)
