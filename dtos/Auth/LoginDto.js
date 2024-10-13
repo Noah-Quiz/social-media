@@ -1,3 +1,5 @@
+const StatusCodeEnums = require("../../enums/StatusCodeEnum");
+const CoreException = require("../../exceptions/CoreException");
 const { validEmail } = require("../../utils/validator");
 
 /**
@@ -27,6 +29,12 @@ class LoginDto {
 
   async validate() {
     try {
+      if (!this.email || !this.password) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Email and password are required."
+        );
+      }
       await validEmail(this.email);
     } catch (error) {
       throw error;

@@ -89,13 +89,79 @@ authRoutes.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
-authRoutes.get(
+
+/**
+ * @swagger
+ * /api/auth/google/callback:
+ *   post:
+ *     summary: Receive Google OAuth2 callback
+ *     description: After the user logs in with Google, Google will redirect the user back to this endpoint. This endpoint will then authenticate the user and log them in.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginGoogleDto'
+ *     responses:
+ *      200:
+ *       description: Login with Google successfully
+ *      400:
+ *       description: Bad request
+ *      500:
+ *       description: Internal server error
+ *
+ */
+authRoutes.post(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   authController.loginGoogleController
 );
 
+/**
+ * @swagger
+ * /api/auth/apple:
+ *   get:
+ *     summary: Login with Apple
+ *     description: Initiates the Apple OAuth login flow. Redirects the user to the Apple login page.
+ *     tags: [Auth]
+ *     responses:
+ *       302:
+ *         description: Redirect to Aplle for authentication
+ *         headers:
+ *           Location:
+ *             description: URL to Aplle's OAuth 2.0 login page
+ *             schema:
+ *               type: string
+ *               example: https://accounts.apple.com/o/oauth2/auth
+ *       500:
+ *         description: Internal server error
+ *
+ */
 authRoutes.get("/apple", passport.authenticate("apple"));
+
+/**
+ * @swagger
+ * /api/auth/apple/callback:
+ *   post:
+ *     summary: Receive Apple OAuth2 callback
+ *     description: After the user logs in with Apple, Apple will redirect the user back to this endpoint. This endpoint will then authenticate the user and log them in.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginAppleDto'
+ *     responses:
+ *      200:
+ *       description: Login with Apple successfully
+ *      400:
+ *       description: Bad request
+ *      500:
+ *       description: Internal server error
+ *
+ */
 authRoutes.post(
   "/apple/callback",
   express.urlencoded({ extended: true }),

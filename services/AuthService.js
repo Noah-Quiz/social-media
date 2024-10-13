@@ -61,7 +61,28 @@ const loginService = async (email, password) => {
         "User is not active"
       );
 
-    const isPasswordMath = bcrypt.compare(password, user.password);
+    // Check if user is verified
+    if (user.verify === false)
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "User is not verified. Please check your email or phone for verification"
+      );
+
+    // Check if already login with google
+    if (user.googleId !== "" && !user.password) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "You have already registered with Google. Please login with Google"
+      );
+    }
+    if (user.appleUser === true && !user.password) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "You have already registered with Apple. Please login with Apple"
+      );
+    }
+
+    const isPasswordMath = await bcrypt.compare(password, user.password);
     if (!isPasswordMath) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
@@ -128,6 +149,10 @@ const loginAppleService = async (user) => {
       }
       if (existingUser.verify === false) {
         existingUser.verify = true;
+        await existingUser.save();
+      }
+      if (existingUser.appleUser === false) {
+        existingUser.appleUser = true;
         await existingUser.save();
       }
       return existingUser;
