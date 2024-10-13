@@ -24,13 +24,25 @@ const clearAllHistoryRecordsService = async (userId) => {
     }
 }
 
-const getAllHistoryRecordsService = async (userId) => {
+const deleteHistoryRecordService = async (historyId) => {
     try {
         const connection = new DatabaseTransaction();
 
-        const historyRecords = await connection.historyRepository.getAllHistoryRecordsRepository(userId);
+        await connection.historyRepository.deleteHistoryRecordRepository(historyId);
 
-        return historyRecords;
+        return;
+    } catch (error) {
+        throw error;
+    }
+}
+
+const getAllHistoryRecordsService = async (userId, query) => {
+    try {
+        const connection = new DatabaseTransaction();
+
+        const data = await connection.historyRepository.getAllHistoryRecordsRepository(userId, query);
+
+        return data;
     } catch (error) {
         throw error;
     }
@@ -39,5 +51,6 @@ const getAllHistoryRecordsService = async (userId) => {
 module.exports = {
     createHistoryRecordService,
     clearAllHistoryRecordsService,
-    getAllHistoryRecordsService
+    getAllHistoryRecordsService,
+    deleteHistoryRecordService,
 }

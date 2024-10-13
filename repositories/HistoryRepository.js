@@ -1,66 +1,71 @@
-const History = require("../entities/HistoryEntity");
+const WatchHistory = require("../entities/HistoryEntity");
 
 class HistoryRepository {
     // Create a new history
     async createHistoryRecordRepository(data, session) {
         try {
             const { videoId, userId } = data;
-    
-            const history = await History.findOneAndUpdate(
+
+            const history = await WatchHistory.findOneAndUpdate(
                 { videoId, userId },
                 { $set: { lastUpdated: new Date() } },
                 { new: true, upsert: true, session }
             );
-    
+
             return history;
         } catch (error) {
             throw new Error(`Error creating/updating history record: ${error.message}`);
         }
     }
-    
 
-    async getAllHistoryRecordsRepository(userId) {
+    // Get all history records
+    async getAllHistoryRecordsRepository(userId, query) {
         try {
-            const historyRecords = await History.find({ userId });
+            const skip = (query.page - 1) * query.size;
 
-            return historyRecords;
+            const searchQuery = { userId };
+
+            const totalRecords = await WatchHistory.countDocuments(searchQuery);
+
+            const historyRecords = await WatchHistory.find(searchQuery)
+            .limit(query.size)
+            .skip(skip);
+
+            return { 
+                historyRecords,
+                total: totalRecords,
+                page: query.page,
+                totalPages: Math.ceil(totalRecords / query.size),
+            };
         } catch (error) {
             throw new Error(`Error creating history record: ${error.message}`);
         }
     }
-    
+
     // Clear all history of associated userId
     async clearAllHistoryRecordsRepository(userId) {
         try {
-            const result = await History.deleteMany({ userId: userId, isDeleted: false });
-    
-            if (result.deletedCount === 0) {
-                throw new Error('No history records found for the given user and type');
-            }
-    
+            await WatchHistory.deleteMany({ userId: userId });
+
             return true;
         } catch (error) {
             throw new Error(`Error clearing history: ${error.message}`);
         }
     }
-    
-    async deleteHistoryRecordById(historyId) {
-        try {
-            const result = await History.findByIdAndUpdate(
-                historyId,
-                { $set: { isDeleted: true } },
-                { new: true, runValidators: true }
-            );
 
+    async deleteHistoryRecordRepository(historyId) {
+        try {
+            const result = await WatchHistory.findByIdAndDelete(historyId);
+    
             if (!result) {
                 throw new Error('History record not found');
             }
-
+    
             return result;
         } catch (error) {
-            throw new Error(`Error soft deleting history record: ${error.message}`);
+            throw new Error(`Error deleting history record: ${error.message}`);
         }
-    }
+    }    
 }
 
 module.exports = HistoryRepository;
