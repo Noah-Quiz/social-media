@@ -3,6 +3,20 @@ const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
 const { validEmail } = require("../../utils/validator");
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     UpdateUserEmailDto:
+ *       type: object
+ *       required:
+ *         - email
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: The user's email.
+ */
 class UpdateUserEmailDto {
   constructor(userId, email) {
     this.email = email;

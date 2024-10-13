@@ -3,6 +3,25 @@ const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
 const { validPassword } = require("../../utils/validator");
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     UpdateUserPasswordDto:
+ *       type: object
+ *       required:
+ *        - oldPassword
+ *        - newPassword
+ *       properties:
+ *         oldPassword:
+ *           type: string
+ *           format: password
+ *           description: The user's old password.
+ *         newPassword:
+ *           type: string
+ *           format: password
+ *           description: The user's new password.
+ */
 class UpdateUserPasswordDto {
   constructor(userId, oldPassword, newPassword) {
     this.userId = userId;

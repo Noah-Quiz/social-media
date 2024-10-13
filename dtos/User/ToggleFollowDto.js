@@ -2,6 +2,27 @@ const { default: mongoose } = require("mongoose");
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ToggleFollowDto:
+ *       type: object
+ *       required:
+ *        - userId
+ *        - followId
+ *        - action
+ *       properties:
+ *         userId:
+ *           type: string
+ *           description: The user's id.
+ *         followId:
+ *           type: string
+ *           description: The follower's id.
+ *         action:
+ *           type: string
+ *           description: Action includes ["follow", "unfollow"].
+ */
 class ToggleFollowDto {
   constructor(userId, followId, action) {
     this.userId = userId;

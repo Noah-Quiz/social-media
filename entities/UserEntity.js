@@ -29,6 +29,10 @@ const userEntitySchema = new mongoose.Schema({
     default: "",
     unique: true,
   },
+  appleUser: {
+    type: Boolean,
+    default: false,
+  },
   email: {
     type: String,
     default: "",

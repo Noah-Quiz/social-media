@@ -19,6 +19,9 @@ const mongoose = require("mongoose");
 const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
 const UpdateUserPasswordDto = require("../dtos/User/UpdateUserPasswordDto");
 const UpdateUserEmailDto = require("../dtos/User/UpdateUserEmailDto");
+const GetUserWalletDto = require("../dtos/User/GetUserWalletDto");
+const UpdateUserWalletDto = require("../dtos/User/UpdateUserWalletDto");
+const DeleteUserDto = require("../dtos/User/DeleteUserDto");
 
 class UserController {
   async getAllUsersController(req, res) {
@@ -44,14 +47,11 @@ class UserController {
   }
 
   async deleteUserByIdController(req, res) {
-    const { userId } = req.params;
-
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: "Valid user ID is required" });
-    }
     try {
+      const { userId } = req.params;
+      const deleteUserDto = new DeleteUserDto(userId);
+      await deleteUserDto.validate();
+
       const result = await deleteUserByIdService(userId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
@@ -111,12 +111,16 @@ class UserController {
         nickName,
         avatar,
       });
-      await checkFileSuccess(avatar);
+      if (avatar) {
+        await checkFileSuccess(avatar);
+      }
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ user: result, message: "Update user profile successfully" });
     } catch (error) {
-      await deleteFile(req.file.path);
+      if (req.file) {
+        await deleteFile(req.file.path);
+      }
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
@@ -218,9 +222,15 @@ class UserController {
     }
   }
   async getUserWalletController(req, res) {
-    const userId = req.userId;
-    console.log(userId);
     try {
+      const { userId } = req.params;
+      if (userId !== req.userId) {
+        return res
+          .status(StatusCodeEnums.Forbidden_403)
+          .json({ message: "Forbidden access" });
+      }
+      const getUserWalletDto = new GetUserWalletDto(userId);
+      await getUserWalletDto.validate();
       const wallet = await getUserWalletService(userId);
       return res
         .status(StatusCodeEnums.OK_200)
@@ -232,14 +242,24 @@ class UserController {
     }
   }
   async updateUserWalletController(req, res) {
-    const userId = req.userId;
-    const { amount, actionCurrencyType, exchangeRate } = req.body;
-    if (!amount || !actionCurrencyType || !userId) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json("Missing field: amount, actionCurrencyType");
-    }
     try {
+      const { userId } = req.params;
+      if (userId !== req.userId) {
+        return res
+          .status(StatusCodeEnums.Forbidden_403)
+          .json({ message: "Forbidden access" });
+      }
+
+      const { amount, actionCurrencyType, exchangeRate } = req.body;
+
+      const updateUserWalletDto = new UpdateUserWalletDto(
+        userId,
+        amount,
+        actionCurrencyType,
+        exchangeRate
+      );
+      await updateUserWalletDto.validate();
+
       const user = await updateUserWalletService(
         userId,
         actionCurrencyType,
