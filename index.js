@@ -14,6 +14,8 @@ const roomRoutes = require("./routes/RoomRoute");
 const { createAMessageService } = require("./services/MessageService");
 const { getAnUserByIdService } = require("./services/UserService");
 const commentRoutes = require("./routes/CommentRoute");
+const vnpayRoutes = require("./routes/VnpayRoute");
+const receiptRoutes = require("./routes/ReceiptRoute");
 const app = express();
 const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
@@ -111,7 +113,7 @@ app.get("/", (req, res) => {
 // Log API requests
 app.use((req, res, next) => {
   const logger = getLogger("API");
-  logger.info(req.path, req.method);
+  logger.info(req.method + " " + req.path);
   next();
 });
 
@@ -124,6 +126,8 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/vnpay", vnpayRoutes);
+app.use("/api/receipts/", receiptRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 

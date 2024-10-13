@@ -3,7 +3,7 @@ const UserEnum = require("../enums/UserEnum");
 const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const { validFullName, validEmail } = require("../utils/validator");
-
+const bcrypt = require("bcrypt");
 module.exports = {
   getAllUsersService: async (page, size, name) => {
     const connection = new DatabaseTransaction();
@@ -108,6 +108,35 @@ module.exports = {
       throw error;
     }
   },
+  updateUserPasswordByIdService: async (userId, data) => {
+    try {
+      const connection = new DatabaseTransaction();
+
+      const user = await connection.userRepository.findUserById(userId);
+      if (!user) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
+
+      const isMatch = bcrypt.compare(data.oldPassword, user.password);
+      if (!isMatch) {
+        throw new CoreException(
+          StatusCodeEnum.BadRequest_400,
+          "Old password is incorrect"
+        );
+      }
+
+      const salt = 10;
+      const hashedNewPassword = await bcrypt.hash(data.newPassword, salt);
+
+      const result = await connection.userRepository.updateAnUserByIdRepository(
+        userId,
+        { password: hashedNewPassword }
+      );
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  },
 
   followUserService: async (userId, followId) => {
     try {
@@ -136,6 +165,17 @@ module.exports = {
           "Follow unsuccessfully"
         );
       }
+
+      const notification = {
+        avatar: user.avatar,
+        content: `${user.fullName} đang follow bạn`,
+        check: user,
+        seen: false,
+        createdAt: new Date(),
+      };
+
+      await connection.userRepository.notifiCommentRepository(userId, followId);
+
       return result;
     } catch (error) {
       throw error;
@@ -168,6 +208,7 @@ module.exports = {
           "Unfollow unsuccessfully"
         );
       }
+
       return result;
     } catch (error) {
       throw error;
@@ -182,6 +223,63 @@ module.exports = {
         watchTime
       );
       return;
+    } catch (error) {
+      throw error;
+    }
+  },
+  getUserWalletService: async (userId) => {
+    try {
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.getUserWallet(userId);
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateUserWalletService: async (
+    userId,
+    actionCurrencyType,
+    amount,
+    exchangeRate
+  ) => {
+    let rate;
+    if (!exchangeRate) {
+      rate = 1000; //default
+    } else {
+      rate = parseFloat(exchangeRate);
+    }
+
+    try {
+      const parseAmount = parseFloat(amount);
+      if (parseFloat <= 0) {
+        throw error("Invalid amount");
+      }
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.updateUserWalletRepository(
+        userId,
+        actionCurrencyType,
+        parseAmount,
+        rate
+      );
+      if (!user) {
+        throw new CoreException(
+          StatusCodeEnum.NotFound_404,
+          "User not found or update failed"
+        );
+      }
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  },
+  async topUpUserService(userId, amount) {
+    try {
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.topUpUserBalance(
+        userId,
+        amount
+      );
+      return user;
     } catch (error) {
       throw error;
     }

@@ -1,3 +1,4 @@
+const GetVideosByPlaylistIdDto = require("../dtos/Video/GetVideosByPlaylistId");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const {
@@ -245,15 +246,22 @@ class VideoController {
   async getVideosByPlaylistIdController(req, res) {
     try {
       const { playlistId } = req.params;
-      if (!mongoose.Types.ObjectId.isValid(playlistId)) {
-        return res
-          .status(StatusCodeEnums.BadRequest_400)
-          .json({ message: "PlaylistId is not an ObjectId" });
-      }
-      const videos = await getVideosByPlaylistIdService(playlistId);
+      const { page, size } = req.query;
+      const getVideosByPlaylistId = new GetVideosByPlaylistIdDto(
+        playlistId,
+        page,
+        size
+      );
+      await getVideosByPlaylistId.validate();
+
+      const videos = await getVideosByPlaylistIdService(
+        playlistId,
+        page || 1,
+        size || 10
+      );
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ message: "Get videos successfully", videos });
+        .json({ videos, message: "Get videos by playlistId successfully" });
     } catch (error) {
       if (error instanceof CoreException) {
         res.status(error.code).json({ message: error.message });
