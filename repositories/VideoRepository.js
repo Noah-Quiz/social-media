@@ -105,15 +105,27 @@ class VideoRepository {
       throw new Error(`Error when fetching video by videoId: ${error.message}`);
     }
   }
-  
-  async getVideosByPlaylistIdRepository(playlistId) {
+
+  async getVideosByPlaylistIdRepository(playlistId, page, size) {
     try {
+      console.log(page)
       const playlist = await MyPlaylist.findById(playlistId);
       if (!playlist) {
         throw new Error("Playlist not found");
       }
-      const videos = playlist.videoIds.map((video) => video.toString());
-      return videos;
+      const videoIds = playlist.videoIds.map((video) => video.toString());
+
+      const skip = (page - 1) * size;
+      const videos = await Video.find({ _id: { $in: videoIds } })
+        .skip(skip)
+        .limit(size);
+
+      return {
+        data: videos,
+        page: page,
+        total: videos.length,
+        totalPages: Math.ceil(videos.length / size),
+      };
     } catch (error) {
       throw new Error(
         `Error when fetch all videos by playlistId: ${error.message}`
@@ -123,19 +135,17 @@ class VideoRepository {
   async getAllVideosRepository(query) {
     try {
       const skip = (query.page - 1) * query.size;
-  
+
       const searchQuery = { isDeleted: false };
-  
+
       if (query.title) {
-        searchQuery.title = query.title; 
+        searchQuery.title = query.title;
       }
-  
+
       const totalVideos = await Video.countDocuments(searchQuery);
-  
-      const videos = await Video.find(searchQuery)
-        .limit(query.size)
-        .skip(skip);
-  
+
+      const videos = await Video.find(searchQuery).limit(query.size).skip(skip);
+
       return {
         videos,
         total: totalVideos,

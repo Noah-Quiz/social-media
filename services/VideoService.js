@@ -179,12 +179,12 @@ const getVideosService = async (query) => {
   }
 };
 
-const getVideosByPlaylistIdService = async (playlistId) => {
+const getVideosByPlaylistIdService = async (playlistId, page, size) => {
   try {
     const connection = new DatabaseTransaction();
     const videos =
       await connection.videoRepository.getVideosByPlaylistIdRepository(
-        playlistId
+        playlistId,page,size
       );
     return videos;
   } catch (error) {
