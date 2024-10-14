@@ -266,12 +266,19 @@ route.get("/:userId", userController.getUserByIdController);
  *     summary: Update user profile by ID
  *     description: Update user profile by ID, including fullName, nickName, avatar.
  *     tags: [Users]
+ *     consumes:
+ *      - multipart/form-data
  *     parameters:
  *      - in: path
  *        name: userId
  *        schema:
  *         type: string
  *         required: true
+ *      - in: formData
+ *        name: avatar
+ *        schema:
+ *         type: file
+ *        description: The user's avatar image file
  *     requestBody:
  *       content:
  *         application/json:
