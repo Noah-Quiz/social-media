@@ -1,7 +1,28 @@
-const { default: mongoose } = require("mongoose");
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
+const { validMongooseObjectId } = require("../../utils/validator");
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ToggleFollowDto:
+ *       type: object
+ *       required:
+ *        - userId
+ *        - followId
+ *        - action
+ *       properties:
+ *         userId:
+ *           type: string
+ *           description: The user's id.
+ *         followId:
+ *           type: string
+ *           description: The follower's id.
+ *         action:
+ *           type: string
+ *           description: Action includes ["follow", "unfollow"].
+ */
 class ToggleFollowDto {
   constructor(userId, followId, action) {
     this.userId = userId;
@@ -12,15 +33,10 @@ class ToggleFollowDto {
     if (!["follow", "unfollow"].includes(this.action)) {
       throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid action");
     }
-    if (!mongoose.Types.ObjectId.isValid(this.userId)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid userId");
-    }
-    if (!mongoose.Types.ObjectId.isValid(this.followId)) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Invalid followId"
-      );
-    }
+    await validMongooseObjectId(this.userId);
+
+    await validMongooseObjectId(this.followId);
+
     if (this.userId === this.followId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,

@@ -29,6 +29,10 @@ const userEntitySchema = new mongoose.Schema({
     default: "",
     unique: true,
   },
+  appleUser: {
+    type: Boolean,
+    default: false,
+  },
   email: {
     type: String,
     default: "",
@@ -99,6 +103,14 @@ const userEntitySchema = new mongoose.Schema({
       type: Number,
       default: 0,
     },
+  },
+  totalWatchTime: {
+    type: Number,
+    default: 0,
+  },
+  point: {
+    type: Number,
+    default: 0,
   },
   ...baseEntitySchema.obj,
 });

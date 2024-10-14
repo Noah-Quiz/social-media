@@ -9,6 +9,8 @@ const CommentRepository = require("./CommentRepository.js");
 const ReceiptRepository = require("./ReceiptRepository.js");
 const HistoryRepository = require("./HistoryRepository.js");
 const StreamRepository = require("./StreamRepository.js");
+const GiftRepository = require("./GiftRepository.js");
+const GiftHistoryRepository = require("./GiftHistoryRepository.js");
 class DatabaseTransaction extends BaseDatabaseTransaction {
   constructor() {
     super();
@@ -22,6 +24,8 @@ class DatabaseTransaction extends BaseDatabaseTransaction {
     this.receiptRepository = new ReceiptRepository();
     this.historyRepository = new HistoryRepository();
     this.streamRepository = new StreamRepository();
+    this.giftRepository = new GiftRepository();
+    this.giftHistoryRepository = new GiftHistoryRepository();
   }
 }
 

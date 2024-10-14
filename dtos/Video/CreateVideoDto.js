@@ -1,6 +1,6 @@
-const { default: mongoose } = require("mongoose");
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
+const { validMongooseObjectId } = require("../../utils/validator");
 
 class CreateVideoDto {
   constructor(title, description, enumMode, categoryIds) {
@@ -23,18 +23,13 @@ class CreateVideoDto {
           "CategoryIds must be an array"
         );
       }
-      if(this.categoryIds && this.categoryIds.length !== 0) {
-        this.categoryIds.forEach((id) => {
-          if (!mongoose.Types.ObjectId.isValid(id)) {
-            throw new CoreException(
-              StatusCodeEnums.BadRequest_400,
-              `Invalid category ID`
-            );
-          }
+      if (this.categoryIds && this.categoryIds.length !== 0) {
+        this.categoryIds.forEach(async (id) => {
+          await validMongooseObjectId(id);
         });
       }
     } catch (error) {
-        throw error;
+      throw error;
     }
   }
 }
