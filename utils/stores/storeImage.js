@@ -66,6 +66,14 @@ const storage = multer.diskStorage({
         }
         dir = path.join(`assets/images/categories/${categoryId}`);
         break;
+
+      case "thumbnailImg":
+        dir = path.join(`assets/images/stream-thumbnail`);
+        break;
+
+      default: 
+        logger.error(`Unknown field name: ${file.fieldname}`);
+        return cb(`Error: Unknown field name '${file.fieldname}'`);
     }
 
     fs.mkdir(dir, { recursive: true }, (err) => {
@@ -102,6 +110,15 @@ const storage = multer.diskStorage({
         fileName = `${baseName}${ext}`;
         dirPath = path.join(`assets/images/categories/${categoryId}`);
         break;
+
+      case "thumbnailImg":
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/stream-thumbnail`);
+        break;
+
+      default: 
+        logger.error(`Unknown field name: ${file.fieldname}`);
+        return cb(`Error: Unknown field name '${file.fieldname}'`);
     }
 
     // Check for existing files with the same base name but different extensions
@@ -132,15 +149,16 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|gif/;
   const mimeType = allowedTypes.test(file.mimetype);
-  const extName = allowedTypes.test(
-    path.extname(file.originalname).toLowerCase()
-  );
+  const extName = allowedTypes.test(path.extname(file.originalname).toLowerCase());
 
   if (mimeType && extName) {
     return cb(null, true);
+  } else {
+    logger.error("Error: Images Only!");
+    return cb(null, false);
   }
-  logger.error("Error: Images Only!");
 };
+
 
 const uploadImage = multer({
   storage: storage,
