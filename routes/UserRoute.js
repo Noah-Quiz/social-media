@@ -12,7 +12,6 @@ const route = express.Router();
 
 route.use(AuthMiddleware);
 
-
 /**
  * @swagger
  * /api/users/wallet/{userId}:
@@ -212,7 +211,7 @@ route.put("/watch-time", userController.updateTotalWatchTimeController);
  *        schema:
  *         type: number
  *         default: 1
- *         description: Page number 
+ *         description: Page number
  *      - in: path
  *        name: size
  *        schema:
