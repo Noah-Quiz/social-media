@@ -2,11 +2,10 @@ const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
 const { validMongooseObjectId } = require("../../utils/validator");
 
-class GetUserWalletDto {
+class DeleteHistoryRecordsDto {
   constructor(userId) {
     this.userId = userId;
   }
-
   async validate() {
     if (!this.userId) {
       throw new CoreException(
@@ -18,4 +17,4 @@ class GetUserWalletDto {
   }
 }
 
-module.exports = GetUserWalletDto;
+module.exports = DeleteHistoryRecordsDto;

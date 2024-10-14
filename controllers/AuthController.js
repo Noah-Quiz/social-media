@@ -23,6 +23,7 @@ const SendVerificationPhoneDto = require("../dtos/Auth/SendVerificationPhoneDto"
 const CreateResetPasswordTokenDto = require("../dtos/Auth/CreateResetPasswordTokenDto");
 const LoginGoogleDto = require("../dtos/Auth/LoginGoogleDto");
 const LoginAppleDto = require("../dtos/Auth/LoginAppleDto");
+const VerifyEmailDto = require("../dtos/Auth/VerifyEmailDto");
 require("dotenv").config();
 
 class AuthController {
@@ -49,7 +50,6 @@ class AuthController {
   async loginController(req, res) {
     try {
       const { email, password } = req.body;
-      console.log(email, password);
       const ipAddress =
         req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
@@ -165,8 +165,11 @@ class AuthController {
   }
 
   async verifyEmailController(req, res) {
-    const { token } = req.query;
     try {
+      const { token } = req.query;
+      const verifyEmailDto = new VerifyEmailDto(token);
+      await verifyEmailDto.validate();
+
       const user = await verifyEmailService(token);
       res.status(200).json({ message: "Email verified successfully" });
     } catch (error) {

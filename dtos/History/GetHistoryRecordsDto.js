@@ -2,32 +2,35 @@ const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
 const { validMongooseObjectId } = require("../../utils/validator");
 
-class GetVideosByPlaylistIdDto {
-  constructor(playlistId, page, size) {
-    this.playlistId = playlistId;
+class GetHistoryRecordsDto {
+  constructor(userId, page, size) {
+    this.userId = userId;
     this.page = page;
     this.size = size;
   }
+
   async validate() {
-    if (!this.playlistId)
+    if (!this.userId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "PlaylistId is required"
+        "User ID is required"
       );
-    await validMongooseObjectId(this.playlistId);
+    }
+    await validMongooseObjectId(this.userId);
 
-    if (this.page && this.page < 1)
+    if (this.page && this.page < 1) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Page cannot be less than 1"
+        "Page is invalid"
       );
-
-    if (this.size && this.size < 1)
+    }
+    if (this.size && this.size < 1) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Size cannot be less than 1"
+        "Size is invalid"
       );
+    }
   }
 }
 
-module.exports = GetVideosByPlaylistIdDto;
+module.exports = GetHistoryRecordsDto;
