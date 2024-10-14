@@ -151,6 +151,30 @@ class UserRepository {
     }
   }
 
+  async updateTotalWatchTimeRepository(userId, watchTime) {
+    try {
+      const user = await User.findByIdAndUpdate(
+        userId,
+        {
+          $inc: { totalWatchTime: watchTime },
+        },
+        {
+          new: true,
+        }
+      );
+      await User.findByIdAndUpdate(userId, {
+        point: this.calculatePoint(user.totalWatchTime),
+      });
+      return true;
+    } catch (error) {
+      console.error("Error updating total watch time:", error);
+    }
+  }
+
+  calculatePoint(totalWatchTime) {
+    return Math.floor(totalWatchTime / 60);
+  }
+
   async notifiFollowRepository(userId, followId) {
     try {
       const user = await User.findOne({ _id: userId });

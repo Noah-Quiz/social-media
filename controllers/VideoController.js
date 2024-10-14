@@ -1,3 +1,4 @@
+const GetVideosByPlaylistIdDto = require("../dtos/Video/GetVideosByPlaylistId");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const {
@@ -36,12 +37,16 @@ class VideoController {
         enumMode,
       });
 
-      return res.status(StatusCodeEnums.Created_201).json({ message: "Create Video successfully", video });
+      return res
+        .status(StatusCodeEnums.Created_201)
+        .json({ message: "Create Video successfully", video });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
@@ -52,7 +57,9 @@ class VideoController {
     const userId = req.userId;
 
     if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
-      return res.status(StatusCodeEnums.BadRequest_400).json({ message: "Valid video ID is required" });
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Valid video ID is required" });
     }
 
     try {
@@ -63,7 +70,9 @@ class VideoController {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
@@ -72,7 +81,9 @@ class VideoController {
     const { videoId } = req.params;
 
     if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
-      return res.status(StatusCodeEnums.BadRequest_400).json({ message: "Valid video ID is required" });
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Valid video ID is required" });
     }
 
     try {
@@ -83,7 +94,9 @@ class VideoController {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
@@ -92,7 +105,9 @@ class VideoController {
     const { videoId } = req.params;
 
     if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
-      return res.status(StatusCodeEnums.BadRequest_400).json({ message: "Valid video ID is required" });
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Valid video ID is required" });
     }
 
     let thumbnailFile = null;
@@ -105,12 +120,16 @@ class VideoController {
     try {
       const video = await updateAVideoByIdService(videoId, data, thumbnailFile);
 
-      return res.status(StatusCodeEnums.OK_200).json({ message: "Update video successfully", video });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Update video successfully", video });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
@@ -120,7 +139,9 @@ class VideoController {
     const userId = req.userId;
 
     if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
-      return res.status(StatusCodeEnums.BadRequest_400).json({ message: "Valid video ID is required" });
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Valid video ID is required" });
     }
 
     try {
@@ -131,27 +152,35 @@ class VideoController {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
 
   async getVideosByUserIdController(req, res) {
     const { userId } = req.params;
-
+    const { sortBy } = req.query;
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(StatusCodeEnums.BadRequest_400).json({ message: "Valid user ID is required" });
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Valid user ID is required" });
     }
 
     try {
-      const videos = await getVideosByUserIdService(userId);
+      const videos = await getVideosByUserIdService(userId, sortBy);
 
-      return res.status(StatusCodeEnums.OK_200).json({ message: "Success", videos });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Success", videos });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
@@ -160,18 +189,24 @@ class VideoController {
     const { videoId } = req.params;
 
     if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
-      return res.status(StatusCodeEnums.BadRequest_400).json({ message: "Valid video ID is required" });
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Valid video ID is required" });
     }
 
     try {
       const video = await getVideoService(videoId);
 
-      return res.status(StatusCodeEnums.OK_200).json({ message: "Success", video });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Success", video });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
@@ -184,7 +219,9 @@ class VideoController {
 
     try {
       if (query.page < 1) {
-        return res.status(StatusCodeEnums.BadRequest_400).json({ message: "Page cannot be less than 1" })
+        return res
+          .status(StatusCodeEnums.BadRequest_400)
+          .json({ message: "Page cannot be less than 1" });
       }
       if (query.title) {
         query.title = { $regex: query.title, $options: "i" };
@@ -192,12 +229,16 @@ class VideoController {
 
       const { videos, total, page, totalPages } = await getVideosService(query);
 
-      return res.status(StatusCodeEnums.OK_200).json({ message: "Success", videos, total, page, totalPages });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Success", videos, total, page, totalPages });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
       }
     }
   }
@@ -205,15 +246,22 @@ class VideoController {
   async getVideosByPlaylistIdController(req, res) {
     try {
       const { playlistId } = req.params;
-      if (!mongoose.Types.ObjectId.isValid(playlistId)) {
-        return res
-          .status(StatusCodeEnums.BadRequest_400)
-          .json({ message: "PlaylistId is not an ObjectId" });
-      }
-      const videos = await getVideosByPlaylistIdService(playlistId);
+      const { page, size } = req.query;
+      const getVideosByPlaylistId = new GetVideosByPlaylistIdDto(
+        playlistId,
+        page,
+        size
+      );
+      await getVideosByPlaylistId.validate();
+
+      const videos = await getVideosByPlaylistIdService(
+        playlistId,
+        page || 1,
+        size || 10
+      );
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ message: "Get videos successfully", videos });
+        .json({ videos, message: "Get videos by playlistId successfully" });
     } catch (error) {
       if (error instanceof CoreException) {
         res.status(error.code).json({ message: error.message });

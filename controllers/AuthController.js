@@ -21,6 +21,9 @@ const CoreException = require("../exceptions/CoreException");
 const SendVerificationEmailDto = require("../dtos/Auth/SendVerificationEmailDto");
 const SendVerificationPhoneDto = require("../dtos/Auth/SendVerificationPhoneDto");
 const CreateResetPasswordTokenDto = require("../dtos/Auth/CreateResetPasswordTokenDto");
+const LoginGoogleDto = require("../dtos/Auth/LoginGoogleDto");
+const LoginAppleDto = require("../dtos/Auth/LoginAppleDto");
+const VerifyEmailDto = require("../dtos/Auth/VerifyEmailDto");
 require("dotenv").config();
 
 class AuthController {
@@ -75,10 +78,19 @@ class AuthController {
   }
 
   async loginGoogleController(req, res) {
-    const googleUser = req.user;
-    const ipAddress =
-      req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     try {
+      const googleUser = req.user;
+      const ipAddress =
+        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+      const loginGoogleDto = new LoginGoogleDto(
+        googleUser.id,
+        googleUser.email,
+        googleUser.displayName,
+        googleUser.avatar
+      );
+      await loginGoogleDto.validate();
+
       const user = await loginGoogleService(googleUser);
       const accessToken = createAccessToken(
         { _id: user._id, ip: ipAddress },
@@ -93,8 +105,11 @@ class AuthController {
     }
   }
 
-  async loginAppleController(req, res, next) {
+  async loginAppleController(req, res) {
     try {
+      const loginAppleDtoIdToken = new LoginAppleDto(req.body.id_token);
+      await loginAppleDtoIdToken.validate();
+
       const user = {
         email: "",
         name: "",
@@ -150,8 +165,11 @@ class AuthController {
   }
 
   async verifyEmailController(req, res) {
-    const { token } = req.query;
     try {
+      const { token } = req.query;
+      const verifyEmailDto = new VerifyEmailDto(token);
+      await verifyEmailDto.validate();
+
       const user = await verifyEmailService(token);
       res.status(200).json({ message: "Email verified successfully" });
     } catch (error) {
@@ -212,7 +230,7 @@ class AuthController {
         email
       );
       await createResetPasswordTokenDto.validate();
-      
+
       const user = await createResetPasswordTokenService(email);
       if (user) {
         res

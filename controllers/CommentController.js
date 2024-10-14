@@ -43,9 +43,10 @@ class CommentController {
     }
   }
   async getVideoCommentsController(req, res) {
+    const { sortBy } = req.query;
     const { videoId } = req.params;
     try {
-      const comments = await getVideoCommentsService(videoId);
+      const comments = await getVideoCommentsService(videoId, sortBy);
       return res.status(200).json({
         comments: comments,
         size: comments.length,
@@ -79,7 +80,8 @@ class CommentController {
   }
   async likeCommentController(req, res) {
     const { id } = req.params;
-    const userId = req.userId;
+    const { userId } = req.body;
+    // const userId = req.userId;
     try {
       const comment = await likeService(userId, id);
       return res.status(200).json({ comments: comment, message: "Success" });

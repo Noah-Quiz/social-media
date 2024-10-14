@@ -1,6 +1,6 @@
-const { default: mongoose } = require("mongoose");
 const CoreException = require("../../exceptions/CoreException");
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
+const { validMongooseObjectId } = require("../../utils/validator");
 
 class DeletePlaylistDto {
   constructor(playlistId) {
@@ -13,12 +13,7 @@ class DeletePlaylistDto {
         "playlistId is required"
       );
     }
-    if (!mongoose.Types.ObjectId.isValid(this.playlistId)) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Invalid playlist ID"
-      );
-    }
+    await validMongooseObjectId(this.playlistId);
   }
 }
 module.exports = DeletePlaylistDto;

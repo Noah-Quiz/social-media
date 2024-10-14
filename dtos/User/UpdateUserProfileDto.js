@@ -1,8 +1,25 @@
-const { default: mongoose } = require("mongoose");
-const { validFullName } = require("../../utils/validator");
-const CoreException = require("../../exceptions/CoreException");
-const StatusCodeEnums = require("../../enums/StatusCodeEnum");
+const {
+  validFullName,
+  validMongooseObjectId,
+} = require("../../utils/validator");
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     UpdateUserProfileDto:
+ *       type: object
+ *       properties:
+ *         fullName:
+ *           type: string
+ *           description: The user's full name.
+ *         nickName:
+ *           type: string
+ *           description: The user's nick name.
+ *         avatar:
+ *           type: string
+ *           description: The user's avatar. And this is a url to the path of the image.
+ */
 class UpdateUserProfileDto {
   constructor(userId, fullName, nickName) {
     this.userId = userId;
@@ -11,12 +28,9 @@ class UpdateUserProfileDto {
   }
   async validate() {
     try {
-      await validFullName(this.fullName);
-      if (!mongoose.Types.ObjectId.isValid(this.userId)) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Invalid user ID"
-        );
+      await validMongooseObjectId(this.userId);
+      if (this.fullName) {
+        await validFullName(this.fullName);
       }
     } catch (error) {
       throw error;

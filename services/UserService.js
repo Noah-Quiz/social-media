@@ -214,6 +214,19 @@ module.exports = {
       throw error;
     }
   },
+
+  updateTotalWatchTimeService: async (userId, watchTime) => {
+    const connection = new DatabaseTransaction();
+    try {
+      await connection.userRepository.updateTotalWatchTimeRepository(
+        userId,
+        watchTime
+      );
+      return;
+    } catch (error) {
+      throw error;
+    }
+  },
   getUserWalletService: async (userId) => {
     try {
       const connection = new DatabaseTransaction();
