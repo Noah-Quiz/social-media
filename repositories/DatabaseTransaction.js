@@ -8,6 +8,8 @@ const RoomRepository = require("./RoomRepository.js");
 const CommentRepository = require("./CommentRepository.js");
 const ReceiptRepository = require("./ReceiptRepository.js");
 const HistoryRepository = require("./HistoryRepository.js");
+const GiftRepository = require("./GiftRepository.js");
+const GiftHistoryRepository = require("./GiftHistoryRepository.js");
 class DatabaseTransaction extends BaseDatabaseTransaction {
   constructor() {
     super();
@@ -20,6 +22,8 @@ class DatabaseTransaction extends BaseDatabaseTransaction {
     this.commentRepository = new CommentRepository();
     this.receiptRepository = new ReceiptRepository();
     this.historyRepository = new HistoryRepository();
+    this.giftRepository = new GiftRepository();
+    this.giftHistoryRepository = new GiftHistoryRepository();
   }
 }
 
