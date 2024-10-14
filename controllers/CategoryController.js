@@ -12,8 +12,17 @@ const { checkFileSuccess, deleteFile } = require("../utils/stores/storeImage");
 
 class CategoryController {
   async createCategoryController(req, res) {
+    const { name, imageUrl } = req.body;
+    if (!name || !imageUrl) {
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Please provide both name and imageUrl" });
+    }
     try {
-      const category = req.body;
+      const category = {
+        name: name,
+        imageUrl: imageUrl,
+      };
 
       const result = await createCategoryService(category);
 
