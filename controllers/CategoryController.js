@@ -1,4 +1,3 @@
-const { default: mongoose } = require("mongoose");
 const {
   createCategoryService,
   getAllCategoryService,
@@ -9,14 +8,21 @@ const {
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const { checkFileSuccess, deleteFile } = require("../utils/stores/storeImage");
+const CreateCategoryDto = require("../dtos/Category/CreateCategoryDto");
+const DeleteCategoryDto = require("../dtos/Category/DeleteCategoryDto");
+const UpdateCategoryDto = require("../dtos/Category/UpdateCategoryDto");
+const GetCategoryDto = require("../dtos/Category/GetCategoryDto");
 
 class CategoryController {
   async createCategoryController(req, res) {
     try {
-      const category = req.body;
+      const { name } = req.body;
+      const createCategoryDto = new CreateCategoryDto(name);
+      await createCategoryDto.validate();
 
-      const result = await createCategoryService(category);
+      const categoryData = { name };
 
+      const result = await createCategoryService(categoryData);
       return res
         .status(StatusCodeEnums.Created_201)
         .json({ category: result, message: "Success" });
@@ -34,12 +40,8 @@ class CategoryController {
   async getCategoryController(req, res) {
     try {
       const { categoryId } = req.params;
-
-      if (!categoryId || !mongoose.Types.ObjectId.isValid(categoryId)) {
-        return res
-          .status(StatusCodeEnums.BadRequest_400)
-          .json({ message: "Valid category ID is required" });
-      }
+      const getCategoryDto = new GetCategoryDto(categoryId);
+      await getCategoryDto.validate();
 
       const category = await getCategoryService(categoryId);
 
@@ -82,19 +84,20 @@ class CategoryController {
       const imageUrl = req.file ? req.file.path : null;
       const categoryData = { name, imageUrl };
 
-      if (!categoryId || !mongoose.Types.ObjectId.isValid(categoryId)) {
-        return res
-          .status(StatusCodeEnums.BadRequest_400)
-          .json({ message: "Valid category ID is required" });
-      }
+      const updateCategoryDto = new UpdateCategoryDto(categoryId, name);
+      await updateCategoryDto.validate();
 
       const result = await updateCategoryService(categoryId, categoryData);
-      await checkFileSuccess(imageUrl);
+      if (req.file) {
+        await checkFileSuccess(imageUrl);
+      }
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ category: result, message: "Update category successfully" });
     } catch (error) {
-      await deleteFile(req.file.path);
+      if (req.file) {
+        await deleteFile(req.file.path);
+      }
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
@@ -108,14 +111,11 @@ class CategoryController {
   async deleteCategoryController(req, res) {
     try {
       const { categoryId } = req.params;
+      const deleteCategoryDto = new DeleteCategoryDto(categoryId);
+      await deleteCategoryDto.validate();
 
-      if (!categoryId || !mongoose.Types.ObjectId.isValid(categoryId)) {
-        return res
-          .status(StatusCodeEnums.BadRequest_400)
-          .json({ message: "Valid category ID is required" });
-      }
-
-      await deleteCategoryService(categoryId);
+      const category = await deleteCategoryService(categoryId);
+      // await deleteFile(category.imageUrl);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {

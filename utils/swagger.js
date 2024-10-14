@@ -43,6 +43,10 @@ const options = {
         name: "Users",
         description: "Operations about users",
       },
+      {
+        name: "Categories",
+        description: "Operations about categories",
+      },
     ],
     components: {
       securitySchemes: {

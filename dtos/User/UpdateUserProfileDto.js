@@ -16,9 +16,6 @@ const {
  *         nickName:
  *           type: string
  *           description: The user's nick name.
- *         avatar:
- *           type: string
- *           description: The user's avatar. And this is a url to the path of the image.
  */
 class UpdateUserProfileDto {
   constructor(userId, fullName, nickName) {

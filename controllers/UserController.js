@@ -111,7 +111,7 @@ class UserController {
         nickName,
         avatar,
       });
-      if (avatar) {
+      if (req.file) {
         await checkFileSuccess(avatar);
       }
       return res
