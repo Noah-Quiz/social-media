@@ -1,4 +1,5 @@
-const { validEmail } = require("../../utils/validator");
+const StatusCodeEnums = require("../../enums/StatusCodeEnum");
+const CoreException = require("../../exceptions/CoreException");
 
 /**
  * @swagger
@@ -16,6 +17,18 @@ const { validEmail } = require("../../utils/validator");
 class VerifyEmailDto {
   constructor(token) {
     this.token = token;
+  }
+  async validate() {
+    try {
+      if (!this.token) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Token is required"
+        );
+      }
+    } catch (error) {
+      throw error;
+    }
   }
 }
 

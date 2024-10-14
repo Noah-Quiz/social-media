@@ -1,7 +1,7 @@
-const { default: mongoose } = require("mongoose");
-const { validFullName } = require("../../utils/validator");
-const CoreException = require("../../exceptions/CoreException");
-const StatusCodeEnums = require("../../enums/StatusCodeEnum");
+const {
+  validFullName,
+  validMongooseObjectId,
+} = require("../../utils/validator");
 
 /**
  * @swagger
@@ -28,14 +28,9 @@ class UpdateUserProfileDto {
   }
   async validate() {
     try {
+      await validMongooseObjectId(this.userId);
       if (this.fullName) {
         await validFullName(this.fullName);
-      }
-      if (!mongoose.Types.ObjectId.isValid(this.userId)) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Invalid user ID"
-        );
       }
     } catch (error) {
       throw error;

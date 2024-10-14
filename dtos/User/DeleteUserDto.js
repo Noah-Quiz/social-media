@@ -1,24 +1,19 @@
-const { default: mongoose } = require("mongoose");
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
+const { validMongooseObjectId } = require("../../utils/validator");
 
 class DeleteUserDto {
   constructor(userId) {
     this.userId = userId;
   }
   async validate() {
-    if (!userId) {
+    if (!this.userId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "user ID is required"
       );
     }
-    if (!mongoose.Types.ObjectId.isValid(this.userId)) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Invalid user ID"
-      );
-    }
+    await validMongooseObjectId(this.userId);
   }
 }
 

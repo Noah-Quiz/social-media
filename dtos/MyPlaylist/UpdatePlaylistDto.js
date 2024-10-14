@@ -1,6 +1,7 @@
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
 const mongoose = require("mongoose");
+const { validMongooseObjectId } = require("../../utils/validator");
 class UpdatePlaylistDto {
   constructor(addedVideoIds, removedVideoIds, playlistName, playListId) {
     this.addedVideoIds = addedVideoIds;
@@ -10,6 +11,14 @@ class UpdatePlaylistDto {
   }
   async validate() {
     try {
+      if (!this.playListId) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Playlist ID is required"
+        );
+      }
+      await validMongooseObjectId(this.playListId);
+      
       if (this.addedVideoIds && !Array.isArray(this.addedVideoIds)) {
         throw new CoreException(
           StatusCodeEnums.BadRequest_400,
@@ -23,33 +32,14 @@ class UpdatePlaylistDto {
         );
       }
       if (this.addedVideoIds && this.addedVideoIds.length !== 0) {
-        this.addedVideoIds.forEach((id) => {
-          if (!mongoose.Types.ObjectId.isValid(id)) {
-            throw new CoreException(
-              StatusCodeEnums.BadRequest_400,
-              `Invalid video ID: ${id}. Cannot add`
-            );
-          }
+        this.addedVideoIds.forEach(async (id) => {
+          await validMongooseObjectId(id);
         });
       }
       if (this.removedVideoIds && this.removedVideoIds.length !== 0) {
-        this.removedVideoIds.forEach((id) => {
-          if (!mongoose.Types.ObjectId.isValid(id)) {
-            throw new CoreException(
-              StatusCodeEnums.BadRequest_400,
-              `Invalid video ID: ${id}. Cannot remove`
-            );
-          }
+        this.removedVideoIds.forEach(async (id) => {
+          await validMongooseObjectId(id);
         });
-      }
-      if (
-        this.playListId &&
-        !mongoose.Types.ObjectId.isValid(this.playListId)
-      ) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          `Invalid playlist ID: ${this.playListId}`
-        );
       }
     } catch (error) {
       throw error;
