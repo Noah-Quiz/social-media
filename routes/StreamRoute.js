@@ -6,20 +6,16 @@ const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const streamController = new StreamController();
 const streamRoutes = express.Router();
 
-streamRoutes.use(AuthMiddleware);
-
 streamRoutes.get("/", streamController.getStreamsController);
 
-streamRoutes.post("/", uploadImage.single("thumbnailImg"), streamController.createStreamController);
+streamRoutes.post("/", AuthMiddleware, uploadImage.single("thumbnailImg"), streamController.createStreamController);
 
-streamRoutes.delete("/:streamId", streamController.deleteStreamController);
+streamRoutes.delete("/:streamId", AuthMiddleware, streamController.deleteStreamController);
 
 streamRoutes.get("/:streamId", streamController.getStreamController);
 
-streamRoutes.patch("/:streamId", uploadImage.single("thumbnailImg"), streamController.updateStreamController);
+streamRoutes.patch("/:streamId", AuthMiddleware, uploadImage.single("thumbnailImg"), streamController.updateStreamController);
 
-streamRoutes.post("/end/:streamId", streamController.endStreamController);
-
-streamRoutes.get("/stream-url/:streamId", streamController.getStreamUrlController);
+streamRoutes.post("/end/:streamId", AuthMiddleware, streamController.endStreamController);
 
 module.exports = streamRoutes;

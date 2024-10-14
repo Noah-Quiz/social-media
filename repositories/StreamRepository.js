@@ -5,7 +5,7 @@ class StreamRepository {
   // Create a new stream
   async createStreamRepository(data, session) {
     try {
-      const stream = await Stream.create([data], { session });
+      const stream = await Stream.create([{ ...data, lastUpdated: Date.now() }], { session });
       return stream[0];
     } catch (error) {
       throw new Error(`Error creating stream: ${error.message}`);
@@ -18,7 +18,8 @@ class StreamRepository {
       const stream = await Stream.findByIdAndUpdate(
         streamId,
         {
-          endedAt: new Date(),
+          endedAt: Date.now(),
+          lastUpdated: Date.now(),
           streamUrl: "",
         },
         { new: true, runValidators: true, session }
@@ -39,9 +40,9 @@ class StreamRepository {
     try {
       const result = await Stream.aggregate([
         {
-          $match: { 
-            _id: new mongoose.Types.ObjectId(streamId), 
-            isDeleted: false 
+          $match: {
+            _id: new mongoose.Types.ObjectId(streamId),
+            isDeleted: false,
           },
         },
         {
@@ -55,10 +56,19 @@ class StreamRepository {
         { $unwind: "$user" },
         {
           $lookup: {
-            from: "categories", // Assuming your categories collection is named "categories"
+            from: "categories",
             localField: "categoryIds",
             foreignField: "_id",
-            as: "categories", // Rename the populated field from categoryIds to categories
+            as: "categories",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  imageUrl: 1,
+                  _id: 0,
+                },
+              },
+            ],
           },
         },
         {
@@ -78,39 +88,41 @@ class StreamRepository {
           },
         },
         { $replaceRoot: { newRoot: "$merged" } },
-        { $project: { categoryIds: 0 } }, // Optionally remove the original categoryIds field
+        { $project: { categoryIds: 0 } },
       ]);
-  
+
       return result[0] || null;
     } catch (error) {
       throw new Error(`Error finding stream: ${error.message}`);
     }
-  } 
+  }
 
   // Update a stream
   async updateStreamRepository(streamId, updateData, categoryData, session = null) {
     try {
+      const updateOperations = { lastUpdated: Date.now(), ...updateData };
+
       if (categoryData.addedCategoryIds && categoryData.addedCategoryIds.length > 0) {
         await Stream.updateOne(
           { _id: streamId },
-          { $addToSet: { categoryIds: { $each: categoryData.addedCategoryIds } } },
-          { runValidators: true }
+          { $addToSet: { categoryIds: { $each: categoryData.addedCategoryIds } }, lastUpdated: Date.now() },
+          { runValidators: true, session }
         );
       }
 
       if (categoryData.removedCategoryIds && categoryData.removedCategoryIds.length > 0) {
         await Stream.updateOne(
           { _id: streamId },
-          { $pull: { categoryIds: { $in: categoryData.removedCategoryIds } } },
-          { runValidators: true }
+          { $pull: { categoryIds: { $in: categoryData.removedCategoryIds } }, lastUpdated: Date.now() },
+          { runValidators: true, session }
         );
       }
 
       const updatedStream = await Stream.findByIdAndUpdate(
-        streamId, 
-        updateData,
-        { new: true, runValidators: true }
-    );
+        streamId,
+        updateOperations,
+        { new: true, runValidators: true, session }
+      );
 
       return updatedStream;
     } catch (error) {
@@ -123,7 +135,7 @@ class StreamRepository {
     try {
       const stream = await Stream.findByIdAndUpdate(
         streamId,
-        { isDeleted: true },
+        { isDeleted: true, lastUpdated: Date.now() },
         { new: true, runValidators: true, session }
       );
 

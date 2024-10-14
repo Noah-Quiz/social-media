@@ -42,6 +42,9 @@ const streamSchema = new Schema({
       default: [],
     },
   ],
+  endedAt: {
+    type: Date,
+  },
   ...baseEntitySchema.obj,
 });
 

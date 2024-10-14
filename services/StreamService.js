@@ -2,17 +2,6 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum.js");
 const CoreException = require("../exceptions/CoreException.js");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction.js");
 
-const getStreamUrlService = async (streamId) => {
-  try {
-    const connection = new DatabaseTransaction();
-    const stream = await connection.streamRepository.getStreamById(streamId);
-
-    return stream.streamUrl;
-  } catch (error) {
-    throw error;
-  }
-};
-
 const getStreamService = async (streamId) => {
   try {
     const connection = new DatabaseTransaction();
@@ -41,11 +30,15 @@ const getStreamsService = async (query) => {
   }
 };
 
-const updateStreamService = async (streamId, updateData, categoryData) => {
+const updateStreamService = async (userId, streamId, updateData, categoryData) => {
   try {
     const connection = new DatabaseTransaction();
 
     const stream = await connection.streamRepository.getStreamRepository(streamId);
+
+    if (stream.userId.toString() !== userId) {
+      throw new CoreException(StatusCodeEnums.Forbidden_403, "You do not have permission to perform this action");
+    }
 
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
@@ -59,13 +52,23 @@ const updateStreamService = async (streamId, updateData, categoryData) => {
   }
 };
 
-const deleteStreamService = async (streamId) => {
+const deleteStreamService = async (userId, streamId) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const stream = await connection.streamRepository.deleteStreamRepository(streamId);
+    const stream = await connection.streamRepository.getStreamRepository(streamId);
 
-    return stream;
+    if (stream.userId.toString() !== userId) {
+      throw new CoreException(StatusCodeEnums.Forbidden_403, "You do not have permission to perform this action");
+    }
+
+    if (!stream) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
+    }
+
+    await connection.streamRepository.deleteStreamRepository(streamId);
+
+    return true;
   } catch (error) {
     throw error;
   }
@@ -105,6 +108,5 @@ module.exports = {
   endStreamService,
   updateStreamService,
   deleteStreamService,
-  getStreamUrlService,
   createStreamService,
 };

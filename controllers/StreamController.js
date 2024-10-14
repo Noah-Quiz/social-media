@@ -5,22 +5,6 @@ const { createStreamService, deleteStreamService, getStreamService, endStreamSer
 const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
 
 class StreamController {
-  async getStreamUrlController(req, res) {
-    const { streamId } = req.params;
-
-    try {
-      const streamUrl = await getStreamUrlService(streamId);
-
-      return res.status(StatusCodeEnums.OK_200).json({ streamUrl, message: "Success" });
-    } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
-      }
-    }
-  }
-
   async getStreamController(req, res) {
     const { streamId } = req.params;
 
@@ -83,13 +67,9 @@ class StreamController {
     const { streamId } = req.params;
     const { title, description, addedCategoryIds, removedCategoryIds } = req.body;
     let thumbnailFile = req.file ? req.file.path : null;
-    console.log(req.body);
+    const userId = req.userId;
 
     try {
-      if (!req.file) {
-        throw new CoreException(StatusCodeEnums.BadRequest_400).json({ message: 'No file uploaded or file type not supported!' });
-      }
-
       if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
         throw new CoreException(StatusCodeEnums.BadRequest_400).json({ message: "Valid stream ID is required" });
       }
@@ -119,13 +99,13 @@ class StreamController {
       const categoryData = { addedCategoryIds, removedCategoryIds }
       const updateData = { title, description, thumbnailUrl: thumbnailFile };
 
-      const stream = await updateStreamService(streamId, updateData, categoryData);
+      const stream = await updateStreamService(userId, streamId, updateData, categoryData);
 
-      await checkFileSuccess(thumbnailFile);
+      if (thumbnailFile) await checkFileSuccess(thumbnailFile);
 
       return res.status(StatusCodeEnums.OK_200).json({ stream, message: "Stream updated successfully" });
     } catch (error) {
-      await deleteFile(req.file.path);
+      if (thumbnailFile) await deleteFile(thumbnailFile);
 
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
@@ -137,9 +117,10 @@ class StreamController {
 
   async deleteStreamController(req, res) {
     const { streamId } = req.params;
+    const userId = req.userId;
 
     try {
-      await deleteStreamService(streamId);
+      await deleteStreamService(userId, streamId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
@@ -158,7 +139,7 @@ class StreamController {
     let thumbnailFile = req.file ? req.file.path : null;
 
     try {
-      if (!req.file) {
+      if (thumbnailFile) {
         throw new CoreException(StatusCodeEnums.BadRequest_400).json({ message: 'No file uploaded or file type not supported!' });
       }
 
@@ -177,11 +158,11 @@ class StreamController {
 
       const stream = await createStreamService(data);
 
-      await checkFileSuccess(thumbnailFile);
+      if (thumbnailFile) await checkFileSuccess(thumbnailFile);
 
       return res.status(StatusCodeEnums.Created_201).json({ stream, message: "Success" });
     } catch (error) {
-      await deleteFile(req.file.path);
+      if (thumbnailFile) await deleteFile(thumbnailFile);
 
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
