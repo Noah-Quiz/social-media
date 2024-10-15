@@ -12,11 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-<<<<<<< HEAD
-    "amqplib": "^0.10.4",
-=======
     "@mux/mux-node": "^8.8.0",
->>>>>>> 86858a447ca48f5b832e882832138e7c39f33861
+    "amqplib": "^0.10.4",
     "and": "^0.0.3",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
