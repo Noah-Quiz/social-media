@@ -168,8 +168,19 @@ const viewIncrementService = async (videoId) => {
     const result = await connection.videoRepository.viewIncrementRepository(
       videoId
     );
-
-    return result;
+    const video = await connection.videoRepository.getVideoByIdRepository(
+      videoId
+    );
+    if (video.numOfViews % 1000 === 0) {
+      const rate =
+        await connection.exchangeRateRepository.getCurrentRateRepository();
+      await connection.userRepository.updateUserWalletRepository(
+        video.userId,
+        "ReceiveCoin",
+        rate.coinPer1000View
+      );
+    }
+    return video;
   } catch (error) {
     throw error;
   }

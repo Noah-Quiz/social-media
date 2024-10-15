@@ -88,9 +88,11 @@ class VideoController {
     }
 
     try {
-      await viewIncrementService(videoId);
+      const video = await viewIncrementService(videoId);
 
-      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ video: video, message: "Success" });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
