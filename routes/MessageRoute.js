@@ -10,6 +10,8 @@ messageRoutes.use(AuthMiddleware);
  * @swagger
  * /api/messages:
  *   post:
+ *     security:
+ *      - bearerAuth: [] 
  *     summary: Create a new message
  *     tags: [Messages]
  *     requestBody:
@@ -32,6 +34,8 @@ messageRoutes.post("/", messageController.createAMessageController);
  * @swagger
  * /api/messages/room-messages:
  *   get:
+ *     security:
+ *      - bearerAuth: [] 
  *     summary: Send verification email to user
  *     tags: [Messages]
  *     parameters:
@@ -54,6 +58,8 @@ messageRoutes.get("/room-messages", messageController.getMessagesController);
  * @swagger
  * /api/messages/{messageId}:
  *   delete:
+ *     security:
+ *      - bearerAuth: [] 
  *     summary: Delete a message by ID
  *     tags: [Messages]
  *     parameters:
@@ -76,6 +82,8 @@ messageRoutes.delete("/:messageId", messageController.deleteMessageController);
  * @swagger
  * /api/messages/{messageId}:
  *   get:
+ *     security:
+ *      - bearerAuth: [] 
  *     summary: Get a message by ID
  *     tags: [Messages]
  *     parameters:
@@ -98,6 +106,8 @@ messageRoutes.get("/:messageId", messageController.getMessageController);
  * @swagger
  * /api/messages/{messageId}:
  *   put:
+ *     security:
+ *      - bearerAuth: [] 
  *     summary: Update a message by ID
  *     tags: [Messages]
  *     parameters:

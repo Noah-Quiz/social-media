@@ -1,3 +1,4 @@
+const CreatePlaylistDto = require("../dtos/MyPlaylist/CreatePlaylistDto");
 const DeletePlaylistDto = require("../dtos/MyPlaylist/DeletePlaylistDto");
 const UpdatePlaylistDto = require("../dtos/MyPlaylist/UpdatePlaylistDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
@@ -106,10 +107,12 @@ class MyPlaylistController {
   }
 
   async createAPlaylist(req, res) {
-    const { playlistName } = req.body;
-    const userId = req.userId;
-
     try {
+      const { playlistName } = req.body;
+      const userId = req.userId;
+      const createPlaylistDto = new CreatePlaylistDto(userId, playlistName);
+      await createPlaylistDto.validate();
+
       const playlist = await createAPlaylistService(userId, playlistName);
 
       res.status(200).json({ playlist, message: "Success" });

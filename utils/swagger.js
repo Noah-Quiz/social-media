@@ -55,6 +55,14 @@ const options = {
         name: "Messages",
         description: "Operations about messages",
       },
+      {
+        name: "Receipts",
+        description: "Operations about receipts",
+      },
+      {
+        name: "MyPlaylists",
+        description: "Operations about my playlists",
+      },
     ],
     components: {
       securitySchemes: {
