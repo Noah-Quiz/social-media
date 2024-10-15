@@ -1,3 +1,5 @@
+const CreateExchangeRateDto = require("../dtos/ExchangeRate/CreateExchangeRateDto");
+const UpdateExchangeRateDto = require("../dtos/ExchangeRate/UpdateExchangeRateDto");
 const {
   createExchangeRateService,
   deleteExchangeRateService,
@@ -7,31 +9,23 @@ const {
 
 class ExchangeRateController {
   async createExchangeRateController(req, res) {
-    const {
-      topUpBalanceRate = 1,
-      topUpCoinRate = 1000,
-      exchangeRateBalanceToCoin = 1000,
-      exchangeRateCoinToBalance = 0.0008,
-      coinPer1000View = 100000,
-    } = req.body;
-
-    // Validate number fields directly
-    const numberFields = {
-      topUpBalanceRate,
-      topUpCoinRate,
-      exchangeRateBalanceToCoin,
-      exchangeRateCoinToBalance,
-      coinPer1000View,
-    };
-    for (const [key, value] of Object.entries(numberFields)) {
-      if (value !== undefined && (typeof value !== "number" || isNaN(value))) {
-        return res
-          .status(400)
-          .json({ message: `Invalid field: ${key} must be a valid number.` });
-      }
-    }
-
     try {
+      const {
+        topUpBalanceRate = 1,
+        topUpCoinRate = 1000,
+        exchangeRateBalanceToCoin = 1000,
+        exchangeRateCoinToBalance = 0.0008,
+        coinPer1000View = 100000,
+      } = req.body;
+      const createExchangeRateDto = new CreateExchangeRateDto(
+        topUpBalanceRate,
+        topUpCoinRate,
+        exchangeRateBalanceToCoin,
+        exchangeRateCoinToBalance,
+        coinPer1000View
+      );
+      await createExchangeRateDto.validate();
+
       const result = await createExchangeRateService(
         topUpBalanceRate,
         topUpCoinRate,
@@ -61,36 +55,25 @@ class ExchangeRateController {
   }
 
   async updateExchangeRateController(req, res) {
-    const { id } = req.params;
-    const {
-      topUpBalanceRate,
-      topUpCoinRate,
-      exchangeRateBalanceToCoin,
-      exchangeRateCoinToBalance,
-      coinPer1000View,
-    } = req.body;
-
-    if (!id) {
-      return res.status(400).json({ message: "Invalid ID format" });
-    }
-
-    // Validate number fields directly
-    const numberFields = {
-      topUpBalanceRate,
-      topUpCoinRate,
-      exchangeRateBalanceToCoin,
-      exchangeRateCoinToBalance,
-      coinPer1000View,
-    };
-    for (const [key, value] of Object.entries(numberFields)) {
-      if (value !== undefined && (typeof value !== "number" || isNaN(value))) {
-        return res
-          .status(400)
-          .json({ message: `Invalid field: ${key} must be a valid number.` });
-      }
-    }
-
     try {
+      const { id } = req.params;
+      const {
+        topUpBalanceRate,
+        topUpCoinRate,
+        exchangeRateBalanceToCoin,
+        exchangeRateCoinToBalance,
+        coinPer1000View,
+      } = req.body;
+      const updateExchangeRateDto = new UpdateExchangeRateDto(
+        id,
+        topUpBalanceRate,
+        topUpCoinRate,
+        exchangeRateBalanceToCoin,
+        exchangeRateCoinToBalance,
+        coinPer1000View
+      );
+      await updateExchangeRateDto.validate();
+
       const result = await updateExchangeRateService(
         id,
         topUpBalanceRate,
