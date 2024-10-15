@@ -67,6 +67,10 @@ const options = {
         name: "ExchangeRates",
         description: "Operations about exchange rates",
       },
+      {
+        name: "Gifts",
+        description: "Operations about gifts",
+      }
     ],
     components: {
       securitySchemes: {
