@@ -4,7 +4,10 @@ const moment = require("moment");
 const crypto = require("crypto");
 const querystring = require("qs");
 const { createReceiptService } = require("../services/ReceiptService.js");
-const { topUpUserService } = require("../services/UserService.js");
+const {
+  topUpUserService,
+  updateUserWalletService,
+} = require("../services/UserService.js");
 // Utility function to sort object keys
 function sortObject(obj) {
   const sorted = {};
@@ -83,6 +86,12 @@ exports.vnpayReturn = async (req, res) => {
     const amount = parseFloat(orderInfo.slice(27).trim());
     try {
       const result = await topUpUserService(userId, amount); //1VND = 1 balance
+      const exchange = await updateUserWalletService(
+        userId,
+        "ExchangeBalanceToCoin",
+        amount,
+        1000
+      );
 
       const receipt = await createReceiptService(
         userId,
