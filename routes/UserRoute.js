@@ -12,6 +12,7 @@ const route = express.Router();
 
 route.use(AuthMiddleware);
 
+route.get("/dashboard", userController.getStatsByDateController);
 
 /**
  * @swagger
@@ -212,7 +213,7 @@ route.put("/watch-time", userController.updateTotalWatchTimeController);
  *        schema:
  *         type: number
  *         default: 1
- *         description: Page number 
+ *         description: Page number
  *      - in: path
  *        name: size
  *        schema:

@@ -15,6 +15,12 @@ const GetCategoryDto = require("../dtos/Category/GetCategoryDto");
 
 class CategoryController {
   async createCategoryController(req, res) {
+    const { name, imageUrl } = req.body;
+    if (!name || !imageUrl) {
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Please provide both name and imageUrl" });
+    }
     try {
       const { name } = req.body;
       const createCategoryDto = new CreateCategoryDto(name);

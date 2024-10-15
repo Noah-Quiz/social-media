@@ -138,7 +138,7 @@ module.exports = {
     }
   },
 
-  followUserService: async (userId, followId) => {
+  toggleFollowUserService: async (userId, followId, action) => {
     try {
       const connection = new DatabaseTransaction();
 
@@ -155,10 +155,12 @@ module.exports = {
         );
       }
 
-      const result = await connection.userRepository.followAnUserRepository(
-        userId,
-        followId
-      );
+      const result =
+        await connection.userRepository.toggleFollowAnUserRepository(
+          userId,
+          followId,
+          action
+        );
       if (!result) {
         throw new CoreException(
           StatusCodeEnum.Conflict_409,
@@ -175,39 +177,6 @@ module.exports = {
       };
 
       await connection.userRepository.notifiCommentRepository(userId, followId);
-
-      return result;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  unfollowUserService: async (userId, followId) => {
-    try {
-      const connection = new DatabaseTransaction();
-
-      const user = await connection.userRepository.findUserById(userId);
-      if (!user) {
-        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
-      }
-      const follow = await connection.userRepository.findUserById(followId);
-      if (!follow) {
-        throw new CoreException(
-          StatusCodeEnum.NotFound_404,
-          "User to follow not found"
-        );
-      }
-
-      const result = await connection.userRepository.unfollowAnUserRepository(
-        userId,
-        followId
-      );
-      if (!result) {
-        throw new CoreException(
-          StatusCodeEnum.Conflict_409,
-          "Unfollow unsuccessfully"
-        );
-      }
 
       return result;
     } catch (error) {
@@ -283,5 +252,17 @@ module.exports = {
     } catch (error) {
       throw error;
     }
+  },
+
+  getStatsByDateService: async (userId, fromDate, toDate) => {
+    try {
+      const connection = new DatabaseTransaction();
+      const stats = await connection.userRepository.getStatsByDateRepository(
+        userId,
+        fromDate,
+        toDate
+      );
+      return stats;
+    } catch (error) {}
   },
 };

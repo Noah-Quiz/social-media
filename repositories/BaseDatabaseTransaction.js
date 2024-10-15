@@ -19,6 +19,7 @@ class BaseDatabaseTransaction {
       await mongoose.connect(URI, { dbName: DBName });
       logger.info(`Successfully connected to the database ${DBName}`);
     } catch (error) {
+      logger.error("Database connection error:", error.message);
       throw new Error(error.message);
     }
   }
@@ -29,6 +30,7 @@ class BaseDatabaseTransaction {
       this.session.startTransaction();
       return this.session;
     } catch (error) {
+      logger.error("Error starting transaction:", error.message);
       throw new Error(error.message);
     }
   }
@@ -37,11 +39,13 @@ class BaseDatabaseTransaction {
     try {
       if (this.session) {
         await this.session.commitTransaction();
-        this.session.endSession();
         logger.info("Commit change to database successfully!");
       }
     } catch (error) {
+      logger.error("Error committing transaction:", error.message);
       throw new Error(error.message);
+    } finally {
+      await this.endSession(); // Ensure session is ended after commit
     }
   }
 
@@ -49,11 +53,21 @@ class BaseDatabaseTransaction {
     try {
       if (this.session) {
         await this.session.abortTransaction();
-        this.session.endSession();
-        logger.info("Abort change to database!");
+        logger.info("Transaction aborted!");
       }
     } catch (error) {
+      logger.error("Error aborting transaction:", error.message);
       throw new Error(error.message);
+    } finally {
+      await this.endSession(); // Ensure session is ended after abort
+    }
+  }
+
+  async endSession() {
+    if (this.session) {
+      await this.session.endSession();
+      this.session = null; // Clear session reference
+      logger.info("Session ended.");
     }
   }
 }

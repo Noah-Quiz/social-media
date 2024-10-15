@@ -113,28 +113,13 @@ const storage = multer.diskStorage({
         fileName = `${baseName}${ext}`;
         dirPath = path.join(`assets/videos/${videoId}`);
         break;
+      case "thumbnailImg":
+        dir = path.join(`assets/images/stream-thumbnail`);
+        break;
+      default:
+        logger.error(`Unknown field name: ${file.fieldname}`);
+        return cb(`Error: Unknown field name '${file.fieldname}'`);
     }
-
-    // Check for existing files with the same base name but different extensions
-    // fs.readdir(dirPath, async (err, files) => {
-    //   if (err) {
-    //     logger.error(`Failed to read directory ${dirPath}: ${err.message}`);
-    //     return cb(err);
-    //   }
-    //   // Find and delete files with the same base name but different extensions
-    //   for (const fileName of files) {
-    //     const existingBaseName = path.parse(fileName).name;
-    //     if (existingBaseName === baseName) {
-    //       const existingFilePath = path.join(dirPath, fileName);
-    //       try {
-    //         await deleteFile(existingFilePath);
-    //       } catch (unlinkErr) {
-    //         return cb(unlinkErr);
-    //       }
-    //     }
-    //   }
-    // });
-    // Proceed to save the new file
     logger.info(`Saving file ${fileName} successfully to ${dirPath}`);
     cb(null, fileName);
   },

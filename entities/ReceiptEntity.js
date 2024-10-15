@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const baseEntitySchema = require("./BaseEntity.js");
+const ExchangeRate = require("./ExchangeRateEntity.js");
 
 const receiptSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
@@ -12,6 +13,13 @@ const receiptSchema = new mongoose.Schema({
   bankCode: { type: String, required: true },
   amount: { type: Number, required: true },
   transactionId: { type: String, required: true, unique: true },
+  type: {
+    type: String,
+  },
+  exchangeRate: {
+    type: Number,
+    required: true,
+  },
   ...baseEntitySchema.obj,
 });
 

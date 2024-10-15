@@ -1,6 +1,7 @@
 const Video = require("../entities/VideoEntity");
 const MyPlaylist = require("../entities/MyPlaylistEntity");
 const mongoose = require("mongoose");
+const User = require("../entities/UserEntity");
 
 class VideoRepository {
   async createVideoRepository(videoData, session) {
