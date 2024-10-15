@@ -2,6 +2,10 @@ const GetVideosByPlaylistIdDto = require("../dtos/Video/GetVideosByPlaylistId");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const {
+  createBunnyStreamVideoService,
+  uploadBunnyStreamVideoService,
+} = require("../services/BunnyStreamService");
+const {
   createVideoService,
   toggleLikeVideoService,
   viewIncrementService,
@@ -17,24 +21,22 @@ require("dotenv").config();
 
 class VideoController {
   async createVideoController(req, res) {
-    const { title, description, enumMode, categoryIds } = req.body;
-    const userId = req.userId;
-
     try {
-      if (!req.files.videoUrl || !req.files.thumbnailUrl) {
-        return res
-          .status(StatusCodeEnums.BadRequest_400)
-          .json({ message: "Video and thumbnail files are required." });
-      }
+      const { title, description, enumMode, categoryIds } = req.body;
+      const userId = req.userId;
 
-      const videoFile = req.files.videoUrl[0];
-      const thumbnailFile = req.files.thumbnailUrl[0];
 
-      const video = await createVideoService(userId, videoFile, thumbnailFile, {
+      const bunnyVideo = await createBunnyStreamVideoService(
+        process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
+        title
+      );
+      const video = await createVideoService(userId, {
         title,
         description,
         categoryIds,
         enumMode,
+        bunnyId: bunnyVideo.guid,
+        videoUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/playlist.m3u8`,
       });
 
       return res
@@ -48,6 +50,25 @@ class VideoController {
           .status(StatusCodeEnums.InternalServerError_500)
           .json({ message: error.message });
       }
+    }
+  }
+
+  async uploadVideoController(req,res){
+    try {
+      const userId = req.userId;
+
+      if (!req.files.video || !req.files.videoThumbnail) {
+        return res
+          .status(StatusCodeEnums.BadRequest_400)
+          .json({ message: "Video and thumbnail files are required." });
+      }
+
+      const videoFile = req.files.video[0];
+      const thumbnailFile = req.files.videoThumbnail[0];
+      console.log(videoFile);
+      console.log(thumbnailFile);
+    } catch (error) {
+      
     }
   }
 

@@ -8,9 +8,7 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 
 const createVideoService = async (
   userId,
-  videoFile,
-  thumbnailFile,
-  { title, description, enumMode, categoryIds }
+  { title, description, enumMode, categoryIds, bunnyId, videoUrl }
 ) => {
   try {
     if (["public", "private", "unlisted"].includes(enumMode)) {
@@ -39,10 +37,10 @@ const createVideoService = async (
 
     const connection = new DatabaseTransaction();
 
-    const { videoUrl, embedUrl, thumbnailUrl } = await uploadFiles(
-      videoFile,
-      thumbnailFile
-    );
+    // const { videoUrl, embedUrl, thumbnailUrl } = await uploadFiles(
+    //   videoFile,
+    //   thumbnailFile
+    // );
 
     const video = await connection.videoRepository.createVideoRepository({
       userId,
@@ -51,8 +49,7 @@ const createVideoService = async (
       categoryIds,
       enumMode,
       videoUrl,
-      embedUrl,
-      thumbnailUrl,
+      bunnyId,
     });
 
     return video;
@@ -119,8 +116,10 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const video = await connection.videoRepository.getVideoByIdRepository(videoId);
-    
+    const video = await connection.videoRepository.getVideoByIdRepository(
+      videoId
+    );
+
     if (!video) {
       throw new CoreException(StatusCodeEnum.NotFound_404, "Video not found");
     }
@@ -146,9 +145,12 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
       check: videoId,
       seen: false,
       createdAt: new Date(),
-    }
+    };
 
-    await connection.userRepository.notifiLikeVideoRepository(videoOwnerId, notification);
+    await connection.userRepository.notifiLikeVideoRepository(
+      videoOwnerId,
+      notification
+    );
 
     return result;
   } catch (error) {
@@ -215,7 +217,9 @@ const getVideosByPlaylistIdService = async (playlistId, page, size) => {
     const connection = new DatabaseTransaction();
     const videos =
       await connection.videoRepository.getVideosByPlaylistIdRepository(
-        playlistId,page,size
+        playlistId,
+        page,
+        size
       );
     return videos;
   } catch (error) {

@@ -2,14 +2,22 @@ const express = require("express");
 const VideoController = require("../controllers/VideoController");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const upload = require("../utils/validatorFile");
+const { uploadVideo, uploadImage } = require("../utils/stores/storeImage");
 const videoRoutes = express.Router();
 const videoController = new VideoController();
 
 videoRoutes.post(
   "/",
   AuthMiddleware,
-  upload.fields([{ name: "videoUrl" }, { name: "thumbnailUrl" }]),
+  // uploadImage.fields([{ name: "videoThumbnail" }, { name: "video" }]),
   videoController.createVideoController
+);
+
+videoRoutes.put(
+  "/",
+  AuthMiddleware,
+  uploadImage.fields([{ name: "videoThumbnail" }, { name: "video" }]),
+  videoController.uploadVideoController
 );
 
 videoRoutes.get("/", AuthMiddleware, videoController.getVideosController);
@@ -51,5 +59,4 @@ videoRoutes.delete(
   AuthMiddleware,
   videoController.deleteVideoController
 );
-
 module.exports = videoRoutes;

@@ -115,10 +115,9 @@ class AuthController {
         name: "",
       };
       if (req.body.user) {
-        user.email = JSON.parse(req.body.user.email);
-        user.name = JSON.parse(
-          req.body.user.name.firstName + " " + req.body.user.name.lastName
-        );
+        const userData = JSON.parse(req.body.user);
+        user.email = userData.email;
+        user.name = userData.name.firstName + " " + userData.name.lastName;
       } else {
         const jwtClaims = await verifyAppleToken({
           idToken: req.body.id_token,
@@ -136,10 +135,12 @@ class AuthController {
         process.env.ACCESS_TOKEN_EXPIRE
       );
       res
-        .status(200)
+        .status(StatusCodeEnums.OK_200)
         .json({ accessToken, message: "Login with Apple successfully" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      return res
+        .status(StatusCodeEnums.InternalServerError_500)
+        .json({ message: error.message });
     }
   }
 
