@@ -38,24 +38,24 @@ class LoginGoogleDto {
     if (!this.id) {
       throw new CoreException(StatusCodeEnums.BadRequest_400, "Id is required");
     }
-    if (!this.email) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Email is required"
-      );
-    }
-    if (!this.displayName) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Display name is required"
-      );
-    }
-    if (!this.avavtar) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Avatar is required"
-      );
-    }
+    // if (!this.email) {
+    //   throw new CoreException(
+    //     StatusCodeEnums.BadRequest_400,
+    //     "Email is required"
+    //   );
+    // }
+    // if (!this.displayName) {
+    //   throw new CoreException(
+    //     StatusCodeEnums.BadRequest_400,
+    //     "Display name is required"
+    //   );
+    // }
+    // if (!this.avavtar) {
+    //   throw new CoreException(
+    //     StatusCodeEnums.BadRequest_400,
+    //     "Avatar is required"
+    //   );
+    // }
   }
 }
 
