@@ -1,7 +1,12 @@
 const validator = require("validator");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const mongoose = require("mongoose");
 
+const validMongooseObjectId = async (id) => {
+  if (!mongoose.Types.ObjectId.isValid(id))
+    throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid id");
+};
 const validFullName = async (fullName) => {
   if (!fullName)
     throw new CoreException(
@@ -54,4 +59,10 @@ const validPhoneNumber = async (phoneNumber) => {
       "Phone number is invalid"
     );
 };
-module.exports = { validFullName, validEmail, validPassword, validPhoneNumber };
+module.exports = {
+  validMongooseObjectId,
+  validFullName,
+  validEmail,
+  validPassword,
+  validPhoneNumber,
+};

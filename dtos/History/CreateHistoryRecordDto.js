@@ -1,24 +1,24 @@
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
-const { validEmail, validMongooseObjectId } = require("../../utils/validator");
+const { validMongooseObjectId } = require("../../utils/validator");
 
 /**
  * @swagger
  * components:
  *   schemas:
- *     UpdateUserEmailDto:
+ *     CreateHistoryRecordDto:
  *       type: object
  *       required:
- *         - email
+ *        - videoId
  *       properties:
- *         email:
+ *         videoId:
  *           type: string
- *           format: email
- *           description: The user's email.
+ *           description: The video's id.
  */
-class UpdateUserEmailDto {
-  constructor(userId, email) {
-    this.email = email;
+class CreateHistoryRecordDto {
+  constructor(userId, videoId) {
+    this.userId = userId;
+    this.videoId = videoId;
   }
   async validate() {
     if (!this.userId) {
@@ -29,14 +29,14 @@ class UpdateUserEmailDto {
     }
     await validMongooseObjectId(this.userId);
 
-    if (!this.email) {
+    if (!this.videoId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Email is required"
+        "Video ID is required"
       );
     }
-    await validEmail(this.email);
+    await validMongooseObjectId(this.videoId);
   }
 }
 
-module.exports = UpdateUserEmailDto;
+module.exports = CreateHistoryRecordDto;

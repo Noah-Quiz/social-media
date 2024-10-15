@@ -2,20 +2,19 @@ const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
 const { validMongooseObjectId } = require("../../utils/validator");
 
-class GetUserWalletDto {
-  constructor(userId) {
-    this.userId = userId;
+class DeleteHistoryRecordDto {
+  constructor(historyId) {
+    this.historyId = historyId;
   }
-
   async validate() {
-    if (!this.userId) {
+    if (!this.historyId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "User ID is required"
+        "History ID is required"
       );
     }
-    await validMongooseObjectId(this.userId);
+    await validMongooseObjectId(this.historyId);
   }
 }
 
-module.exports = GetUserWalletDto;
+module.exports = DeleteHistoryRecordDto;

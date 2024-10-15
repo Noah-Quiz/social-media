@@ -1,7 +1,9 @@
-const { default: mongoose } = require("mongoose");
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
-const { validPassword } = require("../../utils/validator");
+const {
+  validPassword,
+  validMongooseObjectId,
+} = require("../../utils/validator");
 
 /**
  * @swagger
@@ -35,12 +37,8 @@ class UpdateUserPasswordDto {
         "User ID is required"
       );
     }
-    if (!mongoose.Types.ObjectId.isValid(this.userId)) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Valid user ID is required"
-      );
-    }
+    await validMongooseObjectId(this.userId);
+
     if (!this.oldPassword || !this.newPassword) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,

@@ -1,35 +1,38 @@
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
+const { validMongooseObjectId } = require("../../utils/validator");
 
 /**
  * @swagger
  * components:
  *   schemas:
- *     VerifyEmailDto:
+ *     UpdateCategoryDto:
  *       type: object
- *       required:
- *         - token
  *       properties:
- *         token:
+ *         name:
  *           type: string
- *           description: Email verify token.
+ *           description: The category's name.
+
  */
-class VerifyEmailDto {
-  constructor(token) {
-    this.token = token;
+class UpdateCategoryDto {
+  constructor(categoryId, name) {
+    this.categoryId = categoryId;
+    this.name = name;
   }
+
   async validate() {
     try {
-      if (!this.token) {
+      if (!this.categoryId) {
         throw new CoreException(
           StatusCodeEnums.BadRequest_400,
-          "Token is required"
+          "Category ID is required"
         );
       }
+      await validMongooseObjectId(this.categoryId);
     } catch (error) {
       throw error;
     }
   }
 }
 
-module.exports = VerifyEmailDto;
+module.exports = UpdateCategoryDto;

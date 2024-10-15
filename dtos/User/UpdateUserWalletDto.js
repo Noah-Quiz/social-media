@@ -1,6 +1,6 @@
-const { default: mongoose } = require("mongoose");
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
+const { validMongooseObjectId } = require("../../utils/validator");
 
 /**
  * @swagger
@@ -39,9 +39,7 @@ class UpdateUserWalletDto {
         "Missing field: userId"
       );
     }
-    if (!mongoose.Types.ObjectId.isValid(this.userId)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid userId");
-    }
+    await validMongooseObjectId(this.userId);
     if (!this.amount) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
