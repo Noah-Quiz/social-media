@@ -84,14 +84,16 @@ const userEntitySchema = new mongoose.Schema({
   },
   follow: [
     {
-      type: mongoose.Types.ObjectId,
-      ref: "User",
+      _id: false,
+      followId: { type: mongoose.Types.ObjectId, ref: "User", require: true },
+      followDate: { type: Date, default: Date.now, require: true },
     },
   ],
   followBy: [
     {
-      type: mongoose.Types.ObjectId,
-      ref: "User",
+      _id: false,
+      followById: { type: mongoose.Types.ObjectId, ref: "User", require: true },
+      followByDate: { type: Date, default: Date.now, require: true },
     },
   ],
   wallet: {

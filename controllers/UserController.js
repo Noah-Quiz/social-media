@@ -14,6 +14,8 @@ const {
   updateUserPasswordByIdService,
   getUserWalletService,
   updateUserWalletService,
+  toggleFollowUserService,
+  getStatsByDateService,
 } = require("../services/UserService");
 const mongoose = require("mongoose");
 const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
@@ -197,20 +199,39 @@ class UserController {
   }
   async toggleFollowController(req, res) {
     try {
-      let result;
       const { userId, followId, action } = req.body;
       const toggleFollowDto = new ToggleFollowDto(userId, followId, action);
       await toggleFollowDto.validate();
 
-      if (action === "follow") {
-        result = await followUserService(userId, followId);
-      } else if (action === "unfollow") {
-        result = await unfollowUserService(userId, followId);
-      }
+      const result = await toggleFollowUserService(userId, followId, action);
 
       return res.status(StatusCodeEnums.OK_200).json({
         message: `${action.charAt(0).toUpperCase() + action.slice(1)} success`,
       });
+    } catch (error) {
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
+    }
+  }
+
+  async getStatsByDateController(req, res) {
+    const { userId, fromDate, toDate } = req.body;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Valid user ID is required" });
+    }
+
+    try {
+      const result = await getStatsByDateService(userId, fromDate, toDate);
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Success", result });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });

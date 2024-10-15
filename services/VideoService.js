@@ -119,8 +119,10 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const video = await connection.videoRepository.getVideoByIdRepository(videoId);
-    
+    const video = await connection.videoRepository.getVideoByIdRepository(
+      videoId
+    );
+
     if (!video) {
       throw new CoreException(StatusCodeEnum.NotFound_404, "Video not found");
     }
@@ -146,9 +148,12 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
       check: videoId,
       seen: false,
       createdAt: new Date(),
-    }
+    };
 
-    await connection.userRepository.notifiLikeVideoRepository(videoOwnerId, notification);
+    await connection.userRepository.notifiLikeVideoRepository(
+      videoOwnerId,
+      notification
+    );
 
     return result;
   } catch (error) {
@@ -215,7 +220,9 @@ const getVideosByPlaylistIdService = async (playlistId, page, size) => {
     const connection = new DatabaseTransaction();
     const videos =
       await connection.videoRepository.getVideosByPlaylistIdRepository(
-        playlistId,page,size
+        playlistId,
+        page,
+        size
       );
     return videos;
   } catch (error) {

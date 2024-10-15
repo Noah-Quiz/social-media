@@ -12,7 +12,7 @@ videoRoutes.post(
   videoController.createVideoController
 );
 
-videoRoutes.get("/", AuthMiddleware, videoController.getVideosController);
+videoRoutes.get("/", videoController.getVideosController);
 
 videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
 

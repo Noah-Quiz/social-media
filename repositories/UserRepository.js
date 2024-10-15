@@ -1,5 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const User = require("../entities/UserEntity");
+const Video = require("../entities/VideoEntity");
 
 class UserRepository {
   async createUser(data, session) {
@@ -107,7 +108,7 @@ class UserRepository {
     }
   }
 
-  async followAnUserRepository(userId, followId) {
+  async toggleFollowAnUserRepository(userId, followId, action) {
     const user = await User.findOne({ _id: userId });
     const follow = await User.findOne({ _id: followId });
     if (!user || !follow) {
@@ -115,39 +116,43 @@ class UserRepository {
     }
 
     try {
-      await User.updateOne(
-        { _id: userId },
-        { $addToSet: { follow: followId } }
-      );
+      if (action === "follow") {
+        await User.updateOne(
+          { _id: userId },
+          {
+            $addToSet: {
+              follow: {
+                followId: new mongoose.Types.ObjectId(followId),
+                followDate: Date.now(),
+              },
+            },
+          }
+        );
 
-      await User.updateOne(
-        { _id: followId },
-        { $addToSet: { followBy: userId } }
-      );
+        await User.updateOne(
+          { _id: followId },
+          {
+            $addToSet: {
+              followBy: {
+                followById: new mongoose.Types.ObjectId(userId),
+                followByDate: Date.now(),
+              },
+            },
+          }
+        );
+        return true;
+      } else if (action === "unfollow") {
+        await User.updateOne({ _id: userId }, { $pull: { follow: followId } });
 
-      console.log(`User ${userId} follows user ${followId} successfully`);
-      return true;
+        await User.updateOne(
+          { _id: followId },
+          { $pull: { followBy: userId } }
+        );
+        return true;
+      }
+      return false;
     } catch (error) {
-      return false;
-    }
-  }
-
-  async unfollowAnUserRepository(userId, followId) {
-    const user = await User.findOne({ _id: userId });
-    const follow = await User.findOne({ _id: followId });
-    console.log(user);
-    if (!user || !follow) {
-      return false;
-    }
-
-    try {
-      await User.updateOne({ _id: userId }, { $pull: { follow: followId } });
-
-      await User.updateOne({ _id: followId }, { $pull: { followBy: userId } });
-
-      return true;
-    } catch (error) {
-      return false;
+      throw new Error(`Error: ${error.message}`);
     }
   }
 
@@ -345,6 +350,90 @@ class UserRepository {
         formatedCoin: user.wallet.coin.toLocaleString(),
       };
       return userWallet;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async getStatsByDateRepository(userId, fromDate, toDate) {
+    try {
+      const fromDateString = new Date(fromDate + "T00:00:00.000Z");
+      const toDateString = new Date(toDate + "T23:59:59.999Z");
+
+      const userStats = await User.aggregate([
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(userId),
+          },
+        },
+        {
+          $project: {
+            totalFollows: {
+              $size: {
+                $filter: {
+                  input: "$follow",
+                  as: "f",
+                  cond: {
+                    $and: [
+                      { $gte: ["$$f.followDate", fromDateString] },
+                      { $lt: ["$$f.followDate", toDateString] },
+                    ],
+                  },
+                },
+              },
+            },
+            totalFollowers: {
+              $size: {
+                $filter: {
+                  input: "$followBy",
+                  as: "fb",
+                  cond: {
+                    $and: [
+                      { $gte: ["$$fb.followByDate", fromDateString] },
+                      { $lt: ["$$fb.followByDate", toDateString] },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      ]);
+
+      const userStat = userStats[0];
+      const { _id, ...user } = userStat;
+
+      const video = await Video.aggregate([
+        {
+          $match: {
+            userId: new mongoose.Types.ObjectId(userId),
+            dateCreated: {
+              $gte: fromDateString,
+              $lte: toDateString,
+            },
+            isDeleted: false,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalLikes: { $sum: { $size: "$likedBy" } },
+            totalViews: { $sum: "$numOfViews" },
+            totalVideo: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+          },
+        },
+      ]);
+      const result = video[0];
+
+      return {
+        ...result,
+        ...user,
+      };
     } catch (error) {
       throw new Error(error.message);
     }

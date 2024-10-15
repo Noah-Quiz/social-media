@@ -11,6 +11,7 @@ const {
   deleteVideoService,
   getVideoService,
   getVideosService,
+  getStatsByDateService,
 } = require("../services/VideoService");
 const { default: mongoose } = require("mongoose");
 require("dotenv").config();

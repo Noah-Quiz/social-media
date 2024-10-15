@@ -9,6 +9,7 @@ const userController = new UserController();
 const historyController = new HistoryController();
 
 const route = express.Router();
+route.get("/dashboard", userController.getStatsByDateController);
 
 // route.use(AuthMiddleware);
 
@@ -234,7 +235,10 @@ route.get("/history", historyController.getAllHistoryRecordsController);
 
 route.delete("/history", historyController.clearAllHistoryRecordsController);
 
-route.delete("/history/:historyId", historyController.deleteHistoryRecordController);
+route.delete(
+  "/history/:historyId",
+  historyController.deleteHistoryRecordController
+);
 
 route.put("/watch-time", userController.updateTotalWatchTimeController);
 
