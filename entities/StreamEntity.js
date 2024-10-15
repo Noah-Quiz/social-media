@@ -20,6 +20,14 @@ const streamSchema = new Schema({
     type: String,
     default: '',
   },
+  muxStreamId: {
+    type: String,
+    default: '',
+  },
+  muxPlaybackId: {
+    type: String,
+    default: '',
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
