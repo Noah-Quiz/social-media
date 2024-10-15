@@ -47,6 +47,14 @@ const options = {
         name: "Categories",
         description: "Operations about categories",
       },
+      {
+        name: "Comments",
+        description: "Operations about comments",
+      },
+      {
+        name: "Messages",
+        description: "Operations about messages",
+      },
     ],
     components: {
       securitySchemes: {
