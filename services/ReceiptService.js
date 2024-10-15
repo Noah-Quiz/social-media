@@ -36,7 +36,9 @@ const createReceiptService = async (
   paymentPort,
   bankCode,
   amount,
-  transactionId
+  transactionId,
+  type,
+  ExchangeRate
 ) => {
   const connection = new DatabaseTransaction();
   try {
@@ -46,7 +48,9 @@ const createReceiptService = async (
       paymentPort,
       bankCode,
       amount,
-      transactionId
+      transactionId,
+      type,
+      exchangeRate
     );
     return receipt;
   } catch (error) {
