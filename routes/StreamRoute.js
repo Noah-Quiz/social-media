@@ -18,4 +18,8 @@ streamRoutes.patch("/:streamId", AuthMiddleware, uploadImage.single("thumbnailIm
 
 streamRoutes.post("/end/:streamId", AuthMiddleware, streamController.endStreamController);
 
+streamRoutes.post("/reset-stream-key/:streamId", AuthMiddleware, streamController.resetStreamKeyController);
+
+streamRoutes.get("/playback-token/:streamId", AuthMiddleware, streamController.createMuxTokenController);
+
 module.exports = streamRoutes;

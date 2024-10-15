@@ -16,7 +16,7 @@ const validFullName = async (fullName) => {
   if (!validator.isLength(fullName, { min: 6, max: 50 }))
     throw new CoreException(
       StatusCodeEnums.BadRequest_400,
-      "Full name is invalid"
+      "Full name is invalid, must be a minimum of 6 characters and a maximum of 50 characters."
     );
 };
 
