@@ -1,13 +1,14 @@
 const { default: mongoose } = require("mongoose");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
-const { createStreamService, deleteStreamService, getStreamService, endStreamService, getStreamsService, updateStreamService } = require("../services/StreamService");
+const { createStreamService, deleteStreamService, getStreamService, endStreamService, getStreamsService, updateStreamService, resetStreamKeyService } = require("../services/StreamService");
 const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
+const { createMuxToken } = require("../utils/muxLiveStream");
 
 class StreamController {
   async getStreamController(req, res) {
     const { streamId } = req.params;
-
+    
     try {
       const stream = await getStreamService(streamId);
 
@@ -51,7 +52,7 @@ class StreamController {
     const { streamId } = req.params;
 
     try {
-      const stream = await endStreamService(streamId);
+      await endStreamService(streamId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
@@ -120,6 +121,10 @@ class StreamController {
     const userId = req.userId;
 
     try {
+      if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
+        throw new CoreException(StatusCodeEnums.BadRequest_400).json({ message: "Valid stream ID is required" });
+      }
+      
       await deleteStreamService(userId, streamId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
@@ -164,6 +169,51 @@ class StreamController {
     } catch (error) {
       if (thumbnailFile) await deleteFile(thumbnailFile);
 
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+      }
+    }
+  }
+
+  async resetStreamKeyController(req, res) {
+    const { streamId } = req.params;
+
+    try {
+      if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
+        throw new CoreException(StatusCodeEnums.BadRequest_400).json({ message: "Valid stream ID is required" });
+      }
+
+      const streamKey = await resetStreamKeyService(streamId);
+
+      return res.status(StatusCodeEnums.OK_200).json({ streamKey, message: "Success" })
+    } catch (error) {
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+      }
+    }
+  }
+
+  async createMuxTokenController(req, res) {
+    const { streamId } = req.params;
+
+    try {
+      if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
+        throw new CoreException(StatusCodeEnums.BadRequest_400).json({ message: "Valid stream ID is required" });
+      }
+
+      const stream = await getStreamService(streamId);
+
+      let muxToken = null;
+      if (stream) { 
+        muxToken = await createMuxToken(stream);
+      }
+
+      return res.status(StatusCodeEnums.OK_200).json({ muxToken, message: "Success" })
+    } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {

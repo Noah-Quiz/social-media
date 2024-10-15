@@ -102,7 +102,7 @@ class StreamRepository {
     try {
       const updateOperations = { lastUpdated: Date.now(), ...updateData };
 
-      if (categoryData.addedCategoryIds && categoryData.addedCategoryIds.length > 0) {
+      if (categoryData && categoryData.addedCategoryIds && categoryData.addedCategoryIds.length > 0) {
         await Stream.updateOne(
           { _id: streamId },
           { $addToSet: { categoryIds: { $each: categoryData.addedCategoryIds } }, lastUpdated: Date.now() },
@@ -110,7 +110,7 @@ class StreamRepository {
         );
       }
 
-      if (categoryData.removedCategoryIds && categoryData.removedCategoryIds.length > 0) {
+      if (categoryData && categoryData.removedCategoryIds && categoryData.removedCategoryIds.length > 0) {
         await Stream.updateOne(
           { _id: streamId },
           { $pull: { categoryIds: { $in: categoryData.removedCategoryIds } }, lastUpdated: Date.now() },
