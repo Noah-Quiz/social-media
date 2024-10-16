@@ -55,6 +55,22 @@ const options = {
         name: "Messages",
         description: "Operations about messages",
       },
+      {
+        name: "Receipts",
+        description: "Operations about receipts",
+      },
+      {
+        name: "MyPlaylists",
+        description: "Operations about my playlists",
+      },
+      {
+        name: "ExchangeRates",
+        description: "Operations about exchange rates",
+      },
+      {
+        name: "Gifts",
+        description: "Operations about gifts",
+      }
     ],
     components: {
       securitySchemes: {
@@ -85,7 +101,7 @@ function swaggerDoc(app, port) {
     swaggerUi.serve,
     swaggerUi.setup(swaggerSpec, {
       swaggerOptions: {
-        docExpansion: "list",
+        docExpansion: "none",
         filter: true,
         persistAuthorization: true,
       },
