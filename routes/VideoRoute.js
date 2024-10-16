@@ -9,12 +9,11 @@ const videoController = new VideoController();
 videoRoutes.post(
   "/",
   AuthMiddleware,
-  // uploadImage.fields([{ name: "videoThumbnail" }, { name: "video" }]),
   videoController.createVideoController
 );
 
 videoRoutes.put(
-  "/",
+  "/:videoId",
   AuthMiddleware,
   uploadImage.fields([{ name: "videoThumbnail" }, { name: "video" }]),
   videoController.uploadVideoController
@@ -29,10 +28,10 @@ videoRoutes.get(
   videoController.getVideosByPlaylistIdController
 );
 
-videoRoutes.put(
+videoRoutes.patch(
   "/:videoId",
   AuthMiddleware,
-  upload.fields([{ name: "thumbnailUrl" }]),
+  uploadImage.fields([{ name: "videoThumbnail" }]),
   videoController.updateAVideoByIdController
 );
 
