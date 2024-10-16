@@ -1,4 +1,3 @@
-const dotenv = require("dotenv");
 require("dotenv").config();
 const express = require("express");
 const getLogger = require("./utils/logger");
@@ -19,6 +18,7 @@ const receiptRoutes = require("./routes/ReceiptRoute");
 const streamRoutes = require("./routes/StreamRoute");
 const giftRoutes = require("./routes/GiftRoute");
 const giftHistoryRoutes = require("./routes/GiftHistoryRoute");
+const exchangeRateRoutes = require("./routes/ExchangeRateRoutes");
 const advertisementRoutes = require("./routes/AdvertisementRoute");
 const app = express();
 const server = require("http").createServer(app);
@@ -49,38 +49,41 @@ const vimeoClient = new Vimeo(
 );
 
 function handleLeaveRoom(socket, roomId) {
+  const logger = getLogger("SOCKET");
   socket.leave(roomId);
-  console.log(`User left room: ${roomId}`);
+  logger.info(`User left room: ${roomId}`);
 }
 
 // Listen for socket connections
 io.on("connection", (socket) => {
-  console.log(`User connected: ${socket.id}`);
+  const logger = getLogger("SOCKET");
+
+  logger.info(`User connected: ${socket.id}`);
 
   // Public Chat: Joining a default room
   socket.on("join_public_chat", () => {
     const room = "public_room";
     socket.join(room);
-    console.log(`${socket.id} joined public room`);
+    logger.info(`${socket.id} joined public room`);
   });
 
   // Private Chat: Join a private room between two users
   socket.on("join_private_chat", (roomId) => {
     socket.join(roomId);
-    console.log(`${socket.id} joined private room: ${roomId}`);
+    logger.info(`${socket.id} joined private room: ${roomId}`);
   });
 
   // Group Chat: Join a group room
   socket.on("join_group_chat", (groupId) => {
     socket.join(groupId);
-    console.log(`${socket.id} joined group room: ${room}`);
+    logger.info(`${socket.id} joined group room: ${room}`);
   });
 
   // Livestreaming Chat: Join livestream room
   socket.on("join_livestream_chat", (streamId) => {
     const room = `livestream_${streamId}`;
     socket.join(room);
-    console.log(`${socket.id} joined livestream room: ${room}`);
+    logger.info(`${socket.id} joined livestream room: ${room}`);
   });
 
   // Sending messages
@@ -92,18 +95,18 @@ io.on("connection", (socket) => {
       message,
       avatar: user.avatar,
     });
-    console.log(`Message sent to ${room}: ${message}`);
+    logger.info(`Message sent to ${room}: ${message}`);
   });
 
   // Leaving a room (for private, group, livestream chat)
   socket.on("leave_room", (room) => {
     socket.leave(room);
-    console.log(`${socket.id} left room: ${room}`);
+    logger.info(`${socket.id} left room: ${room}`);
   });
 
   // Disconnect event
   socket.on("disconnect", () => {
-    console.log(`User disconnected: ${socket.id}`);
+    logger.info(`User disconnected: ${socket.id}`);
   });
 });
 
@@ -137,6 +140,7 @@ app.use("/api/advertisements", advertisementRoutes);
 
 app.use("/api/gifts/", giftRoutes);
 app.use("/api/gift-history/", giftHistoryRoutes);
+app.use("/api/exchange-rate/", exchangeRateRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 

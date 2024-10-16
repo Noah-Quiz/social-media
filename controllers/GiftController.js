@@ -6,22 +6,16 @@ const {
   getGiftService,
   updateGiftService,
 } = require("../services/GiftService");
+const CreateGiftDto = require("../dtos/Gift/CreateGiftDto");
+const UpdateGiftDto = require("../dtos/Gift/UpdateGiftDto");
 
 class GiftController {
   async createGiftController(req, res) {
-    const { name, image, valuePerUnit } = req.body;
-    if (!name || !image || !valuePerUnit) {
-      return res
-        .status(400)
-        .json({ message: "Please fill in all fields: name, image, price" });
-    }
-
-    // Use validator's isFloat method correctly
-    if (!isFloat(valuePerUnit.toString())) {
-      return res.status(400).json({ message: "Invalid price format" });
-    }
-
     try {
+      const { name, image, valuePerUnit } = req.body;
+      const createGiftDto = new CreateGiftDto(name, image, valuePerUnit);
+      await createGiftDto.validate();
+
       const gift = await createGiftService(name, image, valuePerUnit);
       return res.status(200).json({ gift: gift, message: "Success" });
     } catch (error) {
@@ -30,18 +24,12 @@ class GiftController {
   }
 
   async updateGiftController(req, res) {
-    const { id } = req.params;
-    const { name, image, valuePerUnit } = req.body;
-
-    if (!id) {
-      return res.status(400).json({ message: "ID is required" });
-    }
-
-    if (valuePerUnit && !isFloat(valuePerUnit.toString())) {
-      return res.status(400).json({ message: "Invalid price format" });
-    }
-
     try {
+      const { id } = req.params;
+      const { name, image, valuePerUnit } = req.body;
+      const updateGiftDto = new UpdateGiftDto(id, name, image, valuePerUnit);
+      await updateGiftDto.validate();
+
       const gift = await updateGiftService(
         id,
         name || "",

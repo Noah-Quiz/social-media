@@ -8,9 +8,7 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 
 const createVideoService = async (
   userId,
-  videoFile,
-  thumbnailFile,
-  { title, description, enumMode, categoryIds }
+  { title, description, enumMode, categoryIds, bunnyId, videoUrl }
 ) => {
   try {
     if (["public", "private", "unlisted"].includes(enumMode)) {
@@ -39,10 +37,10 @@ const createVideoService = async (
 
     const connection = new DatabaseTransaction();
 
-    const { videoUrl, embedUrl, thumbnailUrl } = await uploadFiles(
-      videoFile,
-      thumbnailFile
-    );
+    // const { videoUrl, embedUrl, thumbnailUrl } = await uploadFiles(
+    //   videoFile,
+    //   thumbnailFile
+    // );
 
     const video = await connection.videoRepository.createVideoRepository({
       userId,
@@ -51,8 +49,7 @@ const createVideoService = async (
       categoryIds,
       enumMode,
       videoUrl,
-      embedUrl,
-      thumbnailUrl,
+      bunnyId,
     });
 
     return video;
@@ -168,8 +165,19 @@ const viewIncrementService = async (videoId) => {
     const result = await connection.videoRepository.viewIncrementRepository(
       videoId
     );
-
-    return result;
+    const video = await connection.videoRepository.getVideoByIdRepository(
+      videoId
+    );
+    if (video.numOfViews % 1000 === 0) {
+      const rate =
+        await connection.exchangeRateRepository.getCurrentRateRepository();
+      await connection.userRepository.updateUserWalletRepository(
+        video.userId,
+        "ReceiveCoin",
+        rate.coinPer1000View
+      );
+    }
+    return video;
   } catch (error) {
     throw error;
   }

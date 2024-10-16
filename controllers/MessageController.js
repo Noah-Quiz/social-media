@@ -6,83 +6,133 @@ const {
   createAMessageService,
   updateMessageService,
 } = require("../services/MessageService");
+const CreateMessageDto = require("../dtos/Message/CreateMessageDto");
+const CoreException = require("../exceptions/CoreException");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const GetMessagesDto = require("../dtos/Message/GetMessagesDto");
+const UpdateMessageDto = require("../dtos/Message/UpdateMessageDto");
+const GetMessageDto = require("../dtos/Message/GetMessageDto");
+const DeleteMessageDto = require("../dtos/Message/DeleteMessageDto");
 
 class MessageController {
   async getMessageController(req, res) {
-    const { messageId } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(messageId)) {
-      return res.status(400).json({ error: "Invalid message ID" });
-    }
     try {
+      const { messageId } = req.params;
+      const getMessageDto = new GetMessageDto(messageId);
+      await getMessageDto.validate();
+
       const message = await findMessageService(messageId);
       if (!message) {
         res
           .status(404)
           .json({ message: `No message found for id: ${messageId}` });
       }
-      res.status(200).json({ data: message, message: "Success" });
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ data: message, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 
   async getMessagesController(req, res) {
-    const { roomId } = req.query; // Extract roomId from the query
-
-    if (!roomId) {
-      return res.status(400).json({ error: "roomId is required" });
-    }
-
     try {
+      const { roomId } = req.query; // Extract roomId from the query
+
+      const getMessagesDto = new GetMessagesDto(roomId);
+      await getMessagesDto.validate();
+
       const messages = await findAllMessagesByRoomIdService(roomId);
       if (!messages || messages.length === 0) {
         return res
           .status(404)
           .json({ message: `No messages found for room: ${roomId}` });
       }
-      res.status(200).json({ data: messages, message: "Success" });
-    } catch (error) {
       res
-        .status(500)
-        .json({ error: `Error fetching messages: ${error.message}` });
+        .status(StatusCodeEnums.OK_200)
+        .json({ data: messages, message: "Success" });
+    } catch (error) {
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 
   async updateMessageController(req, res) {
-    const { messageId } = req.params;
-    const { content } = req.body;
-    const userId = req.userId;
-    const updateData = { content };
-
     try {
+      const { messageId } = req.params;
+      const { content } = req.body;
+      const userId = req.userId;
+      const updateData = { content };
+
+      const updateMessageDto = new UpdateMessageDto(messageId, content, userId);
+      await updateMessageDto.validate();
+
       const message = await updateMessageService(userId, messageId, updateData);
 
-      res.status(200).json({ data: message, message: "Success" });
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ data: message, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 
   async deleteMessageController(req, res) {
-    const { messageId } = req.params;
-    const userId = req.userId;
     try {
+      const { messageId } = req.params;
+      const userId = req.userId;
+      const deleteMessageDto = new DeleteMessageDto(messageId, userId);
+      await deleteMessageDto.validate();
+
       await deleteMessageService(userId, messageId);
-      res.status(200).json({ message: "Success" });
+      res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 
   async createAMessageController(req, res) {
-    const { roomId, content } = req.body;
-    const userId = req.userId;
     try {
+      const { roomId, content } = req.body;
+      const userId = req.userId;
+      const createMessageDto = new CreateMessageDto(userId, roomId, content);
+      await createMessageDto.validate();
+
       const message = await createAMessageService(userId, roomId, content);
-      res.status(200).json({ data: message, message: "Success" });
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ data: message, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 }

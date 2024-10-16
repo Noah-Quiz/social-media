@@ -317,6 +317,9 @@ class UserRepository {
       }
 
       switch (actionCurrencyType) {
+        case "ReceiveCoin":
+          user.wallet.coin += amount;
+          break;
         case "SpendBalance":
           if (user.wallet.balance < amount) {
             throw new Error("Insufficient balance");

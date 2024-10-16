@@ -8,7 +8,9 @@ class ReceiptRepository {
     paymentPort,
     bankCode,
     amount,
-    transactionId
+    transactionId,
+    type,
+    exchangeRate
   ) {
     try {
       const receipt = await Receipt.create({
@@ -18,6 +20,8 @@ class ReceiptRepository {
         bankCode,
         amount,
         transactionId,
+        type,
+        exchangeRate,
       });
       return receipt;
     } catch (error) {

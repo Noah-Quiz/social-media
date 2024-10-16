@@ -44,7 +44,14 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
       "SpendCoin",
       totalCost
     );
-
+    const stream = await connection.streamRepository.getStreamRepository(
+      streamId
+    );
+    await connection.userRepository.updateUserWalletRepository(
+      stream.userId,
+      "ReceiveCoin",
+      totalCost
+    );
     await connection.commitTransaction(); // Commit transaction if all operations succeed
     return giftHistory;
   } catch (error) {
