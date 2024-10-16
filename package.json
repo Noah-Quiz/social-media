@@ -14,7 +14,6 @@
   "dependencies": {
     "amqplib": "^0.10.4",
     "@mux/mux-node": "^8.8.0",
-    "amqplib": "^0.10.4",
     "and": "^0.0.3",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
