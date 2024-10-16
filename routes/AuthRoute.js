@@ -93,7 +93,7 @@ authRoutes.get(
 /**
  * @swagger
  * /api/auth/google/callback:
- *   post:
+ *   get:
  *     summary: Receive Google OAuth2 callback
  *     description: After the user logs in with Google, Google will redirect the user back to this endpoint. This endpoint will then authenticate the user and log them in.
  *     tags: [Auth]
@@ -112,7 +112,7 @@ authRoutes.get(
  *       description: Internal server error
  *
  */
-authRoutes.post(
+authRoutes.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   authController.loginGoogleController

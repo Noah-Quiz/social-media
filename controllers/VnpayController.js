@@ -1,10 +1,15 @@
-const DatabaseTransaction = require("../repositories/DatabaseTransaction.js");
+// vnpayController.js
 const config = require("../vnpay/vnpay.config.js");
 const moment = require("moment");
 const crypto = require("crypto");
 const querystring = require("qs");
-const { createReceiptService } = require("../services/ReceiptService.js");
-const { topUpUserService } = require("../services/UserService.js");
+const {
+  topUpUserService,
+  updateUserWalletService,
+} = require("../services/UserService");
+const { getExchangeRateService } = require("../services/ExchangeRateService");
+const { createReceiptService } = require("../services/ReceiptService");
+
 // Utility function to sort object keys
 function sortObject(obj) {
   const sorted = {};
@@ -22,6 +27,7 @@ exports.createPaymentUrl = (req, res) => {
   const orderId = moment(date).format("DDHHmmss");
   const { amount, bankCode } = req.body;
   const userId = req.userId;
+
   if (!amount) {
     return res.status(400).json({
       message: "Please fill in the required fields: amount",
@@ -66,9 +72,11 @@ exports.createPaymentUrl = (req, res) => {
 exports.vnpayReturn = async (req, res) => {
   let vnp_Params = req.query;
   const secureHash = vnp_Params["vnp_SecureHash"];
+
   // Remove secureHash params before processing
   delete vnp_Params["vnp_SecureHash"];
   delete vnp_Params["vnp_SecureHashType"];
+
   // Sort the parameters to compare with the signature
   vnp_Params = sortObject(vnp_Params);
   const signData = querystring.stringify(vnp_Params, { encode: false });
@@ -81,39 +89,62 @@ exports.vnpayReturn = async (req, res) => {
     // Slice the first 24 characters as userId, the rest as amount
     const userId = orderInfo.slice(0, 24);
     const amount = parseFloat(orderInfo.slice(27).trim());
-    try {
-      const result = await topUpUserService(userId, amount); //1VND = 1 balance
 
+    try {
+      // Process the payment directly
+      const topUpBalance = await topUpUserService(userId, amount);
+
+      // Get the exchange rate
+      const rate = await getExchangeRateService();
+
+      // Update the user's wallet balance
+      const CoinTopUp = await updateUserWalletService(
+        userId,
+        "ExchangeBalanceToCoin",
+        amount,
+        rate.topUpCoinRate
+      );
+
+      // Create a receipt for the transaction
       const receipt = await createReceiptService(
         userId,
-        (paymentMethod = vnp_Params.vnp_CardType),
-        (paymentPort = "VNPAY"),
-        (bankCode = vnp_Params.vnp_BankCode),
+        vnp_Params.vnp_CardType,
+        "VNPAY",
+        vnp_Params.vnp_BankCode,
         amount,
-        (transactionId = vnp_Params.vnp_TxnRef)
+        vnp_Params.vnp_TxnRef,
+        "TopUpCoin",
+        (exchangeRate = rate.topUpCoinRate)
       );
+      if (!topUpBalance || !CoinTopUp) {
+        res.status(500).json({
+          success: false,
+          message: "Payment successful but failed to top up coin.",
+          vnp_Params: vnp_Params,
+        });
+      }
       if (!receipt) {
-        return res.status(400).json({ message: "Failed to create receipt" });
-      } else {
-        console.log("receipt generated");
+        res.status(500).json({
+          success: false,
+          message: "Failed to create receipt.",
+          vnp_Params: vnp_Params,
+        });
       }
       console.log(
         `Top-up successful for User ID: ${userId}, Amount: ${amount} VND`
       );
       res.status(200).json({
         success: true,
-        message: "Payment successful",
+        message: "Payment successful and processed.",
         vnp_Params: vnp_Params,
       });
     } catch (error) {
-      console.error(
-        `Error updating wallet balance for User ID: ${userId} - ${error.message}`
-      );
+      console.error("Error processing payment:", error);
+
       res.status(500).json({
         success: false,
-        message:
-          "Payment successful, but failed to update user balance, please contact admin for suports",
-        error: error.message,
+        message: "Payment failed.",
+        vnp_Params: vnp_Params,
       });
     }
   } else {

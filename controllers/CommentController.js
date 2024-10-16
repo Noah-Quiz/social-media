@@ -1,3 +1,8 @@
+const CreateCommentDto = require("../dtos/Comment/CreateCommentDto");
+const GetChildrenCommentsDto = require("../dtos/Comment/GetChildrenCommentsDto");
+const GetVideoCommentsDto = require("../dtos/Comment/GetVideoCommentsDto");
+const LikeCommentDto = require("../dtos/Comment/LikeCommentDto");
+const UnlikeCommentDto = require("../dtos/Comment/UnlikeCommentDto");
 const {
   createCommentService,
   getCommentService,
@@ -11,14 +16,19 @@ const {
 
 class CommentController {
   async createCommentController(req, res) {
-    const userId = req.userId;
-    const videoId = req.body.videoId;
-    const content = req.body.content;
-    const responseTo = req.body.responseTo;
-    if (!userId || !videoId || !content) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
     try {
+      const userId = req.userId;
+      const videoId = req.body.videoId;
+      const content = req.body.content;
+      const responseTo = req.body.responseTo;
+      const createCommentDto = new CreateCommentDto(
+        userId,
+        videoId,
+        content,
+        responseTo
+      );
+      await createCommentDto.validate();
+
       const comment = await createCommentService(
         userId,
         videoId,
@@ -43,9 +53,12 @@ class CommentController {
     }
   }
   async getVideoCommentsController(req, res) {
-    const { sortBy } = req.query;
-    const { videoId } = req.params;
     try {
+      const { sortBy } = req.query;
+      const { videoId } = req.params;
+      const getVideoCommentsDto = new GetVideoCommentsDto(videoId, sortBy);
+      await getVideoCommentsDto.validate();
+
       const comments = await getVideoCommentsService(videoId, sortBy);
       return res.status(200).json({
         comments: comments,
@@ -79,10 +92,13 @@ class CommentController {
     }
   }
   async likeCommentController(req, res) {
-    const { id } = req.params;
-    const { userId } = req.body;
-    // const userId = req.userId;
     try {
+      const { id } = req.params;
+      // const { userId } = req.body;
+      const userId = req.userId;
+      const likeCommentDto = new LikeCommentDto(id, userId);
+      await likeCommentDto.validate();
+
       const comment = await likeService(userId, id);
       return res.status(200).json({ comments: comment, message: "Success" });
     } catch (error) {
@@ -90,9 +106,12 @@ class CommentController {
     }
   }
   async unlikeCommentController(req, res) {
-    const { id } = req.params;
-    const userId = req.userId;
     try {
+      const { id } = req.params;
+      const userId = req.userId;
+      const unlikeCommentDto = new UnlikeCommentDto(id, userId);
+      await unlikeCommentDto.validate();
+      
       const comment = await unlikeService(userId, id);
       return res.status(200).json({ comments: comment, message: "Success" });
     } catch (error) {
@@ -100,12 +119,15 @@ class CommentController {
     }
   }
   async getChildrenCommentsController(req, res) {
-    const limit = req.query.limit;
-    const commentId = req.query.commentId;
-    if (!commentId) {
-      return res.status(400).json({ message: "Comment ID is required" });
-    }
     try {
+      const limit = req.query.limit;
+      const commentId = req.query.commentId;
+      const getChildrenCommentsDto = new GetChildrenCommentsDto(
+        commentId,
+        limit
+      );
+      await getChildrenCommentsDto.validate();
+
       const { comments, maxLevel } = await getChildrenCommentsService(
         commentId,
         limit || 10

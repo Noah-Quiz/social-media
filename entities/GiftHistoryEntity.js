@@ -15,7 +15,11 @@ const giftSchema = new mongoose.Schema(
 ); // Disable _id for each object in the "gifts" array
 
 const giftHistorySchema = new mongoose.Schema({
-  streamId: { type: String, required: true }, // No stream model yet
+  streamId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Stream",
+    required: true,
+  },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   gifts: [giftSchema], // Use the giftSchema for the "gifts" array
   total: { type: Number, required: true },

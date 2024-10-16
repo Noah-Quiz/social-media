@@ -134,3 +134,12 @@ dist
 *.jpg
 *.jpeg
 *.gif
+
+# videos
+*.mp4
+*.webm
+*.ogg
+*.flv
+*.avi
+*.mov
+*.wmv

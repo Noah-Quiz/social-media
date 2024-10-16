@@ -18,23 +18,21 @@ class ReceiptController {
     }
   }
   async getAllUserReceiptsController(req, res) {
-    const userId = req.userId;
     try {
+      const userId = req.userId;
       const receipts = await getAllUserReceiptService(userId);
-      return res
-        .status(200)
-        .json({
-          receipts: receipts,
-          size: receipts.length,
-          message: "Success",
-        });
+      return res.status(200).json({
+        receipts: receipts,
+        size: receipts.length,
+        message: "Success",
+      });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   }
   async deleteReceiptController(req, res) {
-    const { id } = req.params;
     try {
+      const { id } = req.params;
       const receipt = await deleteReceiptService(id);
       return res.status(200).json({ receipt: receipt, message: "Success" });
     } catch (error) {

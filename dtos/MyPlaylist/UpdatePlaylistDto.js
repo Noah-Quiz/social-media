@@ -1,7 +1,30 @@
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
-const mongoose = require("mongoose");
 const { validMongooseObjectId } = require("../../utils/validator");
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     UpdatePlaylistDto:
+ *       type: object
+ *       required:
+ *         - addedVideoIds
+ *       properties:
+ *         addedVideoIds:
+ *           type: array
+ *           items:
+ *            type: string
+ *           description: The added video ids.
+ *         removedVideoIds:
+ *           type: array
+ *           items:
+ *            type: string
+ *           description: The removed video ids. 
+ *         playlistName:
+ *            type: string
+ *            description: The playlist's name.
+ */
 class UpdatePlaylistDto {
   constructor(addedVideoIds, removedVideoIds, playlistName, playListId) {
     this.addedVideoIds = addedVideoIds;
@@ -18,7 +41,7 @@ class UpdatePlaylistDto {
         );
       }
       await validMongooseObjectId(this.playListId);
-      
+
       if (this.addedVideoIds && !Array.isArray(this.addedVideoIds)) {
         throw new CoreException(
           StatusCodeEnums.BadRequest_400,
