@@ -77,12 +77,31 @@ const uploadBunnyStreamVideoService = async (libraryId, videoId, filePath) => {
         AccessKey: process.env.BUNNY_STREAM_API_KEY,
         "Content-Type": "application/octet-stream",
       },
-      maxBodyLength: 2 * 1024 * 1024 * 1024, // 2GB
+      maxBodyLength: Infinity,
     });
     logger.info(`Upload video response: ${JSON.stringify(res.data)}`);
     return JSON.parse(JSON.stringify(res.data));
   } catch (error) {
     logger.error(`Upload video error: ${error}`);
+    throw error;
+  }
+};
+
+const updateBunnyStreamVideoService = async (libraryId, videoId, title) => {
+  try {
+    const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${libraryId}/videos/${videoId}`;
+    const formData = new FormData();
+    formData.append("title", title);
+    const res = await axios.post(url, formData, {
+      headers: {
+        AccessKey: process.env.BUNNY_STREAM_API_KEY,
+        "Content-Type": "application/json",
+      },
+    });
+    logger.info(`Update video response: ${JSON.stringify(res.data)}`);
+    return JSON.parse(JSON.stringify(res.data));
+  } catch (error) {
+    logger.error(`Update video error: ${error}`);
     throw error;
   }
 };
@@ -108,5 +127,6 @@ module.exports = {
   getAllBunnyStreamVideosService,
   createBunnyStreamVideoService,
   uploadBunnyStreamVideoService,
+  updateBunnyStreamVideoService,
   deleteBunnyStreamVideoService,
 };
