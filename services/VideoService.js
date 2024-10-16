@@ -190,11 +190,11 @@ const getVideosByUserIdService = async (userId, sortBy) => {
   }
 };
 
-const getVideoService = async (userId) => {
+const getVideoService = async (videoId) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const video = await connection.videoRepository.getVideoRepository(userId);
+    const video = await connection.videoRepository.getVideoRepository(videoId);
 
     return video;
   } catch (error) {
