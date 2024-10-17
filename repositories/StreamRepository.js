@@ -5,7 +5,10 @@ class StreamRepository {
   // Create a new stream
   async createStreamRepository(data, session) {
     try {
-      const stream = await Stream.create([{ ...data, lastUpdated: Date.now() }], { session });
+      const stream = await Stream.create(
+        [{ ...data, lastUpdated: Date.now() }],
+        { session }
+      );
       return stream[0];
     } catch (error) {
       throw new Error(`Error creating stream: ${error.message}`);
@@ -65,7 +68,7 @@ class StreamRepository {
                 $project: {
                   name: 1,
                   imageUrl: 1,
-                  _id: 0,
+                  _id: 1,
                 },
               },
             ],
@@ -98,22 +101,43 @@ class StreamRepository {
   }
 
   // Update a stream
-  async updateStreamRepository(streamId, updateData, categoryData, session = null) {
+  async updateStreamRepository(
+    streamId,
+    updateData,
+    categoryData,
+    session = null
+  ) {
     try {
       const updateOperations = { lastUpdated: Date.now(), ...updateData };
 
-      if (categoryData && categoryData.addedCategoryIds && categoryData.addedCategoryIds.length > 0) {
+      if (
+        categoryData &&
+        categoryData.addedCategoryIds &&
+        categoryData.addedCategoryIds.length > 0
+      ) {
         await Stream.updateOne(
           { _id: streamId },
-          { $addToSet: { categoryIds: { $each: categoryData.addedCategoryIds } }, lastUpdated: Date.now() },
+          {
+            $addToSet: {
+              categoryIds: { $each: categoryData.addedCategoryIds },
+            },
+            lastUpdated: Date.now(),
+          },
           { runValidators: true, session }
         );
       }
 
-      if (categoryData && categoryData.removedCategoryIds && categoryData.removedCategoryIds.length > 0) {
+      if (
+        categoryData &&
+        categoryData.removedCategoryIds &&
+        categoryData.removedCategoryIds.length > 0
+      ) {
         await Stream.updateOne(
           { _id: streamId },
-          { $pull: { categoryIds: { $in: categoryData.removedCategoryIds } }, lastUpdated: Date.now() },
+          {
+            $pull: { categoryIds: { $in: categoryData.removedCategoryIds } },
+            lastUpdated: Date.now(),
+          },
           { runValidators: true, session }
         );
       }
@@ -180,7 +204,13 @@ class StreamRepository {
             merged: {
               $mergeObjects: [
                 "$$ROOT",
-                { user: { fullName: "$user.fullName", nickName: "$user.nickName", avatar: "$user.avatar" } },
+                {
+                  user: {
+                    fullName: "$user.fullName",
+                    nickName: "$user.nickName",
+                    avatar: "$user.avatar",
+                  },
+                },
               ],
             },
           },

@@ -8,18 +8,44 @@ const streamRoutes = express.Router();
 
 streamRoutes.get("/", streamController.getStreamsController);
 
-streamRoutes.post("/", AuthMiddleware, uploadImage.single("thumbnailImg"), streamController.createStreamController);
+streamRoutes.post(
+  "/",
+  AuthMiddleware,
+  uploadImage.single("thumbnailImg"),
+  streamController.createStreamController
+);
 
-streamRoutes.delete("/:streamId", AuthMiddleware, streamController.deleteStreamController);
+streamRoutes.delete(
+  "/:streamId",
+  AuthMiddleware,
+  streamController.deleteStreamController
+);
 
 streamRoutes.get("/:streamId", streamController.getStreamController);
 
-streamRoutes.patch("/:streamId", AuthMiddleware, uploadImage.single("thumbnailImg"), streamController.updateStreamController);
+streamRoutes.patch(
+  "/:streamId",
+  AuthMiddleware,
+  uploadImage.single("thumbnailImg"),
+  streamController.updateStreamController
+);
 
-streamRoutes.post("/end/:streamId", AuthMiddleware, streamController.endStreamController);
+streamRoutes.post(
+  "/end/:streamId",
+  AuthMiddleware,
+  streamController.endStreamController
+);
 
-streamRoutes.post("/reset-stream-key/:streamId", AuthMiddleware, streamController.resetStreamKeyController);
+streamRoutes.post(
+  "/reset-stream-key/:streamId",
+  AuthMiddleware,
+  streamController.resetStreamKeyController
+);
 
-streamRoutes.get("/playback-token/:streamId", AuthMiddleware, streamController.createMuxTokenController);
+streamRoutes.get(
+  "/playback-token/:streamId",
+  AuthMiddleware,
+  streamController.createMuxTokenController
+);
 
 module.exports = streamRoutes;

@@ -26,7 +26,6 @@ class VideoController {
       const { title, description, enumMode, categoryIds } = req.body;
       const userId = req.userId;
 
-
       const bunnyVideo = await createBunnyStreamVideoService(
         process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
         title
@@ -54,7 +53,7 @@ class VideoController {
     }
   }
 
-  async uploadVideoController(req,res){
+  async uploadVideoController(req, res) {
     try {
       const userId = req.userId;
 
@@ -68,9 +67,7 @@ class VideoController {
       const thumbnailFile = req.files.videoThumbnail[0];
       console.log(videoFile);
       console.log(thumbnailFile);
-    } catch (error) {
-      
-    }
+    } catch (error) {}
   }
 
   async toggleLikeVideoController(req, res) {
