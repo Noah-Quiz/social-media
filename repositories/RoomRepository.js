@@ -75,7 +75,11 @@ class RoomRepository {
         type: "private",
         participants: { $all: [user1, user2] }, // Check for rooms with both users as participants
         isDeleted: false,
-      }).populate("participants");
+      }).populate({
+        path: "participants",
+        select:
+          "fullName nickName role avatar email phoneNumber follow followBy _id",
+      });
     } catch (error) {
       throw new Error(`Error finding DM room between users: ${error.message}`);
     }
@@ -87,7 +91,11 @@ class RoomRepository {
       return await Room.find({
         participants: userId,
         isDeleted: false,
-      }).populate("participants");
+      }).populate({
+        path: "participants",
+        select:
+          "fullName nickName role avatar email phoneNumber follow followBy _id",
+      });
     } catch (error) {
       throw new Error(
         `Error finding chat room for user with ID ${userId}: ${error.message}`
