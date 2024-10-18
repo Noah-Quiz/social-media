@@ -97,12 +97,12 @@ router.get("/video/:videoId", commentController.getVideoCommentsController);
  *      - bearerAuth: []
  *     summary: Like a video
  *     tags: [Comments]
-  *     parameters:
+ *     parameters:
  *      - in: path
  *        name: id
  *        schema:
  *         type: string
- *         required: true 
+ *         required: true
  *     responses:
  *      200:
  *       description: Like video successfully
@@ -122,12 +122,12 @@ router.put("/like/:id", commentController.likeCommentController);
  *      - bearerAuth: []
  *     summary: Unlike a video
  *     tags: [Comments]
-  *     parameters:
+ *     parameters:
  *      - in: path
  *        name: id
  *        schema:
  *         type: string
- *         required: true 
+ *         required: true
  *     responses:
  *      200:
  *       description: Unlike video successfully
@@ -146,12 +146,12 @@ router.put("/unlike/:id", commentController.unlikeCommentController);
  *      - bearerAuth: []
  *     summary: Get a comment by id
  *     tags: [Comments]
-  *     parameters:
+ *     parameters:
  *      - in: path
  *        name: id
  *        schema:
  *         type: string
- *         required: true 
+ *         required: true
  *     responses:
  *      200:
  *       description: Get comment successfully
@@ -170,12 +170,12 @@ router.get("/:id", commentController.getCommentController);
  *      - bearerAuth: []
  *     summary: Update a comment by id
  *     tags: [Comments]
-  *     parameters:
+ *     parameters:
  *      - in: path
  *        name: id
  *        schema:
  *         type: string
- *         required: true 
+ *         required: true
  *     responses:
  *      200:
  *       description: Update comment successfully
@@ -194,12 +194,12 @@ router.put("/:id", commentController.updateCommentController);
  *      - bearerAuth: []
  *     summary: Delete a comment by id
  *     tags: [Comments]
-  *     parameters:
+ *     parameters:
  *      - in: path
  *        name: id
  *        schema:
  *         type: string
- *         required: true 
+ *         required: true
  *     responses:
  *      200:
  *       description: Delete comment successfully

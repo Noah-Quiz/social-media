@@ -27,6 +27,7 @@ class CommentController {
         content,
         responseTo
       );
+      console.log(userId, "+", videoId, "+", content, "+", responseTo);
       await createCommentDto.validate();
 
       const comment = await createCommentService(
@@ -84,8 +85,12 @@ class CommentController {
   async updateCommentController(req, res) {
     const { id } = req.params;
     const userId = req.userId;
+    const { content } = req.body;
+    if (!content || content === "") {
+      return res.status(400).json({ message: "Content is required" });
+    }
     try {
-      const comment = await updateCommentService(userId, id, req.body);
+      const comment = await updateCommentService(userId, id, content);
       return res.status(200).json({ comments: comment, message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -111,7 +116,7 @@ class CommentController {
       const userId = req.userId;
       const unlikeCommentDto = new UnlikeCommentDto(id, userId);
       await unlikeCommentDto.validate();
-      
+
       const comment = await unlikeService(userId, id);
       return res.status(200).json({ comments: comment, message: "Success" });
     } catch (error) {
