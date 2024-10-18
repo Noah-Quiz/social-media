@@ -26,6 +26,11 @@ const commentSchema = new mongoose.Schema({
     type: mongoose.Types.ObjectId,
     ref: "Comment",
   },
+  level: {
+    type: Number,
+    default: 0,
+    required: true,
+  },
   ...baseEntitySchema.obj,
 });
 

@@ -35,16 +35,24 @@ const createCommentService = async (userId, videoId, content, responseTo) => {
   }
 };
 
-const sendNotificationsForComment = async (videoId, commentUserId, responseTo) => {
+const sendNotificationsForComment = async (
+  videoId,
+  commentUserId,
+  responseTo
+) => {
   const connection = new DatabaseTransaction();
 
   // Lấy thông tin video
-  const video = await connection.videoRepository.getVideoByIdRepository(videoId);
+  const video = await connection.videoRepository.getVideoByIdRepository(
+    videoId
+  );
   if (!video) throw new Error("Video not found");
 
   const videoOwnerId = video.userId;
 
-  const commentUser = await connection.userRepository.findUserById(commentUserId);
+  const commentUser = await connection.userRepository.findUserById(
+    commentUserId
+  );
 
   const notificationForVideoOwner = {
     avatar: commentUser.avatar,
@@ -58,10 +66,12 @@ const sendNotificationsForComment = async (videoId, commentUserId, responseTo) =
   if (!responseTo) {
     await connection.userRepository.notifiCommentRepository(videoOwnerId, {
       ...notificationForVideoOwner,
-      check: null 
+      check: null,
     });
   } else {
-    const parentComment = await connection.commentRepository.getComment(responseTo);
+    const parentComment = await connection.commentRepository.getComment(
+      responseTo
+    );
     if (parentComment) {
       const parentCommentOwnerId = parentComment.userId;
 
@@ -76,13 +86,15 @@ const sendNotificationsForComment = async (videoId, commentUserId, responseTo) =
 
       await connection.userRepository.notifiCommentRepository(videoOwnerId, {
         ...notificationForVideoOwner,
-        check: null
+        check: null,
       });
-      await connection.userRepository.notifiCommentRepository(parentCommentOwnerId, notificationForParentCommentOwner);
+      await connection.userRepository.notifiCommentRepository(
+        parentCommentOwnerId,
+        notificationForParentCommentOwner
+      );
     }
   }
 };
-
 
 const getCommentService = async (id) => {
   const connection = new DatabaseTransaction();
@@ -107,19 +119,19 @@ const getVideoCommentsService = async (videoId, sortBy) => {
 };
 
 //comment owner update duoc
-const updateCommentService = async (userId, id, commentData) => {
+const updateCommentService = async (userId, id, content) => {
   const connection = new DatabaseTransaction();
   try {
     const originalComment = await connection.commentRepository.getComment(id);
     let notCommentOwner =
-      originalComment[0].userId.toString() !== userId.toString();
+      originalComment.userId.toString() !== userId.toString();
     if (notCommentOwner) {
       throw new Error("You can not update other people comment");
     }
 
     const comment = await connection.commentRepository.updateComment(
       id,
-      commentData
+      content
     );
     return comment;
   } catch (error) {
@@ -172,7 +184,10 @@ const likeService = async (userId, commentId) => {
       createdAt: new Date(),
     };
 
-    await connection.userRepository.notifiLikeCommentRepository(commentOwnerId, notification);
+    await connection.userRepository.notifiLikeCommentRepository(
+      commentOwnerId,
+      notification
+    );
 
     return comment;
   } catch (error) {

@@ -441,6 +441,85 @@ class UserRepository {
       throw new Error(error.message);
     }
   }
+  async getFollowerRepository(userId) {
+    try {
+      const user = await User.aggregate([
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(userId),
+            isDeleted: false,
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "followBy.followById",
+            foreignField: "_id",
+            as: "followers",
+            pipeline: [
+              {
+                $project: {
+                  _id: 1,
+                  fullName: 1,
+                  nickName: 1,
+                  avatar: 1,
+                },
+              },
+            ],
+          },
+        },
+        {
+          $project: {
+            followers: 1,
+          },
+        },
+      ]);
+
+      console.log(user);
+      return user.length > 0 ? user[0].followers : [];
+    } catch (error) {
+      throw new Error(`Error getting follower: ${error.message}`);
+    }
+  }
+  async getFollowingRepository(userId) {
+    try {
+      const user = await User.aggregate([
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(userId),
+            isDeleted: false,
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "follow.followId",
+            foreignField: "_id",
+            as: "following",
+            pipeline: [
+              {
+                $project: {
+                  _id: 1,
+                  fullName: 1,
+                  nickName: 1,
+                  avatar: 1,
+                },
+              },
+            ],
+          },
+        },
+        {
+          $project: {
+            following: 1,
+          },
+        },
+      ]);
+      console.log(user);
+      return user.length > 0 ? user[0].following : [];
+    } catch (error) {
+      throw new Error(`Error getting following: ${error.message}`);
+    }
+  }
 }
 
 module.exports = UserRepository;
