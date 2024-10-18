@@ -16,6 +16,8 @@ const {
   updateUserWalletService,
   toggleFollowUserService,
   getStatsByDateService,
+  getFollowerService,
+  getFollowingService,
 } = require("../services/UserService");
 const mongoose = require("mongoose");
 const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
@@ -200,6 +202,8 @@ class UserController {
   async toggleFollowController(req, res) {
     try {
       const { userId, followId, action } = req.body;
+      console.log("user: ", userId);
+      console.log("follow: ", followId);
       const toggleFollowDto = new ToggleFollowDto(userId, followId, action);
       await toggleFollowDto.validate();
 
@@ -313,6 +317,55 @@ class UserController {
       return res
         .status(StatusCodeEnums.InternalServerError_500)
         .json({ message: error.message });
+    }
+  }
+
+  async getFollowerController(req, res) {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "User ID is required" });
+    }
+    try {
+      const result = await getFollowerService(userId);
+      if (!result || result.length === 0) {
+        return res
+          .status(StatusCodeEnums.NotFound_404)
+          .json({ message: "No follower found" });
+      }
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ follower: result, message: "Success" });
+    } catch (error) {
+      return res
+        .status(StatusCodeEnums.InternalServerError_500)
+        .json(error.message);
+    }
+  }
+  async getFollowingController(req, res) {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "User ID is required" });
+    }
+    try {
+      const result = await getFollowingService(userId);
+      if (!result || result.length === 0) {
+        return res
+          .status(StatusCodeEnums.NotFound_404)
+          .json({ message: "No following found" });
+      }
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ following: result, message: "success" });
+    } catch (error) {
+      return res
+        .status(StatusCodeEnums.InternalServerError_500)
+        .json(error.message);
     }
   }
 }
