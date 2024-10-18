@@ -5,7 +5,10 @@ class StreamRepository {
   // Create a new stream
   async createStreamRepository(data, session) {
     try {
-      const stream = await Stream.create([{ ...data, lastUpdated: Date.now() }], { session });
+      const stream = await Stream.create(
+        [{ ...data, lastUpdated: Date.now() }],
+        { session }
+      );
       return stream[0];
     } catch (error) {
       throw new Error(`Error creating stream: ${error.message}`);
@@ -38,82 +41,105 @@ class StreamRepository {
   // Get a stream by ID
   async getStreamRepository(streamId) {
     try {
-      const result = await Stream.aggregate([
-        {
-          $match: {
-            _id: new mongoose.Types.ObjectId(streamId),
-            isDeleted: false,
-          },
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            as: "user",
-          },
-        },
-        { $unwind: "$user" },
-        {
-          $lookup: {
-            from: "categories",
-            localField: "categoryIds",
-            foreignField: "_id",
-            as: "categories",
-            pipeline: [
-              {
-                $project: {
-                  name: 1,
-                  imageUrl: 1,
-                  _id: 0,
-                },
-              },
-            ],
-          },
-        },
-        {
-          $project: {
-            merged: {
-              $mergeObjects: [
-                "$$ROOT",
-                {
-                  user: {
-                    fullName: "$user.fullName",
-                    nickName: "$user.nickName",
-                    avatar: "$user.avatar",
-                  },
-                },
-              ],
-            },
-          },
-        },
-        { $replaceRoot: { newRoot: "$merged" } },
-        { $project: { categoryIds: 0 } },
-      ]);
+      // const result = await Stream.aggregate([
+      //   {
+      //     $match: {
+      //       _id: new mongoose.Types.ObjectId(streamId),
+      //       isDeleted: false,
+      //     },
+      //   },
+      //   {
+      //     $lookup: {
+      //       from: "users",
+      //       localField: "userId",
+      //       foreignField: "_id",
+      //       as: "user",
+      //     },
+      //   },
+      //   { $unwind: "$user" },
+      //   {
+      //     $lookup: {
+      //       from: "categories",
+      //       localField: "categoryIds",
+      //       foreignField: "_id",
+      //       as: "categories",
+      //       pipeline: [
+      //         {
+      //           $project: {
+      //             name: 1,
+      //             imageUrl: 1,
+      //             _id: 0,
+      //           },
+      //         },
+      //       ],
+      //     },
+      //   },
+      //   {
+      //     $project: {
+      //       merged: {
+      //         $mergeObjects: [
+      //           "$$ROOT",
+      //           {
+      //             user: {
+      //               fullName: "$user.fullName",
+      //               nickName: "$user.nickName",
+      //               avatar: "$user.avatar",
+      //             },
+      //           },
+      //         ],
+      //       },
+      //     },
+      //   },
+      //   { $replaceRoot: { newRoot: "$merged" } },
+      //   { $project: { categoryIds: 0 } },
+      // ]);
 
-      return result[0] || null;
+      const result = await Stream.findById(streamId)
+      return result;
+      // return result[0] || null;
     } catch (error) {
       throw new Error(`Error finding stream: ${error.message}`);
     }
   }
 
   // Update a stream
-  async updateStreamRepository(streamId, updateData, categoryData, session = null) {
+  async updateStreamRepository(
+    streamId,
+    updateData,
+    categoryData,
+    session = null
+  ) {
     try {
       const updateOperations = { lastUpdated: Date.now(), ...updateData };
 
-      if (categoryData && categoryData.addedCategoryIds && categoryData.addedCategoryIds.length > 0) {
+      if (
+        categoryData &&
+        categoryData.addedCategoryIds &&
+        categoryData.addedCategoryIds.length > 0
+      ) {
         await Stream.updateOne(
           { _id: streamId },
-          { $addToSet: { categoryIds: { $each: categoryData.addedCategoryIds } }, lastUpdated: Date.now() },
+          {
+            $addToSet: {
+              categoryIds: { $each: categoryData.addedCategoryIds },
+            },
+            lastUpdated: Date.now(),
+          },
           { runValidators: true, session }
         );
       }
 
-      if (categoryData && categoryData.removedCategoryIds && categoryData.removedCategoryIds.length > 0) {
+      if (
+        categoryData &&
+        categoryData.removedCategoryIds &&
+        categoryData.removedCategoryIds.length > 0
+      ) {
         await Stream.updateOne(
           { _id: streamId },
-          { $pull: { categoryIds: { $in: categoryData.removedCategoryIds } }, lastUpdated: Date.now() },
+          {
+            $pull: { categoryIds: { $in: categoryData.removedCategoryIds } },
+            lastUpdated: Date.now(),
+          },
           { runValidators: true, session }
         );
       }
@@ -180,7 +206,13 @@ class StreamRepository {
             merged: {
               $mergeObjects: [
                 "$$ROOT",
-                { user: { fullName: "$user.fullName", nickName: "$user.nickName", avatar: "$user.avatar" } },
+                {
+                  user: {
+                    fullName: "$user.fullName",
+                    nickName: "$user.nickName",
+                    avatar: "$user.avatar",
+                  },
+                },
               ],
             },
           },
