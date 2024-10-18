@@ -6,6 +6,22 @@ const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const streamController = new StreamController();
 const streamRoutes = express.Router();
 
+streamRoutes.get("/live-input", streamController.listLiveInputsController);
+
+streamRoutes.post("/live-input", streamController.createLiveInputController);
+
+streamRoutes.put(
+  "/live-input/:streamId",
+  AuthMiddleware,
+  streamController.updateLiveInputController
+);
+
+streamRoutes.delete(
+  "/live-input/:streamId",
+  AuthMiddleware,
+  streamController.deleteLiveInputController
+);
+
 streamRoutes.get("/", streamController.getStreamsController);
 
 streamRoutes.post(

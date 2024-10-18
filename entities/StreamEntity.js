@@ -10,32 +10,51 @@ const streamSchema = new Schema({
   },
   description: {
     type: String,
-    default: '',
-  },
-  streamKey: {
-    type: String,
-    default: '',
-  },
-  streamUrl: {
-    type: String,
-    default: '',
-  },
-  muxStreamId: {
-    type: String,
-    default: '',
-  },
-  muxPlaybackId: {
-    type: String,
-    default: '',
+    default: "",
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
+  uid: {
+    type: String,
+    default: "",
+  },
+  rtmps: {
+    url: { type: String, default: "" },
+    streamKey: { type: String, default: "" },
+  },
+  rtmpsPlayback: {
+    url: { type: String, default: "" },
+    streamKey: { type: String, default: "" },
+  },
+  srt: {
+    url: { type: String, default: "" },
+    streamId: { type: String, default: "" },
+    passphrase: { type: String, default: "" },
+  },
+  srtPlayback: {
+    url: { type: String, default: "" },
+    streamId: { type: String, default: "" },
+    passphrase: { type: String, default: "" },
+  },
+  webRTC: {
+    url: { type: String, default: "" },
+  },
+  webRTCPlayback: {
+    url: { type: String, default: "" },
+  },
+  meta: {
+    name: { type: String, default: "" },
+  },
+  status: {
+    type: String,
+    default: null,
+  },
   thumbnailUrl: {
     type: String,
-    default: '',
+    default: "",
   },
   categoryIds: [
     {
@@ -55,7 +74,6 @@ const streamSchema = new Schema({
   },
   ...baseEntitySchema.obj,
 });
-
 const Stream = mongoose.model("Stream", streamSchema);
 
 module.exports = Stream;
