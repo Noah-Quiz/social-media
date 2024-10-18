@@ -9,7 +9,7 @@ class GetChildrenCommentsDto {
   }
 
   async validate() {
-    if (!comment) {
+    if (!this.commentId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Missing required commentId field"
