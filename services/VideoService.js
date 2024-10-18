@@ -5,10 +5,18 @@ const axios = require("axios");
 const { uploadThumbnail, uploadFiles } = require("../middlewares/LoadFile");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
-
+const crypto = require("crypto");
 const createVideoService = async (
   userId,
-  { title, description, enumMode, categoryIds, bunnyId, videoUrl }
+  {
+    title,
+    description,
+    enumMode,
+    categoryIds,
+    bunnyId,
+    videoUrl,
+    videoEmbedUrl,
+  }
 ) => {
   try {
     if (["public", "private", "unlisted"].includes(enumMode)) {
@@ -49,6 +57,7 @@ const createVideoService = async (
       categoryIds,
       enumMode,
       videoUrl,
+      videoEmbedUrl,
       bunnyId,
     });
 
@@ -78,8 +87,28 @@ const uploadVideoService = async (
     }
     video.videoServerUrl = videoFilePath;
     video.thumbnailUrl = videoThumbnailFilePath;
-    await video.save();
+    await connection.videoRepository.updateAVideoByIdRepository(videoId, video);
     return video;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const generateVideoEmbedUrlToken = async (videoId, dateExpire) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const video = await connection.videoRepository.getVideoRepository(videoId);
+    if (!video) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
+    }
+    const input = `${process.env.BUNNY_STREAM_TOKEN_AUTHENTICATION_KEY}${video.bunnyId}${dateExpire}`;
+    const hash = crypto.createHash("sha256").update(input).digest("hex");
+    const url = new URL(video.videoEmbedUrl);
+    url.searchParams.set("token", hash);
+    url.searchParams.set("expires", dateExpire);
+    await connection.videoRepository.updateAVideoByIdRepository(videoId, {
+      videoEmbedUrl: url.toString(),
+    });
   } catch (error) {
     throw error;
   }
@@ -341,4 +370,5 @@ module.exports = {
   getVideoService,
   getVideosService,
   uploadVideoService,
+  generateVideoEmbedUrlToken,
 };

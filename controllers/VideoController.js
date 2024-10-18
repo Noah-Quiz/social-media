@@ -19,11 +19,13 @@ const {
   getVideosService,
   getStatsByDateService,
   uploadVideoService,
+  generateVideoEmbedUrlToken,
 } = require("../services/VideoService");
 const { default: mongoose } = require("mongoose");
 const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
 const UploadVideoDto = require("../dtos/Video/UploadVideoDto");
 const DeleteVideoDto = require("../dtos/Video/DeleteVideoDto");
+const GenerateVideoEmbedUrlTokenDto = require("../dtos/Video/GenerateVideoEmbedUrlTokenDto");
 require("dotenv").config();
 
 class VideoController {
@@ -43,12 +45,40 @@ class VideoController {
         enumMode,
         bunnyId: bunnyVideo.guid,
         videoUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/playlist.m3u8`,
+        videoEmbedUrl: `https://iframe.mediadelivery.net/embed/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/${bunnyVideo.guid}`,
       });
 
       return res
         .status(StatusCodeEnums.Created_201)
         .json({ message: "Create Video successfully", video });
     } catch (error) {
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
+    }
+  }
+
+  async generateVideoEmbedUrlTokenController(req, res) {
+    try {
+      const { videoId } = req.params;
+      const { dateExpire } = req.body; // UNIX format
+      const generateVideoEmbedUrlTokenDto = new GenerateVideoEmbedUrlTokenDto(
+        videoId,
+        dateExpire
+      );
+      await generateVideoEmbedUrlTokenDto.validate();
+
+      await generateVideoEmbedUrlToken(videoId, dateExpire);
+      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
+    } catch (error) {
+      if (req.files) {
+        await deleteFile(req.files.video[0].path);
+        await deleteFile(req.files.videoThumbnail[0].path);
+      }
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
@@ -90,9 +120,10 @@ class VideoController {
         .status(StatusCodeEnums.OK_200)
         .json({ bunnyVideo, message: "Success" });
     } catch (error) {
-      if (req.files.video) await deleteFile(req.files.video[0].path);
-      if (req.files.videoThumbnail)
+      if (req.files) {
+        await deleteFile(req.files.video[0].path);
         await deleteFile(req.files.videoThumbnail[0].path);
+      }
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
