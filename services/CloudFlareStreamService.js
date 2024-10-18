@@ -46,11 +46,11 @@ const retrieveCloudFlareStreamLiveInput = async (uid) => {
       .request(options)
       .then(async function (response) {
         live = response.data.result;
-        return live;
       })
       .catch(function (error) {
         console.error(error);
       });
+    return live;
   } catch (error) {
     throw error;
   }
@@ -73,7 +73,7 @@ const createCloudFlareStreamLiveInput = async (creatorId, streamName) => {
         recording: {
           allowedOrigins: ["*"],
           hideLiveViewerCount: false,
-          mode: "automatic",
+          mode: "off",
           requireSignedURLs: false,
           timeoutSeconds: 0,
         },
