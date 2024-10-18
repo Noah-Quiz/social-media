@@ -41,60 +41,62 @@ class StreamRepository {
   // Get a stream by ID
   async getStreamRepository(streamId) {
     try {
-      const result = await Stream.aggregate([
-        {
-          $match: {
-            _id: new mongoose.Types.ObjectId(streamId),
-            isDeleted: false,
-          },
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            as: "user",
-          },
-        },
-        { $unwind: "$user" },
-        {
-          $lookup: {
-            from: "categories",
-            localField: "categoryIds",
-            foreignField: "_id",
-            as: "categories",
-            pipeline: [
-              {
-                $project: {
-                  name: 1,
-                  imageUrl: 1,
-                  _id: 1,
-                },
-              },
-            ],
-          },
-        },
-        {
-          $project: {
-            merged: {
-              $mergeObjects: [
-                "$$ROOT",
-                {
-                  user: {
-                    fullName: "$user.fullName",
-                    nickName: "$user.nickName",
-                    avatar: "$user.avatar",
-                  },
-                },
-              ],
-            },
-          },
-        },
-        { $replaceRoot: { newRoot: "$merged" } },
-        { $project: { categoryIds: 0 } },
-      ]);
+      // const result = await Stream.aggregate([
+      //   {
+      //     $match: {
+      //       _id: new mongoose.Types.ObjectId(streamId),
+      //       isDeleted: false,
+      //     },
+      //   },
+      //   {
+      //     $lookup: {
+      //       from: "users",
+      //       localField: "userId",
+      //       foreignField: "_id",
+      //       as: "user",
+      //     },
+      //   },
+      //   { $unwind: "$user" },
+      //   {
+      //     $lookup: {
+      //       from: "categories",
+      //       localField: "categoryIds",
+      //       foreignField: "_id",
+      //       as: "categories",
+      //       pipeline: [
+      //         {
+      //           $project: {
+      //             name: 1,
+      //             imageUrl: 1,
+      //             _id: 0,
+      //           },
+      //         },
+      //       ],
+      //     },
+      //   },
+      //   {
+      //     $project: {
+      //       merged: {
+      //         $mergeObjects: [
+      //           "$$ROOT",
+      //           {
+      //             user: {
+      //               fullName: "$user.fullName",
+      //               nickName: "$user.nickName",
+      //               avatar: "$user.avatar",
+      //             },
+      //           },
+      //         ],
+      //       },
+      //     },
+      //   },
+      //   { $replaceRoot: { newRoot: "$merged" } },
+      //   { $project: { categoryIds: 0 } },
+      // ]);
 
-      return result[0] || null;
+      const result = await Stream.findById(streamId)
+      return result;
+      // return result[0] || null;
     } catch (error) {
       throw new Error(`Error finding stream: ${error.message}`);
     }
