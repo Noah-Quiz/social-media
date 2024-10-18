@@ -331,7 +331,7 @@ class VideoRepository {
         throw new Error("Playlist not found");
       }
       const videoIds = playlist.videoIds.map((video) => video.toString());
-
+      console.log(videoIds);
       const skip = (page - 1) * size;
 
       // Fetch video details using getVideoRepository
