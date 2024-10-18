@@ -46,7 +46,7 @@ class CommentController {
     try {
       const comment = await getCommentService(id);
       if (!comment) {
-        res.status(500).json("Comment not found");
+        return res.status(500).json("Comment not found");
       }
       return res.status(200).json({ comments: comment, message: "Success" });
     } catch (error) {
