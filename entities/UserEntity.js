@@ -24,6 +24,10 @@ const userEntitySchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  ipAddress: {
+    type: String,
+    default: "",
+  },
   googleId: {
     type: String,
     default: "",
