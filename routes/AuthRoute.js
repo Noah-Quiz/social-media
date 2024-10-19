@@ -196,7 +196,7 @@ authRoutes.get(
 /**
  * @swagger
  * /api/auth/verify/email:
- *   post:
+ *   get:
  *     summary: Verify user email
  *     tags: [Auth]
  *     requestBody:
@@ -213,7 +213,7 @@ authRoutes.get(
  *       500:
  *         description: Internal server error
  */
-authRoutes.post("/verify/email", authController.verifyEmailController);
+authRoutes.get("/verify/email", authController.verifyEmailController);
 
 /**
  * @swagger

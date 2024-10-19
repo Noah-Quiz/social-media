@@ -19,6 +19,8 @@ const streamRoutes = require("./routes/StreamRoute");
 const giftRoutes = require("./routes/GiftRoute");
 const giftHistoryRoutes = require("./routes/GiftHistoryRoute");
 const exchangeRateRoutes = require("./routes/ExchangeRateRoutes");
+const { default: helmet } = require("helmet");
+const limiter = require("./middlewares/RateLimiter.js");
 const app = express();
 const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
@@ -27,6 +29,11 @@ const io = require("socket.io")(server, {
     methods: ["GET", "POST"],
   },
 });
+
+// Security
+app.use(helmet());
+app.disable("x-powered-by");
+app.use(limiter(15, 100));
 
 // Middleware
 app.use(
