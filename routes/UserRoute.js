@@ -12,6 +12,9 @@ const route = express.Router();
 
 route.use(AuthMiddleware);
 
+route.get("/follower/:userId", userController.getFollowerController);
+route.get("/following/:userId", userController.getFollowingController);
+
 route.get("/dashboard", userController.getStatsByDateController);
 
 /**
@@ -389,4 +392,5 @@ route.delete(
   requireRole(UserEnum.ADMIN),
   userController.deleteUserByIdController
 );
+
 module.exports = route;

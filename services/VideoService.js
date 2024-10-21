@@ -5,10 +5,18 @@ const axios = require("axios");
 const { uploadThumbnail, uploadFiles } = require("../middlewares/LoadFile");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
-
+const crypto = require("crypto");
 const createVideoService = async (
   userId,
-  { title, description, enumMode, categoryIds, bunnyId, videoUrl }
+  {
+    title,
+    description,
+    enumMode,
+    categoryIds,
+    bunnyId,
+    videoUrl,
+    videoEmbedUrl,
+  }
 ) => {
   try {
     if (["public", "private", "unlisted"].includes(enumMode)) {
@@ -49,6 +57,7 @@ const createVideoService = async (
       categoryIds,
       enumMode,
       videoUrl,
+      videoEmbedUrl,
       bunnyId,
     });
 
@@ -58,9 +67,66 @@ const createVideoService = async (
   }
 };
 
+const uploadVideoService = async (
+  videoId,
+  userId,
+  videoFilePath,
+  videoThumbnailFilePath
+) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const video = await connection.videoRepository.getVideoRepository(videoId);
+    if (!video) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
+    }
+    if (video.userId.toString() !== userId.toString()) {
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "You do not have permission to perform this action"
+      );
+    }
+    if (video.isUploaded === true) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Video is already uploaded"
+      );
+    }
+    video.isUploaded = true;
+    video.videoServerUrl = videoFilePath;
+    video.thumbnailUrl = videoThumbnailFilePath;
+    await connection.videoRepository.updateAVideoByIdRepository(videoId, video);
+    return video;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const generateVideoEmbedUrlToken = async (videoId, dateExpire) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const video = await connection.videoRepository.getVideoRepository(videoId);
+    if (!video) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
+    }
+    const input = `${process.env.BUNNY_STREAM_TOKEN_AUTHENTICATION_KEY}${video.bunnyId}${dateExpire}`;
+    const hash = crypto.createHash("sha256").update(input).digest("hex");
+    const url = new URL(video.videoEmbedUrl);
+    url.searchParams.set("token", hash);
+    url.searchParams.set("expires", dateExpire);
+    await connection.videoRepository.updateAVideoByIdRepository(videoId, {
+      videoEmbedUrl: url.toString(),
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
   try {
-    if (!["public", "private", "unlisted"].includes(data.enumMode)) {
+    if (
+      data.enumMode &&
+      !["public", "private", "unlisted"].includes(data.enumMode)
+    ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid video accessibility"
@@ -92,13 +158,13 @@ const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
 
-    if (thumbnailFile && thumbnailFile.buffer) {
-      const vimeoVideoId = video.videoUrl.split("/").pop();
-      const thumbnailUrl = await uploadThumbnail(
-        `/videos/${vimeoVideoId}`,
-        thumbnailFile
-      );
-      data.thumbnailUrl = thumbnailUrl;
+    if (thumbnailFile) {
+      // const vimeoVideoId = video.videoUrl.split("/").pop();
+      // const thumbnailUrl = await uploadThumbnail(
+      //   `/videos/${vimeoVideoId}`,
+      //   thumbnailFile
+      // );
+      data.thumbnailUrl = thumbnailFile.path;
     }
 
     const updatedVideo =
@@ -198,11 +264,11 @@ const getVideosByUserIdService = async (userId, sortBy) => {
   }
 };
 
-const getVideoService = async (userId) => {
+const getVideoService = async (videoId) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const video = await connection.videoRepository.getVideoRepository(userId);
+    const video = await connection.videoRepository.getVideoRepository(videoId);
 
     return video;
   } catch (error) {
@@ -260,22 +326,22 @@ const deleteVideoService = async (videoId, userId) => {
       );
     }
 
-    let vimeoVideoId = video.videoUrl.split("/").pop();
-    const response = await axios.delete(
-      `https://api.vimeo.com/videos/${vimeoVideoId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.VIMEO_ACCESS_TOKEN}`,
-        },
-      }
-    );
+    // let vimeoVideoId = video.videoUrl.split("/").pop();
+    // const response = await axios.delete(
+    //   `https://api.vimeo.com/videos/${vimeoVideoId}`,
+    //   {
+    //     headers: {
+    //       Authorization: `Bearer ${process.env.VIMEO_ACCESS_TOKEN}`,
+    //     },
+    //   }
+    // );
 
-    if (response.status !== 204) {
-      throw new CoreException(
-        StatusCodeEnums.NoContent_204,
-        "Failed to delete video on Vimeo. Video not found"
-      );
-    }
+    // if (response.status !== 204) {
+    //   throw new CoreException(
+    //     StatusCodeEnums.NoContent_204,
+    //     "Failed to delete video on Vimeo. Video not found"
+    //   );
+    // }
 
     const result = await connection.videoRepository.deleteVideoRepository(
       video._id,
@@ -310,4 +376,6 @@ module.exports = {
   deleteVideoService,
   getVideoService,
   getVideosService,
+  uploadVideoService,
+  generateVideoEmbedUrlToken,
 };
