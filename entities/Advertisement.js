@@ -12,8 +12,9 @@ const advertisementSchema = new mongoose.Schema({
     ref: "Video",
     require: true,
   },
-  coin: {
-    type: Number,
+  advertisementPackage: {
+    type: mongoose.Types.ObjectId,
+    ref: "AdvertisementPackage",
     require: true,
   },
   isAdvertised: {
@@ -22,6 +23,7 @@ const advertisementSchema = new mongoose.Schema({
   },
   expDate: {
     type: Date,
+    require: true,
   },
   ...baseEntitySchema.obj,
 });
