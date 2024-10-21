@@ -8,6 +8,7 @@ const videoSchema = new mongoose.Schema({
   videoUrl: { type: String, required: true },
   videoEmbedUrl: { type: String, default: "" },
   videoServerUrl: { type: String, default: "" },
+  isUploaded: { type: Boolean, default: false },
   numOfViews: { type: Number, default: 0 },
   likedBy: [
     {

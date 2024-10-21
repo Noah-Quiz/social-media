@@ -85,6 +85,13 @@ const uploadVideoService = async (
         "You do not have permission to perform this action"
       );
     }
+    if (video.isUploaded === true) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Video is already uploaded"
+      );
+    }
+    video.isUploaded = true;
     video.videoServerUrl = videoFilePath;
     video.thumbnailUrl = videoThumbnailFilePath;
     await connection.videoRepository.updateAVideoByIdRepository(videoId, video);

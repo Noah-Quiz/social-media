@@ -1,0 +1,80 @@
+const getLogger = require("./logger");
+const logger = getLogger("RABBITMQ");
+const amqp = require("amqplib");
+require("dotenv").config();
+const path = require("path");
+async function sendMessageToQueue(queue, message) {
+  try {
+    const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL);
+    const channel = await connection.createChannel();
+    await channel.assertQueue(queue, { durable: true });
+    channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
+      persistent: true,
+    });
+    logger.info(`Message sent to queue ${queue}`);
+    await channel.close();
+    await connection.close();
+  } catch (error) {
+    logger.error(`Error while sending message to queue ${queue}: ${error}`);
+  }
+}
+
+async function consumeMessageFromQueue(queue, callback) {
+  logger.info(`Consuming message from queue ${queue}`);
+  let connection;
+  let channel;
+
+  try {
+    connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL);
+    channel = await connection.createChannel();
+    await channel.assertQueue(queue, { durable: true });
+
+    channel.consume(
+      queue,
+      async (msg) => {
+        if (msg) {
+          try {
+            const { bunnyId, videoFilePath } = JSON.parse(
+              msg.content.toString()
+            );
+            logger.info(`Path: ${videoFilePath}`);
+            logger.info(
+              `Message received from queue ${queue}: ${msg.content.toString()}`
+            );
+            await callback(
+              process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
+              bunnyId,
+              videoFilePath
+            );
+            logger.info(`Message processed successfully`);
+
+            channel.ack(msg); // Acknowledge the message
+          } catch (error) {
+            logger.error(`Error while processing message: ${error}`);
+            channel.nack(msg); // Not acknowledge, message will be re-queued
+          }
+        }
+      },
+      { noAck: false }
+    );
+  } catch (error) {
+    logger.error(`Error while consuming message from queue ${queue}: ${error}`);
+  } finally {
+    // Optional: Clean up the connection and channel when you're done
+    process.on("SIGINT", async () => {
+      if (channel) {
+        await channel.close();
+      }
+      if (connection) {
+        await connection.close();
+      }
+      logger.info("RabbitMQ connection closed.");
+      process.exit(0);
+    });
+  }
+}
+
+module.exports = {
+  sendMessageToQueue,
+  consumeMessageFromQueue,
+};
