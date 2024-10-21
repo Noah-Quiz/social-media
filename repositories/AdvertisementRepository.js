@@ -1,12 +1,29 @@
+const { default: mongoose } = require("mongoose");
 const Advertisement = require("../entities/Advertisement");
+const AdvertisementPackage = require("../entities/AdvertisementPackage");
 
 class AdvertisementRepository {
-  async createAnAdvertisementRepository(userId, videoId, coin, expDate) {
+  async createAnAdvertisementRepository(userId, videoId, packageId) {
     try {
+      const advertisementPackage = await AdvertisementPackage.findById(
+        packageId
+      );
+      const dateUnit = advertisementPackage.dateUnit;
+      const numberOfDateUnit = advertisementPackage.numberOfDateUnit;
+      const expDate = new Date();
+
+      if (dateUnit === "DAY") {
+        expDate.setDate(expDate.getDate() + numberOfDateUnit);
+      } else if (dateUnit === "MONTH") {
+        expDate.setMonth(expDate.getMonth() + numberOfDateUnit);
+      } else {
+        expDate.setFullYear(expDate.getFullYear() + numberOfDateUnit);
+      }
+
       const advertisement = await Advertisement.create({
         userId,
         videoId,
-        coin,
+        advertisementPackage: new mongoose.Types.ObjectId(packageId),
         expDate,
       });
       return advertisement;

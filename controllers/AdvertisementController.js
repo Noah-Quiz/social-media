@@ -11,7 +11,7 @@ const { getVideoService } = require("../services/VideoService");
 
 class AdvertisementController {
   async createAnAdvertisementController(req, res) {
-    const { userId, videoId, coin, expDate } = req.body;
+    const { userId, videoId, packageId } = req.body;
 
     if (
       !mongoose.Types.ObjectId.isValid(userId) ||
@@ -23,6 +23,7 @@ class AdvertisementController {
     }
 
     const video = await getVideoService(videoId);
+
     const checkUserId = new mongoose.Types.ObjectId(userId);
     if (!video.userId.equals(checkUserId)) {
       console.log(video.userId);
@@ -36,8 +37,7 @@ class AdvertisementController {
       const result = await createAnAdvertisementService(
         userId,
         videoId,
-        coin,
-        expDate
+        packageId
       );
       return res.status(StatusCodeEnums.Created_201).json({ data: result });
     } catch (error) {

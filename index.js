@@ -19,6 +19,8 @@ const streamRoutes = require("./routes/StreamRoute");
 const giftRoutes = require("./routes/GiftRoute");
 const giftHistoryRoutes = require("./routes/GiftHistoryRoute");
 const exchangeRateRoutes = require("./routes/ExchangeRateRoutes");
+const packageRoutes = require("./routes/AdvertisementPackageRoute.js");
+const advertisementRoutes = require("./routes/AdvertisementRoute.js");
 const app = express();
 const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
@@ -135,10 +137,11 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/vnpay", vnpayRoutes);
 app.use("/api/receipts", receiptRoutes);
 app.use("/api/streams", streamRoutes);
-
+app.use("/api/advertisements", advertisementRoutes);
 app.use("/api/gifts/", giftRoutes);
 app.use("/api/gift-history/", giftHistoryRoutes);
 app.use("/api/exchange-rate/", exchangeRateRoutes);
+app.use("/api/advertisement-packages", packageRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 

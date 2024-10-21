@@ -60,7 +60,7 @@ videoRoutes.get("/", AuthMiddleware, videoController.getVideosController);
  *    tags: [Video]
  *    parameters:
  *      - in: path
- *        name: user Id
+ *        name: userId
  *        required: true
  *        schema:
  *          type: string
@@ -82,7 +82,7 @@ videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
  *    tags: [Video]
  *    parameters:
  *      - in: path
- *        name: playlist Id
+ *        name: playlistId
  *        required: true
  *        schema:
  *          type: string
@@ -112,7 +112,7 @@ videoRoutes.get(
  *          schema:
  *            $ref: '#/components/schemas/UpdateVideoDto'
  *    200:
- *      description: Get videos by playlist id successfully
+ *      description: Update a video by id successfully
  *    400:
  *      description: Bad request
  *    500:
@@ -133,7 +133,7 @@ videoRoutes.patch(
  *   tags: [Video]
  *   parameters:
  *      - in: path
- *        name: video Id
+ *        name: videoId
  *        required: true
  *        schema:
  *          type: string
@@ -147,11 +147,7 @@ videoRoutes.patch(
  *      description: Internal server error
  */
 
-videoRoutes.get(
-  "/:videoId",
-  AuthMiddleware,
-  videoController.getVideoController
-);
+videoRoutes.get("/:videoId", videoController.getVideoController);
 
 /**
  * @swagger
