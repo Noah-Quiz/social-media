@@ -185,6 +185,9 @@ class StreamRepository {
       if (query.title) {
         searchQuery.name = query.title;
       }
+      if (query.uid) {
+        searchQuery.uid = query.uid;
+      }
 
       const totalStreams = await Stream.countDocuments(searchQuery);
 
