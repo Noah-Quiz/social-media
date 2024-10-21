@@ -2,15 +2,14 @@ const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const mongoose = require("mongoose");
 
 module.exports = {
-  async createAnAdvertisementService(userId, videoId, coin, expDate) {
+  async createAnAdvertisementService(userId, videoId, packageId) {
     try {
       const connection = new DatabaseTransaction();
       const advertisement =
         await connection.advertisementRepository.createAnAdvertisementRepository(
           userId,
           videoId,
-          coin,
-          expDate
+          packageId
         );
       return advertisement;
     } catch (error) {
