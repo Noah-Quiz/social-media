@@ -8,7 +8,7 @@ const streamRoutes = express.Router();
 
 streamRoutes.get("/live-input", streamController.listLiveInputsController);
 
-streamRoutes.post("/live-input", AuthMiddleware, streamController.createLiveInputController);
+// streamRoutes.post("/live-input", AuthMiddleware, streamController.createLiveInputController);
 
 streamRoutes.put(
   "/live-input/:streamId",
@@ -16,11 +16,11 @@ streamRoutes.put(
   streamController.updateLiveInputController
 );
 
-streamRoutes.delete(
-  "/live-input/:streamId",
-  AuthMiddleware,
-  streamController.deleteLiveInputController
-);
+// streamRoutes.delete(
+//   "/live-input/:streamId",
+//   AuthMiddleware,
+//   streamController.deleteLiveInputController
+// );
 
 streamRoutes.get("/", streamController.getStreamsController);
 
