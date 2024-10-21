@@ -37,9 +37,11 @@ class StreamController {
       }
     }
   }
+
   async createLiveInputController(req, res) {
     try {
-      const { creatorId, streamName, description } = req.body;
+      const { streamName, description } = req.body;
+      const creatorId = req.userId;
 
       const cloudflareStream = await createCloudFlareStreamLiveInput(
         creatorId,
@@ -60,7 +62,6 @@ class StreamController {
         webRTCPlayback: cloudflareStream.webRTCPlayback,
         status: cloudflareStream.status,
         meta: cloudflareStream.meta,
-        status: cloudflareStream.status,
       });
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
@@ -321,63 +322,6 @@ class StreamController {
     } catch (error) {
       if (thumbnailFile) await deleteFile(thumbnailFile);
 
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
-    }
-  }
-
-  async resetStreamKeyController(req, res) {
-    const { streamId } = req.params;
-
-    try {
-      if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
-        throw new CoreException(StatusCodeEnums.BadRequest_400).json({
-          message: "Valid stream ID is required",
-        });
-      }
-
-      const streamKey = await resetStreamKeyService(streamId);
-
-      return res
-        .status(StatusCodeEnums.OK_200)
-        .json({ streamKey, message: "Success" });
-    } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
-    }
-  }
-
-  async createMuxTokenController(req, res) {
-    const { streamId } = req.params;
-
-    try {
-      if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
-        throw new CoreException(StatusCodeEnums.BadRequest_400).json({
-          message: "Valid stream ID is required",
-        });
-      }
-
-      const stream = await getStreamService(streamId);
-
-      let muxToken = null;
-      if (stream) {
-        muxToken = await createMuxToken(stream);
-      }
-
-      return res
-        .status(StatusCodeEnums.OK_200)
-        .json({ muxToken, message: "Success" });
-    } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
