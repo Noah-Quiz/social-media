@@ -148,7 +148,6 @@ app.use("/api/advertisements", advertisementRoutes);
 app.use("/api/gifts/", giftRoutes);
 app.use("/api/gift-history/", giftHistoryRoutes);
 app.use("/api/exchange-rate/", exchangeRateRoutes);
-app.use("/api/advertisement-packages", packageRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 

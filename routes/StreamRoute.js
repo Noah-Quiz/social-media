@@ -8,7 +8,7 @@ const streamRoutes = express.Router();
 
 streamRoutes.get("/live-input", streamController.listLiveInputsController);
 
-streamRoutes.post("/live-input", streamController.createLiveInputController);
+streamRoutes.post("/live-input", AuthMiddleware, streamController.createLiveInputController);
 
 streamRoutes.put(
   "/live-input/:streamId",
@@ -50,18 +50,6 @@ streamRoutes.post(
   "/end/:streamId",
   AuthMiddleware,
   streamController.endStreamController
-);
-
-streamRoutes.post(
-  "/reset-stream-key/:streamId",
-  AuthMiddleware,
-  streamController.resetStreamKeyController
-);
-
-streamRoutes.get(
-  "/playback-token/:streamId",
-  AuthMiddleware,
-  streamController.createMuxTokenController
 );
 
 module.exports = streamRoutes;
