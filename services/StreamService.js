@@ -3,14 +3,6 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum.js");
 const CoreException = require("../exceptions/CoreException.js");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction.js");
 const {
-  deleteLiveStream,
-  endStream,
-  resetStreamKey,
-  retrieveLiveStream,
-  retrieveAssetInputInfo,
-  retrieveAsset,
-} = require("../utils/muxLiveStream.js");
-const {
   deleteCloudFlareStreamLiveInput,
 } = require("./CloudFlareStreamService.js");
 
@@ -133,21 +125,6 @@ const endStreamService = async (streamId) => {
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
-
-    // Retrieve live stream info
-    const muxStream = await retrieveLiveStream(stream.muxStreamId);
-
-    // Retrieve live stream recording info
-    const assetId = muxStream?.active_asset_id
-      ? muxStream?.active_asset_id
-      : muxStream?.recent_asset_ids[0];
-    const asset = await retrieveAsset(assetId);
-    const streamRecordingId = asset?.playback_ids[0]?.id;
-    const streamRecodingUrl = `https://stream.mux.com/${streamRecordingId}.m3u8`;
-
-    // Ending and deleting live stream from MUX
-    await endStream(stream.muxStreamId);
-    await deleteLiveStream(stream.muxStreamId);
 
     await connection.commitTransaction();
     return stream;

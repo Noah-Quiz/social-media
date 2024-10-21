@@ -23,7 +23,7 @@ class StreamRepository {
         {
           endedAt: Date.now(),
           lastUpdated: Date.now(),
-          streamUrl: "",
+          status: "offline",
         },
         { new: true, runValidators: true, session }
       );
@@ -41,62 +41,60 @@ class StreamRepository {
   // Get a stream by ID
   async getStreamRepository(streamId) {
     try {
-      // const result = await Stream.aggregate([
-      //   {
-      //     $match: {
-      //       _id: new mongoose.Types.ObjectId(streamId),
-      //       isDeleted: false,
-      //     },
-      //   },
-      //   {
-      //     $lookup: {
-      //       from: "users",
-      //       localField: "userId",
-      //       foreignField: "_id",
-      //       as: "user",
-      //     },
-      //   },
-      //   { $unwind: "$user" },
-      //   {
-      //     $lookup: {
-      //       from: "categories",
-      //       localField: "categoryIds",
-      //       foreignField: "_id",
-      //       as: "categories",
-      //       pipeline: [
-      //         {
-      //           $project: {
-      //             name: 1,
-      //             imageUrl: 1,
-      //             _id: 0,
-      //           },
-      //         },
-      //       ],
-      //     },
-      //   },
-      //   {
-      //     $project: {
-      //       merged: {
-      //         $mergeObjects: [
-      //           "$$ROOT",
-      //           {
-      //             user: {
-      //               fullName: "$user.fullName",
-      //               nickName: "$user.nickName",
-      //               avatar: "$user.avatar",
-      //             },
-      //           },
-      //         ],
-      //       },
-      //     },
-      //   },
-      //   { $replaceRoot: { newRoot: "$merged" } },
-      //   { $project: { categoryIds: 0 } },
-      // ]);
+      const result = await Stream.aggregate([
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(streamId),
+            isDeleted: false,
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryIds",
+            foreignField: "_id",
+            as: "categories",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  imageUrl: 1,
+                  _id: 0,
+                },
+              },
+            ],
+          },
+        },
+        {
+          $project: {
+            merged: {
+              $mergeObjects: [
+                "$$ROOT",
+                {
+                  user: {
+                    fullName: "$user.fullName",
+                    nickName: "$user.nickName",
+                    avatar: "$user.avatar",
+                  },
+                },
+              ],
+            },
+          },
+        },
+        { $replaceRoot: { newRoot: "$merged" } },
+        { $project: { categoryIds: 0 } },
+      ]);
 
-      const result = await Stream.findById(streamId)
-      return result;
-      // return result[0] || null;
+      return result[0] || null;
     } catch (error) {
       throw new Error(`Error finding stream: ${error.message}`);
     }
@@ -178,7 +176,9 @@ class StreamRepository {
   // Get all streams
   async getStreamsRepository(query) {
     try {
-      const skip = (query.page - 1) * query.size;
+      const page = query.page || 1;
+      const size = query.size || 10;
+      const skip = ((page - 1) * size) || 0;
 
       const searchQuery = { isDeleted: false };
 
@@ -194,7 +194,7 @@ class StreamRepository {
       const streams = await Stream.aggregate([
         { $match: searchQuery },
         { $skip: skip },
-        { $limit: +query.size },
+        { $limit: size },
         {
           $lookup: {
             from: "users",
@@ -226,8 +226,8 @@ class StreamRepository {
       return {
         streams,
         total: totalStreams,
-        page: query.page,
-        totalPages: Math.ceil(totalStreams / query.size),
+        page: page,
+        totalPages: Math.ceil(totalStreams / size),
       };
     } catch (error) {
       throw new Error(`Error getting streams: ${error.message}`);
