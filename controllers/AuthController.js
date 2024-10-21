@@ -32,7 +32,17 @@ class AuthController {
       const { fullName, email, phoneNumber, password } = req.body;
       const signupDto = new SignupDto(fullName, email, phoneNumber, password);
       await signupDto.validate();
-      const user = await signUpService(fullName, email, phoneNumber, password);
+
+      const ipAddress =
+        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+      const user = await signUpService(
+        fullName,
+        email,
+        phoneNumber,
+        password,
+        ipAddress
+      );
       res
         .status(StatusCodeEnums.Created_201)
         .json({ message: "Signup successfully" });
@@ -56,7 +66,7 @@ class AuthController {
       const loginDto = new LoginDto(email, password);
       await loginDto.validate();
 
-      const user = await loginService(email, password);
+      const user = await loginService(email, password, ipAddress);
       const accessToken = createAccessToken(
         { _id: user._id, ip: ipAddress },
         process.env.ACCESS_TOKEN_SECRET,
@@ -91,7 +101,7 @@ class AuthController {
       );
       await loginGoogleDto.validate();
 
-      const user = await loginGoogleService(googleUser);
+      const user = await loginGoogleService(googleUser, ipAddress);
       const accessToken = createAccessToken(
         { _id: user._id, ip: ipAddress },
         process.env.ACCESS_TOKEN_SECRET,
@@ -128,7 +138,7 @@ class AuthController {
 
       const ipAddress =
         req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-      const loggedUser = await loginAppleService(user);
+      const loggedUser = await loginAppleService(user, ipAddress);
       const accessToken = createAccessToken(
         { _id: loggedUser._id, ip: ipAddress },
         process.env.ACCESS_TOKEN_SECRET,

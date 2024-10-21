@@ -28,34 +28,37 @@ class CreateCommentDto {
   }
 
   async validate() {
+    // Validate userId
     if (!this.userId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Missing required userId field"
       );
     }
-    await validMongooseObjectId(this.userId);
+    await validMongooseObjectId(this.userId); // Validate as ObjectId
+
+    // Validate videoId
     if (!this.videoId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Missing required videoId field"
       );
     }
-    await validMongooseObjectId(this.videoId);
+    await validMongooseObjectId(this.videoId); // Validate as ObjectId
+
+    // Validate content (no need to validate as ObjectId, just check if it exists)
     if (!this.content) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Missing required content field"
       );
     }
-    await validMongooseObjectId(this.content);
-    if (!this.responseTo) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Missing required responseTo field"
-      );
+    // No ObjectId validation for content
+
+    // Validate responseTo if provided (it's optional)
+    if (this.responseTo) {
+      await validMongooseObjectId(this.responseTo); // Only validate if provided
     }
-    await validMongooseObjectId(this.responseTo);
   }
 }
 
