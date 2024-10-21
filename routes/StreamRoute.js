@@ -2,6 +2,7 @@ const express = require("express");
 const StreamController = require("../controllers/StreamController");
 const { uploadImage } = require("../utils/stores/storeImage");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
+const checkUserSuspended = require("../middlewares/checkUserSuspended");
 
 const streamController = new StreamController();
 const streamRoutes = express.Router();
@@ -27,6 +28,7 @@ streamRoutes.get("/", streamController.getStreamsController);
 streamRoutes.post(
   "/",
   AuthMiddleware,
+  checkUserSuspended,
   uploadImage.single("thumbnailImg"),
   streamController.createStreamController
 );
