@@ -1,3 +1,4 @@
+require("dotenv").config();
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");

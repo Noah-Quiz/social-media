@@ -164,9 +164,6 @@ const createStreamService = async (data) => {
   const session = await connection.startTransaction();
 
   try {
-    // Create a live stream on MUX
-    // const response = await createLiveStream();
-
     const stream = await connection.streamRepository.createStreamRepository(
       data,
       session
@@ -183,30 +180,6 @@ const createStreamService = async (data) => {
   }
 };
 
-const resetStreamKeyService = async (streamId) => {
-  try {
-    const connection = new DatabaseTransaction();
-
-    const stream = await connection.streamRepository.getStreamRepository(
-      streamId
-    );
-
-    if (!stream) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
-    }
-
-    const streamKey = await resetStreamKey(stream.muxStreamId);
-
-    await connection.streamRepository.updateStreamRepository(streamId, {
-      streamKey,
-    });
-
-    return streamKey;
-  } catch (error) {
-    throw error;
-  }
-};
-
 module.exports = {
   getStreamService,
   getStreamsService,
@@ -214,5 +187,4 @@ module.exports = {
   updateStreamService,
   deleteStreamService,
   createStreamService,
-  resetStreamKeyService,
 };

@@ -142,10 +142,10 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/vnpay", vnpayRoutes);
 app.use("/api/receipts", receiptRoutes);
 app.use("/api/streams", streamRoutes);
-
 app.use("/api/gifts/", giftRoutes);
 app.use("/api/gift-history/", giftHistoryRoutes);
 app.use("/api/exchange-rate/", exchangeRateRoutes);
+
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 
