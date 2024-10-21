@@ -3,6 +3,7 @@ const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const UserEnum = require("../enums/UserEnum");
+const { promises } = require("nodemailer/lib/xoauth2");
 
 const createAPlaylistService = async (userId, playlistName) => {
   try {
@@ -31,8 +32,16 @@ const getAPlaylistService = async (playlistId) => {
 
     const playlist =
       await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
-
-    return playlist;
+    const video =
+      await connection.videoRepository.getVideosByPlaylistIdRepository(
+        playlist._id,
+        1,
+        100
+      );
+    return {
+      ...playlist,
+      video: video.data,
+    };
   } catch (error) {
     throw new Error(error);
   }
@@ -42,10 +51,23 @@ const getAllMyPlaylistsService = async (data) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const playlist =
+    const playlists =
       await connection.myPlaylistRepository.getAllMyPlaylistsRepository(data);
-
-    return playlist;
+    const playlistWithVideos = await Promise.all(
+      playlists.map(async (playlist) => {
+        const video =
+          await connection.videoRepository.getVideosByPlaylistIdRepository(
+            playlist._id,
+            1, // page number
+            100 // limit
+          );
+        return {
+          ...playlist,
+          video: video.data,
+        };
+      })
+    );
+    return playlistWithVideos;
   } catch (error) {
     throw new Error(error);
   }

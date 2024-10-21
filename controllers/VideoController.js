@@ -4,6 +4,8 @@ const CoreException = require("../exceptions/CoreException");
 const {
   createBunnyStreamVideoService,
   uploadBunnyStreamVideoService,
+  deleteBunnyStreamVideoService,
+  updateBunnyStreamVideoService,
 } = require("../services/BunnyStreamService");
 const {
   createVideoService,
@@ -16,8 +18,15 @@ const {
   getVideoService,
   getVideosService,
   getStatsByDateService,
+  uploadVideoService,
+  generateVideoEmbedUrlToken,
 } = require("../services/VideoService");
 const { default: mongoose } = require("mongoose");
+const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
+const UploadVideoDto = require("../dtos/Video/UploadVideoDto");
+const DeleteVideoDto = require("../dtos/Video/DeleteVideoDto");
+const GenerateVideoEmbedUrlTokenDto = require("../dtos/Video/GenerateVideoEmbedUrlTokenDto");
+const { sendMessageToQueue } = require("../utils/rabbitMq");
 require("dotenv").config();
 
 class VideoController {
@@ -25,7 +34,6 @@ class VideoController {
     try {
       const { title, description, enumMode, categoryIds } = req.body;
       const userId = req.userId;
-
 
       const bunnyVideo = await createBunnyStreamVideoService(
         process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
@@ -38,6 +46,7 @@ class VideoController {
         enumMode,
         bunnyId: bunnyVideo.guid,
         videoUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/playlist.m3u8`,
+        videoEmbedUrl: `https://iframe.mediadelivery.net/embed/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/${bunnyVideo.guid}`,
       });
 
       return res
@@ -54,22 +63,79 @@ class VideoController {
     }
   }
 
-  async uploadVideoController(req,res){
+  async generateVideoEmbedUrlTokenController(req, res) {
+    try {
+      const { videoId } = req.params;
+      const { dateExpire } = req.body; // UNIX format
+      const generateVideoEmbedUrlTokenDto = new GenerateVideoEmbedUrlTokenDto(
+        videoId,
+        dateExpire
+      );
+      await generateVideoEmbedUrlTokenDto.validate();
+
+      await generateVideoEmbedUrlToken(videoId, dateExpire);
+      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
+    } catch (error) {
+      if (req.files) {
+        await deleteFile(req.files.video[0].path);
+        await deleteFile(req.files.videoThumbnail[0].path);
+      }
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
+    }
+  }
+
+  async uploadVideoController(req, res) {
     try {
       const userId = req.userId;
-
-      if (!req.files.video || !req.files.videoThumbnail) {
-        return res
-          .status(StatusCodeEnums.BadRequest_400)
-          .json({ message: "Video and thumbnail files are required." });
-      }
-
+      const { videoId } = req.params;
       const videoFile = req.files.video[0];
       const thumbnailFile = req.files.videoThumbnail[0];
-      console.log(videoFile);
-      console.log(thumbnailFile);
+      const uploadVideoDto = new UploadVideoDto(
+        userId,
+        videoId,
+        videoFile,
+        thumbnailFile
+      );
+      await uploadVideoDto.validate();
+
+      const video = await uploadVideoService(
+        videoId,
+        userId,
+        videoFile.path,
+        thumbnailFile.path
+      );
+
+      const queueMessage = {
+        bunnyId: video.bunnyId,
+        videoFilePath: videoFile.path,
+      };
+      await sendMessageToQueue("bunny_video_dev_hung", queueMessage);
+
+      // const bunnyVideo = await uploadBunnyStreamVideoService(
+      //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
+      //   video.bunnyId,
+      //   videoFile.path
+      // );
+
+      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      
+      if (req.files) {
+        await deleteFile(req.files.video[0].path);
+        await deleteFile(req.files.videoThumbnail[0].path);
+      }
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
     }
   }
 
@@ -126,27 +192,27 @@ class VideoController {
   }
 
   async updateAVideoByIdController(req, res) {
-    const { videoId } = req.params;
-
-    if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Valid video ID is required" });
-    }
-
-    let thumbnailFile = null;
-    if (req.files && req.files.thumbnailUrl) {
-      thumbnailFile = req.files.thumbnailUrl[0];
-    }
-
-    const data = req.body;
-
     try {
+      const { videoId } = req.params;
+
+      let thumbnailFile = null;
+      if (req.files && req.files.videoThumbnail) {
+        thumbnailFile = req.files.videoThumbnail[0];
+      }
+
+      const data = req.body;
+
       const video = await updateAVideoByIdService(videoId, data, thumbnailFile);
+      const bunnyVideo = await updateBunnyStreamVideoService(
+        process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
+        video.bunnyId,
+        data.title
+      );
+      await checkFileSuccess(thumbnailFile.path);
 
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ message: "Update video successfully", video });
+        .json({ video, message: "Update video successfully" });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
@@ -159,17 +225,18 @@ class VideoController {
   }
 
   async deleteVideoController(req, res) {
-    const { videoId } = req.params;
-    const userId = req.userId;
-
-    if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Valid video ID is required" });
-    }
-
     try {
-      await deleteVideoService(videoId, userId);
+      const { videoId } = req.params;
+      const userId = req.userId;
+      const deleteVideoDto = new DeleteVideoDto(videoId, userId);
+      await deleteVideoDto.validate();
+
+      const video = await deleteVideoService(videoId, userId);
+
+      const bunnyVideo = await deleteBunnyStreamVideoService(
+        process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
+        video.bunnyId
+      );
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {

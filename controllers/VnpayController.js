@@ -9,7 +9,11 @@ const {
 } = require("../services/UserService");
 const { getExchangeRateService } = require("../services/ExchangeRateService");
 const { createReceiptService } = require("../services/ReceiptService");
-
+const {
+  processPaymentQueue,
+  consumePaymentQueue,
+  consumeResponseQueue,
+} = require("../queues/paymentQueues.js");
 // Utility function to sort object keys
 function sortObject(obj) {
   const sorted = {};
@@ -24,7 +28,8 @@ function sortObject(obj) {
 exports.createPaymentUrl = (req, res) => {
   const date = new Date();
   const createDate = moment(date).format("YYYYMMDDHHmmss");
-  const orderId = moment(date).format("DDHHmmss");
+  const orderId =
+    moment(date).format("YYYYMMDDHHmmss") + Math.floor(Math.random() * 1000);
   const { amount, bankCode } = req.body;
   const userId = req.userId;
 
@@ -91,45 +96,51 @@ exports.vnpayReturn = async (req, res) => {
     const amount = parseFloat(orderInfo.slice(27).trim());
 
     try {
+      //queue in rabbitMQ then dequeue
+      await processPaymentQueue(userId, amount, vnp_Params);
+      await consumePaymentQueue();
+      await consumeResponseQueue();
+
+      // //directly handling
       // Process the payment directly
-      const topUpBalance = await topUpUserService(userId, amount);
+      // const topUpBalance = await topUpUserService(userId, amount);
 
-      // Get the exchange rate
-      const rate = await getExchangeRateService();
+      // // Get the exchange rate
+      // const rate = await getExchangeRateService();
 
-      // Update the user's wallet balance
-      const CoinTopUp = await updateUserWalletService(
-        userId,
-        "ExchangeBalanceToCoin",
-        amount,
-        rate.topUpCoinRate
-      );
+      // // Update the user's wallet balance
+      // const CoinTopUp = await updateUserWalletService(
+      //   userId,
+      //   "ExchangeBalanceToCoin",
+      //   amount,
+      //   rate.topUpCoinRate
+      // );
 
-      // Create a receipt for the transaction
-      const receipt = await createReceiptService(
-        userId,
-        vnp_Params.vnp_CardType,
-        "VNPAY",
-        vnp_Params.vnp_BankCode,
-        amount,
-        vnp_Params.vnp_TxnRef,
-        "TopUpCoin",
-        (exchangeRate = rate.topUpCoinRate)
-      );
-      if (!topUpBalance || !CoinTopUp) {
-        res.status(500).json({
-          success: false,
-          message: "Payment successful but failed to top up coin.",
-          vnp_Params: vnp_Params,
-        });
-      }
-      if (!receipt) {
-        res.status(500).json({
-          success: false,
-          message: "Failed to create receipt.",
-          vnp_Params: vnp_Params,
-        });
-      }
+      // // Create a receipt for the transaction
+      // const receipt = await createReceiptService(
+      //   userId,
+      //   vnp_Params.vnp_CardType,
+      //   "VNPAY",
+      //   vnp_Params.vnp_BankCode,
+      //   amount,
+      //   vnp_Params.vnp_TxnRef,
+      //   "TopUpCoin",
+      //   (exchangeRate = rate.topUpCoinRate)
+      // );
+      // if (!topUpBalance || !CoinTopUp) {
+      //   res.status(500).json({
+      //     success: false,
+      //     message: "Payment successful but failed to top up coin.",
+      //     vnp_Params: vnp_Params,
+      //   });
+      // }
+      // if (!receipt) {
+      //   res.status(500).json({
+      //     success: false,
+      //     message: "Failed to create receipt.",
+      //     vnp_Params: vnp_Params,
+      //   });
+      // }
       console.log(
         `Top-up successful for User ID: ${userId}, Amount: ${amount} VND`
       );

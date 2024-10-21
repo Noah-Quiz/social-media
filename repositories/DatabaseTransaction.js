@@ -12,6 +12,7 @@ const StreamRepository = require("./StreamRepository.js");
 const GiftRepository = require("./GiftRepository.js");
 const GiftHistoryRepository = require("./GiftHistoryRepository.js");
 const ExchangeRateRepository = require("./ExchangeRateRepository.js");
+const AdvertisementRepository = require("./AdvertisementRepository.js");
 class DatabaseTransaction extends BaseDatabaseTransaction {
   constructor() {
     super();
@@ -28,6 +29,7 @@ class DatabaseTransaction extends BaseDatabaseTransaction {
     this.giftRepository = new GiftRepository();
     this.giftHistoryRepository = new GiftHistoryRepository();
     this.exchangeRateRepository = new ExchangeRateRepository();
+    this.advertisementRepository = new AdvertisementRepository();
   }
 }
 

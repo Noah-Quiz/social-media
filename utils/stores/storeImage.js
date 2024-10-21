@@ -3,7 +3,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const getLogger = require("../logger");
-const logger = getLogger("IMAGE_UPLOAD");
+const logger = getLogger("FILE_UPLOAD");
 
 const checkFileSuccess = async (filePath) => {
   logger.info(`Checking file ${filePath} for success...`);
@@ -69,8 +69,15 @@ const storage = multer.diskStorage({
       case "video":
       case "videoThumbnail":
         const { videoId } = req.params;
-        dir = path.join(`assets/videos/${videoId}`);
+        dir = path.join(
+          `assets/videos/${videoId}/${
+            file.fieldname === "video" ? "source" : "thumbnail"
+          }`
+        );
         break;
+      default:
+        logger.error(`Unknown field name: ${file.fieldname}`);
+        return cb(`Error: Unknown field name '${file.fieldname}'`);
     }
 
     fs.mkdir(dir, { recursive: true }, (err) => {
@@ -82,7 +89,7 @@ const storage = multer.diskStorage({
     });
   },
   filename: async (req, file, cb) => {
-    const baseName = req.headers["content-length"] + "_" + Date.now(); // the file is nane by the size of the file
+    let baseName = req.headers["content-length"] + "_" + Date.now(); // the file is nane by the size of the file
     const ext = path.extname(file.originalname);
     let fileName = "";
     let dirPath = "";
@@ -111,10 +118,11 @@ const storage = multer.diskStorage({
       case "videoThumbnail":
         const { videoId } = req.params;
         fileName = `${baseName}${ext}`;
-        dirPath = path.join(`assets/videos/${videoId}`);
-        break;
-      case "thumbnailImg":
-        dir = path.join(`assets/images/stream-thumbnail`);
+        dirPath = path.join(
+          `assets/videos/${videoId}/${
+            file.fieldname === "video" ? "source" : "thumbnail"
+          }`
+        );
         break;
       default:
         logger.error(`Unknown field name: ${file.fieldname}`);
@@ -162,7 +170,6 @@ const uploadImage = multer({
 const uploadVideo = multer({
   storage: storage,
   fileFilter: videoFilter,
-  limits: { fileSize: 1024 * 1024 * 1024 * 2 }, //Limit size to 2GB
 });
 
 module.exports = { uploadImage, uploadVideo, deleteFile, checkFileSuccess };

@@ -265,4 +265,28 @@ module.exports = {
       return stats;
     } catch (error) {}
   },
+
+  async getFollowerService(userId) {
+    try {
+      const connection = new DatabaseTransaction();
+      const follower = await connection.userRepository.getFollowerRepository(
+        userId
+      );
+      return follower;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async getFollowingService(userId) {
+    try {
+      const connection = new DatabaseTransaction();
+      const following = await connection.userRepository.getFollowingRepository(
+        userId
+      );
+      return following;
+    } catch (error) {
+      throw error;
+    }
+  },
 };

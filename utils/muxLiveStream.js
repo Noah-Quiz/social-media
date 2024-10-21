@@ -10,30 +10,30 @@ const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET;
 const muxClient = new Mux(MUX_TOKEN_ID, MUX_TOKEN_SECRET);
 const { liveStreams, assets } = muxClient.video;
 
-const createLiveStream = async () => {
-    try {
-        const stream = await liveStreams.create({
-            playback_policy: ['signed'],
-            new_asset_settings: {
-                playback_policy: ['public'],
-            },
-            latency_mode: 'low',
-            use_slate_for_standard_latency: true,
-            max_continuous_duration: 300,
-            reconnect_window: 300,
-        });
+// const createLiveStream = async () => {
+//     try {
+//         const stream = await liveStreams.create({
+//             playback_policy: ['signed'],
+//             new_asset_settings: {
+//                 playback_policy: ['public'],
+//             },
+//             latency_mode: 'low',
+//             use_slate_for_standard_latency: true,
+//             max_continuous_duration: 300,
+//             reconnect_window: 300,
+//         });
 
-        stream.playback_id = stream.playback_ids[0].id;
-        stream.stream_url = `https://stream.mux.com/${stream.playback_ids[0].id}.m3u8`;
+//         stream.playback_id = stream.playback_ids[0].id;
+//         stream.stream_url = `https://stream.mux.com/${stream.playback_ids[0].id}.m3u8`;
 
-        logger.info("Create live stream on MUX successfully")
-        console.log(stream)
-        return stream;
-    } catch (error) {
-        logger.error(`Error creating live stream on MUX: ${error}`);
-        throw new Error(`Mux Error: ${error.message}`);
-    }
-}
+//         logger.info("Create live stream on MUX successfully")
+//         console.log(stream)
+//         return stream;
+//     } catch (error) {
+//         logger.error(`Error creating live stream on MUX: ${error}`);
+//         throw new Error(`Mux Error: ${error.message}`);
+//     }
+// }
 
 const deleteLiveStream = async (liveStreamId) => {
     try {
@@ -136,7 +136,7 @@ const retrieveAsset = async (assetId) => {
 }
 
 module.exports = {
-    createLiveStream, 
+    // createLiveStream, 
     deleteLiveStream, 
     endStream, 
     resetStreamKey, 

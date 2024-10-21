@@ -38,7 +38,7 @@ const createReceiptService = async (
   amount,
   transactionId,
   type,
-  ExchangeRate
+  exchangeRate
 ) => {
   const connection = new DatabaseTransaction();
   try {
@@ -50,7 +50,7 @@ const createReceiptService = async (
       amount,
       transactionId,
       type,
-      exchangeRate
+      (exchangeRate = exchangeRate)
     );
     return receipt;
   } catch (error) {
