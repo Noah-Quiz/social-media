@@ -1,11 +1,9 @@
 const express = require("express");
 const VideoController = require("../controllers/VideoController");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
-const upload = require("../utils/validatorFile");
-const { uploadVideo, uploadImage } = require("../utils/stores/storeImage");
+const {  uploadImage } = require("../utils/stores/storeImage");
 const videoRoutes = express.Router();
 const videoController = new VideoController();
-
 /**
  * @swagger
  * /api/videos/:
@@ -28,13 +26,6 @@ const videoController = new VideoController();
  */
 
 videoRoutes.post("/", AuthMiddleware, videoController.createVideoController);
-
-videoRoutes.put(
-  "/:videoId",
-  AuthMiddleware,
-  uploadImage.fields([{ name: "videoThumbnail" }, { name: "video" }]),
-  videoController.uploadVideoController
-);
 
 /**
  * @swagger
@@ -97,6 +88,21 @@ videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
 videoRoutes.get(
   "/my-playlist/:playlistId",
   videoController.getVideosByPlaylistIdController
+);
+
+videoRoutes.put(
+  "/:videoId",
+  AuthMiddleware,
+  uploadImage.fields([
+    { name: "video", maxCount: 1 },
+    { name: "videoThumbnail", maxCount: 1 },
+  ]),
+  videoController.uploadVideoController
+);
+
+videoRoutes.post(
+  "/:videoId/generate-token",
+  videoController.generateVideoEmbedUrlTokenController
 );
 
 /**

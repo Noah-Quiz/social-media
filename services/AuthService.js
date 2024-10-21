@@ -8,7 +8,13 @@ const {
 } = require("../utils/phoneVerification");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
-const signUpService = async (fullName, email, phoneNumber, password) => {
+const signUpService = async (
+  fullName,
+  email,
+  phoneNumber,
+  password,
+  ipAddress
+) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -21,16 +27,15 @@ const signUpService = async (fullName, email, phoneNumber, password) => {
         "Email is already registered"
       );
 
+    const formattedPhoneNumber = phoneNumber.replace(/^0/, "+84");
     const existingPhone = await connection.userRepository.findUserByPhoneNumber(
-      phoneNumber
+      formattedPhoneNumber
     );
     if (existingPhone)
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Phone number is already registered"
       );
-
-    const formattedPhoneNumber = phoneNumber.replace(/^0/, "+84");
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -40,6 +45,7 @@ const signUpService = async (fullName, email, phoneNumber, password) => {
       email: email,
       phoneNumber: formattedPhoneNumber,
       password: hashedPassword,
+      ipAddress: ipAddress,
     });
 
     return user;
@@ -48,13 +54,16 @@ const signUpService = async (fullName, email, phoneNumber, password) => {
   }
 };
 
-const loginService = async (email, password) => {
+const loginService = async (email, password, ipAddress) => {
   try {
     const connection = new DatabaseTransaction();
 
     const user = await connection.userRepository.findUserByEmail(email);
     if (!user)
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+
+    await checkIpAddressMismatch(user, ipAddress);
+
     if (user.isActive === false)
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
@@ -65,7 +74,7 @@ const loginService = async (email, password) => {
     if (user.verify === false)
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "User is not verified. Please check your email or phone for verification"
+        "User is not verified. Please check your email or phone message for verification"
       );
 
     // Check if already login with google
@@ -99,29 +108,26 @@ const loginService = async (email, password) => {
   }
 };
 
-const loginGoogleService = async (user) => {
+const loginGoogleService = async (user, ipAddress) => {
   try {
     const connection = new DatabaseTransaction();
     const existingUser = await connection.userRepository.findUserByEmail(
       user.emails[0].value
     );
     if (existingUser) {
-      if (existingUser.isActive === false) {
-        existingUser.isActive = true;
-        await existingUser.save();
-      }
+      await checkIpAddressMismatch(existingUser, ipAddress);
+
       if (existingUser.verify === false) {
         existingUser.verify = true;
-        await existingUser.save();
       }
       if (existingUser.googleId === "") {
         existingUser.googleId = user.id;
-        await existingUser.save();
       }
       if (existingUser.avatar === "") {
         existingUser.avatar = user.photos[0].value;
-        await existingUser.save();
       }
+      existingUser.lastLogin = Date.now();
+      await existingUser.save();
       return existingUser;
     }
     const newUser = await connection.userRepository.createUser({
@@ -136,25 +142,23 @@ const loginGoogleService = async (user) => {
     throw new Error(`Error when login with Google: ${error.message}`);
   }
 };
-const loginAppleService = async (user) => {
+const loginAppleService = async (user, ipAddress) => {
   try {
     const connection = new DatabaseTransaction();
     const existingUser = await connection.userRepository.findUserByEmail(
       user.email
     );
     if (existingUser) {
-      if (existingUser.isActive === false) {
-        existingUser.isActive = true;
-        await existingUser.save();
-      }
+      await checkIpAddressMismatch(existingUser, ipAddress);
+      
       if (existingUser.verify === false) {
         existingUser.verify = true;
-        await existingUser.save();
       }
       if (existingUser.appleUser === false) {
         existingUser.appleUser = true;
-        await existingUser.save();
       }
+      existingUser.lastLogin = Date.now();
+      await existingUser.save();
       return existingUser;
     }
     const newUser = await connection.userRepository.createUser({
@@ -165,6 +169,26 @@ const loginAppleService = async (user) => {
     return newUser;
   } catch (error) {
     throw new Error(`Error when login with Apple: ${error.message}`);
+  }
+};
+
+const checkIpAddressMismatch = async (user, ipAddress) => {
+  try {
+    const connection = new DatabaseTransaction();
+    if (user.ipAddress !== ipAddress) {
+      await connection.userRepository.updateAnUserByIdRepository(user._id, {
+        verify: false,
+        verifyToken: null,
+        ipAddress: ipAddress,
+      });
+      await sendVerificationEmailService(user.email);
+      throw new CoreException(
+        StatusCodeEnums.Unauthorized_401,
+        "Ip address is not match. We have sent you an email to verify your account again."
+      );
+    }
+  } catch (error) {
+    throw error;
   }
 };
 
@@ -204,7 +228,7 @@ const sendVerificationEmailService = async (email) => {
     </tr>
     <tr>
       <td>
-        <a href="http://localhost:4000/api/auth/verify?token=${token}">Click here to verify your email</a>
+        <a href="${process.env.DEVELOPMENT_URL}:${process.env.DEVELOPMENT_PORT}/api/auth/verify/email?token=${token}">Click here to verify your email</a>
       </td>
     </tr>
     <tr>
