@@ -114,6 +114,22 @@ const userEntitySchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  suspense: {
+    isSuspended: {
+      type: Boolean,
+      default: false,
+    },
+    endTime: {
+      type: Date,
+    },
+    duration: {
+      type: Number,
+    },
+    time: {
+      type: Number,
+      default: 0,
+    },
+  },
   ...baseEntitySchema.obj,
 });
 
