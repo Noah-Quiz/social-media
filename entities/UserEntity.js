@@ -33,6 +33,10 @@ const userEntitySchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  ipAddress: {
+    type: String,
+    default: "",
+  },
   email: {
     type: String,
     default: "",
