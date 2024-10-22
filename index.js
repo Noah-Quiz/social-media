@@ -24,6 +24,8 @@ const limiter = require("./middlewares/RateLimiter.js");
 const packageRoutes = require("./routes/AdvertisementPackageRoute.js");
 const advertisementRoutes = require("./routes/AdvertisementRoute.js");
 const memberPackRoutes = require("./routes/MemberPackRoute.js");
+const memberGroupRoutes = require("./routes/MemberGroupRoute.js");
+
 const app = express();
 const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
@@ -150,6 +152,8 @@ app.use("/api/gifts/", giftRoutes);
 app.use("/api/gift-history/", giftHistoryRoutes);
 app.use("/api/exchange-rate/", exchangeRateRoutes);
 app.use("/api/member-pack", memberPackRoutes);
+app.use("/api/member-group", memberGroupRoutes);
+
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 

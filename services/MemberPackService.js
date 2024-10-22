@@ -26,6 +26,7 @@ const createMemberPackService = async (
   }
 };
 const updateMemberPackService = async (
+  id,
   name,
   description,
   price,
@@ -38,13 +39,14 @@ const updateMemberPackService = async (
   }
   try {
     const memberPack =
-      connection.memberPackRepository.updateMemberPackRepository({
+      connection.memberPackRepository.updateMemberPackRepository(
+        id,
         name,
         description,
         price,
         durationUnit,
-        durationNumber,
-      });
+        durationNumber
+      );
     return memberPack;
   } catch (error) {
     throw new Error(error.message);

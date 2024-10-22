@@ -15,6 +15,7 @@ const ExchangeRateRepository = require("./ExchangeRateRepository.js");
 const AdvertisementRepository = require("./AdvertisementRepository.js");
 const AdvertisementPackageRepository = require("./AdvertisementPackageRepository.js");
 const MemberPackRepository = require("./MemberPackRepository.js");
+const MemberGroupRepository = require("./MemberGroupRepository.js");
 class DatabaseTransaction extends BaseDatabaseTransaction {
   constructor() {
     super();
@@ -34,6 +35,7 @@ class DatabaseTransaction extends BaseDatabaseTransaction {
     this.advertisementRepository = new AdvertisementRepository();
     this.advertisementPackageRepository = new AdvertisementPackageRepository();
     this.memberPackRepository = new MemberPackRepository();
+    this.memberGroupRepository = new MemberGroupRepository();
   }
 }
 

@@ -27,6 +27,6 @@ const memberPackSchema = new mongoose.Schema({
   ...baseEntitySchema.obj,
 });
 
-const memberPack = mongoose.model("Pack", memberPackSchema);
+const memberPack = mongoose.model("Memberpack", memberPackSchema);
 
 module.exports = memberPack;
