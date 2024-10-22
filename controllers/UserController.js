@@ -3,8 +3,6 @@ const UpdateUserProfileDto = require("../dtos/User/UpdateUserProfileDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const {
-  followUserService,
-  unfollowUserService,
   getAllUsersService,
   getUserByIdService,
   updateUserProfileByIdService,

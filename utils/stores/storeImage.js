@@ -3,7 +3,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const getLogger = require("../logger");
-const logger = getLogger("IMAGE_UPLOAD");
+const logger = getLogger("FILE_UPLOAD");
 
 const checkFileSuccess = async (filePath) => {
   logger.info(`Checking file ${filePath} for success...`);
@@ -170,7 +170,6 @@ const uploadImage = multer({
 const uploadVideo = multer({
   storage: storage,
   fileFilter: videoFilter,
-  limits: { fileSize: 1024 * 1024 * 1024 * 2 }, //Limit size to 2GB
 });
 
 module.exports = { uploadImage, uploadVideo, deleteFile, checkFileSuccess };
