@@ -8,8 +8,6 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *   schemas:
  *     UpdatePlaylistDto:
  *       type: object
- *       required:
- *         - addedVideoIds
  *       properties:
  *         addedVideoIds:
  *           type: array

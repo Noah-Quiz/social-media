@@ -1,16 +1,14 @@
 const express = require("express");
 const VideoController = require("../controllers/VideoController");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
-const upload = require("../utils/validatorFile");
-const { uploadVideo, uploadImage } = require("../utils/stores/storeImage");
+const {  uploadImage } = require("../utils/stores/storeImage");
 const videoRoutes = express.Router();
 const videoController = new VideoController();
-
 /**
  * @swagger
  * /api/videos/:
  *  post:
- *    tags: [Video]
+ *    tags: [Videos]
  *    summary: Create a video
  *    requestBody:
  *      required: true
@@ -29,19 +27,12 @@ const videoController = new VideoController();
 
 videoRoutes.post("/", AuthMiddleware, videoController.createVideoController);
 
-videoRoutes.put(
-  "/:videoId",
-  AuthMiddleware,
-  uploadImage.fields([{ name: "videoThumbnail" }, { name: "video" }]),
-  videoController.uploadVideoController
-);
-
 /**
  * @swagger
  * /api/videos/:
  *  get:
  *   summary: Get all videos
- *   tags: [Video]
+ *   tags: [Videos]
  *   responses:
  *    200:
  *      description: Get all videos successfully
@@ -57,10 +48,10 @@ videoRoutes.get("/", AuthMiddleware, videoController.getVideosController);
  * /api/videos/user/{userId}:
  *  get:
  *    summary: Get videos by user id
- *    tags: [Video]
+ *    tags: [Videos]
  *    parameters:
  *      - in: path
- *        name: user Id
+ *        name: userId
  *        required: true
  *        schema:
  *          type: string
@@ -79,10 +70,10 @@ videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
  * /api/videos/my-playlist/{playlistId}:
  *  get:
  *    summary: Get videos by playlist id
- *    tags: [Video]
+ *    tags: [Videos]
  *    parameters:
  *      - in: path
- *        name: playlist Id
+ *        name: playlistId
  *        required: true
  *        schema:
  *          type: string
@@ -99,12 +90,27 @@ videoRoutes.get(
   videoController.getVideosByPlaylistIdController
 );
 
+videoRoutes.put(
+  "/:videoId",
+  AuthMiddleware,
+  uploadImage.fields([
+    { name: "video", maxCount: 1 },
+    { name: "videoThumbnail", maxCount: 1 },
+  ]),
+  videoController.uploadVideoController
+);
+
+videoRoutes.post(
+  "/:videoId/generate-token",
+  videoController.generateVideoEmbedUrlTokenController
+);
+
 /**
  * @swagger
  * /api/videos/{videoId}:
  *  patch:
  *    summary: Update a video by id
- *    tags: [Video]
+ *    tags: [Videos]
  *    requestBody:
  *      required: true
  *      content:
@@ -112,7 +118,7 @@ videoRoutes.get(
  *          schema:
  *            $ref: '#/components/schemas/UpdateVideoDto'
  *    200:
- *      description: Get videos by playlist id successfully
+ *      description: Update a video by id successfully
  *    400:
  *      description: Bad request
  *    500:
@@ -130,10 +136,10 @@ videoRoutes.patch(
  * /api/videos/{videoId}:
  *  get:
  *   summary: Get video by id
- *   tags: [Video]
+ *   tags: [Videos]
  *   parameters:
  *      - in: path
- *        name: video Id
+ *        name: videoId
  *        required: true
  *        schema:
  *          type: string
@@ -147,18 +153,14 @@ videoRoutes.patch(
  *      description: Internal server error
  */
 
-videoRoutes.get(
-  "/:videoId",
-  AuthMiddleware,
-  videoController.getVideoController
-);
+videoRoutes.get("/:videoId", videoController.getVideoController);
 
 /**
  * @swagger
  * /api/videos/like/{videoId}:
  *  post:
  *   summary: Toggle like a video
- *   tags: [Video]
+ *   tags: [Videos]
  *   parameters:
  *      - in: path
  *        name: videoId
@@ -198,7 +200,7 @@ videoRoutes.post(
  * /api/videos/view/{videoId}:
  *  post:
  *   summary: Increase view of a video
- *   tags: [Video]
+ *   tags: [Videos]
  *   parameters:
  *      - in: path
  *        name: videoId
@@ -226,7 +228,7 @@ videoRoutes.post(
  * /api/videos/{videoId}:
  *  delete:
  *   summary: Delete a video
- *   tags: [Video]
+ *   tags: [Videos]
  *   parameters:
  *      - in: path
  *        name: videoId
