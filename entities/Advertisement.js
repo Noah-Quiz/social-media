@@ -12,10 +12,22 @@ const advertisementSchema = new mongoose.Schema({
     ref: "Video",
     require: true,
   },
-  advertisementPackage: {
-    type: mongoose.Types.ObjectId,
-    ref: "AdvertisementPackage",
-    require: true,
+  advertisementPackages: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "AdvertisementPackage",
+      require: true,
+    },
+  ],
+  currentPackageIndex: {
+    type: Number,
+    default: 0,
+  },
+  totalCoin: {
+    type: Number,
+  },
+  rank: {
+    type: Number,
   },
   isAdvertised: {
     type: Boolean,

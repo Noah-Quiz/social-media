@@ -107,4 +107,8 @@ advertisementRoutes.delete(
   advertisementController.deleteAnAdvertisementByIdController
 );
 
+advertisementRoutes.put(
+  "/extend",
+  advertisementController.extendAdvertisementController
+);
 module.exports = advertisementRoutes;
