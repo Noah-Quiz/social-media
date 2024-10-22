@@ -23,36 +23,43 @@ class MemberPackRepository {
     }
   }
 
-  async updateMemberPackRepository(id, updates) {
+  async updateMemberPackRepository(
+    id,
+    name,
+    description,
+    price,
+    durationUnit,
+    durationNumber
+  ) {
     try {
-      const memberPack = await MemberPack.findById(id);
+      const memberPack = await MemberPack.findOne({
+        _id: new mongoose.Types.ObjectId(id),
+        isDeleted: false,
+      });
       if (!memberPack) {
         throw new Error("Member pack not found");
       }
 
-      if (updates.name !== undefined && updates.name !== memberPack.name) {
-        memberPack.name = updates.name;
+      if (name !== undefined && name !== memberPack.name) {
+        memberPack.name = name;
+      }
+      if (description !== undefined && description !== memberPack.description) {
+        memberPack.description = description;
+      }
+      if (price !== undefined && price !== memberPack.price) {
+        memberPack.price = price;
       }
       if (
-        updates.description !== undefined &&
-        updates.description !== memberPack.description
+        durationUnit !== undefined &&
+        durationUnit !== memberPack.durationUnit
       ) {
-        memberPack.description = updates.description;
-      }
-      if (updates.price !== undefined && updates.price !== memberPack.price) {
-        memberPack.price = updates.price;
+        memberPack.durationUnit = durationUnit;
       }
       if (
-        updates.durationUnit !== undefined &&
-        updates.durationUnit !== memberPack.durationUnit
+        durationNumber !== undefined &&
+        durationNumber !== memberPack.durationNumber
       ) {
-        memberPack.durationUnit = updates.durationUnit;
-      }
-      if (
-        updates.durationNumber !== undefined &&
-        updates.durationNumber !== memberPack.durationNumber
-      ) {
-        memberPack.durationNumber = updates.durationNumber;
+        memberPack.durationNumber = durationNumber;
       }
 
       await memberPack.save();
@@ -73,9 +80,13 @@ class MemberPackRepository {
 
   async deleteMemberPackRepository(id) {
     try {
-      const memberPack = await MemberPack.findByIdAndUpdate(id, {
-        $set: { isDeleted: true },
-      });
+      const memberPack = await MemberPack.findByIdAndUpdate(
+        id,
+        {
+          $set: { isDeleted: true },
+        },
+        { new: true }
+      );
       return memberPack;
     } catch (error) {
       throw new Error("Error deleting member pack: " + error.message);
