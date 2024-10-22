@@ -8,7 +8,7 @@ const videoController = new VideoController();
  * @swagger
  * /api/videos/:
  *  post:
- *    tags: [Video]
+ *    tags: [Videos]
  *    summary: Create a video
  *    requestBody:
  *      required: true
@@ -32,7 +32,7 @@ videoRoutes.post("/", AuthMiddleware, videoController.createVideoController);
  * /api/videos/:
  *  get:
  *   summary: Get all videos
- *   tags: [Video]
+ *   tags: [Videos]
  *   responses:
  *    200:
  *      description: Get all videos successfully
@@ -48,7 +48,7 @@ videoRoutes.get("/", AuthMiddleware, videoController.getVideosController);
  * /api/videos/user/{userId}:
  *  get:
  *    summary: Get videos by user id
- *    tags: [Video]
+ *    tags: [Videos]
  *    parameters:
  *      - in: path
  *        name: userId
@@ -70,7 +70,7 @@ videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
  * /api/videos/my-playlist/{playlistId}:
  *  get:
  *    summary: Get videos by playlist id
- *    tags: [Video]
+ *    tags: [Videos]
  *    parameters:
  *      - in: path
  *        name: playlistId
@@ -110,7 +110,7 @@ videoRoutes.post(
  * /api/videos/{videoId}:
  *  patch:
  *    summary: Update a video by id
- *    tags: [Video]
+ *    tags: [Videos]
  *    requestBody:
  *      required: true
  *      content:
@@ -136,7 +136,7 @@ videoRoutes.patch(
  * /api/videos/{videoId}:
  *  get:
  *   summary: Get video by id
- *   tags: [Video]
+ *   tags: [Videos]
  *   parameters:
  *      - in: path
  *        name: videoId
@@ -160,7 +160,7 @@ videoRoutes.get("/:videoId", videoController.getVideoController);
  * /api/videos/like/{videoId}:
  *  post:
  *   summary: Toggle like a video
- *   tags: [Video]
+ *   tags: [Videos]
  *   parameters:
  *      - in: path
  *        name: videoId
@@ -200,7 +200,7 @@ videoRoutes.post(
  * /api/videos/view/{videoId}:
  *  post:
  *   summary: Increase view of a video
- *   tags: [Video]
+ *   tags: [Videos]
  *   parameters:
  *      - in: path
  *        name: videoId
@@ -228,7 +228,7 @@ videoRoutes.post(
  * /api/videos/{videoId}:
  *  delete:
  *   summary: Delete a video
- *   tags: [Video]
+ *   tags: [Videos]
  *   parameters:
  *      - in: path
  *        name: videoId
