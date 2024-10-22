@@ -17,6 +17,14 @@ const streamSchema = new Schema({
     ref: "User",
     required: true,
   },
+  streamOnlineUrl: {
+    type: String,
+    default: "",
+  },
+  streamServerUrl: {
+    type: String,
+    default: "",
+  },
   uid: {
     type: String,
     default: "",
@@ -50,7 +58,8 @@ const streamSchema = new Schema({
   },
   status: {
     type: String,
-    default: null,
+    enum: ["live", "offline"],
+    default: "offline",
   },
   thumbnailUrl: {
     type: String,

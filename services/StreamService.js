@@ -3,14 +3,6 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum.js");
 const CoreException = require("../exceptions/CoreException.js");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction.js");
 const {
-  deleteLiveStream,
-  endStream,
-  resetStreamKey,
-  retrieveLiveStream,
-  retrieveAssetInputInfo,
-  retrieveAsset,
-} = require("../utils/muxLiveStream.js");
-const {
   deleteCloudFlareStreamLiveInput,
 } = require("./CloudFlareStreamService.js");
 
@@ -134,21 +126,6 @@ const endStreamService = async (streamId) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
 
-    // Retrieve live stream info
-    const muxStream = await retrieveLiveStream(stream.muxStreamId);
-
-    // Retrieve live stream recording info
-    const assetId = muxStream?.active_asset_id
-      ? muxStream?.active_asset_id
-      : muxStream?.recent_asset_ids[0];
-    const asset = await retrieveAsset(assetId);
-    const streamRecordingId = asset?.playback_ids[0]?.id;
-    const streamRecodingUrl = `https://stream.mux.com/${streamRecordingId}.m3u8`;
-
-    // Ending and deleting live stream from MUX
-    await endStream(stream.muxStreamId);
-    await deleteLiveStream(stream.muxStreamId);
-
     await connection.commitTransaction();
     return stream;
   } catch (error) {
@@ -164,9 +141,6 @@ const createStreamService = async (data) => {
   const session = await connection.startTransaction();
 
   try {
-    // Create a live stream on MUX
-    // const response = await createLiveStream();
-
     const stream = await connection.streamRepository.createStreamRepository(
       data,
       session
@@ -183,30 +157,6 @@ const createStreamService = async (data) => {
   }
 };
 
-const resetStreamKeyService = async (streamId) => {
-  try {
-    const connection = new DatabaseTransaction();
-
-    const stream = await connection.streamRepository.getStreamRepository(
-      streamId
-    );
-
-    if (!stream) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
-    }
-
-    const streamKey = await resetStreamKey(stream.muxStreamId);
-
-    await connection.streamRepository.updateStreamRepository(streamId, {
-      streamKey,
-    });
-
-    return streamKey;
-  } catch (error) {
-    throw error;
-  }
-};
-
 module.exports = {
   getStreamService,
   getStreamsService,
@@ -214,5 +164,4 @@ module.exports = {
   updateStreamService,
   deleteStreamService,
   createStreamService,
-  resetStreamKeyService,
 };

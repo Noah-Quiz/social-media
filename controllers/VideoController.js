@@ -115,6 +115,7 @@ class VideoController {
         bunnyId: video.bunnyId,
         videoFilePath: videoFile.path,
       };
+
       await sendMessageToQueue("bunny_video_dev_hung", queueMessage);
 
       // const bunnyVideo = await uploadBunnyStreamVideoService(

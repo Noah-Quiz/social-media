@@ -24,10 +24,6 @@ const userEntitySchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  ipAddress: {
-    type: String,
-    default: "",
-  },
   googleId: {
     type: String,
     default: "",
@@ -36,6 +32,10 @@ const userEntitySchema = new mongoose.Schema({
   appleUser: {
     type: Boolean,
     default: false,
+  },
+  ipAddress: {
+    type: String,
+    default: "",
   },
   email: {
     type: String,
@@ -117,6 +117,22 @@ const userEntitySchema = new mongoose.Schema({
   point: {
     type: Number,
     default: 0,
+  },
+  suspense: {
+    isSuspended: {
+      type: Boolean,
+      default: false,
+    },
+    endTime: {
+      type: Date,
+    },
+    duration: {
+      type: String,
+    },
+    time: {
+      type: Number,
+      default: 0,
+    },
   },
   ...baseEntitySchema.obj,
 });
