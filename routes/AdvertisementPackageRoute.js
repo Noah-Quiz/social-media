@@ -10,7 +10,7 @@ const packageController = new AdvertisementPackageController();
  * /api/advertisement-packages/:
  *  get:
  *   summary: Get all packages
- *   tags: [Advertisement Package]
+ *   tags: [Advertisement Packages]
  *   responses:
  *    200:
  *      description: Get all packages successfully
@@ -25,7 +25,7 @@ packageRoutes.get("/", packageController.getAllAvailablePackageController);
  * @swagger
  * /api/advertisement-packages/:
  *  post:
- *    tags: [Advertisement Package]
+ *    tags: [Advertisement Packages]
  *    summary: Create a package
  *    requestBody:
  *      required: true
@@ -48,7 +48,7 @@ packageRoutes.post("/", packageController.createAPackageController);
  * /api/advertisement-packages/:
  *  put:
  *    summary: Update a package by id
- *    tags: [Advertisement Package]
+ *    tags: [Advertisement Packages]
  *    requestBody:
  *      required: true
  *      content:
@@ -69,7 +69,7 @@ packageRoutes.put("/", packageController.updateAPackageByIdController);
  * /api/advertisement-packages/{packageId}:
  *  get:
  *   summary: Get package by id
- *   tags: [Advertisement Package]
+ *   tags: [Advertisement Packages]
  *   parameters:
  *      - in: path
  *        name: packageId
@@ -92,7 +92,7 @@ packageRoutes.get("/:id", packageController.getAPackageByIdController);
  * /api/advertisement-packages/{packageId}:
  *  delete:
  *   summary: Delete package by id
- *   tags: [Advertisement Package]
+ *   tags: [Advertisement Packages]
  *   parameters:
  *      - in: path
  *        name: packageId

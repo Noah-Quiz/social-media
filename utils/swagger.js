@@ -70,7 +70,23 @@ const options = {
       {
         name: "Gifts",
         description: "Operations about gifts",
-      }
+      },
+      {
+        name: "Videos",
+        description: "Operations about videos",
+      },
+      {
+        name: "Advertisements",
+        description: "Operations about advertisements",
+      },
+      {
+        name: "Advertisement Packages",
+        description: "Operations about advertisement packages",
+      },
+      {
+        name: "Streams",
+        description: "Operations about streams",
+      },
     ],
     components: {
       securitySchemes: {
