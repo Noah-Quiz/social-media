@@ -10,7 +10,7 @@ const advertisementController = new AdvertisementController();
  * @swagger
  * /api/advertisements/:
  *  post:
- *    tags: [Advertisement]
+ *    tags: [Advertisements]
  *    summary: Create an advertisement
  *    requestBody:
  *      required: true
@@ -36,7 +36,7 @@ advertisementRoutes.post(
  * /api/advertisements/:
  *  get:
  *   summary: Get all advertisements
- *   tags: [Advertisement]
+ *   tags: [Advertisements]
  *   responses:
  *    200:
  *      description: Get packages successfully
@@ -60,7 +60,7 @@ advertisementRoutes.get(
  * /api/advertisements/{adsId}:
  *  get:
  *   summary: Get package by id
- *   tags: [Advertisement]
+ *   tags: [Advertisements]
  *   parameters:
  *      - in: path
  *        name: adsId
@@ -86,7 +86,7 @@ advertisementRoutes.get(
  * /api/advertisements/{adsId}:
  *  delete:
  *   summary: Delete advertisement by id
- *   tags: [Advertisement]
+ *   tags: [Advertisements]
  *   parameters:
  *      - in: path
  *        name: adsId
