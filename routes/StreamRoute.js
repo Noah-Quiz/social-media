@@ -14,6 +14,7 @@ streamRoutes.get("/live-input", streamController.listLiveInputsController);
 streamRoutes.put(
   "/live-input/:streamId",
   AuthMiddleware,
+  uploadImage.single("streamThumbnail"),
   streamController.updateLiveInputController
 );
 
@@ -72,7 +73,7 @@ streamRoutes.post(
   "/",
   AuthMiddleware,
   checkUserSuspended,
-  uploadImage.single("thumbnailImg"),
+  uploadImage.single("streamThumbnail"),
   streamController.createStreamController
 );
 

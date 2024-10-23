@@ -84,6 +84,8 @@ class StreamController {
     try {
       const { streamId } = req.params;
       const { creatorId, streamName } = req.body;
+
+      
     } catch (error) {}
   }
 
@@ -285,7 +287,7 @@ class StreamController {
         title,
         description,
         categoryIds,
-        thumbnailUrl: thumbnailFile,
+        thumbnailUrl: thumbnailFile.path,
         uid: cloudflareStream.uid,
         rtmps: cloudflareStream.rtmps,
         rtmpsPlayback: cloudflareStream.rtmpsPlayback,
@@ -308,7 +310,7 @@ class StreamController {
         .json({ stream, message: "Live Stream created successfully" });
     } catch (error) {
       // Delete thumbnail if an error occurs
-      if (thumbnailFile) await deleteFile(thumbnailFile);
+      if (req.file) await deleteFile(thumbnailFile);
 
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
