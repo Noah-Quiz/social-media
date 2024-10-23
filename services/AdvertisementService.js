@@ -17,6 +17,20 @@ module.exports = {
     }
   },
 
+  async extendAdvertisementService(adsId, packageId) {
+    try {
+      const connection = new DatabaseTransaction();
+      const advertisement =
+        await connection.advertisementRepository.extendAdvertisementRepository(
+          adsId,
+          packageId
+        );
+      return advertisement;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+
   async getAllAvailableAdvertisementsService() {
     try {
       const connection = new DatabaseTransaction();

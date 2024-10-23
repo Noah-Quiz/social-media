@@ -81,6 +81,11 @@ const streamSchema = new Schema({
   endedAt: {
     type: Date,
   },
+  enumMode: {
+    type: String,
+    enum: ["public", "private", "unlisted"],
+    default: "public",
+  },
   ...baseEntitySchema.obj,
 });
 const Stream = mongoose.model("Stream", streamSchema);
