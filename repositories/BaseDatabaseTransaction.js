@@ -11,7 +11,13 @@ const DBName = process.env.DATABASE_NAME || "Cluster0";
 class BaseDatabaseTransaction {
   constructor() {
     this.session = null;
-    this.connect();
+    // Properly await the connect call, since it's asynchronous
+    this.connect().catch((error) => {
+      logger.error(
+        "Database connection error during constructor:",
+        error.message
+      );
+    });
   }
 
   async connect() {

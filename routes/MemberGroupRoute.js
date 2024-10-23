@@ -9,5 +9,11 @@ const route = express.Router();
 route.use(AuthMiddleware);
 
 route.put("/upgrade-vip", memberGroupController.updateVipController);
-
+route.get(
+  "/",
+  requireRole(UserEnum.ADMIN),
+  memberGroupController.getAllMemberGroupController
+);
+route.get("/my-group", memberGroupController.getMemberGroupController);
+route.delete("/my-group", memberGroupController.deleteMemberGroupController);
 module.exports = route;
