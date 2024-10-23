@@ -4,6 +4,7 @@ const amqp = require("amqplib");
 require("dotenv").config();
 const path = require("path");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const { deleteCloudFlareStreamLiveInput } = require("../services/CloudFlareStreamService");
 
 async function sendMessageToQueue(queue, message) {
   try {
@@ -30,7 +31,7 @@ async function consumeMessageFromQueue(queue, callback) {
     connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL);
     channel = await connection.createChannel();
     await channel.assertQueue(queue, { durable: true });
-    
+
     connection.on('error', (err) => logger.error(`Connection error: ${err.message}`));
     connection.on('close', () => {
       logger.warn('Connection closed, reconnecting...');
@@ -42,7 +43,7 @@ async function consumeMessageFromQueue(queue, callback) {
       async (msg) => {
         if (msg) {
           try {
-            const { live_input_id } = JSON.parse(msg.content.toString());
+            const { live_input_id, streamOnlineUrl } = JSON.parse(msg.content.toString());
 
             switch (queue) {
               case "bunny_video_dev_hung":
@@ -63,27 +64,48 @@ async function consumeMessageFromQueue(queue, callback) {
 
               case "live_stream.connected":
                 const connection = new DatabaseTransaction();
-                
+
                 const query = { uid: live_input_id };
                 const stream = await connection.streamRepository.getStreamsRepository(query);
                 if (!stream?.streams?.length) {
                   throw new Error("Stream not found for given live input ID");
                 }
-                
+
                 await connection.streamRepository.updateStreamRepository(stream.streams[0]?._id, { status: "live" });
                 break;
 
               case "live_stream.disconnected":
                 const connection2 = new DatabaseTransaction();
-                
-                const query2 = { uid: live_input_id };
-                const stream2 = await connection2.streamRepository.getStreamsRepository(query2);
-                if (!stream2?.streams?.length) {
-                  throw new Error("Stream not found for given live input ID");
+                const session = await connection2.startTransaction();
+
+                try {
+                  const query2 = { uid: live_input_id };
+                  const stream2 = await connection2.streamRepository.getStreamsRepository(query2);
+                  if (!stream2?.streams?.length) {
+                    throw new Error("Stream not found for given live input ID");
+                  }
+
+                  const updateData = {
+                    rtmps: null,
+                    rtmpsPlayback: null,
+                    srt: null,
+                    srtPlayback: null,
+                    webRTC: null,
+                    webRTCPlayback: null,
+                    streamOnlineUrl,
+                  };
+                  await connection2.streamRepository.updateStreamRepository(stream2.streams[0]?._id, updateData, null, session);
+
+                  await connection2.streamRepository.endStreamRepository(stream2.streams[0]?._id, session);
+                  
+                  await deleteCloudFlareStreamLiveInput(stream2.streams[0].uid);
+
+                  connection2.commitTransaction();
+                } catch (error) {
+                  connection2.abortTransaction();
+                } finally {
+                  break;
                 }
-                
-                await connection2.streamRepository.endStreamRepository(stream2.streams[0]?._id);
-                break;
             }
 
             channel.ack(msg);

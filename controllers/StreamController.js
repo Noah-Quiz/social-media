@@ -10,6 +10,7 @@ const {
   updateStreamService,
   resetStreamKeyService,
   deleteLiveStreamByUidService,
+  toggleLikeStreamService,
 } = require("../services/StreamService");
 const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
 const { createMuxToken } = require("../utils/muxLiveStream");
@@ -310,6 +311,32 @@ class StreamController {
       // Delete thumbnail if an error occurs
       if (thumbnailFile) await deleteFile(thumbnailFile);
 
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
+    }
+  }
+
+  async toggleLikeStreamController(req, res) {
+    const { streamId } = req.params;
+    const { action } = req.query;
+    const userId = req.userId;
+
+    if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Valid stream ID is required" });
+    }
+
+    try {
+      await toggleLikeStreamService(streamId, userId, action);
+
+      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
+    } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {

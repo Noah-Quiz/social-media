@@ -233,6 +233,29 @@ class StreamRepository {
       throw new Error(`Error getting streams: ${error.message}`);
     }
   }
+
+  async toggleLikeStreamRepository(streamId, userId, action = "like") {
+    try {
+      const updateAction =
+        action === "like"
+          ? { $addToSet: { likedBy: userId } }
+          : { $pull: { likedBy: userId } };
+
+      const updatedVideo = await Stream.findByIdAndUpdate(
+        streamId,
+        updateAction,
+        { new: true }
+      );
+
+      if (!updatedVideo) {
+        throw new Error("Stream not found");
+      }
+
+      return true;
+    } catch (error) {
+      throw new Error(`Error in toggling like/unlike: ${error.message}`);
+    }
+  }
 }
 
 module.exports = StreamRepository;
