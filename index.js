@@ -66,10 +66,24 @@ function handleLeaveRoom(socket, roomId) {
 }
 
 // Listen for socket connections
+let viewerCount = 0;
+
 io.on("connection", (socket) => {
   const logger = getLogger("SOCKET");
 
   logger.info(`User connected: ${socket.id}`);
+
+  // Increment viewer count when a user joins
+  viewerCount++;
+  io.emit("viewer_count", viewerCount);
+  logger.info(`Viewer count incremented: ${viewerCount}`);
+
+  // Decrement viewer count when a user disconnects
+  socket.on("disconnect", () => {
+    viewerCount--;
+    io.emit("viewer_count", viewerCount);
+    logger.info(`Viewer count decremented: ${viewerCount}`);
+  });
 
   // Public Chat: Joining a default room
   socket.on("join_public_chat", () => {
