@@ -157,6 +157,35 @@ const createStreamService = async (data) => {
   }
 };
 
+const toggleLikeStreamService = async (streamId, userId, action) => {
+  try {
+    const connection = new DatabaseTransaction();
+
+    const stream = await connection.streamRepository.getStreamRepository(
+      streamId
+    );
+
+    if (!stream) {
+      throw new CoreException(StatusCodeEnum.NotFound_404, "Stream not found");
+    }
+
+    const allowedActions = ["like", "unlike"];
+    if (!allowedActions.includes(action)) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid action");
+    }
+
+    const result = await connection.streamRepository.toggleLikeStreamRepository(
+      streamId,
+      userId,
+      action
+    );
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   getStreamService,
   getStreamsService,
@@ -164,4 +193,5 @@ module.exports = {
   updateStreamService,
   deleteStreamService,
   createStreamService,
+  toggleLikeStreamService,
 };
