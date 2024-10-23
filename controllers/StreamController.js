@@ -218,7 +218,7 @@ class StreamController {
         .status(StatusCodeEnums.OK_200)
         .json({ stream, message: "Stream updated successfully" });
     } catch (error) {
-      if (thumbnailFile) await deleteFile(thumbnailFile);
+      if (req.file) await deleteFile(thumbnailFile);
 
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
@@ -255,7 +255,6 @@ class StreamController {
     try {
       const { title, description, categoryIds } = req.body;
       const userId = req.userId;
-      let thumbnailFile = req.file ? req.file.path : null;
       const createStreamDto = new CreateStreamDto(
         userId,
         title,
@@ -278,7 +277,6 @@ class StreamController {
         title,
         description,
         categoryIds,
-        thumbnailUrl: thumbnailFile.path,
         uid: cloudflareStream.uid,
         rtmps: cloudflareStream.rtmps,
         rtmpsPlayback: cloudflareStream.rtmpsPlayback,
@@ -293,16 +291,10 @@ class StreamController {
       // Create stream entry in the database
       const stream = await createStreamService(streamData);
 
-      // Check if thumbnail upload was successful
-      if (thumbnailFile) await checkFileSuccess(thumbnailFile);
-
       return res
         .status(StatusCodeEnums.Created_201)
         .json({ stream, message: "Live Stream created successfully" });
     } catch (error) {
-      // Delete thumbnail if an error occurs
-      if (req.file) await deleteFile(thumbnailFile);
-
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
