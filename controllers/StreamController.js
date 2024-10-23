@@ -80,15 +80,6 @@ class StreamController {
   //   }
   // }
 
-  async updateLiveInputController(req, res) {
-    try {
-      const { streamId } = req.params;
-      const { creatorId, streamName } = req.body;
-
-      
-    } catch (error) {}
-  }
-
   // async deleteLiveInputController(req, res) {
   //   try {
   //     const { streamId } = req.params;
