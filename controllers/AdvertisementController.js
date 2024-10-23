@@ -5,6 +5,7 @@ const {
   updateAnAdvertisementByIdService,
   getAnAdvertisementByIdService,
   deleteAnAdvertisementByIdService,
+  extendAdvertisementService,
 } = require("../services/AdvertisementService");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const { getVideoService } = require("../services/VideoService");
@@ -40,6 +41,18 @@ class AdvertisementController {
         packageId
       );
       return res.status(StatusCodeEnums.Created_201).json({ data: result });
+    } catch (error) {
+      return res
+        .status(StatusCodeEnums.InternalServerError_500)
+        .json({ message: error.message });
+    }
+  }
+
+  async extendAdvertisementController(req, res) {
+    const { adsId, packageId } = req.body;
+    try {
+      const result = await extendAdvertisementService(adsId, packageId);
+      return res.status(StatusCodeEnums.OK_200).json({ data: result });
     } catch (error) {
       return res
         .status(StatusCodeEnums.InternalServerError_500)
