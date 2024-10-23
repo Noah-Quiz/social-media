@@ -11,11 +11,12 @@ streamRoutes.get("/live-input", streamController.listLiveInputsController);
 
 // streamRoutes.post("/live-input", AuthMiddleware, streamController.createLiveInputController);
 
-streamRoutes.put(
-  "/live-input/:streamId",
-  AuthMiddleware,
-  streamController.updateLiveInputController
-);
+// streamRoutes.put(
+//   "/live-input/:streamId",
+//   AuthMiddleware,
+//   uploadImage.single("streamThumbnail"),
+//   streamController.updateLiveInputController
+// );
 
 // streamRoutes.delete(
 //   "/live-input/:streamId",
@@ -72,7 +73,6 @@ streamRoutes.post(
   "/",
   AuthMiddleware,
   checkUserSuspended,
-  uploadImage.single("thumbnailImg"),
   streamController.createStreamController
 );
 
@@ -159,7 +159,7 @@ streamRoutes.get("/:streamId", streamController.getStreamController);
 streamRoutes.patch(
   "/:streamId",
   AuthMiddleware,
-  uploadImage.single("thumbnailImg"),
+  uploadImage.single("streamThumbnail"),
   streamController.updateStreamController
 );
 

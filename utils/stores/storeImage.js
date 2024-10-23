@@ -75,6 +75,10 @@ const storage = multer.diskStorage({
           }`
         );
         break;
+      case "streamThumbnail":
+        const { streamId } = req.params;
+        dir = path.join(`assets/images/streams/${streamId}`);
+        break;
       default:
         logger.error(`Unknown field name: ${file.fieldname}`);
         return cb(`Error: Unknown field name '${file.fieldname}'`);
@@ -123,6 +127,11 @@ const storage = multer.diskStorage({
             file.fieldname === "video" ? "source" : "thumbnail"
           }`
         );
+        break;
+      case "streamThumbnail":
+        const { streamId } = req.params;
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/streams/${streamId}`);
         break;
       default:
         logger.error(`Unknown field name: ${file.fieldname}`);
