@@ -54,4 +54,10 @@ streamRoutes.post(
   streamController.endStreamController
 );
 
+streamRoutes.post(
+  "/like/:streamId",
+  AuthMiddleware,
+  streamController.toggleLikeStreamController
+);
+
 module.exports = streamRoutes;

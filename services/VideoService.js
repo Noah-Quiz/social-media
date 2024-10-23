@@ -178,6 +178,7 @@ const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
     throw error;
   }
 };
+
 const toggleLikeVideoService = async (videoId, userId, action) => {
   try {
     const connection = new DatabaseTransaction();
