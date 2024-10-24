@@ -19,7 +19,7 @@ route.get("/dashboard", userController.getStatsByDateController);
 
 /**
  * @swagger
- * /api/users/wallet/{userId}:
+ * /api/users/{userId}/wallet:
  *   get:
  *     security:
  *      - bearerAuth: []
@@ -39,11 +39,11 @@ route.get("/dashboard", userController.getStatsByDateController);
  *       500:
  *         description: Internal server error
  */
-route.get("/wallet/:userId", userController.getUserWalletController);
+route.get("/:userId/wallet", userController.getUserWalletController);
 
 /**
  * @swagger
- * /api/users/wallet/{userId}:
+ * /api/users/{userId}/wallet:
  *   put:
  *     security:
  *      - bearerAuth: []
@@ -70,7 +70,7 @@ route.get("/wallet/:userId", userController.getUserWalletController);
  *       description: Internal server error
  *
  */
-route.put("/wallet/:userId", userController.updateUserWalletController);
+route.put("/:userId/wallet", userController.updateUserWalletController);
 
 /**
  * @swagger
@@ -185,6 +185,7 @@ route.delete("/history", historyController.clearAllHistoryRecordsController);
  *        name: historyId
  *        schema:
  *         type: string
+ *         required: true
  *         description: The history record's id
  *     responses:
  *      200:
@@ -230,7 +231,7 @@ route.put("/watch-time", userController.updateTotalWatchTimeController);
  *         description: Search by name
  *     responses:
  *       201:
- *         description: Get user wallet successfully
+ *         description: Get users successfully
  *       400:
  *         description: Bad request
  *       500:
@@ -254,7 +255,7 @@ route.get("/", userController.getAllUsersController);
  *         required: true
  *     responses:
  *       201:
- *         description: Get user wallet successfully
+ *         description: Get user successfully
  *       400:
  *         description: Bad request
  *       500:
@@ -264,7 +265,7 @@ route.get("/:userId", userController.getUserByIdController);
 
 /**
  * @swagger
- * /api/users/profile/{userId}:
+ * /api/users/{userId}/profile:
  *   put:
  *     security:
  *      - bearerAuth: []
@@ -299,14 +300,14 @@ route.get("/:userId", userController.getUserByIdController);
  *
  */
 route.put(
-  "/profile/:userId",
+  "/:userId/profile",
   uploadImage.single("avatar"),
   userController.updateUserProfileByIdController
 );
 
 /**
  * @swagger
- * /api/users/email/{userId}:
+ * /api/users/{userId}/email:
  *   put:
  *     security:
  *      - bearerAuth: []
@@ -332,11 +333,11 @@ route.put(
  *       description: Internal server error
  *
  */
-route.put("/email/:userId", userController.updateUserEmailByIdController);
+route.put("/:userId/email", userController.updateUserEmailByIdController);
 
 /**
  * @swagger
- * /api/users/password/{userId}:
+ * /api/users/{userId}/password:
  *   put:
  *     security:
  *      - bearerAuth: []
@@ -361,7 +362,7 @@ route.put("/email/:userId", userController.updateUserEmailByIdController);
  *      500:
  *       description: Internal server error
  */
-route.put("/password/:userId", userController.updateUserPasswordByIdController);
+route.put("/:userId/password", userController.updateUserPasswordByIdController);
 
 /**
  * @swagger

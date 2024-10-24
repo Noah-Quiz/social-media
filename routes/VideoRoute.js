@@ -166,7 +166,7 @@ videoRoutes.get(
 
 /**
  * @swagger
- * /api/videos/like/{videoId}:
+ * /api/videos/{videoId}/like:
  *  post:
  *   summary: Toggle like a video
  *   tags: [Videos]
@@ -199,14 +199,14 @@ videoRoutes.get(
  */
 
 videoRoutes.post(
-  "/like/:videoId",
+  "/:videoId/like",
   AuthMiddleware,
   videoController.toggleLikeVideoController
 );
 
 /**
  * @swagger
- * /api/videos/view/{videoId}:
+ * /api/videos/{videoId}/view:
  *  post:
  *   summary: Increase view of a video
  *   tags: [Videos]
@@ -227,7 +227,7 @@ videoRoutes.post(
  */
 
 videoRoutes.post(
-  "/view/:videoId",
+  "/:videoId/view",
   AuthMiddleware,
   videoController.viewIncrementController
 );
