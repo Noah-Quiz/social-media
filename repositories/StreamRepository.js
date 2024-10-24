@@ -256,6 +256,57 @@ class StreamRepository {
       throw new Error(`Error in toggling like/unlike: ${error.message}`);
     }
   }
+
+  async getRecommendedStreamsRepository(data) {
+    try {
+      const { userId } = data;
+
+      const recentLikedStreams = await Stream.find({
+        likedBy: mongoose.Types.ObjectId(userId),
+      })
+        .sort({ createdAt: -1 })
+        .limit(100)
+        .populate("categoryIds");
+  
+      const categoryIds = new Set(recentLikedStreams.flatMap(stream => stream.categoryIds));
+      if (categoryIds.length === 0) {
+        return [];
+      }
+  
+      const recommendedStreams = await Stream.find({
+        status: "live",
+        categoryIds: { $in: categoryIds },
+      })
+  
+      return recommendedStreams;
+    } catch (error) {
+      console.error("Error fetching matching streams:", error);
+      throw error;
+    }
+  }
+
+  async getRelevantStreamsRepository(data) {
+    try {
+      const { categoryIds, streamerId } = data;
+
+      const query = {
+        status: "live",
+        $or: [
+          { categoryIds: { $in: categoryIds } },
+          { userId: streamerId },
+        ],
+      };
+
+      const relevantStreams = await Stream.find(query)
+      .populate("userId")
+      .populate("categoryIds")
+      .sort({ likedBy: -1, createdAt: -1 });
+
+    return relevantStreams;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = StreamRepository;

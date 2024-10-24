@@ -184,7 +184,39 @@ const toggleLikeStreamService = async (streamId, userId, action) => {
   } catch (error) {
     throw error;
   }
-};
+}
+
+const getRecommendedStreamsService = async (data) => {
+  try {
+    const connection = new DatabaseTransaction();
+
+    const result = await connection.streamRepository.getRecommendedStreamsRepository(data);
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
+const getRelevantStreamsService = async (data) => {z
+  try {
+    const connection = new DatabaseTransaction();
+
+    const { streamerId } = data;
+
+    const streamer = await connection.userRepository.getAnUserByIdRepository(streamerId);
+
+    if (!streamer) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Streamer not found");
+    }
+
+    const result = await connection.streamRepository.getRecommendedStreamsRepository(data);
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
 
 module.exports = {
   getStreamService,
@@ -194,4 +226,6 @@ module.exports = {
   deleteStreamService,
   createStreamService,
   toggleLikeStreamService,
+  getRecommendedStreamsService,
+  getRelevantStreamsService,
 };

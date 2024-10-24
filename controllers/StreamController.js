@@ -11,6 +11,7 @@ const {
   resetStreamKeyService,
   deleteLiveStreamByUidService,
   toggleLikeStreamService,
+  getRecommendedStreamsService,
 } = require("../services/StreamService");
 const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
 const { createMuxToken } = require("../utils/muxLiveStream");
@@ -23,6 +24,7 @@ const { sendMessageToQueue } = require("../utils/rabbitMq");
 const CreateStreamDto = require("../dtos/Stream/CreateStreamDto");
 const DeleteStreamDto = require("../dtos/Stream/DeleteStreamDto");
 const UpdateStreamDto = require("../dtos/Stream/UpdateStreamDto");
+const StreamRecommendationDto = require("../dtos/Stream/StreamRecommendationDto");
 
 class StreamController {
   async listLiveInputsController(req, res) {
@@ -267,10 +269,11 @@ class StreamController {
       // Create live input using Cloudflare service
       const creatorId = userId;
       const streamName = title;
-      const cloudflareStream = await createCloudFlareStreamLiveInput(
-        creatorId,
-        streamName
-      );
+      const cloudflareStream = null;
+      // const cloudflareStream = await createCloudFlareStreamLiveInput(
+      //   creatorId,
+      //   streamName
+      // );
 
       // Prepare stream data with live input details
       const streamData = {
@@ -278,15 +281,15 @@ class StreamController {
         title,
         description,
         categoryIds,
-        uid: cloudflareStream.uid,
-        rtmps: cloudflareStream.rtmps,
-        rtmpsPlayback: cloudflareStream.rtmpsPlayback,
-        srt: cloudflareStream.srt,
-        srtPlayback: cloudflareStream.srtPlayback,
-        webRTC: cloudflareStream.webRTC,
-        webRTCPlayback: cloudflareStream.webRTCPlayback,
-        status: cloudflareStream.status,
-        meta: cloudflareStream.meta,
+        uid: cloudflareStream?.uid,
+        rtmps: cloudflareStream?.rtmps,
+        rtmpsPlayback: cloudflareStream?.rtmpsPlayback,
+        srt: cloudflareStream?.srt,
+        srtPlayback: cloudflareStream?.srtPlayback,
+        webRTC: cloudflareStream?.webRTC,
+        webRTCPlayback: cloudflareStream?.webRTCPlayback,
+        status: cloudflareStream?.status,
+        meta: cloudflareStream?.meta,
       };
 
       // Create stream entry in the database
@@ -321,6 +324,52 @@ class StreamController {
       await toggleLikeStreamService(streamId, userId, action);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
+    } catch (error) {
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
+    }
+  }
+
+  async getRecommendedStreamsController(req, res) {
+    const userId = req.userId;
+    const data = { userId };
+
+    try {
+      const streams = await getRecommendedStreamsService(data)
+
+      return res.status(StatusCodeEnums.OK_200).json({ streams, message: "Success" });
+    } catch (error) {
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
+    }
+  }
+
+  async getRelevantStreamsController(req, res) {
+    const { streamerId, categoryIds } = req.body;
+    const userId = req.userId;
+
+    try {
+      const streamRecommendationDto = new StreamRecommendationDto(streamerId, categoryIds);
+      await streamRecommendationDto.validate();
+
+      const data = {
+        streamerId,
+        categoryIds,
+      }
+
+      await getRecommendedStreamsService(data)
+
+      return res.status(StatusCodeEnums.OK_200).json({ streams, message: "Success" });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
