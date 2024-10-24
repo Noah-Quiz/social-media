@@ -42,9 +42,9 @@ class CommentController {
     }
   }
   async getCommentController(req, res) {
-    const { id } = req.params;
+    const { commentId } = req.params;
     try {
-      const comment = await getCommentService(id);
+      const comment = await getCommentService(commentId);
       if (!comment) {
         return res.status(500).json("Comment not found");
       }
@@ -71,10 +71,10 @@ class CommentController {
     }
   }
   async deleteCommentController(req, res) {
-    const { id } = req.params;
+    const { commentId } = req.params;
     const userId = req.userId;
     try {
-      const comment = await softDeleteCommentService(userId, id);
+      const comment = await softDeleteCommentService(userId, commentId);
       return res
         .status(200)
         .json({ comments: comment, message: "Delete successfully" });
@@ -83,14 +83,14 @@ class CommentController {
     }
   }
   async updateCommentController(req, res) {
-    const { id } = req.params;
+    const { commentId } = req.params;
     const userId = req.userId;
     const { content } = req.body;
     if (!content || content === "") {
       return res.status(400).json({ message: "Content is required" });
     }
     try {
-      const comment = await updateCommentService(userId, id, content);
+      const comment = await updateCommentService(userId, commentId, content);
       return res.status(200).json({ comments: comment, message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -98,13 +98,13 @@ class CommentController {
   }
   async likeCommentController(req, res) {
     try {
-      const { id } = req.params;
+      const { commentId } = req.params;
       // const { userId } = req.body;
       const userId = req.userId;
-      const likeCommentDto = new LikeCommentDto(id, userId);
+      const likeCommentDto = new LikeCommentDto(commentId, userId);
       await likeCommentDto.validate();
 
-      const comment = await likeService(userId, id);
+      const comment = await likeService(userId, commentId);
       return res.status(200).json({ comments: comment, message: "Success" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -112,12 +112,12 @@ class CommentController {
   }
   async unlikeCommentController(req, res) {
     try {
-      const { id } = req.params;
+      const { commentId } = req.params;
       const userId = req.userId;
-      const unlikeCommentDto = new UnlikeCommentDto(id, userId);
+      const unlikeCommentDto = new UnlikeCommentDto(commentId, userId);
       await unlikeCommentDto.validate();
 
-      const comment = await unlikeService(userId, id);
+      const comment = await unlikeService(userId, commentId);
       return res.status(200).json({ comments: comment, message: "Success" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -125,8 +125,8 @@ class CommentController {
   }
   async getChildrenCommentsController(req, res) {
     try {
-      const limit = req.query.limit;
-      const commentId = req.query.commentId;
+      const { commentId } = req.params;
+      const { limit } = req.query;
       const getChildrenCommentsDto = new GetChildrenCommentsDto(
         commentId,
         limit
