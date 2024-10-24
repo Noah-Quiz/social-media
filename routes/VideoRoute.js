@@ -1,7 +1,7 @@
 const express = require("express");
 const VideoController = require("../controllers/VideoController");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
-const {  uploadImage } = require("../utils/stores/storeImage");
+const { uploadImage } = require("../utils/stores/storeImage");
 const videoRoutes = express.Router();
 const videoController = new VideoController();
 /**
@@ -63,7 +63,11 @@ videoRoutes.get("/", AuthMiddleware, videoController.getVideosController);
  *    500:
  *      description: Internal server error
  */
-videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
+videoRoutes.get(
+  "/user/:userId",
+  AuthMiddleware,
+  videoController.getVideosByUserIdController
+);
 
 /**
  * @swagger
@@ -87,6 +91,7 @@ videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
  */
 videoRoutes.get(
   "/my-playlist/:playlistId",
+  AuthMiddleware,
   videoController.getVideosByPlaylistIdController
 );
 
@@ -153,7 +158,11 @@ videoRoutes.patch(
  *      description: Internal server error
  */
 
-videoRoutes.get("/:videoId", videoController.getVideoController);
+videoRoutes.get(
+  "/:videoId",
+  AuthMiddleware,
+  videoController.getVideoController
+);
 
 /**
  * @swagger

@@ -254,6 +254,7 @@ class VideoController {
   async getVideosByUserIdController(req, res) {
     const { userId } = req.params;
     const { sortBy } = req.query;
+    const requester = req.userId;
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res
         .status(StatusCodeEnums.BadRequest_400)
@@ -261,7 +262,7 @@ class VideoController {
     }
 
     try {
-      const videos = await getVideosByUserIdService(userId, sortBy);
+      const videos = await getVideosByUserIdService(userId, sortBy, requester);
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -279,15 +280,16 @@ class VideoController {
 
   async getVideoController(req, res) {
     const { videoId } = req.params;
-
-    if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
+    const requester = req.userId;
+    console.log(requester);
+    if (!videoId || !mongoose.Types.ObjectId.isValid(videoId, requester)) {
       return res
         .status(StatusCodeEnums.BadRequest_400)
         .json({ message: "Valid video ID is required" });
     }
 
     try {
-      const video = await getVideoService(videoId);
+      const video = await getVideoService(videoId, requester);
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -339,17 +341,20 @@ class VideoController {
     try {
       const { playlistId } = req.params;
       const { page, size } = req.query;
+      const requester = req.userId;
       const getVideosByPlaylistId = new GetVideosByPlaylistIdDto(
         playlistId,
         page,
-        size
+        size,
+        requester
       );
       await getVideosByPlaylistId.validate();
 
       const videos = await getVideosByPlaylistIdService(
         playlistId,
         page || 1,
-        size || 10
+        size || 10,
+        requester
       );
       return res
         .status(StatusCodeEnums.OK_200)

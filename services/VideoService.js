@@ -19,7 +19,7 @@ const createVideoService = async (
   }
 ) => {
   try {
-    if (["public", "private", "unlisted"].includes(enumMode)) {
+    if (["public", "private", "unlisted", "member"].includes(enumMode)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid video accessibility"
@@ -250,27 +250,94 @@ const viewIncrementService = async (videoId) => {
   }
 };
 
-const getVideosByUserIdService = async (userId, sortBy) => {
+const getVideosByUserIdService = async (userId, sortBy, requester) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const videos = await connection.videoRepository.getVideosByUserIdRepository(
+    // Fetch all videos for the given userId
+    let videos = await connection.videoRepository.getVideosByUserIdRepository(
       userId,
       sortBy
     );
+    // Step 1: If requester is the owner, return all videos unmodified
+    if (userId === requester) {
+      return videos; // Owner has full access
+    }
+    console.log("requester: ", requester);
+    // Step 2: Separate private videos (to process them differently later)
+    const privateVideoIds = videos
+      .filter((video) => video.enumMode === "private")
+      .map((video) => video._id);
 
-    return videos;
+    // Step 3: Separate member videos for processing
+    const memberVideoIds = videos
+      .filter((video) => video.enumMode === "member")
+      .map((video) => video._id);
+
+    // Step 4: Check if the requester is a member
+    const isMember = await checkMemberShip(requester, userId);
+    console.log(isMember);
+    // Step 5: Process private videos (show the message for non-owners)
+    let processedVideos = updateVideosForNonMembership(
+      videos,
+      privateVideoIds,
+      "private" // Mark private videos with a "This is a private video" message
+    );
+
+    // Step 6: If the requester is not a member, process member-only videos
+    if (!isMember) {
+      processedVideos = updateVideosForNonMembership(
+        processedVideos,
+        memberVideoIds,
+        "member" // Mark member videos with a "This video requires membership" message
+      );
+    }
+
+    // Step 7: Return the processed videos, including modifications
+    return processedVideos;
   } catch (error) {
-    throw error;
+    throw new Error(
+      `Error fetching videos for user ${userId}: ${error.message}`
+    );
   }
 };
 
-const getVideoService = async (videoId) => {
+const getVideoService = async (videoId, requester) => {
   try {
     const connection = new DatabaseTransaction();
 
     const video = await connection.videoRepository.getVideoRepository(videoId);
-
+    if (!video) {
+      throw new Error(`Video with id ${videoId} does not exist`);
+    }
+    if (video.enumMode === "private") {
+      if (requester.toString() !== video.userId.toString()) {
+        const updatedVideos = updateVideosForNonMembership(
+          [video],
+          [video._id],
+          "private"
+        );
+        return Array.isArray(updatedVideos) && updatedVideos.length === 1
+          ? updatedVideos[0] // Return the single video object
+          : updatedVideos; // Return the array if it's not of length 1
+      }
+      return video; // Requester is the owner, return the video
+    } else if (video.enumMode === "member") {
+      const isMember = await checkMemberShip(requester, video.userId);
+      if (!isMember && requester.toString() !== video.userId.toString()) {
+        //not member & not owner
+        const updatedVideos = updateVideosForNonMembership(
+          [video],
+          [video._id],
+          "member"
+        );
+        return Array.isArray(updatedVideos) && updatedVideos.length === 1
+          ? updatedVideos[0] // Return the single video object
+          : updatedVideos; // Return the array if it's not of length 1
+      } else {
+        return video;
+      }
+    }
     return video;
   } catch (error) {
     throw error;
@@ -290,18 +357,85 @@ const getVideosService = async (query) => {
   }
 };
 
-const getVideosByPlaylistIdService = async (playlistId, page, size) => {
+const getVideosByPlaylistIdService = async (
+  playlistId,
+  page,
+  size,
+  requester
+) => {
   try {
     const connection = new DatabaseTransaction();
+
+    // Fetch videos by playlist from the repository
     const videos =
       await connection.videoRepository.getVideosByPlaylistIdRepository(
         playlistId,
         page,
         size
       );
-    return videos;
+
+    // Step 1: Group videos by userId
+    const videosByOwner = videos.data.reduce((acc, video) => {
+      if (!acc[video.userId]) {
+        acc[video.userId] = [];
+      }
+      acc[video.userId].push(video);
+      return acc;
+    }, {});
+
+    // Step 2: Iterate over each unique user (owner)
+    const resultVideos = [];
+
+    for (let [userId, userVideos] of Object.entries(videosByOwner)) {
+      const isOwner = requester.toString() === userId.toString();
+
+      // Step 3: Process private videos using updateVideosForNonMembership
+      const privateVideoIds = userVideos
+        .filter((video) => video.enumMode === "private")
+        .map((video) => video._id);
+
+      // Step 4: Handle member-only videos
+      const memberVideoIds = userVideos
+        .filter((video) => video.enumMode === "member")
+        .map((video) => video._id);
+
+      let processedVideos = userVideos;
+
+      // Step 5: If the requester is not the owner, modify private and member-only videos
+      if (!isOwner) {
+        // Modify private videos for non-owner
+        if (privateVideoIds.length > 0) {
+          processedVideos = updateVideosForNonMembership(
+            processedVideos,
+            privateVideoIds,
+            "private"
+          );
+        }
+
+        // Check if requester is a member for the current user's videos
+        if (memberVideoIds.length > 0) {
+          const isMember = await checkMemberShip(requester, userId);
+
+          // If the requester is not a member, modify member-only videos
+          if (!isMember) {
+            processedVideos = updateVideosForNonMembership(
+              processedVideos,
+              memberVideoIds,
+              "member"
+            );
+          }
+        }
+      }
+      // Step 6: Add the processed (or unprocessed for owners) videos to the result
+      resultVideos.push(...processedVideos);
+    }
+
+    // Step 7: Return the final processed videos
+    return resultVideos;
   } catch (error) {
-    throw error;
+    throw new Error(
+      `Error fetching videos for playlist ${playlistId}: ${error.message}`
+    );
   }
 };
 
@@ -362,6 +496,58 @@ const deleteVideoService = async (videoId, userId) => {
   } catch (error) {
     await connection.abortTransaction();
     throw error;
+  }
+};
+const updateVideosForNonMembership = (videos, videoIds, type) => {
+  // Iterate through the array of videos and modify if the _id is found in videoIds
+  return videos.map((video) => {
+    let content;
+    if (type === "member") {
+      content = `This video requires membership`;
+    } else {
+      content = "this is a private video";
+    }
+    if (videoIds.includes(video._id)) {
+      // If the video ID is in the list, update the specific fields
+      return {
+        ...video, // Keep all other properties the same
+        videoUrl: content,
+        videoEmbedUrl: content,
+        videoServerUrl: content,
+        embedUrl: content,
+      };
+    }
+    // If the ID is not found, return the video object unchanged
+    return video;
+  });
+};
+const checkMemberShip = async (requester, userId) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const memberGroup =
+      await connection.memberGroupRepository.getMemberGroupRepository(userId);
+
+    // If no member group or members array is empty, return false
+    if (!memberGroup || memberGroup.members.length === 0) {
+      return false;
+    }
+    console.log(memberGroup.members);
+    // Use 'some' to check if the requester is a member
+    let isMember = false;
+    memberGroup.members.map((member) => {
+      console.log(
+        member.memberId.toString(),
+        requester,
+        member.memberId.toString() === requester
+      );
+      if (member.memberId.toString() === requester) {
+        isMember = true;
+      }
+    });
+
+    return isMember; // Return true if found, otherwise false
+  } catch (error) {
+    throw error; // Handle the error appropriately in your app
   }
 };
 
