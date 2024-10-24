@@ -39,7 +39,7 @@ streamRoutes.get("/live-input", streamController.listLiveInputsController);
  *       description: Internal server error
  *
  */
-streamRoutes.get("/", streamController.getStreamsController);
+streamRoutes.get("/", AuthMiddleware, streamController.getStreamsController);
 
 /**
  * @swagger
@@ -126,7 +126,11 @@ streamRoutes.delete(
  *       description: Internal server error
  *
  */
-streamRoutes.get("/:streamId", streamController.getStreamController);
+streamRoutes.get(
+  "/:streamId",
+  AuthMiddleware,
+  streamController.getStreamController
+);
 
 /**
  * @swagger

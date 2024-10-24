@@ -9,16 +9,13 @@ const roomSchema = new Schema({
     minlength: [1, "Room name must be at least 1 character long"],
     maxlength: [100, "Room name cannot exceed 100 characters"],
   },
-  videoId: {
+  streamId: {
     type: mongoose.Types.ObjectId,
-    ref: "Video",
-    required: function () {
-      return this.type === "video";
-    }, // Only required if the room type is video-based
+    ref: "Stream",
   },
   type: {
     type: String,
-    enum: ["private", "video", "public", "group"],
+    enum: ["private", "member", "public", "group"],
     required: true,
   },
   participants: [
@@ -32,6 +29,6 @@ const roomSchema = new Schema({
   ],
 
   ...baseEntitySchema.obj,
-}); // Automatically adds createdAt and updatedAt timestamps
+});
 
 module.exports = mongoose.model("Room", roomSchema);

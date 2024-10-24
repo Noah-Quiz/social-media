@@ -13,12 +13,14 @@ const findMessageService = async (messageId) => {
   }
 };
 
-const findAllMessagesByRoomIdService = async (id) => {
+const findMessagesByRoomIdService = async (id, page, size) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const messages = await connection.messageRepository.getAllMessagesByRoomId(
-      id
+    const messages = await connection.messageRepository.getMessagesByRoomId(
+      id,
+      page,
+      size
     );
 
     return messages;
@@ -84,7 +86,7 @@ const createAMessageService = async (userId, roomId, content) => {
 module.exports = {
   createAMessageService,
   findMessageService,
-  findAllMessagesByRoomIdService,
+  findMessagesByRoomIdService,
   updateMessageService,
   deleteMessageService,
 };
