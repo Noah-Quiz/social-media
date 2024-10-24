@@ -281,7 +281,7 @@ class VideoController {
   async getVideoController(req, res) {
     const { videoId } = req.params;
     const requester = req.userId;
-    console.log(requester);
+
     if (!videoId || !mongoose.Types.ObjectId.isValid(videoId, requester)) {
       return res
         .status(StatusCodeEnums.BadRequest_400)
