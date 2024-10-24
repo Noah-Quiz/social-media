@@ -55,7 +55,10 @@ const getStreamService = async (streamId, requester) => {
 const getStreamsService = async (query, requester) => {
   const connection = new DatabaseTransaction();
   try {
-    const data = await connection.streamRepository.getStreamsRepository(query);
+    const data = await connection.streamRepository.getStreamsRepository(
+      query,
+      requester
+    );
 
     let streams = data.streams
       .filter(
