@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const Message = require("../entities/MessageEntity");
 
 class MessageRepository {
@@ -65,11 +66,25 @@ class MessageRepository {
     }
   }
 
-  async getAllMessagesByRoomId(id) {
+  async getMessagesByRoomId(id, page, size) {
     try {
-      const messages = await Message.find({ roomId: id, isDeleted: false });
+      const skip = (page - 1) * size || 0;
+      const searchQuery = { roomId: id, isDeleted: false };
 
-      return messages;
+      const totalMessages = await Message.countDocuments(searchQuery);
+      const messages = await Message.find({
+        roomId: new mongoose.Types.ObjectId(id),
+        isDeleted: false,
+      })
+        .sort({ dateCreated: -1 })
+        .limit(size)
+        .skip(skip);
+      return {
+        messages,
+        totalPages: Math.ceil(totalMessages / size),
+        page,
+        totalMessages,
+      };
     } catch (error) {
       throw new Error(`Error fetching messages: ${error.message}`);
     }
