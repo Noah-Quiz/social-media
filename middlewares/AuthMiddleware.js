@@ -23,11 +23,11 @@ const AuthMiddleware = async (req, res, next) => {
     logger.info(`User ID from token: ${_id}`);
     logger.info(`IP Address from token: ${ip}`);
 
-    if (ip && ip !== ipAddress) {
-      return res.status(StatusCodeEnums.Unauthorized_401).json({
-        message: "IP address mismatch. Please log in again.",
-      });
-    }
+    // if (ip && ip !== ipAddress) {
+    //   return res.status(StatusCodeEnums.Unauthorized_401).json({
+    //     message: "IP address mismatch. Please log in again.",
+    //   });
+    // }
 
     if (!mongoose.Types.ObjectId.isValid(_id)) {
       return res
