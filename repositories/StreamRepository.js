@@ -178,7 +178,7 @@ class StreamRepository {
     try {
       const page = query.page || 1;
       const size = query.size || 10;
-      const skip = ((page - 1) * size) || 0;
+      const skip = (page - 1) * size || 0;
 
       const searchQuery = { isDeleted: false };
 

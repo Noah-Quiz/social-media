@@ -25,6 +25,7 @@ const packageRoutes = require("./routes/AdvertisementPackageRoute.js");
 const advertisementRoutes = require("./routes/AdvertisementRoute.js");
 const memberPackRoutes = require("./routes/MemberPackRoute.js");
 const memberGroupRoutes = require("./routes/MemberGroupRoute.js");
+const { updateStreamViewsService } = require("./services/StreamService.js");
 
 const app = express();
 const server = require("http").createServer(app);
@@ -66,24 +67,12 @@ function handleLeaveRoom(socket, roomId) {
 }
 
 // Listen for socket connections
-let viewerCount = 0;
+let viewersCount = 0;
 
 io.on("connection", (socket) => {
   const logger = getLogger("SOCKET");
-
+  const userStreams = new Set();
   logger.info(`User connected: ${socket.id}`);
-
-  // Increment viewer count when a user joins
-  viewerCount++;
-  io.emit("viewer_count", viewerCount);
-  logger.info(`Viewer count incremented: ${viewerCount}`);
-
-  // Decrement viewer count when a user disconnects
-  socket.on("disconnect", () => {
-    viewerCount--;
-    io.emit("viewer_count", viewerCount);
-    logger.info(`Viewer count decremented: ${viewerCount}`);
-  });
 
   // Public Chat: Joining a default room
   socket.on("join_public_chat", () => {
@@ -108,6 +97,8 @@ io.on("connection", (socket) => {
   socket.on("join_livestream_chat", (streamId) => {
     const room = `livestream_${streamId}`;
     socket.join(room);
+    userStreams.add(streamId);
+    updateViewersCount(streamId);
     logger.info(`${socket.id} joined livestream room: ${room}`);
   });
 
@@ -124,9 +115,10 @@ io.on("connection", (socket) => {
   });
 
   // Leaving a room (for private, group, livestream chat)
-  socket.on("leave_room", (room) => {
-    socket.leave(room);
-    logger.info(`${socket.id} left room: ${room}`);
+  socket.on("leave_livestream", (streamId) => {
+    handleLeaveLiveStream(streamId);
+    userStreams.delete(streamId);
+    logger.info(`${socket.id} left room: ${streamId}`);
   });
 
   // Disconnect event
@@ -156,7 +148,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/users", userRoute);
 app.use("/api/messages", messageRoutes);
 app.use("/api/videos", videoRoutes);
-app.use("/api/rooms", roomRoutes);
+app.use("/api/StreauserStreams", roomRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/vnpay", vnpayRoutes);
 app.use("/api/receipts", receiptRoutes);
@@ -182,3 +174,15 @@ server.listen(port, (err) => {
     swaggerDoc(app, port);
   }
 });
+
+//Update viewers count of a live stream
+function updateViewersCount(streamId) {
+  const viewersCount = io.sockets.adapter.rooms.get(streamId)?.size || 0;
+  updateStreamViewsService(streamId, { currentViewCount: viewersCount });
+  io.to(streamId).emit("viewers_count", viewersCount);
+}
+
+function handleLeaveLiveStream(socket, streamId) {
+  socket.leave(streamId);
+  updateStreamViewsService(streamId);
+}
