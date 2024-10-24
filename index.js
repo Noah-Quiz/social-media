@@ -28,7 +28,7 @@ const memberPackRoutes = require("./routes/MemberPackRoute.js");
 const memberGroupRoutes = require("./routes/MemberGroupRoute.js");
 const paymentRouters = require("./routes/PaymentRoute.js");
 const { updateStreamViewsService } = require("./services/StreamService.js");
-
+const path = require("path");
 const app = express();
 const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
@@ -58,6 +58,8 @@ app.use(session({
   saveUninitialized: true,
   cookie: { secure: false } // Set to true if using HTTPS
 }));
+app.use('/', express.static(__dirname));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
