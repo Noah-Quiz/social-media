@@ -27,6 +27,7 @@ const advertisementRoutes = require("./routes/AdvertisementRoute.js");
 const memberPackRoutes = require("./routes/MemberPackRoute.js");
 const memberGroupRoutes = require("./routes/MemberGroupRoute.js");
 const paymentRouters = require("./routes/PaymentRoute.js");
+const { updateStreamViewsService } = require("./services/StreamService.js");
 
 const app = express();
 const server = require("http").createServer(app);
@@ -157,7 +158,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/users", userRoute);
 app.use("/api/messages", messageRoutes);
 app.use("/api/videos", videoRoutes);
-app.use("/api/rooms", roomRoutes);
+app.use("/api/StreauserStreams", roomRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/payment", paymentRouters);
 app.use("/api/vnpay", vnpayRoutes);
@@ -184,3 +185,15 @@ server.listen(port, (err) => {
     swaggerDoc(app, port);
   }
 });
+
+//Update viewers count of a live stream
+function updateViewersCount(streamId) {
+  const viewersCount = io.sockets.adapter.rooms.get(streamId)?.size || 0;
+  updateStreamViewsService(streamId, { currentViewCount: viewersCount });
+  io.to(streamId).emit("viewers_count", viewersCount);
+}
+
+function handleLeaveLiveStream(socket, streamId) {
+  socket.leave(streamId);
+  updateStreamViewsService(streamId);
+}

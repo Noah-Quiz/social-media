@@ -83,8 +83,15 @@ const streamSchema = new Schema({
   },
   enumMode: {
     type: String,
-    enum: ["public", "private", "unlisted"],
+    enum: ["public", "private", "unlisted", "member"],
     default: "public",
+  },
+  peakViewCount: {
+    type: Number,
+    default: 0,
+  },
+  currentViewCount: {
+    type: Number,
   },
   ...baseEntitySchema.obj,
 });

@@ -1,3 +1,4 @@
+const Stream = require("../entities/StreamEntity.js");
 const User = require("../entities/UserEntity.js");
 const StatusCodeEnums = require("../enums/StatusCodeEnum.js");
 const CoreException = require("../exceptions/CoreException.js");
@@ -6,31 +7,109 @@ const {
   deleteCloudFlareStreamLiveInput,
 } = require("./CloudFlareStreamService.js");
 
-const getStreamService = async (streamId) => {
+const getStreamService = async (streamId, requester) => {
   try {
     const connection = new DatabaseTransaction();
 
     const stream = await connection.streamRepository.getStreamRepository(
       streamId
     );
-
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
+    let process = stream;
+    const isOwner = stream.userId.toString() === requester.toString();
+    //if owner => nothing is change
+    if (isOwner) {
+      return process;
+    }
+    //if not owner => check private stream
+    process = cleanStreamFromNonOwner(stream);
+    if (stream.enumMode === "private") {
+      //handle not owner private
+      const result = updateStreamForNonMembership(
+        [process],
+        [process._id],
+        "private"
+      );
+      return result.length === 1 ? result[0] : result;
+    } else if (stream.enumMode === "member") {
+      //handle not owner member
+      const isMember = await checkMemberShip(requester, stream.userId);
 
-    return stream;
+      if (isMember) {
+        return process;
+      }
+      const result = updateStreamForNonMembership(
+        [process],
+        [process._id],
+        "member"
+      );
+      return result.length === 1 ? result[0] : result;
+    }
+    return process;
+  } catch (error) {
+    throw error;
+  }
+};
+const getStreamsService = async (query, requester) => {
+  const connection = new DatabaseTransaction();
+  try {
+    const data = await connection.streamRepository.getStreamsRepository(
+      query,
+      requester
+    );
+
+    let streams = data.streams
+      .filter(
+        (stream) =>
+          stream.enumMode !== "private" ||
+          stream.userId.toString() === requester.toString()
+      )
+      .map(async (stream) => {
+        const isOwner = stream.userId.toString() === requester.toString();
+        if (isOwner) {
+          return stream; // Return unmodified stream if requester is owner
+        }
+
+        // Clean stream for non-owner
+        let cleanedStream = cleanStreamFromNonOwner(stream);
+
+        // Check if stream is member-only
+        if (stream.enumMode === "member") {
+          const isMember = await checkMemberShip(requester, stream.userId);
+          if (isMember) {
+            return cleanedStream; // Return cleaned stream for members
+          }
+
+          // Handle non-member users, update the stream for non-members
+          return updateStreamForNonMembership(
+            [cleanedStream],
+            [cleanedStream._id],
+            "member"
+          )[0];
+        }
+
+        return cleanedStream; // Return cleaned stream for non-private non-members
+      });
+
+    // Since we have asynchronous map, we need to resolve all promises before returning
+    const processedStreams = await Promise.all(streams);
+
+    return { ...data, streams: processedStreams };
   } catch (error) {
     throw error;
   }
 };
 
-const getStreamsService = async (query) => {
-  const connection = new DatabaseTransaction();
+const updateStreamViewsService = async (streamId, currentViewCount) => {
   try {
-    const data = await connection.streamRepository.getStreamsRepository(query);
-    return data;
+    const stream = await Stream.findByIdAndUpdate(streamId, {
+      $set: { currentViewCount },
+      $max: { peakViewCount: currentViewCount },
+    });
   } catch (error) {
-    throw error;
+    throw new Error(error.message);
   }
 };
 
@@ -111,7 +190,6 @@ const deleteStreamService = async (userId, streamId) => {
   }
 };
 
-
 const endStreamService = async (streamId) => {
   const connection = new DatabaseTransaction();
   const session = await connection.startTransaction();
@@ -166,7 +244,7 @@ const toggleLikeStreamService = async (streamId, userId, action) => {
     );
 
     if (!stream) {
-      throw new CoreException(StatusCodeEnum.NotFound_404, "Stream not found");
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
 
     const allowedActions = ["like", "unlike"];
@@ -185,7 +263,64 @@ const toggleLikeStreamService = async (streamId, userId, action) => {
     throw error;
   }
 };
+const cleanStreamFromNonOwner = (obj) => {
+  const {
+    uid,
+    rtmps,
+    rtmpsPlayback,
+    srt,
+    srtPlayback,
+    webRTC,
+    webRTCPlayback,
+    ...cleanedObject
+  } = obj;
 
+  return cleanedObject;
+};
+const updateStreamForNonMembership = (streams, streamIds, type) => {
+  // Iterate through the array of streams and modify if the _id is found in streamIds
+  return streams.map((stream) => {
+    let content;
+    if (type === "member") {
+      content = `This stream requires membership`;
+    } else {
+      content = "this is a private stream";
+    }
+    if (streamIds.includes(stream._id)) {
+      // If the stream ID is in the list, update the specific fields
+      return {
+        ...stream, // Keep all other properties the same
+        streamOnlineUrl: content,
+        streamServerUrl: content,
+      };
+    }
+    // If the ID is not found, return the stream object unchanged
+    return stream;
+  });
+};
+const checkMemberShip = async (requester, userId) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const memberGroup =
+      await connection.memberGroupRepository.getMemberGroupRepository(userId);
+
+    // If no member group or members array is empty, return false
+    if (!memberGroup || memberGroup.members.length === 0) {
+      return false;
+    }
+    // Use 'some' to check if the requester is a member
+    let isMember = false;
+    memberGroup.members.map((member) => {
+      if (member.memberId.toString() === requester) {
+        isMember = true;
+      }
+    });
+
+    return isMember; // Return true if found, otherwise false
+  } catch (error) {
+    throw error; // Handle the error appropriately in your app
+  }
+};
 module.exports = {
   getStreamService,
   getStreamsService,
@@ -194,4 +329,5 @@ module.exports = {
   deleteStreamService,
   createStreamService,
   toggleLikeStreamService,
+  updateStreamViewsService,
 };
