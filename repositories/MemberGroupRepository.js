@@ -9,9 +9,6 @@ class MemberGroupRepository {
       const memberGroup = await MemberGroup.findOne({
         ownerId,
         isDeleted: false,
-      }).populate({
-        path: "members.memberId",
-        select: "fullName nickName avatar _id",
       });
       if (!memberGroup) {
         const group = await MemberGroup.create({ ownerId: ownerId });
