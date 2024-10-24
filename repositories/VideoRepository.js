@@ -129,7 +129,6 @@ class VideoRepository {
         { $replaceRoot: { newRoot: "$merged" } },
         { $project: { categoryIds: 0 } }, // Optionally hide categoryIds
       ]);
-
       return result[0] || null;
     } catch (error) {
       throw new Error(`Error fetching video: ${error.message}`);
@@ -331,7 +330,7 @@ class VideoRepository {
         throw new Error("Playlist not found");
       }
       const videoIds = playlist.videoIds.map((video) => video.toString());
-      console.log(videoIds);
+
       const skip = (page - 1) * size;
 
       // Fetch video details using getVideoRepository
@@ -367,7 +366,10 @@ class VideoRepository {
         searchQuery.title = { $regex: query.title, $options: "i" }; // Allow title search with case-insensitive regex
       }
 
-      const totalVideos = await Video.countDocuments(searchQuery); // Count total documents based on search
+      const totalVideos = await Video.countDocuments({
+        enumMode: "public",
+        ...searchQuery,
+      }); // Count total documents based on search
 
       let sortCondition;
       if (query.sortBy && query.sortBy === "like") {
@@ -385,6 +387,7 @@ class VideoRepository {
         {
           $match: {
             isDeleted: false,
+            enumMode: "public",
             ...(query.title
               ? { title: { $regex: query.title, $options: "i" } }
               : {}), // Add title condition if exists
