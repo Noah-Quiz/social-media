@@ -259,32 +259,27 @@ const getVideosByUserIdService = async (userId, sortBy, requester) => {
       userId,
       sortBy
     );
-    // Step 1: If requester is the owner, return all videos unmodified
-    if (userId === requester) {
-      return videos; // Owner has full access
-    }
-    console.log("requester: ", requester);
-    // Step 2: Separate private videos (to process them differently later)
-    const privateVideoIds = videos
-      .filter((video) => video.enumMode === "private")
-      .map((video) => video._id);
 
-    // Step 3: Separate member videos for processing
-    const memberVideoIds = videos
+    // If requester is the owner, return all videos unmodified (owner has full access)
+    if (userId === requester) {
+      return videos;
+    }
+
+    // Filter out private videos that are not owned by the requester
+    let processedVideos = videos.filter(
+      (video) =>
+        video.enumMode !== "private" ||
+        video.userId.toString() === requester.toString()
+    );
+
+    // Handle member-only videos
+    const memberVideoIds = processedVideos
       .filter((video) => video.enumMode === "member")
       .map((video) => video._id);
 
-    // Step 4: Check if the requester is a member
     const isMember = await checkMemberShip(requester, userId);
-    console.log(isMember);
-    // Step 5: Process private videos (show the message for non-owners)
-    let processedVideos = updateVideosForNonMembership(
-      videos,
-      privateVideoIds,
-      "private" // Mark private videos with a "This is a private video" message
-    );
 
-    // Step 6: If the requester is not a member, process member-only videos
+    // If the requester is not a member, process member-only videos
     if (!isMember) {
       processedVideos = updateVideosForNonMembership(
         processedVideos,
@@ -293,7 +288,7 @@ const getVideosByUserIdService = async (userId, sortBy, requester) => {
       );
     }
 
-    // Step 7: Return the processed videos, including modifications
+    // Return the processed videos
     return processedVideos;
   } catch (error) {
     throw new Error(
@@ -389,43 +384,30 @@ const getVideosByPlaylistIdService = async (
     for (let [userId, userVideos] of Object.entries(videosByOwner)) {
       const isOwner = requester.toString() === userId.toString();
 
-      // Step 3: Process private videos using updateVideosForNonMembership
-      const privateVideoIds = userVideos
-        .filter((video) => video.enumMode === "private")
-        .map((video) => video._id);
+      // Step 3: Filter out private videos if the requester is not the owner
+      let processedVideos = userVideos.filter(
+        (video) => video.enumMode !== "private" || isOwner
+      );
 
       // Step 4: Handle member-only videos
-      const memberVideoIds = userVideos
+      const memberVideoIds = processedVideos
         .filter((video) => video.enumMode === "member")
         .map((video) => video._id);
 
-      let processedVideos = userVideos;
+      // Step 5: If the requester is not the owner and not a member, modify member-only videos
+      if (!isOwner && memberVideoIds.length > 0) {
+        const isMember = await checkMemberShip(requester, userId);
 
-      // Step 5: If the requester is not the owner, modify private and member-only videos
-      if (!isOwner) {
-        // Modify private videos for non-owner
-        if (privateVideoIds.length > 0) {
+        // If the requester is not a member, process member-only videos
+        if (!isMember) {
           processedVideos = updateVideosForNonMembership(
             processedVideos,
-            privateVideoIds,
-            "private"
+            memberVideoIds,
+            "member" // Mark member videos with a "This video requires membership" message
           );
         }
-
-        // Check if requester is a member for the current user's videos
-        if (memberVideoIds.length > 0) {
-          const isMember = await checkMemberShip(requester, userId);
-
-          // If the requester is not a member, modify member-only videos
-          if (!isMember) {
-            processedVideos = updateVideosForNonMembership(
-              processedVideos,
-              memberVideoIds,
-              "member"
-            );
-          }
-        }
       }
+
       // Step 6: Add the processed (or unprocessed for owners) videos to the result
       resultVideos.push(...processedVideos);
     }
@@ -531,15 +513,9 @@ const checkMemberShip = async (requester, userId) => {
     if (!memberGroup || memberGroup.members.length === 0) {
       return false;
     }
-    console.log(memberGroup.members);
     // Use 'some' to check if the requester is a member
     let isMember = false;
     memberGroup.members.map((member) => {
-      console.log(
-        member.memberId.toString(),
-        requester,
-        member.memberId.toString() === requester
-      );
       if (member.memberId.toString() === requester) {
         isMember = true;
       }

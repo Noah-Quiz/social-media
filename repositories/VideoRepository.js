@@ -127,7 +127,7 @@ class VideoRepository {
           },
         },
         { $replaceRoot: { newRoot: "$merged" } },
-        { $project: { categoryIds: 0 } }, // Optionally hide categoryIds
+        { $project: { categoryIds: 0, isDeleted: 0, __v: 0, lastUpdated: 0 } }, // Optionally hide categoryIds
       ]);
       return result[0] || null;
     } catch (error) {
@@ -232,7 +232,9 @@ class VideoRepository {
             },
           },
           { $replaceRoot: { newRoot: "$merged" } },
-          { $project: { categoryIds: 0 } }, // Optionally hide categoryIds
+          {
+            $project: { categoryIds: 0, isDeleted: 0, __v: 0, lastUpdated: 0 },
+          }, // Optionally hide categoryIds
         ]);
       } else {
         videos = await Video.aggregate([
@@ -300,7 +302,9 @@ class VideoRepository {
             },
           },
           { $replaceRoot: { newRoot: "$merged" } },
-          { $project: { categoryIds: 0 } }, // Optionally hide categoryIds
+          {
+            $project: { categoryIds: 0, isDeleted: 0, __v: 0, lastUpdated: 0 },
+          }, // Optionally hide categoryIds
         ]);
       }
 
@@ -460,7 +464,7 @@ class VideoRepository {
           },
         },
         { $replaceRoot: { newRoot: "$merged" } },
-        { $project: { categoryIds: 0 } }, // Optionally hide categoryIds
+        { $project: { categoryIds: 0, isDeleted: 0, __v: 0, lastUpdated: 0 } }, // Optionally hide categoryIds
         { $skip: skip }, // Apply skip for pagination
         { $limit: +query.size }, // Apply limit for pagination
       ]);
