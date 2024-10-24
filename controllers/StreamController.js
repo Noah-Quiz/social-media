@@ -100,6 +100,7 @@ class StreamController {
 
   async getStreamController(req, res) {
     const { streamId } = req.params;
+    const requester = req.userId;
 
     try {
       if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
@@ -108,7 +109,7 @@ class StreamController {
         });
       }
 
-      const stream = await getStreamService(streamId);
+      const stream = await getStreamService(streamId, requester);
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -126,6 +127,7 @@ class StreamController {
 
   async getStreamsController(req, res) {
     const query = req.query;
+    const requester = req.userId;
 
     if (!query.page) query.page = 1;
     if (!query.size) query.size = 10;
@@ -141,7 +143,8 @@ class StreamController {
       }
 
       const { streams, total, page, totalPages } = await getStreamsService(
-        query
+        query,
+        requester
       );
 
       return res
