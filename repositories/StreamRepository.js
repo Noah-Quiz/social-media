@@ -46,6 +46,7 @@ class StreamRepository {
           $match: {
             _id: new mongoose.Types.ObjectId(streamId),
             isDeleted: false,
+            status: "live",
           },
         },
         {
@@ -174,7 +175,7 @@ class StreamRepository {
   }
 
   // Get all streams
-  async getStreamsRepository(query) {
+  async getStreamsRepository(query, requester) {
     try {
       const page = query.page || 1;
       const size = query.size || 10;
@@ -189,10 +190,17 @@ class StreamRepository {
         searchQuery.uid = query.uid;
       }
 
-      const totalStreams = await Stream.countDocuments(searchQuery);
+      const totalStreams = await Stream.countDocuments({
+        ...searchQuery,
+        status: "live",
+        $or: [
+          { enumMode: { $ne: "private" } }, // Include public and member streams
+          { userId: new mongoose.Types.ObjectId(requester) }, // Include private streams if the requester is the owner
+        ],
+      });
 
       const streams = await Stream.aggregate([
-        { $match: searchQuery },
+        { $match: { ...searchQuery, status: "live" } },
         { $skip: skip },
         { $limit: size },
         {
