@@ -4,14 +4,14 @@ const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const messageController = new MessageController();
 
 const messageRoutes = express.Router();
-messageRoutes.use(AuthMiddleware);
+// messageRoutes.use(AuthMiddleware);
 
 /**
  * @swagger
  * /api/messages:
  *   post:
  *     security:
- *      - bearerAuth: [] 
+ *      - bearerAuth: []
  *     summary: Create a new message
  *     tags: [Messages]
  *     requestBody:
@@ -35,7 +35,7 @@ messageRoutes.post("/", messageController.createAMessageController);
  * /api/messages/room-messages:
  *   get:
  *     security:
- *      - bearerAuth: [] 
+ *      - bearerAuth: []
  *     summary: Send verification email to user
  *     tags: [Messages]
  *     parameters:
@@ -52,14 +52,14 @@ messageRoutes.post("/", messageController.createAMessageController);
  *       500:
  *         description: Internal server error
  */
-messageRoutes.get("/room-messages", messageController.getMessagesController);
+messageRoutes.get("/:roomId", messageController.getMessagesController);
 
 /**
  * @swagger
  * /api/messages/{messageId}:
  *   delete:
  *     security:
- *      - bearerAuth: [] 
+ *      - bearerAuth: []
  *     summary: Delete a message by ID
  *     tags: [Messages]
  *     parameters:
@@ -83,7 +83,7 @@ messageRoutes.delete("/:messageId", messageController.deleteMessageController);
  * /api/messages/{messageId}:
  *   get:
  *     security:
- *      - bearerAuth: [] 
+ *      - bearerAuth: []
  *     summary: Get a message by ID
  *     tags: [Messages]
  *     parameters:
@@ -107,7 +107,7 @@ messageRoutes.get("/:messageId", messageController.getMessageController);
  * /api/messages/{messageId}:
  *   put:
  *     security:
- *      - bearerAuth: [] 
+ *      - bearerAuth: []
  *     summary: Update a message by ID
  *     tags: [Messages]
  *     parameters:

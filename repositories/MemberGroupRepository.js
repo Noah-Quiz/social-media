@@ -9,9 +9,6 @@ class MemberGroupRepository {
       const memberGroup = await MemberGroup.findOne({
         ownerId,
         isDeleted: false,
-      }).populate({
-        path: "members.memberId",
-        select: "fullName nickName avatar _id",
       });
       if (!memberGroup) {
         const group = await MemberGroup.create({ ownerId: ownerId });
@@ -223,7 +220,9 @@ class MemberGroupRepository {
         }
       }
 
-      console.log(`Number of people expired and removed: ${number}`);
+      console.log(
+        `Membership: Number of people expired and removed: ${number}`
+      );
     } catch (error) {
       console.log(`Error handling expired users: ${error.message}`);
     }
