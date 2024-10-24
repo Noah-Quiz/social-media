@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const session = require("express-session");
 const getLogger = require("./utils/logger.js");
 const swaggerDoc = require("./utils/swagger");
 const cors = require("cors");
@@ -25,6 +26,7 @@ const packageRoutes = require("./routes/AdvertisementPackageRoute.js");
 const advertisementRoutes = require("./routes/AdvertisementRoute.js");
 const memberPackRoutes = require("./routes/MemberPackRoute.js");
 const memberGroupRoutes = require("./routes/MemberGroupRoute.js");
+const paymentRouters = require("./routes/PaymentRoute.js");
 
 const app = express();
 const server = require("http").createServer(app);
@@ -48,92 +50,91 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+// Session configuration
+app.use(session({
+  secret: 'your_secret_key', // Replace with a strong secret
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // Set to true if using HTTPS
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const Vimeo = require("vimeo").Vimeo;
+// function handleLeaveRoom(socket, roomId) {
+//   const logger = getLogger("SOCKET");
+//   socket.leave(roomId);
+//   logger.info(`User left room: ${roomId}`);
+// }
 
-const vimeoClient = new Vimeo(
-  process.env.VIMEO_CLIENT_ID,
-  process.env.VIMEO_CLIENT_SECRET,
-  process.env.VIMEO_ACCESS_TOKEN
-);
+// // Listen for socket connections
+// let viewerCount = 0;
 
-function handleLeaveRoom(socket, roomId) {
-  const logger = getLogger("SOCKET");
-  socket.leave(roomId);
-  logger.info(`User left room: ${roomId}`);
-}
+// io.on("connection", (socket) => {
+//   const logger = getLogger("SOCKET");
 
-// Listen for socket connections
-let viewerCount = 0;
+//   logger.info(`User connected: ${socket.id}`);
 
-io.on("connection", (socket) => {
-  const logger = getLogger("SOCKET");
+//   // Increment viewer count when a user joins
+//   viewerCount++;
+//   io.emit("viewer_count", viewerCount);
+//   logger.info(`Viewer count incremented: ${viewerCount}`);
 
-  logger.info(`User connected: ${socket.id}`);
+//   // Decrement viewer count when a user disconnects
+//   socket.on("disconnect", () => {
+//     viewerCount--;
+//     io.emit("viewer_count", viewerCount);
+//     logger.info(`Viewer count decremented: ${viewerCount}`);
+//   });
 
-  // Increment viewer count when a user joins
-  viewerCount++;
-  io.emit("viewer_count", viewerCount);
-  logger.info(`Viewer count incremented: ${viewerCount}`);
+//   // Public Chat: Joining a default room
+//   socket.on("join_public_chat", () => {
+//     const room = "public_room";
+//     socket.join(room);
+//     logger.info(`${socket.id} joined public room`);
+//   });
 
-  // Decrement viewer count when a user disconnects
-  socket.on("disconnect", () => {
-    viewerCount--;
-    io.emit("viewer_count", viewerCount);
-    logger.info(`Viewer count decremented: ${viewerCount}`);
-  });
+//   // Private Chat: Join a private room between two users
+//   socket.on("join_private_chat", (roomId) => {
+//     socket.join(roomId);
+//     logger.info(`${socket.id} joined private room: ${roomId}`);
+//   });
 
-  // Public Chat: Joining a default room
-  socket.on("join_public_chat", () => {
-    const room = "public_room";
-    socket.join(room);
-    logger.info(`${socket.id} joined public room`);
-  });
+//   // Group Chat: Join a group room
+//   socket.on("join_group_chat", (groupId) => {
+//     socket.join(groupId);
+//     logger.info(`${socket.id} joined group room: ${room}`);
+//   });
 
-  // Private Chat: Join a private room between two users
-  socket.on("join_private_chat", (roomId) => {
-    socket.join(roomId);
-    logger.info(`${socket.id} joined private room: ${roomId}`);
-  });
+//   // Livestreaming Chat: Join livestream room
+//   socket.on("join_livestream_chat", (streamId) => {
+//     const room = `livestream_${streamId}`;
+//     socket.join(room);
+//     logger.info(`${socket.id} joined livestream room: ${room}`);
+//   });
 
-  // Group Chat: Join a group room
-  socket.on("join_group_chat", (groupId) => {
-    socket.join(groupId);
-    logger.info(`${socket.id} joined group room: ${room}`);
-  });
+//   // Sending messages
+//   socket.on("send_message", async ({ roomId, userId, message }) => {
+//     await createAMessageService(userId, roomId, message);
+//     const user = await getAnUserByIdService(userId);
+//     io.to(roomId).emit("receive_message", {
+//       sender: user.fullName,
+//       message,
+//       avatar: user.avatar,
+//     });
+//     logger.info(`Message sent to ${room}: ${message}`);
+//   });
 
-  // Livestreaming Chat: Join livestream room
-  socket.on("join_livestream_chat", (streamId) => {
-    const room = `livestream_${streamId}`;
-    socket.join(room);
-    logger.info(`${socket.id} joined livestream room: ${room}`);
-  });
+//   // Leaving a room (for private, group, livestream chat)
+//   socket.on("leave_room", (room) => {
+//     socket.leave(room);
+//     logger.info(`${socket.id} left room: ${room}`);
+//   });
 
-  // Sending messages
-  socket.on("send_message", async ({ roomId, userId, message }) => {
-    await createAMessageService(userId, roomId, message);
-    const user = await getAnUserByIdService(userId);
-    io.to(roomId).emit("receive_message", {
-      sender: user.fullName,
-      message,
-      avatar: user.avatar,
-    });
-    logger.info(`Message sent to ${room}: ${message}`);
-  });
-
-  // Leaving a room (for private, group, livestream chat)
-  socket.on("leave_room", (room) => {
-    socket.leave(room);
-    logger.info(`${socket.id} left room: ${room}`);
-  });
-
-  // Disconnect event
-  socket.on("disconnect", () => {
-    logger.info(`User disconnected: ${socket.id}`);
-  });
-});
+//   // Disconnect event
+//   socket.on("disconnect", () => {
+//     logger.info(`User disconnected: ${socket.id}`);
+//   });
+// });
 
 app.get("/", (req, res) => {
   res.send(
@@ -158,6 +159,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/payment", paymentRouters);
 app.use("/api/vnpay", vnpayRoutes);
 app.use("/api/receipts", receiptRoutes);
 app.use("/api/streams", streamRoutes);
