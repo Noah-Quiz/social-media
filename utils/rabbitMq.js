@@ -32,18 +32,12 @@ async function consumeMessageFromQueue(queue, callback) {
     channel = await connection.createChannel();
     await channel.assertQueue(queue, { durable: true });
 
-    connection.on('error', (err) => logger.error(`Connection error: ${err.message}`));
-    connection.on('close', () => {
-      logger.warn('Connection closed, reconnecting...');
-      setTimeout(() => consumeMessageFromQueue(queue, callback), 5000);
-    });
-
     channel.consume(
       queue,
       async (msg) => {
         if (msg) {
           try {
-            const { live_input_id, streamOnlineUrl } = JSON.parse(msg.content.toString());
+            const { live_input_id, streamOnlineUrl, streamServerUrl, thumbnailUrl } = JSON.parse(msg.content.toString());
 
             switch (queue) {
               case "bunny_video_dev_hung":
@@ -67,11 +61,14 @@ async function consumeMessageFromQueue(queue, callback) {
 
                 const query = { uid: live_input_id };
                 const stream = await connection.streamRepository.getStreamsRepository(query);
-                if (!stream?.streams?.length) {
+                if (!stream?.streams?.length === 0) {
                   throw new Error("Stream not found for given live input ID");
                 }
 
-                await connection.streamRepository.updateStreamRepository(stream.streams[0]?._id, { status: "live" });
+                await connection.streamRepository.updateStreamRepository(stream.streams[0]?._id, { 
+                  status: "live",
+                  streamServerUrl
+                });
                 break;
 
               case "live_stream.disconnected":
@@ -81,7 +78,7 @@ async function consumeMessageFromQueue(queue, callback) {
                 try {
                   const query2 = { uid: live_input_id };
                   const stream2 = await connection2.streamRepository.getStreamsRepository(query2);
-                  if (!stream2?.streams?.length) {
+                  if (!stream2?.streams?.length === 0) {
                     throw new Error("Stream not found for given live input ID");
                   }
 
@@ -93,6 +90,7 @@ async function consumeMessageFromQueue(queue, callback) {
                     webRTC: null,
                     webRTCPlayback: null,
                     streamOnlineUrl,
+                    uid: "",
                   };
                   await connection2.streamRepository.updateStreamRepository(stream2.streams[0]?._id, updateData, null, session);
 
@@ -106,12 +104,24 @@ async function consumeMessageFromQueue(queue, callback) {
                 } finally {
                   break;
                 }
+
+              case "bunny_livestream_thumbnail":
+                const connection3 = new DatabaseTransaction();
+
+                const query3 = { uid: live_input_id };
+                const stream3 = await connection3.streamRepository.getStreamsRepository(query3);
+                if (!stream3?.streams?.length === 0) {
+                  throw new Error("Stream not found for given live input ID");
+                }
+
+                await connection3.streamRepository.updateStreamRepository(stream3.streams[0]?._id, { thumbnailUrl });
+                break;
             }
 
             channel.ack(msg);
           } catch (error) {
             logger.error(`Error while processing message: ${error}`);
-            channel.nack(msg, false, false);
+            channel.nack(msg, true, false);
           }
         }
       },
