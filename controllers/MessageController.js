@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const {
   deleteMessageService,
   findMessageService,
-  findAllMessagesByRoomIdService,
+  findMessagesByRoomIdService,
   createAMessageService,
   updateMessageService,
 } = require("../services/MessageService");
@@ -43,20 +43,29 @@ class MessageController {
 
   async getMessagesController(req, res) {
     try {
-      const { roomId } = req.query; // Extract roomId from the query
+      const query = req.query;
+
+      if (!query.page || query.page < 1) query.page = 1;
+      if (!query.size || query.size < 1) query.size = 20; // Extract roomId from the query
+      const { roomId } = req.params;
 
       const getMessagesDto = new GetMessagesDto(roomId);
       await getMessagesDto.validate();
 
-      const messages = await findAllMessagesByRoomIdService(roomId);
+      const { messages, totalPages, page, totalMessages } =
+        await findMessagesByRoomIdService(roomId, query.page, query.size);
       if (!messages || messages.length === 0) {
         return res
           .status(404)
           .json({ message: `No messages found for room: ${roomId}` });
       }
-      res
-        .status(StatusCodeEnums.OK_200)
-        .json({ data: messages, message: "Success" });
+      res.status(StatusCodeEnums.OK_200).json({
+        messages,
+        totalPages,
+        page,
+        totalMessages,
+        message: "Success",
+      });
     } catch (error) {
       if (error instanceof CoreException) {
         res.status(error.code).json({ message: error.message });

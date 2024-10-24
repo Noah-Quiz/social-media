@@ -86,6 +86,13 @@ const streamSchema = new Schema({
     enum: ["public", "private", "unlisted"],
     default: "public",
   },
+  peakViewCount: {
+    type: Number,
+    default: 0,
+  },
+  currentViewCount: {
+    type: Number,
+  },
   ...baseEntitySchema.obj,
 });
 const Stream = mongoose.model("Stream", streamSchema);

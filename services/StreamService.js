@@ -1,3 +1,4 @@
+const Stream = require("../entities/StreamEntity.js");
 const User = require("../entities/UserEntity.js");
 const StatusCodeEnums = require("../enums/StatusCodeEnum.js");
 const CoreException = require("../exceptions/CoreException.js");
@@ -13,7 +14,6 @@ const getStreamService = async (streamId) => {
     const stream = await connection.streamRepository.getStreamRepository(
       streamId
     );
-
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
@@ -31,6 +31,17 @@ const getStreamsService = async (query) => {
     return data;
   } catch (error) {
     throw error;
+  }
+};
+
+const updateStreamViewsService = async (streamId, currentViewCount) => {
+  try {
+    const stream = await Stream.findByIdAndUpdate(streamId, {
+      $set: { currentViewCount },
+      $max: { peakViewCount: currentViewCount },
+    });
+  } catch (error) {
+    throw new Error(error.message);
   }
 };
 
@@ -111,7 +122,6 @@ const deleteStreamService = async (userId, streamId) => {
   }
 };
 
-
 const endStreamService = async (streamId) => {
   const connection = new DatabaseTransaction();
   const session = await connection.startTransaction();
@@ -166,7 +176,7 @@ const toggleLikeStreamService = async (streamId, userId, action) => {
     );
 
     if (!stream) {
-      throw new CoreException(StatusCodeEnum.NotFound_404, "Stream not found");
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
 
     const allowedActions = ["like", "unlike"];
@@ -194,4 +204,5 @@ module.exports = {
   deleteStreamService,
   createStreamService,
   toggleLikeStreamService,
+  updateStreamViewsService,
 };
