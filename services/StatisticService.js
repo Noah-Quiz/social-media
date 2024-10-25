@@ -1,0 +1,104 @@
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
+const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+
+const countNewUsersService = async () => {
+  try {
+    const connection = new DatabaseTransaction();
+    const today =
+      await connection.userRepository.countNewUsersTodayRepository();
+    const thisWeek =
+      await connection.userRepository.countNewUsersThisWeekRepository();
+    const thisMonth =
+      await connection.userRepository.countNewUsersThisMonthRepository();
+    const monthly =
+      await connection.userRepository.countNewUsersMonthlyRepository();
+    return {
+      today,
+      thisWeek,
+      thisMonth,
+      monthly,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
+const countRevenueService = async () => {
+  try {
+    const connection = new DatabaseTransaction();
+    const today =
+      await connection.receiptRepository.countTodayRevenueRepository();
+    const thisWeek =
+      await connection.receiptRepository.countThisWeekRevenueRepository();
+    const thisMonth =
+      await connection.receiptRepository.countThisMonthRevenue();
+    const monthly = await connection.receiptRepository.countMonthlyRevenue();
+    const total =
+      await connection.receiptRepository.countTotalRevenueRepository();
+    return {
+      today,
+      thisWeek,
+      thisMonth,
+      monthly,
+      total,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
+const countStreamsService = async () => {
+  try {
+    const connection = new DatabaseTransaction();
+    const today =
+      await connection.streamRepository.countTodayStreamsRepository();
+    const thisWeek =
+      await connection.streamRepository.countThisWeekStreamsRepository();
+    const thisMonth =
+      await connection.streamRepository.countThisMonthStreamsRepository();
+    const monthly =
+      await connection.streamRepository.countMonthlyStreamsRepository();
+    const total =
+      await connection.streamRepository.countTotalStreamsRepository();
+    return {
+      today,
+      thisWeek,
+      thisMonth,
+      monthly,
+      total,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
+const countVideosService = async () => {
+  try {
+    const connection = new DatabaseTransaction();
+    const today = await connection.videoRepository.countTodayVideosRepository();
+    const thisWeek =
+      await connection.videoRepository.countThisWeekVideosRepository();
+    const thisMonth =
+      await connection.videoRepository.countThisMonthVideosRepository();
+    const monthly =
+      await connection.videoRepository.countMonthlyVideosRepository();
+    const total = await connection.videoRepository.countTotalVideosRepository();
+    return {
+      today,
+      thisWeek,
+      thisMonth,
+      monthly,
+      total,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports = {
+  countNewUsersService,
+  countRevenueService,
+  countStreamsService,
+  countVideosService,
+};

@@ -2,6 +2,8 @@ const { default: mongoose } = require("mongoose");
 const MemberGroup = require("../entities/MemberGroupEntity");
 const MemberPack = require("../entities/MemberPackEntity");
 const User = require("../entities/UserEntity");
+const getLogger = require("../utils/logger");
+const logger = getLogger("MEMBERSHIP");
 const DatabaseTransaction = require("./DatabaseTransaction");
 class MemberGroupRepository {
   async getMemberGroupRepository(ownerId) {
@@ -220,8 +222,8 @@ class MemberGroupRepository {
         }
       }
 
-      console.log(
-        `Membership: Number of people expired and removed: ${number}`
+      logger.info(
+        `Number of people expired and removed: ${number}`
       );
     } catch (error) {
       console.log(`Error handling expired users: ${error.message}`);
