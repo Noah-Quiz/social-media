@@ -1,5 +1,6 @@
 const CreateExchangeRateDto = require("../dtos/ExchangeRate/CreateExchangeRateDto");
 const UpdateExchangeRateDto = require("../dtos/ExchangeRate/UpdateExchangeRateDto");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const {
   createExchangeRateService,
   deleteExchangeRateService,
@@ -9,30 +10,26 @@ const {
 
 class ExchangeRateController {
   async createExchangeRateController(req, res) {
+    const { name, value = 1, description } = req.body;
+    if (!name || !value) {
+      res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Please fill in all required fields" });
+    }
+    if (isNaN(value)) {
+      res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Value must be a number" });
+    }
     try {
-      const {
-        topUpBalanceRate = 1,
-        topUpCoinRate = 1000,
-        exchangeRateBalanceToCoin = 1000,
-        exchangeRateCoinToBalance = 0.0008,
-        coinPer1000View = 100000,
-      } = req.body;
       const createExchangeRateDto = new CreateExchangeRateDto(
-        topUpBalanceRate,
-        topUpCoinRate,
-        exchangeRateBalanceToCoin,
-        exchangeRateCoinToBalance,
-        coinPer1000View
+        name,
+        value,
+        description
       );
       await createExchangeRateDto.validate();
 
-      const result = await createExchangeRateService(
-        topUpBalanceRate,
-        topUpCoinRate,
-        exchangeRateBalanceToCoin,
-        exchangeRateCoinToBalance,
-        coinPer1000View
-      );
+      const result = await createExchangeRateService(name, value, description);
       res.status(201).json({ exchangeRate: result, message: "Success" });
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -57,31 +54,15 @@ class ExchangeRateController {
   async updateExchangeRateController(req, res) {
     try {
       const { id } = req.params;
-      const {
-        topUpBalanceRate,
-        topUpCoinRate,
-        exchangeRateBalanceToCoin,
-        exchangeRateCoinToBalance,
-        coinPer1000View,
-      } = req.body;
+      const { value, description } = req.body;
       const updateExchangeRateDto = new UpdateExchangeRateDto(
         id,
-        topUpBalanceRate,
-        topUpCoinRate,
-        exchangeRateBalanceToCoin,
-        exchangeRateCoinToBalance,
-        coinPer1000View
+        value,
+        description
       );
       await updateExchangeRateDto.validate();
 
-      const result = await updateExchangeRateService(
-        id,
-        topUpBalanceRate,
-        topUpCoinRate,
-        exchangeRateBalanceToCoin,
-        exchangeRateCoinToBalance,
-        coinPer1000View
-      );
+      const result = await updateExchangeRateService(id, value, description);
       res.status(200).json({ exchangeRate: result, message: "Success" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
