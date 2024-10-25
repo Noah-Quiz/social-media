@@ -27,11 +27,11 @@ class CategoryController {
 
       if (req.file) {
         await checkFileSuccess(imageUrl);
-      }
 
-      return res
-        .status(StatusCodeEnums.Created_201)
-        .json({ category: result, message: "Success" });
+        return res
+          .status(StatusCodeEnums.Created_201)
+          .json({ category: result, message: "Success" });
+      }
     } catch (error) {
       if (req.file) {
         await deleteFile(req.file.path);
