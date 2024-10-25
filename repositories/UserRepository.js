@@ -520,6 +520,68 @@ class UserRepository {
       throw new Error(`Error getting following: ${error.message}`);
     }
   }
+
+  async countNewUsersTodayRepository() {
+    try {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+      return await User.countDocuments({
+        isDeleted: false,
+        dateCreated: { $gte: startOfDay, $lte: endOfDay },
+      });
+    } catch (error) {
+      throw new Error(`Error counting new users today: ${error.message}`);
+    }
+  }
+
+  async countNewUsersThisWeekRepository() {
+    try {
+      const today = new Date();
+      const startOfWeek = new Date(
+        today.setDate(today.getDate() - today.getDay())
+      );
+
+      return await User.countDocuments({
+        isDeleted: false,
+        dateCreated: { $gte: startOfWeek },
+      });
+    } catch (error) {
+      throw new Error(`Error counting new users this week: ${error.message}`);
+    }
+  }
+
+  async countNewUsersThisMonthRepository() {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1); // Đầu tháng
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    return await User.countDocuments({
+      isDeleted: false,
+      dateCreated: { $gte: startOfMonth },
+    });
+  }
+
+  async countNewUsersMonthlyRepository() {
+    const result = await User.aggregate([
+      {
+        $match: { dateCreated: { $ne: null }, isDeleted: false }, // Lọc ra các bản ghi có createdAt là null
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$dateCreated" },
+            month: { $month: "$dateCreated" },
+          },
+          newUsersCount: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ]);
+    return result;
+  }
   async updateUserPointRepository(userId, amount, type) {
     try {
       const user = await User.findOne({
