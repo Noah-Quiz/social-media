@@ -12,6 +12,7 @@ const {
   deleteLiveStreamByUidService,
   toggleLikeStreamService,
   getRecommendedStreamsService,
+  getRelevantStreamsService,
 } = require("../services/StreamService");
 const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
 const { createMuxToken } = require("../utils/muxLiveStream");
@@ -370,7 +371,7 @@ class StreamController {
         categoryIds,
       }
 
-      await getRecommendedStreamsService(data)
+      const streams = await getRelevantStreamsService(data)
 
       return res.status(StatusCodeEnums.OK_200).json({ streams, message: "Success" });
     } catch (error) {

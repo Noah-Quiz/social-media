@@ -80,6 +80,7 @@ const streamSchema = new Schema({
   ],
   endedAt: {
     type: Date,
+    default: null,
   },
   enumMode: {
     type: String,
