@@ -50,19 +50,19 @@ const getAllCategoryService = async () => {
 const updateCategoryService = async (categoryId, categoryData) => {
   try {
     const connection = new DatabaseTransaction();
-    
-    const session = await connection.startTransaction();
+
+    const category = await connection.categoryRepository.getCategoryRepository(categoryId);
+    if (!category) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Category not found");
+    }
 
     const updatedCategory = await connection.categoryRepository.updateCategoryRepository(
       categoryId,
       categoryData,
-      session
     );
 
-    await connection.commitTransaction();
     return updatedCategory;
   } catch (error) {
-    await connection.abortTransaction();
     throw error;
   }
 };

@@ -8,6 +8,9 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *   schemas:
  *     CreateCommentDto:
  *       type: object
+ *       required:
+ *        - videoId
+ *        - content
  *       properties:
  *         videoId:
  *           type: string

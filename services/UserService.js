@@ -86,6 +86,15 @@ module.exports = {
   updateUserEmailByIdService: async (userId, email) => {
     try {
       const connection = new DatabaseTransaction();
+      const existingUser = await connection.userRepository.findUserByEmail(
+        email
+      );
+      if (existingUser) {
+        throw new CoreException(
+          StatusCodeEnum.Conflict_409,
+          "Email is already in use !"
+        );
+      }
       const user = await connection.userRepository.findUserById(userId);
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");

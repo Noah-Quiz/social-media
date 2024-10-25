@@ -27,6 +27,7 @@ const UploadVideoDto = require("../dtos/Video/UploadVideoDto");
 const DeleteVideoDto = require("../dtos/Video/DeleteVideoDto");
 const GenerateVideoEmbedUrlTokenDto = require("../dtos/Video/GenerateVideoEmbedUrlTokenDto");
 const { sendMessageToQueue } = require("../utils/rabbitMq");
+const CreateVideoDto = require("../dtos/Video/CreateVideoDto");
 require("dotenv").config();
 
 class VideoController {
@@ -34,6 +35,13 @@ class VideoController {
     try {
       const { title, description, enumMode, categoryIds } = req.body;
       const userId = req.userId;
+      const createVideoDto = new CreateVideoDto(
+        title,
+        description,
+        enumMode,
+        categoryIds
+      );
+      await createVideoDto.validate();
 
       const bunnyVideo = await createBunnyStreamVideoService(
         process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
