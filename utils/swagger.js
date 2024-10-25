@@ -32,6 +32,10 @@ const options = {
     ],
     tags: [
       {
+        name: "Statistics",
+        description: "Operations about statistics",
+      },
+      {
         name: "Auth",
         description: "Operations about Authorization",
         // externalDocs: {

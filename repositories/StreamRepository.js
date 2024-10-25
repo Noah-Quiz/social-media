@@ -265,6 +265,66 @@ class StreamRepository {
     }
   }
 
+  async countTotalStreamsRepository() {
+    return await Stream.countDocuments({ isDeleted: false });
+  }
+
+  async countTodayStreamsRepository() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    return await Stream.countDocuments({
+      isDeleted: false,
+      dateCreated: {
+        $gte: new Date(currentYear, currentMonth - 1, now.getDate()),
+        $lt: new Date(currentYear, currentMonth - 1, now.getDate() + 1),
+      },
+    });
+  }
+
+  async countThisWeekStreamsRepository() {
+    const now = new Date();
+    const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+    const streamsThisWeek = await Stream.countDocuments({
+      isDeleted: false,
+      dateCreated: { $gte: weekStart },
+    });
+    return streamsThisWeek;
+  }
+
+  async countThisMonthStreamsRepository() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    const streamsThisMonth = await Stream.countDocuments({
+      isDeleted: false,
+      dateCreated: {
+        $gte: new Date(currentYear, currentMonth - 1, 1),
+        $lt: new Date(currentYear, currentMonth, 1),
+      },
+    });
+    return streamsThisMonth;
+  }
+
+  async countMonthlyStreamsRepository() {
+    const streamsMonthly = await Stream.aggregate([
+      {
+        $match: { isDeleted: false },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$dateCreated" },
+            month: { $month: "$dateCreated" },
+          },
+          streamCount: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ]);
+    return streamsMonthly;
   async getRecommendedStreamsRepository(data) {
     try {
       const { userId } = data;
