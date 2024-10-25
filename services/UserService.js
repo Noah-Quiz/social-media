@@ -298,4 +298,17 @@ module.exports = {
       throw error;
     }
   },
+  async updatePointService(userId, amount, type) {
+    try {
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.updateUserPointRepository(
+        userId,
+        amount,
+        type
+      );
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  },
 };

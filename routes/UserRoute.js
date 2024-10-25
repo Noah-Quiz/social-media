@@ -12,6 +12,8 @@ const route = express.Router();
 
 route.use(AuthMiddleware);
 
+route.put("/point", userController.updatePointController);
+
 route.get("/follower/:userId", userController.getFollowerController);
 route.get("/following/:userId", userController.getFollowingController);
 

@@ -221,7 +221,6 @@ class MemberGroupRepository {
           number++;
         }
       }
-
       logger.info(
         `Number of people expired and removed: ${number}`
       );
