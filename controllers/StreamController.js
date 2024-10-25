@@ -273,11 +273,10 @@ class StreamController {
       // Create live input using Cloudflare service
       const creatorId = userId;
       const streamName = title;
-      const cloudflareStream = null;
-      // const cloudflareStream = await createCloudFlareStreamLiveInput(
-      //   creatorId,
-      //   streamName
-      // );
+      const cloudflareStream = await createCloudFlareStreamLiveInput(
+        creatorId,
+        streamName
+      );
 
       // Prepare stream data with live input details
       const streamData = {
