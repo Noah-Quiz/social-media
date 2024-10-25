@@ -17,7 +17,7 @@ paypal.configure({
 
 paymentRouters.get(
   "/paypal",
-//   AuthMiddleware,
+  AuthMiddleware,
   paymentController.payWithPayPalController
 );
 
@@ -26,6 +26,6 @@ paymentRouters.get(
   paymentController.successPayPalController
 );
 
-paymentRouters.get("/paypal/cancel", (req, res) => res.send("Cancelled"));
+paymentRouters.get("/paypal/cancel", paymentController.cancelPayPalController);
 
 module.exports = paymentRouters;
