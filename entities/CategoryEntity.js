@@ -3,8 +3,8 @@ const baseEntitySchema = require("./BaseEntity");
 
 const categorySchema = new mongoose.Schema({
   name: { type: String, required: true },
-  imageUrl: String,
-  ...baseEntitySchema.obj, // Spread operator to include base entity fields
+  imageUrl: { type: String, default: ""},
+  ...baseEntitySchema.obj,
 });
 
 const Category = mongoose.model("Category", categorySchema);

@@ -63,7 +63,7 @@ const loginService = async (email, password, ipAddress) => {
     if (!user)
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
 
-    await checkIpAddressMismatch(user, ipAddress);
+    // await checkIpAddressMismatch(user, ipAddress);
 
     if (user.isActive === false)
       throw new CoreException(
@@ -116,7 +116,7 @@ const loginGoogleService = async (user, ipAddress) => {
       user.emails[0].value
     );
     if (existingUser) {
-      await checkIpAddressMismatch(existingUser, ipAddress);
+      // await checkIpAddressMismatch(existingUser, ipAddress);
 
       if (existingUser.verify === false) {
         existingUser.verify = true;
@@ -150,7 +150,7 @@ const loginAppleService = async (user, ipAddress) => {
       user.email
     );
     if (existingUser) {
-      await checkIpAddressMismatch(existingUser, ipAddress);
+      // await checkIpAddressMismatch(existingUser, ipAddress);
       
       if (existingUser.verify === false) {
         existingUser.verify = true;

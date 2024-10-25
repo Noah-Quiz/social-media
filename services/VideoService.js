@@ -19,29 +19,6 @@ const createVideoService = async (
   }
 ) => {
   try {
-    if (["public", "private", "unlisted", "member"].includes(enumMode)) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Invalid video accessibility"
-      );
-    }
-
-    if (categoryIds && !Array.isArray(categoryIds)) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "CategoryIds must be an array"
-      );
-    }
-    if (categoryIds && categoryIds.length !== 0) {
-      categoryIds.forEach((id) => {
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-          throw new CoreException(
-            StatusCodeEnums.BadRequest_400,
-            `Invalid category ID`
-          );
-        }
-      });
-    }
 
     const connection = new DatabaseTransaction();
 

@@ -80,10 +80,11 @@ const streamSchema = new Schema({
   ],
   endedAt: {
     type: Date,
+    default: null,
   },
   enumMode: {
     type: String,
-    enum: ["public", "private", "unlisted"],
+    enum: ["public", "private", "unlisted", "member"],
     default: "public",
   },
   peakViewCount: {

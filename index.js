@@ -1,5 +1,7 @@
 require("dotenv").config();
 const express = require("express");
+const session = require("express-session");
+const MemoryStore = require("memorystore")(session);
 const getLogger = require("./utils/logger.js");
 const swaggerDoc = require("./utils/swagger");
 const cors = require("cors");
@@ -23,8 +25,9 @@ const packageRoutes = require("./routes/AdvertisementPackageRoute.js");
 const advertisementRoutes = require("./routes/AdvertisementRoute.js");
 const memberPackRoutes = require("./routes/MemberPackRoute.js");
 const memberGroupRoutes = require("./routes/MemberGroupRoute.js");
+const paymentRouters = require("./routes/PaymentRoute.js");
 const { updateStreamViewsService } = require("./services/StreamService.js");
-
+const path = require("path");
 const app = express();
 const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
@@ -47,6 +50,20 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+// Session configuration
+app.use(
+  session({
+    cookie: { maxAge: 86400000 }, // 1 day
+    store: new MemoryStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
+    }),
+    resave: false,
+    secret: "abcxyz",
+    saveUninitialized: true,
+  })
+);
+app.use("/", express.static(__dirname));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -81,6 +98,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/StreauserStreams", roomRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/payment", paymentRouters);
 app.use("/api/vnpay", vnpayRoutes);
 app.use("/api/receipts", receiptRoutes);
 app.use("/api/streams", streamRoutes);
