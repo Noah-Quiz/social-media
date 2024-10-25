@@ -66,7 +66,7 @@ class UserRepository {
   async getAnUserByIdRepository(userId) {
     try {
       const user = await User.findOne({ _id: userId, isDeleted: false }).select(
-        "email fullName nickName follow followBy avatar phoneNumber"
+        "email fullName nickName follow followBy avatar phoneNumber role"
       );
       if (user) {
         return user;
@@ -518,6 +518,43 @@ class UserRepository {
       return user.length > 0 ? user[0].following : [];
     } catch (error) {
       throw new Error(`Error getting following: ${error.message}`);
+    }
+  }
+  async updateUserPointRepository(userId, amount, type) {
+    try {
+      const user = await User.findOne({
+        _id: new mongoose.Types.ObjectId(userId),
+        isDeleted: false,
+      });
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      switch (type) {
+        case "add":
+          user.point += amount;
+          break;
+        case "remove":
+          if (user.point < amount) {
+            throw new Error("Insufficient point");
+          }
+          user.point -= amount;
+          break;
+        case "exchange":
+          if (user.point < amount) {
+            throw new Error("Insufficient point");
+          }
+          user.point -= amount;
+          user.wallet.coin += amount;
+          break;
+        default:
+          break;
+      }
+      await user.save();
+
+      return { point: user.point, wallet: user.wallet };
+    } catch (error) {
+      throw new Error(`Error updating user point: ${error.message}`);
     }
   }
 }
