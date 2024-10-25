@@ -4,7 +4,13 @@ class CategoryRepository {
   async createCategoryRepository(data, session = null) {
     try {
       const category = await Category.create([data], { session });
-      return category[0];
+      const result = category[0].toObject();
+
+      // Remove unwanted fields
+      delete result.__v;
+      delete result.lastUpdated;
+      delete result.isDeleted;
+      return result;
     } catch (error) {
       throw new Error(`Error creating category: ${error.message}`);
     }
@@ -12,8 +18,14 @@ class CategoryRepository {
 
   async getCategoryRepository(id) {
     try {
-      const category = await Category.findOne({ _id: id, isDeleted: "false" });
-      return category;
+      const category = await Category.findOne({ _id: id, isDeleted: false });
+      const result = category.toObject();
+
+      // Remove unwanted fields
+      delete result.__v;
+      delete result.lastUpdated;
+      delete result.isDeleted;
+      return result;
     } catch (error) {
       throw new Error(`Error getting category: ${error.message}`);
     }
@@ -21,7 +33,16 @@ class CategoryRepository {
 
   async getAllCategoryRepository() {
     try {
-      const categories = await Category.find({ isDeleted: "false" });
+      let categories = await Category.find({ isDeleted: false }).lean();
+
+      // Remove unwanted fields from each category
+      categories = categories.map((category) => {
+        delete category.__v;
+        delete category.lastUpdated;
+        delete category.isDeleted;
+        return category;
+      });
+
       return categories;
     } catch (error) {
       throw new Error(`Error getting all categories: ${error.message}`);
@@ -31,11 +52,21 @@ class CategoryRepository {
   async updateCategoryRepository(categoryId, categoryData, session = null) {
     categoryData.lastUpdated = new Date();
     try {
-      const category = await Category.findByIdAndUpdate(categoryId, categoryData, {
-        new: true,
-        session,
-      });
-      return category;
+      const category = await Category.findByIdAndUpdate(
+        categoryId,
+        categoryData,
+        {
+          new: true,
+          session,
+        }
+      );
+      const result = category.toObject();
+
+      // Remove unwanted fields
+      delete result.__v;
+      delete result.lastUpdated;
+      delete result.isDeleted;
+      return result;
     } catch (error) {
       throw new Error(`Error updating category: ${error.message}`);
     }
@@ -53,8 +84,13 @@ class CategoryRepository {
         },
         { session }
       );
+      const result = category.toObject();
 
-      return category;
+      // Remove unwanted fields
+      delete result.__v;
+      delete result.lastUpdated;
+
+      return result;
     } catch (error) {
       throw new Error(`Error deleting category: ${error.message}`);
     }
