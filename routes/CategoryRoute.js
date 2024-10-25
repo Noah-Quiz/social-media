@@ -53,7 +53,6 @@ router.get("/", categoryController.getAllCategoryController);
 router.post(
   "/",
   requireRole(UserEnum.ADMIN),
-  uploadImage.single("categoryImg"),
   categoryController.createCategoryController
 );
 

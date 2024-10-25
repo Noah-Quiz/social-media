@@ -57,7 +57,6 @@ class PaymentController {
     const payerId = req.query.PayerID;
     const paymentId = req.query.paymentId;
     const userId = req.session.userId;
-
     const execute_payment_json = {
       payer_id: payerId,
       //   transactions: [
