@@ -4,7 +4,14 @@ class GiftRepository {
   async createGiftRepository(giftData) {
     try {
       const gift = await Gift.create(giftData);
-      return gift;
+      const result = gift.toObject();
+
+      // Remove unwanted fields
+      delete result.__v;
+      delete result.lastUpdated;
+      delete result.isDeleted;
+
+      return result;
     } catch (error) {
       throw new Error(`Error creating gift: ${error.message}`);
     }
@@ -13,7 +20,18 @@ class GiftRepository {
   async getGiftRepository(id) {
     try {
       const gift = await Gift.findOne({ _id: id, isDeleted: false });
-      return gift;
+      if (!gift) {
+        return null;
+      }
+
+      const result = gift.toObject();
+
+      // Remove unwanted fields
+      delete result.__v;
+      delete result.lastUpdated;
+      delete result.isDeleted;
+
+      return result;
     } catch (error) {
       throw new Error(`Error getting gift: ${error.message}`);
     }
@@ -21,7 +39,18 @@ class GiftRepository {
 
   async getAllGiftRepository() {
     try {
-      const gifts = await Gift.find({ isDeleted: false });
+      let gifts = await Gift.find({ isDeleted: false })
+        .sort({ valuePerUnit: 1 })
+        .lean();
+
+      // Remove unwanted fields from each gift
+      gifts = gifts.map((gift) => {
+        delete gift.__v;
+        delete gift.lastUpdated;
+        delete gift.isDeleted;
+        return gift;
+      });
+
       return gifts;
     } catch (error) {
       throw new Error(`Error getting all gifts: ${error.message}`);
@@ -31,8 +60,7 @@ class GiftRepository {
   async updateGiftRepository(id, name, image, price) {
     try {
       // Fetch the gift by ID
-      const gift = await this.getGiftRepository(id);
-
+      const gift = await Gift.findById(id);
       if (!gift) {
         throw new Error("Gift not found");
       }
@@ -49,8 +77,15 @@ class GiftRepository {
       }
 
       // Save the updated gift
-      await gift.save();
-      return gift;
+      const updatedGift = await gift.save();
+      const result = updatedGift.toObject();
+
+      // Remove unwanted fields
+      delete result.__v;
+      delete result.lastUpdated;
+      delete result.isDeleted;
+
+      return result;
     } catch (error) {
       throw new Error(`Error updating gift: ${error.message}`);
     }
@@ -60,10 +95,22 @@ class GiftRepository {
     try {
       const gift = await Gift.findOneAndUpdate(
         { _id: id },
-        { $set: { isDeleted: true } },
-        { new: true } // Return the updated document
+        {
+          $set: { isDeleted: true, lastUpdated: new Date() },
+        },
+        { new: true }
       );
-      return gift;
+      if (!gift) {
+        return null;
+      }
+
+      const result = gift.toObject();
+
+      // Remove unwanted fields
+      delete result.__v;
+      delete result.lastUpdated;
+
+      return result;
     } catch (error) {
       throw new Error(`Error deleting gift: ${error.message}`);
     }
