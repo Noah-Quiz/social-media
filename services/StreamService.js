@@ -276,7 +276,7 @@ const getRecommendedStreamsService = async (data) => {
   }
 }
 
-const getRelevantStreamsService = async (data) => {z
+const getRelevantStreamsService = async (data) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -288,7 +288,7 @@ const getRelevantStreamsService = async (data) => {z
       throw new CoreException(StatusCodeEnums.NotFound_404, "Streamer not found");
     }
 
-    const result = await connection.streamRepository.getRecommendedStreamsRepository(data);
+    const result = await connection.streamRepository.getRelevantStreamsRepository(data);
 
     return result;
   } catch (error) {
