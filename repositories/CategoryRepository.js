@@ -19,6 +19,10 @@ class CategoryRepository {
   async getCategoryRepository(id) {
     try {
       const category = await Category.findOne({ _id: id, isDeleted: false });
+      if (!category) {
+        return null;
+      }
+
       const result = category.toObject();
 
       // Remove unwanted fields
@@ -60,6 +64,9 @@ class CategoryRepository {
           session,
         }
       );
+      if (!category) {
+        return null;
+      }
       const result = category.toObject();
 
       // Remove unwanted fields
@@ -84,6 +91,9 @@ class CategoryRepository {
         },
         { session }
       );
+      if (!category) {
+        return null;
+      }
       const result = category.toObject();
 
       // Remove unwanted fields
