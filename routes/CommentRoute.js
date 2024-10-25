@@ -32,7 +32,7 @@ router.post("/", commentController.createCommentController);
 
 /**
  * @swagger
- * /api/comments/children:
+ * /api/comments/{commentId}/children:
  *   get:
  *     security:
  *      - bearerAuth: []
@@ -44,7 +44,7 @@ router.post("/", commentController.createCommentController);
  *        schema:
  *         type: string
  *         required: true
- *      - in: path
+ *      - in: query
  *        name: limit
  *        schema:
  *         type: string
@@ -57,7 +57,7 @@ router.post("/", commentController.createCommentController);
  *       description: Internal server error
  *
  */
-router.get("/children", commentController.getChildrenCommentsController);
+router.get("/:commentId/children", commentController.getChildrenCommentsController);
 
 /**
  * @swagger
@@ -77,7 +77,6 @@ router.get("/children", commentController.getChildrenCommentsController);
  *        name: sortBy
  *        schema:
  *         type: string
- *         required: true
  *     responses:
  *      200:
  *       description: Get comments of a video successfully
@@ -91,7 +90,7 @@ router.get("/video/:videoId", commentController.getVideoCommentsController);
 
 /**
  * @swagger
- * /api/comments/like/{id}:
+ * /api/comments/{commentId}/like:
  *   put:
  *     security:
  *      - bearerAuth: []
@@ -99,7 +98,7 @@ router.get("/video/:videoId", commentController.getVideoCommentsController);
  *     tags: [Comments]
  *     parameters:
  *      - in: path
- *        name: id
+ *        name: commentId
  *        schema:
  *         type: string
  *         required: true
@@ -112,11 +111,11 @@ router.get("/video/:videoId", commentController.getVideoCommentsController);
  *       description: Internal server error
  *
  */
-router.put("/like/:id", commentController.likeCommentController);
+router.put("/:commentId/like", commentController.likeCommentController);
 
 /**
  * @swagger
- * /api/comments/unlike/{id}:
+ * /api/comments/{commentId}/unlike:
  *   put:
  *     security:
  *      - bearerAuth: []
@@ -124,7 +123,7 @@ router.put("/like/:id", commentController.likeCommentController);
  *     tags: [Comments]
  *     parameters:
  *      - in: path
- *        name: id
+ *        name: commentId
  *        schema:
  *         type: string
  *         required: true
@@ -136,11 +135,11 @@ router.put("/like/:id", commentController.likeCommentController);
  *      500:
  *       description: Internal server error
  */
-router.put("/unlike/:id", commentController.unlikeCommentController);
+router.put("/:commentId/unlike", commentController.unlikeCommentController);
 
 /**
  * @swagger
- * /api/comments/{id}:
+ * /api/comments/{commentId}:
  *   get:
  *     security:
  *      - bearerAuth: []
@@ -148,7 +147,7 @@ router.put("/unlike/:id", commentController.unlikeCommentController);
  *     tags: [Comments]
  *     parameters:
  *      - in: path
- *        name: id
+ *        name: commentId
  *        schema:
  *         type: string
  *         required: true
@@ -160,11 +159,11 @@ router.put("/unlike/:id", commentController.unlikeCommentController);
  *      500:
  *       description: Internal server error
  */
-router.get("/:id", commentController.getCommentController);
+router.get("/:commentId", commentController.getCommentController);
 
 /**
  * @swagger
- * /api/comments/{id}:
+ * /api/comments/{commentId}:
  *   put:
  *     security:
  *      - bearerAuth: []
@@ -172,7 +171,7 @@ router.get("/:id", commentController.getCommentController);
  *     tags: [Comments]
  *     parameters:
  *      - in: path
- *        name: id
+ *        name: commentId
  *        schema:
  *         type: string
  *         required: true
@@ -184,11 +183,11 @@ router.get("/:id", commentController.getCommentController);
  *      500:
  *       description: Internal server error
  */
-router.put("/:id", commentController.updateCommentController);
+router.put("/:commentId", commentController.updateCommentController);
 
 /**
  * @swagger
- * /api/comments/{id}:
+ * /api/comments/{commentId}:
  *   delete:
  *     security:
  *      - bearerAuth: []
@@ -196,7 +195,7 @@ router.put("/:id", commentController.updateCommentController);
  *     tags: [Comments]
  *     parameters:
  *      - in: path
- *        name: id
+ *        name: commentId
  *        schema:
  *         type: string
  *         required: true
@@ -208,6 +207,6 @@ router.put("/:id", commentController.updateCommentController);
  *      500:
  *       description: Internal server error
  */
-router.delete("/:id", commentController.deleteCommentController);
+router.delete("/:commentId", commentController.deleteCommentController);
 
 module.exports = router;

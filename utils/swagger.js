@@ -26,7 +26,7 @@ const options = {
         description: "Development server",
       },
       {
-        url: "https://social-media-ofm3.onrender.com",
+        url: "https://social-media-z5a2.onrender.com",
         description: "Production server",
       },
     ],

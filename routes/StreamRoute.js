@@ -9,6 +9,41 @@ const streamRoutes = express.Router();
 
 streamRoutes.get("/live-input", streamController.listLiveInputsController);
 
+
+/**
+ * @swagger
+ * /api/streams/relevant:
+ *   get:
+ *     summary: Get streams
+ *     tags: [Streams]
+ *     responses:
+ *      200:
+ *       description: Create stream successfully
+ *      400:
+ *       description: Bad request
+ *      500:
+ *       description: Internal server error
+ *
+ */
+streamRoutes.get("/relevant", AuthMiddleware, streamController.getRelevantStreamsController);
+
+/**
+ * @swagger
+ * /api/streams/recommendation:
+ *   get:
+ *     summary: Get streams
+ *     tags: [Streams]
+ *     responses:
+ *      200:
+ *       description: Create stream successfully
+ *      400:
+ *       description: Bad request
+ *      500:
+ *       description: Internal server error
+ *
+ */
+streamRoutes.get("/recommendation", AuthMiddleware, streamController.getRecommendedStreamsController);
+
 // streamRoutes.post("/live-input", AuthMiddleware, streamController.createLiveInputController);
 
 // streamRoutes.put(
@@ -39,7 +74,7 @@ streamRoutes.get("/live-input", streamController.listLiveInputsController);
  *       description: Internal server error
  *
  */
-streamRoutes.get("/", streamController.getStreamsController);
+streamRoutes.get("/", AuthMiddleware, streamController.getStreamsController);
 
 /**
  * @swagger
@@ -126,7 +161,11 @@ streamRoutes.delete(
  *       description: Internal server error
  *
  */
-streamRoutes.get("/:streamId", streamController.getStreamController);
+streamRoutes.get(
+  "/:streamId",
+  AuthMiddleware,
+  streamController.getStreamController
+);
 
 /**
  * @swagger

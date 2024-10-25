@@ -134,7 +134,7 @@ class UserController {
   }
 
   async updateUserEmailByIdController(req, res) {
-    const { userId } = req.params;
+    const userId  = req.userId;
     const { email } = req.body;
 
     if (req.userId !== userId) {
