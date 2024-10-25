@@ -26,7 +26,7 @@ const { validMongooseObjectId } = require("../../utils/validator");
  */
 class UpdateGiftDto {
   constructor(id, name, image, valuePerUnit) {
-    this.id;
+    this.id = id;
     this.name = name;
     this.image = image;
     this.valuePerUnit = valuePerUnit;
