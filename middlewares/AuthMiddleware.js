@@ -21,7 +21,7 @@ const AuthMiddleware = async (req, res, next) => {
   try {
     const { _id, ip } = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     logger.info(`User ID from token: ${_id}`);
-    logger.info(`IP Address from token: ${ip}`);
+    logger.info(`IP Address from token: ${ip}`);  
 
     // if (ip && ip !== ipAddress) {
     //   return res.status(StatusCodeEnums.Unauthorized_401).json({
