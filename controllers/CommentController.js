@@ -73,6 +73,7 @@ class CommentController {
   async deleteCommentController(req, res) {
     const { commentId } = req.params;
     const userId = req.userId;
+
     try {
       const comment = await softDeleteCommentService(userId, commentId);
       return res

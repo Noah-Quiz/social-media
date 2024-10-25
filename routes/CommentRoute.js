@@ -57,7 +57,10 @@ router.post("/", commentController.createCommentController);
  *       description: Internal server error
  *
  */
-router.get("/:commentId/children", commentController.getChildrenCommentsController);
+router.get(
+  "/:commentId/children",
+  commentController.getChildrenCommentsController
+);
 
 /**
  * @swagger
