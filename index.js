@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
+const MemoryStore = require("memorystore")(session);
 const getLogger = require("./utils/logger.js");
 const swaggerDoc = require("./utils/swagger");
 const cors = require("cors");
@@ -52,13 +53,18 @@ app.use(
   })
 );
 // Session configuration
-app.use(session({
-  secret: 'your_secret_key', // Replace with a strong secret
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false } // Set to true if using HTTPS
-}));
-app.use('/', express.static(__dirname));
+app.use(
+  session({
+    cookie: { maxAge: 86400000 }, // 1 day
+    store: new MemoryStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
+    }),
+    resave: false,
+    secret: "abcxyz",
+    saveUninitialized: true,
+  })
+);
+app.use("/", express.static(__dirname));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
