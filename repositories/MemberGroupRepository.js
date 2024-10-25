@@ -221,7 +221,7 @@ class MemberGroupRepository {
       }
 
       console.log(
-        `Membership: Number of people expired and removed: ${number}`
+        `[MEMBERSHIP]: Number of people expired and removed: ${number}`
       );
     } catch (error) {
       console.log(`Error handling expired users: ${error.message}`);
