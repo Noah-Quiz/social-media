@@ -92,6 +92,7 @@ const streamSchema = new Schema({
   },
   currentViewCount: {
     type: Number,
+    default: 0,
   },
   ...baseEntitySchema.obj,
 });

@@ -10,8 +10,6 @@ const messageRoutes = require("./routes/MessageRoute");
 const videoRoutes = require("./routes/VideoRoute");
 const userRoute = require("./routes/UserRoute");
 const roomRoutes = require("./routes/RoomRoute");
-const { createAMessageService } = require("./services/MessageService");
-const { getAnUserByIdService } = require("./services/UserService");
 const commentRoutes = require("./routes/CommentRoute");
 const vnpayRoutes = require("./routes/VnpayRoute");
 const receiptRoutes = require("./routes/ReceiptRoute");
@@ -60,73 +58,6 @@ const vimeoClient = new Vimeo(
   process.env.VIMEO_ACCESS_TOKEN
 );
 
-function handleLeaveRoom(socket, roomId) {
-  const logger = getLogger("SOCKET");
-  socket.leave(roomId);
-  logger.info(`User left room: ${roomId}`);
-}
-
-// Listen for socket connections
-let viewersCount = 0;
-
-io.on("connection", (socket) => {
-  const logger = getLogger("SOCKET");
-  const userStreams = new Set();
-  logger.info(`User connected: ${socket.id}`);
-
-  // Public Chat: Joining a default room
-  socket.on("join_public_chat", () => {
-    const room = "public_room";
-    socket.join(room);
-    logger.info(`${socket.id} joined public room`);
-  });
-
-  // Private Chat: Join a private room between two users
-  socket.on("join_private_chat", (roomId) => {
-    socket.join(roomId);
-    logger.info(`${socket.id} joined private room: ${roomId}`);
-  });
-
-  // Group Chat: Join a group room
-  socket.on("join_group_chat", (groupId) => {
-    socket.join(groupId);
-    logger.info(`${socket.id} joined group room: ${room}`);
-  });
-
-  // Livestreaming Chat: Join livestream room
-  socket.on("join_livestream_chat", (streamId) => {
-    const room = `livestream_${streamId}`;
-    socket.join(room);
-    userStreams.add(streamId);
-    updateViewersCount(streamId);
-    logger.info(`${socket.id} joined livestream room: ${room}`);
-  });
-
-  // Sending messages
-  socket.on("send_message", async ({ roomId, userId, message }) => {
-    await createAMessageService(userId, roomId, message);
-    const user = await getAnUserByIdService(userId);
-    io.to(roomId).emit("receive_message", {
-      sender: user.fullName,
-      message,
-      avatar: user.avatar,
-    });
-    logger.info(`Message sent to ${room}: ${message}`);
-  });
-
-  // Leaving a room (for private, group, livestream chat)
-  socket.on("leave_livestream", (streamId) => {
-    handleLeaveLiveStream(streamId);
-    userStreams.delete(streamId);
-    logger.info(`${socket.id} left room: ${streamId}`);
-  });
-
-  // Disconnect event
-  socket.on("disconnect", () => {
-    logger.info(`User disconnected: ${socket.id}`);
-  });
-});
-
 app.get("/", (req, res) => {
   res.send(
     "<a href='/api/auth/google'>Login with Google</a><br>" +
@@ -159,7 +90,7 @@ app.use("/api/gift-history/", giftHistoryRoutes);
 app.use("/api/exchange-rate/", exchangeRateRoutes);
 app.use("/api/member-pack", memberPackRoutes);
 app.use("/api/member-group", memberGroupRoutes);
-
+app.use("/api/advertisement-packages", packageRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 
@@ -174,15 +105,3 @@ server.listen(port, (err) => {
     swaggerDoc(app, port);
   }
 });
-
-//Update viewers count of a live stream
-function updateViewersCount(streamId) {
-  const viewersCount = io.sockets.adapter.rooms.get(streamId)?.size || 0;
-  updateStreamViewsService(streamId, { currentViewCount: viewersCount });
-  io.to(streamId).emit("viewers_count", viewersCount);
-}
-
-function handleLeaveLiveStream(socket, streamId) {
-  socket.leave(streamId);
-  updateStreamViewsService(streamId);
-}
