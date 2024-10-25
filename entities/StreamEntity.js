@@ -80,6 +80,7 @@ const streamSchema = new Schema({
   ],
   endedAt: {
     type: Date,
+    default: null,
   },
   enumMode: {
     type: String,
@@ -92,6 +93,7 @@ const streamSchema = new Schema({
   },
   currentViewCount: {
     type: Number,
+    default: 0,
   },
   ...baseEntitySchema.obj,
 });

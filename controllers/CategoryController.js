@@ -17,16 +17,26 @@ class CategoryController {
   async createCategoryController(req, res) {
     try {
       const { name } = req.body;
+      let imageUrl = req.file ? req.file.path : null;
       const createCategoryDto = new CreateCategoryDto(name);
       await createCategoryDto.validate();
 
-      const categoryData = { name };
+      const categoryData = { name, imageUrl };
 
       const result = await createCategoryService(categoryData);
-      return res
-        .status(StatusCodeEnums.Created_201)
-        .json({ category: result, message: "Success" });
+
+      if (req.file) {
+        await checkFileSuccess(imageUrl);
+
+        return res
+          .status(StatusCodeEnums.Created_201)
+          .json({ category: result, message: "Success" });
+      }
     } catch (error) {
+      if (req.file) {
+        await deleteFile(req.file.path);
+      }
+
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
@@ -88,9 +98,11 @@ class CategoryController {
       await updateCategoryDto.validate();
 
       const result = await updateCategoryService(categoryId, categoryData);
+
       if (req.file) {
         await checkFileSuccess(imageUrl);
       }
+
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ category: result, message: "Update category successfully" });
@@ -98,6 +110,7 @@ class CategoryController {
       if (req.file) {
         await deleteFile(req.file.path);
       }
+
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
       } else {
