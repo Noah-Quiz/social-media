@@ -9,25 +9,13 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *     CreateVideoDto:
  *       type: object
  *       required:
- *         - userId
  *         - title
- *         - description
- *         - categoryIds
- *         - enumMode
- *         - bunnyId
- *         - videoUrl
  *       properties:
- *         userId:
- *           type: string
- *           default: 670621c0fe62bfae8a44d099
- *           description: ID of the user
  *         title:
  *           type: string
- *           default: example
  *           description: Title of the video
  *         description:
  *           type: string
- *           default: example description
  *           description: Description of the video
  *         categoryIds:
  *           type: array
@@ -37,14 +25,6 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           type: string
  *           default: public
  *           description: Value of enum mode [public, private, unlisted]
- *         bunnyId:
- *           type: string
- *           default: 12345
- *           description: Bunny CDN ID returned and placed here
- *         videoUrl:
- *           type: string
- *           default: https://example.com
- *           description: URL of the video
  */
 
 class CreateVideoDto {
@@ -56,7 +36,13 @@ class CreateVideoDto {
   }
   async validate() {
     try {
-      if (["public", "private", "unlisted"].includes(this.enumMode)) {
+      if (!this.title) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Title is required"
+        );
+      }
+      if (!["public", "private", "unlisted", "member"].includes(this.enumMode)) {
         throw new CoreException(
           StatusCodeEnums.BadRequest_400,
           "Invalid video accessibility"
