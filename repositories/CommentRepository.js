@@ -76,6 +76,7 @@ class CommentRepository {
               avatar: "$user.avatar",
             },
             level: 1,
+            videoId: 1,
           },
         },
       ]);
@@ -139,6 +140,7 @@ class CommentRepository {
             },
             responseTo: 1,
             level: 1,
+            videoId: 1,
           },
         },
       ];
@@ -345,6 +347,19 @@ class CommentRepository {
     ]);
 
     return comment;
+  }
+  async softDeleteCommentRepository(id) {
+    try {
+      const comment = await Comment.findById(id);
+      if (!comment) {
+        throw new Error("No comment found");
+      }
+      comment.isDeleted = true;
+      await comment.save();
+      return comment;
+    } catch (error) {
+      throw new Error(`Error deleting comment: ${error.message}`);
+    }
   }
 }
 
