@@ -38,13 +38,14 @@ class ExchangeRateController {
 
   async deleteExchangeRateController(req, res) {
     const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({ message: "Invalid ID format" });
+    const { name } = req.body;
+    console.log(name);
+    if (!name) {
+      return res.status(400).json({ message: "Invalid name" });
     }
 
     try {
-      const result = await deleteExchangeRateService(id);
+      const result = await deleteExchangeRateService(id, name);
       return res.status(200).json({ exchangeRate: result, message: "Success" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -54,15 +55,21 @@ class ExchangeRateController {
   async updateExchangeRateController(req, res) {
     try {
       const { id } = req.params;
-      const { value, description } = req.body;
+      const { name, value, description } = req.body;
       const updateExchangeRateDto = new UpdateExchangeRateDto(
         id,
+        name,
         value,
         description
       );
       await updateExchangeRateDto.validate();
 
-      const result = await updateExchangeRateService(id, value, description);
+      const result = await updateExchangeRateService(
+        id,
+        name,
+        value,
+        description
+      );
       res.status(200).json({ exchangeRate: result, message: "Success" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
