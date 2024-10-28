@@ -18,21 +18,25 @@ class StreamRepository {
   // End a stream by setting the endedAt field
   async endStreamRepository(streamId, session) {
     try {
-      const stream = await Stream.findByIdAndUpdate(
+      const stream = await Stream.findById(streamId);
+      const endedAt = Date.now();
+      const duration = endedAt - stream.createdAt;
+      const updatedStream = await Stream.findByIdAndUpdate(
         streamId,
         {
-          endedAt: Date.now(),
+          endedAt: endedAt,
           lastUpdated: Date.now(),
           status: "offline",
+          duration: duration,
         },
         { new: true, runValidators: true, session }
       );
 
-      if (!stream) {
+      if (!updatedStream) {
         throw new Error(`Stream with ID ${streamId} not found`);
       }
 
-      return stream;
+      return updatedStream;
     } catch (error) {
       throw new Error(`Error ending stream: ${error.message}`);
     }
@@ -502,6 +506,71 @@ class StreamRepository {
       return relevantStreams;
     } catch (error) {
       throw error;
+    }
+  }
+
+  async calculateAvgViewsRepository() {
+    try {
+      const result = await Stream.aggregate([
+        {
+          $match: { isDeleted: false, peakViewCount: { $gt: 0 } }, // Include all records that are not deleted & have peak view count > 0
+        },
+        {
+          $group: {
+            _id: null,
+            totalPeakViewCount: { $sum: "$peakViewCount" }, // Sum of all peak view counts
+            count: { $sum: 1 }, // Count of all documents
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            averagePeakViewCount: {
+              $divide: ["$totalPeakViewCount", "$count"],
+            }, // Divide total by count
+          },
+        },
+      ]);
+      return result.length > 0 ? Math.floor(result[0].averagePeakViewCount) : 0;
+    } catch (error) {
+      throw new Error(`Error calculating average views: ${error.message}`);
+    }
+  }
+  async calculateHighestViewsRepository() {
+    try {
+      const result = await Stream.aggregate([
+        {
+          $match: { isDeleted: false, peakViewCount: { $gt: 0 } }, // Include all records that are not deleted & have peak view count > 0
+        },
+        {
+          $sort: { peakViewCount: -1 },
+        },
+        {
+          $limit: 1,
+        },
+      ]);
+      return result.length > 0 ? result[0].peakViewCount : 0;
+    } catch (error) {
+      throw new Error(`Error calculating highest view: ${error.message}`);
+    }
+  }
+
+  async calculateLowestViewsRepository() {
+    try {
+      const result = await Stream.aggregate([
+        {
+          $match: { isDeleted: false, peakViewCount: { $gt: 0 } }, // Include all records that are not deleted & have peak view count > 0
+        },
+        {
+          $sort: { peakViewCount: 1 },
+        },
+        {
+          $limit: 1,
+        },
+      ]);
+      return result.length > 0 ? result[0].peakViewCount : 0;
+    } catch (error) {
+      throw new Error(`Error calculating lowest view: ${error.message}`);
     }
   }
 }
