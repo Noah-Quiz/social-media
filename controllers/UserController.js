@@ -16,6 +16,7 @@ const {
   getStatsByDateService,
   getFollowerService,
   getFollowingService,
+  updatePointService,
 } = require("../services/UserService");
 const mongoose = require("mongoose");
 const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
@@ -134,7 +135,7 @@ class UserController {
   }
 
   async updateUserEmailByIdController(req, res) {
-    const userId  = req.userId;
+    const userId = req.userId;
     const { email } = req.body;
 
     if (req.userId !== userId) {
@@ -364,6 +365,35 @@ class UserController {
       return res
         .status(StatusCodeEnums.InternalServerError_500)
         .json(error.message);
+    }
+  }
+  async updatePointController(req, res) {
+    const { amount, type } = req.body;
+    const userId = req.userId;
+    if (!amount || !type || !userId) {
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Please fill in all the required field" });
+    }
+    if (isNaN(amount) || amount < 0) {
+      return res.status(StatusCodeEnums.BadRequest_400).json({
+        message: "Invalid amount",
+      });
+    }
+    if (!["add", "remove", "exchange"].includes(type)) {
+      return res.status(StatusCodeEnums.BadRequest_400).json({
+        message: "Invalid type",
+      });
+    }
+    try {
+      const result = await updatePointService(userId, amount, type);
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ data: result, message: "Success" });
+    } catch (error) {
+      return res
+        .status(StatusCodeEnums.InternalServerError_500)
+        .json({ message: error.message });
     }
   }
 }
