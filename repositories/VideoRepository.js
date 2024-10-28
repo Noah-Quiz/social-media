@@ -479,6 +479,68 @@ class VideoRepository {
       throw new Error(`Error when fetching all videos: ${error.message}`);
     }
   }
+
+  async countTotalVideosRepository() {
+    return await Video.countDocuments({ isDeleted: false });
+  }
+
+  async countTodayVideosRepository() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    return await Video.countDocuments({
+      isDeleted: false,
+      dateCreated: {
+        $gte: new Date(currentYear, currentMonth - 1, now.getDate()),
+        $lt: new Date(currentYear, currentMonth - 1, now.getDate() + 1),
+      },
+    });
+  }
+
+  async countThisWeekVideosRepository() {
+    const now = new Date();
+    const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+    const videosThisWeek = await Video.countDocuments({
+      isDeleted: false,
+      dateCreated: { $gte: weekStart },
+    });
+    return videosThisWeek;
+  }
+
+  async countThisMonthVideosRepository() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    const videosThisMonth = await Video.countDocuments({
+      isDeleted: false,
+      dateCreated: {
+        $gte: new Date(currentYear, currentMonth - 1, 1),
+        $lt: new Date(currentYear, currentMonth, 1),
+      },
+    });
+    return videosThisMonth;
+  }
+
+  async countMonthlyVideosRepository() {
+    const videosMonthly = await Video.aggregate([
+      {
+        $match: { isDeleted: false },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$dateCreated" },
+            month: { $month: "$dateCreated" },
+          },
+          videoCount: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ]);
+    return videosMonthly;
+  }
 }
 
 module.exports = VideoRepository;
