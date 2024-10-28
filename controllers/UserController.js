@@ -19,7 +19,7 @@ const {
   updatePointService,
 } = require("../services/UserService");
 const mongoose = require("mongoose");
-const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
+const { deleteFile, checkFileSuccess } = require("../middlewares/storeFile");
 const UpdateUserPasswordDto = require("../dtos/User/UpdateUserPasswordDto");
 const UpdateUserEmailDto = require("../dtos/User/UpdateUserEmailDto");
 const GetUserWalletDto = require("../dtos/User/GetUserWalletDto");

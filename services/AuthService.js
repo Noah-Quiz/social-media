@@ -11,7 +11,6 @@ const getLogger = require("../utils/logger.js");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const {
-  checkStreakDate,
   handleLoginStreakService,
 } = require("./LoginStreakService.js");
 const signUpService = async (
@@ -411,7 +410,7 @@ const createResetPasswordTokenService = async (email) => {
   </tr>
   <tr>
     <td>
-      <a href="http://localhost:4000/api/auth/reset-password/${token}">Click here to reset your password</a>
+      <a href="${process.env.APP_BASE_URL}/api/auth/reset-password/${token}">Click here to reset your password</a>
     </td>
   </tr> 
   <tr>
