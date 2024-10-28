@@ -3,7 +3,7 @@ const CategoryController = require("../controllers/CategoryController");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const requireRole = require("../middlewares/requireRole");
 const UserEnum = require("../enums/UserEnum");
-const { uploadImage } = require("../utils/stores/storeImage");
+const { uploadFile } = require("../middlewares/storeFile");
 
 const router = express.Router();
 const categoryController = new CategoryController();
@@ -119,7 +119,7 @@ router.get("/:categoryId", categoryController.getCategoryController);
 router.put(
   "/:categoryId",
   requireRole(UserEnum.ADMIN),
-  uploadImage.single("categoryImg"),
+  uploadFile.single("categoryImg"),
   categoryController.updateCategoryController
 );
 
