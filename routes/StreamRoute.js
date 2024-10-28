@@ -7,9 +7,6 @@ const checkUserSuspended = require("../middlewares/checkUserSuspended");
 const streamController = new StreamController();
 const streamRoutes = express.Router();
 
-streamRoutes.get("/live-input", streamController.listLiveInputsController);
-
-
 /**
  * @swagger
  * /api/streams/relevant:
@@ -43,21 +40,6 @@ streamRoutes.get("/relevant", AuthMiddleware, streamController.getRelevantStream
  *
  */
 streamRoutes.get("/recommendation", AuthMiddleware, streamController.getRecommendedStreamsController);
-
-// streamRoutes.post("/live-input", AuthMiddleware, streamController.createLiveInputController);
-
-// streamRoutes.put(
-//   "/live-input/:streamId",
-//   AuthMiddleware,
-//   uploadImage.single("streamThumbnail"),
-//   streamController.updateLiveInputController
-// );
-
-// streamRoutes.delete(
-//   "/live-input/:streamId",
-//   AuthMiddleware,
-//   streamController.deleteLiveInputController
-// );
 
 /**
  * @swagger
@@ -200,35 +182,6 @@ streamRoutes.patch(
   AuthMiddleware,
   uploadImage.single("streamThumbnail"),
   streamController.updateStreamController
-);
-
-/**
- * @swagger
- * /api/streams/end/{streamId}:
- *   post:
- *     security:
- *      - bearerAuth: []
- *     summary: End a stream by Id
- *     tags: [Streams]
- *     parameters:
- *      - in: path
- *        name: streamId
- *        schema:
- *         type: string
- *         required: true
- *     responses:
- *      200:
- *       description: End stream successfully
- *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
- *
- */
-streamRoutes.post(
-  "/end/:streamId",
-  AuthMiddleware,
-  streamController.endStreamController
 );
 
 streamRoutes.post(
