@@ -104,9 +104,10 @@ class UserController {
       );
       await updateUserProfileDto.validate();
       if (req.userId !== userId) {
-        return res
-          .status(StatusCodeEnums.Forbidden_403)
-          .json({ message: "Forbidden access" });
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "Forbidden access"
+        );
       }
 
       const result = await updateUserProfileByIdService(userId, {
@@ -169,9 +170,10 @@ class UserController {
       const { oldPassword, newPassword } = req.body;
 
       if (req.userId !== userId) {
-        return res
-          .status(StatusCodeEnums.Forbidden_403)
-          .json({ message: "Forbidden access" });
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "Forbidden access"
+        );
       }
       const updateUserPasswordDto = new UpdateUserPasswordDto(
         userId,
