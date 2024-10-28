@@ -5,6 +5,7 @@ const {
   countRevenueService,
   countStreamsService,
   countVideosService,
+  calculateStreamViewsService,
 } = require("../services/StatisticService");
 
 class StatisticController {
@@ -65,6 +66,24 @@ class StatisticController {
       res
         .status(StatusCodeEnums.OK_200)
         .json({ videos, message: "Count videos successfully" });
+    } catch (error) {
+      if (error instanceof CoreException) {
+        res.status(error.code).json({ message: error.message });
+      } else {
+        res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
+    }
+  }
+
+  async calculateStreamViewsController(req, res) {
+    try {
+      const streams = await calculateStreamViewsService();
+      res.status(StatusCodeEnums.OK_200).json({
+        streams,
+        message: "Calculate stream views successfully",
+      });
     } catch (error) {
       if (error instanceof CoreException) {
         res.status(error.code).json({ message: error.message });

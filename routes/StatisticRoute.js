@@ -71,6 +71,11 @@ statisticRoutes.get(
   statisticController.countTotalStreamsController
 );
 
+statisticRoutes.get(
+  "/streams/view",
+  statisticController.calculateStreamViewsController
+);
+
 /**
  * @swagger
  * /api/statistics/videos:
@@ -89,4 +94,5 @@ statisticRoutes.get(
  *         description: Internal server error
  */
 statisticRoutes.get("/videos", statisticController.countTotalVideosController);
+
 module.exports = statisticRoutes;
