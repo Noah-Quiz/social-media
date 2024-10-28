@@ -7,6 +7,7 @@ const {
   sendVerificationCode,
   checkVerification,
 } = require("../utils/phoneVerification");
+const getLogger = require("../utils/logger.js");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const signUpService = async (
@@ -18,7 +19,7 @@ const signUpService = async (
 ) => {
   try {
     const connection = new DatabaseTransaction();
-
+    const logger = getLogger("SIGNUP");
     const existingEmail = await connection.userRepository.findUserByEmail(
       email
     );
@@ -40,14 +41,22 @@ const signUpService = async (
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-
+    const rate =
+      await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
     const user = await connection.userRepository.createUser({
       fullName: fullName,
       email: email,
       phoneNumber: formattedPhoneNumber,
       password: hashedPassword,
       ipAddress: ipAddress,
+      streak: 1,
+      point: rate.dailyPoint + rate.streakBonus * 1,
     });
+    logger.info(
+      `[LOGIN]: new user signup successfully, receive ${
+        rate.dailyPoint + rate.streakBonus * 1
+      }`
+    );
 
     return user;
   } catch (error) {
@@ -100,6 +109,66 @@ const loginService = async (email, password, ipAddress) => {
       );
     }
 
+    const type = checkStreakDate(new Date(), user.lastLogin);
+    const rate =
+      await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
+    const logger = getLogger("LOGIN");
+    switch (type) {
+      //user login at first day of the month
+      case 0:
+        user.streak = 1;
+        user.point += rate.dailyPoint + rate.streakBonus * user.streak;
+
+        // Replace console.log with logger.info
+        logger.info(
+          `Case: new month, streak: ${user.streak}, user ${
+            user._id
+          } successfully received: ${
+            rate.dailyPoint + rate.streakBonus * user.streak
+          } point, current point: ${user.point}`
+        );
+        break;
+
+      //user have already logged in the same day and receive their point
+      case 1:
+        logger.info(
+          `Case: same day, streak: ${
+            user.streak
+          }, You've already received today's login bonus: ${
+            rate.dailyPoint + rate.streakBonus * user.streak
+          } points, current point: ${user.point}`
+        );
+        break;
+      case 2:
+        user.streak += 1;
+        user.point += rate.dailyPoint + rate.streakBonus * user.streak;
+        logger.info(
+          `Case: next day, streak: ${user.streak}, user ${
+            user._id
+          } successfully received: ${
+            rate.dailyPoint + rate.streakBonus * user.streak
+          } points, current point: ${user.point}`
+        );
+
+        break;
+      case 3:
+        user.streak = 1;
+
+        user.point += rate.dailyPoint + rate.streakBonus * user.streak;
+
+        logger.info(
+          `[LOGIN]: Case: not next day, streak: ${user.streak}, user ${
+            user._id
+          } successfully received: ${
+            rate.dailyPoint + rate.streakBonus * user.streak
+          } points, current point: ${user.point}`
+        );
+
+        break;
+      default:
+        break;
+    }
+
     user.lastLogin = Date.now();
     await user.save();
 
@@ -115,6 +184,9 @@ const loginGoogleService = async (user, ipAddress) => {
     const existingUser = await connection.userRepository.findUserByEmail(
       user.emails[0].value
     );
+    const rate =
+      await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
+    const logger = getLogger("LOGIN"); // Create a LOGIN labeled logger instance
     if (existingUser) {
       // await checkIpAddressMismatch(existingUser, ipAddress);
 
@@ -127,17 +199,88 @@ const loginGoogleService = async (user, ipAddress) => {
       if (existingUser.avatar === "") {
         existingUser.avatar = user.photos[0].value;
       }
+      const type = checkStreakDate(new Date(), existingUser.lastLogin);
+
+      switch (type) {
+        //user login at first day of the month
+        case 0:
+          existingUser.streak = 1;
+          existingUser.point +=
+            rate.dailyPoint + rate.streakBonus * existingUser.streak;
+
+          // Replace console.log with logger.info
+          logger.info(
+            `Case: new month, streak: ${existingUser.streak}, user ${
+              existingUser._id
+            } successfully received: ${
+              rate.dailyPoint + rate.streakBonus * existingUser.streak
+            } point, current point: ${existingUser.point}`
+          );
+          break;
+
+        //user have already logged in the same day and receive their point
+        case 1:
+          // Replace console.log with logger.info
+          logger.info(
+            `Case: same day, streak: ${
+              existingUser.streak
+            }, You've already received today's login bonus: ${
+              rate.dailyPoint + rate.streakBonus * existingUser.streak
+            } points, current point: ${existingUser.point}`
+          );
+          break;
+        case 2:
+          existingUser.streak += 1;
+          existingUser.point +=
+            rate.dailyPoint + rate.streakBonus * existingUser.streak;
+          logger.info(
+            `Case: next day, streak: ${existingUser.streak}, user ${
+              user._id
+            } successfully received: ${
+              rate.dailyPoint + rate.streakBonus * existingUser.streak
+            } points, current point: ${existingUser.point}`
+          );
+
+          break;
+        case 3:
+          existingUser.streak = 1;
+
+          existingUser.point +=
+            rate.dailyPoint + rate.streakBonus * existingUser.streak;
+
+          logger.info(
+            `[LOGIN]: Case: not next day, streak: ${
+              existingUser.streak
+            }, user ${existingUser._id} successfully received: ${
+              rate.dailyPoint + rate.streakBonus * existingUser.streak
+            } points, current point: ${existingUser.point}`
+          );
+
+          break;
+        default:
+          break;
+      }
+
       existingUser.lastLogin = Date.now();
       await existingUser.save();
       return existingUser;
     }
+
     const newUser = await connection.userRepository.createUser({
       fullName: user.displayName,
       email: user.emails[0].value,
       googleId: user.id,
       avatar: user.photos[0].value,
       verify: true,
+      streak: 1,
+      point: rate.dailyPoint + rate.streakBonus * 1,
     });
+    logger.info(
+      `[LOGIN]: new user login by google successfully, receive ${
+        rate.dailyPoint + rate.streakBonus * 1
+      }`
+    );
+
     return newUser;
   } catch (error) {
     throw new Error(`Error when login with Google: ${error.message}`);
@@ -149,14 +292,77 @@ const loginAppleService = async (user, ipAddress) => {
     const existingUser = await connection.userRepository.findUserByEmail(
       user.email
     );
+    const rate =
+      await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
+    const logger = getLogger("LOGIN"); // Create a LOGIN labeled logger instance
     if (existingUser) {
       // await checkIpAddressMismatch(existingUser, ipAddress);
-      
+      checkStreakDate();
       if (existingUser.verify === false) {
         existingUser.verify = true;
       }
       if (existingUser.appleUser === false) {
         existingUser.appleUser = true;
+      }
+      const type = checkStreakDate(new Date(), existingUser.lastLogin);
+
+      switch (type) {
+        //user login at first day of the month
+        case 0:
+          existingUser.streak = 1;
+          existingUser.point +=
+            rate.dailyPoint + rate.streakBonus * existingUser.streak;
+
+          // Replace console.log with logger.info
+          logger.info(
+            `Case: new month, streak: ${existingUser.streak}, user ${
+              existingUser._id
+            } successfully received: ${
+              rate.dailyPoint + rate.streakBonus * existingUser.streak
+            } point, current point: ${existingUser.point}`
+          );
+          break;
+
+        //user have already logged in the same day and receive their point
+        case 1:
+          logger.info(
+            `Case: same day, streak: ${
+              existingUser.streak
+            }, You've already received today's login bonus: ${
+              rate.dailyPoint + rate.streakBonus * existingUser.streak
+            } points, current point: ${existingUser.point}`
+          );
+          break;
+        case 2:
+          existingUser.streak += 1;
+          existingUser.point +=
+            rate.dailyPoint + rate.streakBonus * existingUser.streak;
+          logger.info(
+            `Case: next day, streak: ${existingUser.streak}, user ${
+              existingUser._id
+            } successfully received: ${
+              rate.dailyPoint + rate.streakBonus * existingUser.streak
+            } points, current point: ${existingUser.point}`
+          );
+
+          break;
+        case 3:
+          existingUser.streak = 1;
+
+          existingUser.point +=
+            rate.dailyPoint + rate.streakBonus * existingUser.streak;
+
+          logger.info(
+            `[LOGIN]: Case: not next day, streak: ${
+              existingUser.streak
+            }, user ${existingUser._id} successfully received: ${
+              rate.dailyPoint + rate.streakBonus * existingUser.streak
+            } points, current point: ${existingUser.point}`
+          );
+
+          break;
+        default:
+          break;
       }
       existingUser.lastLogin = Date.now();
       await existingUser.save();
@@ -166,7 +372,15 @@ const loginAppleService = async (user, ipAddress) => {
       fullName: user.name,
       email: user.email,
       verify: true,
+      streak: 1,
+      point: rate.dailyPoint + rate.streakBonus * 1,
     });
+    logger.info(
+      `[LOGIN]: new user login by apple successfully, receive ${
+        rate.dailyPoint + rate.streakBonus * 1
+      }`
+    );
+
     return newUser;
   } catch (error) {
     throw new Error(`Error when login with Apple: ${error.message}`);
@@ -412,6 +626,26 @@ const resetPasswordService = async (token, newPassword) => {
     return user;
   } catch (error) {
     throw error;
+  }
+};
+const checkStreakDate = (date1, date2) => {
+  // Normalize the dates to midnight to avoid time issues
+  const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
+  const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
+
+  // Calculate the difference in days
+  const diffInTime = d1 - d2;
+  const diffInDays = diffInTime / (1000 * 60 * 60 * 24);
+
+  //same day
+  if (diffInDays === 0) {
+    return 1; //same day
+  } else if (d1.getDate() === 1) {
+    return 0; //user login first day of the month
+  } else if (diffInDays === 1) {
+    return 2; // Next day
+  } else {
+    return 3; // More than one day apart
   }
 };
 

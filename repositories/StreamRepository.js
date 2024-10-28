@@ -15,30 +15,13 @@ class StreamRepository {
     }
   }
 
-  // End a stream by setting the endedAt field
-  async endStreamRepository(streamId, session) {
+async getStreamByCloudflareId(uid) {
     try {
-      const stream = await Stream.findById(streamId);
-      const endedAt = Date.now();
-      const duration = endedAt - stream.createdAt;
-      const updatedStream = await Stream.findByIdAndUpdate(
-        streamId,
-        {
-          endedAt: endedAt,
-          lastUpdated: Date.now(),
-          status: "offline",
-          duration: duration,
-        },
-        { new: true, runValidators: true, session }
-      );
+      const stream = await Stream.findOne({ uid });
 
-      if (!updatedStream) {
-        throw new Error(`Stream with ID ${streamId} not found`);
-      }
-
-      return updatedStream;
+      return stream;
     } catch (error) {
-      throw new Error(`Error ending stream: ${error.message}`);
+      throw new Error(`Error getting stream: ${error.message}`);
     }
   }
 

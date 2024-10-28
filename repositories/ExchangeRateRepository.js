@@ -53,6 +53,7 @@ class ExchangeRateRepository {
 
   // Soft delete an exchange rate by marking it as isDeleted, can accept either name or id
   async softDeleteRateRepository({ name, id }) {
+    console.log(name);
     try {
       const query = id
         ? { _id: new mongoose.Types.ObjectId(id) }

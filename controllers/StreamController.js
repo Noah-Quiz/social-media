@@ -5,102 +5,21 @@ const {
   createStreamService,
   deleteStreamService,
   getStreamService,
-  endStreamService,
   getStreamsService,
   updateStreamService,
-  resetStreamKeyService,
-  deleteLiveStreamByUidService,
   toggleLikeStreamService,
   getRecommendedStreamsService,
   getRelevantStreamsService,
 } = require("../services/StreamService");
 const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
-const { createMuxToken } = require("../utils/muxLiveStream");
-const {
-  createCloudFlareStreamLiveInput,
-  listCloudFlareStreamLiveInputs,
-  deleteCloudFlareStreamLiveInput,
-} = require("../services/CloudFlareStreamService");
-const { sendMessageToQueue } = require("../utils/rabbitMq");
 const CreateStreamDto = require("../dtos/Stream/CreateStreamDto");
 const DeleteStreamDto = require("../dtos/Stream/DeleteStreamDto");
 const UpdateStreamDto = require("../dtos/Stream/UpdateStreamDto");
 const StreamRecommendationDto = require("../dtos/Stream/StreamRecommendationDto");
+const { default: axios } = require("axios");
 
+const baseUrl = process.env.CLOUDFLARE_SERVER || 'http://localhost:3101'
 class StreamController {
-  async listLiveInputsController(req, res) {
-    try {
-      const lives = await listCloudFlareStreamLiveInputs();
-      console.log(lives);
-      return res
-        .status(StatusCodeEnums.OK_200)
-        .json({ lives, message: "Success" });
-    } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
-    }
-  }
-
-  // async createLiveInputController(req, res) {
-  //   try {
-  //     const { streamName, description } = req.body;
-  //     const creatorId = req.userId;
-
-  //     const cloudflareStream = await createCloudFlareStreamLiveInput(
-  //       creatorId,
-  //       streamName
-  //     );
-
-  //     console.log(cloudflareStream);
-  //     await createStreamService({
-  //       userId: creatorId,
-  //       title: streamName,
-  //       description,
-  //       uid: cloudflareStream.uid,
-  //       rtmps: cloudflareStream.rtmps,
-  //       rtmpsPlayback: cloudflareStream.rtmpsPlayback,
-  //       srt: cloudflareStream.srt,
-  //       srtPlayback: cloudflareStream.srtPlayback,
-  //       webRTC: cloudflareStream.webRTC,
-  //       webRTCPlayback: cloudflareStream.webRTCPlayback,
-  //       status: cloudflareStream.status,
-  //       meta: cloudflareStream.meta,
-  //     });
-
-  //     return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
-  //   } catch (error) {
-  //     if (error instanceof CoreException) {
-  //       return res.status(error.code).json({ message: error.message });
-  //     } else {
-  //       return res
-  //         .status(StatusCodeEnums.InternalServerError_500)
-  //         .json({ message: error.message });
-  //     }
-  //   }
-  // }
-
-  // async deleteLiveInputController(req, res) {
-  //   try {
-  //     const { streamId } = req.params;
-  //     const userId = req.userId;
-  //     await deleteStreamService(userId, streamId);
-  //     return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
-  //   } catch (error) {
-  //     if (error instanceof CoreException) {
-  //       return res.status(error.code).json({ message: error.message });
-  //     } else {
-  //       return res
-  //         .status(StatusCodeEnums.InternalServerError_500)
-  //         .json({ message: error.message });
-  //     }
-  //   }
-  // }
-
   async getStreamController(req, res) {
     const { streamId } = req.params;
     const requester = req.userId;
@@ -153,34 +72,6 @@ class StreamController {
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ streams, total, page, totalPages, message: "Success" });
-    } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
-    }
-  }
-
-  async endStreamController(req, res) {
-    const { streamId } = req.params;
-
-    try {
-      if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
-        throw new CoreException(StatusCodeEnums.BadRequest_400).json({
-          message: "Valid stream ID is required",
-        });
-      }
-
-      const stream = await getStreamService(streamId);
-
-      sendMessageToQueue("bunny_livestream", {
-        data: { input_id: stream.uid },
-      });
-
-      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
@@ -273,10 +164,15 @@ class StreamController {
       // Create live input using Cloudflare service
       const creatorId = userId;
       const streamName = title;
-      const cloudflareStream = await createCloudFlareStreamLiveInput(
+
+      const response = await axios.post(`${baseUrl}/api/cloudflare/live-input`, {
         creatorId,
-        streamName
-      );
+        streamName,
+      });
+      console.log("CLOUDFLARE LIVE INPUT")
+      console.log(response.data)
+
+      const cloudflareStream = response.data?.liveInput;
 
       // Prepare stream data with live input details
       const streamData = {
