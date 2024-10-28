@@ -27,6 +27,9 @@ const memberPackRoutes = require("./routes/MemberPackRoute.js");
 const memberGroupRoutes = require("./routes/MemberGroupRoute.js");
 const paymentRouters = require("./routes/PaymentRoute.js");
 const statisticRoutes = require("./routes/StatisticRoute.js");
+
+process.env.TZ = 'Asia/Ho_Chi_Minh';
+
 const app = express();
 const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
