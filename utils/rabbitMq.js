@@ -2,9 +2,7 @@ const getLogger = require("./logger");
 const logger = getLogger("RABBITMQ");
 const amqp = require("amqplib");
 require("dotenv").config();
-const path = require("path");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
-const { deleteCloudFlareStreamLiveInput } = require("../services/CloudFlareStreamService");
 
 async function sendMessageToQueue(queue, message) {
   try {
@@ -57,28 +55,38 @@ async function consumeMessageFromQueue(queue, callback) {
                 break;
 
               case "live_stream.connected":
+                logger.info("Consuming live stream connect event")
                 const connection = new DatabaseTransaction();
-
-                const query = { uid: live_input_id };
-                const stream = await connection.streamRepository.getStreamsRepository(query);
-                if (!stream?.streams?.length === 0) {
-                  throw new Error("Stream not found for given live input ID");
-                }
-
-                await connection.streamRepository.updateStreamRepository(stream.streams[0]?._id, { 
-                  status: "live",
-                  streamServerUrl
-                });
-                break;
-
-              case "live_stream.disconnected":
-                const connection2 = new DatabaseTransaction();
-                const session = await connection2.startTransaction();
+                const session = await connection.startTransaction();
 
                 try {
-                  const query2 = { uid: live_input_id };
-                  const stream2 = await connection2.streamRepository.getStreamsRepository(query2);
-                  if (!stream2?.streams?.length === 0) {
+                  const uid = live_input_id || null;
+                  const stream = await connection.streamRepository.getStreamByCloudflareId(uid);
+                  if (!stream) {
+                    throw new Error("Stream not found for given live input ID");
+                  }
+
+                  const result = await connection.streamRepository.updateStreamRepository(stream._id, {
+                    status: "live",
+                    streamServerUrl
+                  }, null, session);
+
+                  connection.commitTransaction();
+                } catch (error) {
+                  connection.abortTransaction();
+                } finally {
+                  break;
+                }
+
+              case "live_stream.disconnected":
+                logger.info("Consuming live stream disconnect event")
+                const connection2 = new DatabaseTransaction();
+                const session2 = await connection2.startTransaction();
+
+                try {
+                  const uid = live_input_id || null;
+                  const stream2 = await connection2.streamRepository.getStreamByCloudflareId(uid);
+                  if (!stream2) {
                     throw new Error("Stream not found for given live input ID");
                   }
 
@@ -90,13 +98,13 @@ async function consumeMessageFromQueue(queue, callback) {
                     webRTC: null,
                     webRTCPlayback: null,
                     streamOnlineUrl,
+                    status: "offline",
+                    endedAt: Date.now(),
+                    lastUpdated: Date.now(),
                     uid: "",
                   };
-                  await connection2.streamRepository.updateStreamRepository(stream2.streams[0]?._id, updateData, null, session);
 
-                  await connection2.streamRepository.endStreamRepository(stream2.streams[0]?._id, session);
-                  
-                  await deleteCloudFlareStreamLiveInput(stream2.streams[0].uid);
+                  await connection2.streamRepository.updateStreamRepository(stream2._id, updateData, null, session2);
 
                   connection2.commitTransaction();
                 } catch (error) {
@@ -106,15 +114,16 @@ async function consumeMessageFromQueue(queue, callback) {
                 }
 
               case "bunny_livestream_thumbnail":
+                logger.info("Consuming live stream thumbnail event")
                 const connection3 = new DatabaseTransaction();
 
-                const query3 = { uid: live_input_id };
-                const stream3 = await connection3.streamRepository.getStreamsRepository(query3);
-                if (!stream3?.streams?.length === 0) {
+                const uid = live_input_id || null;
+                const stream3 = await connection3.streamRepository.getStreamByCloudflareId(uid);
+                if (!stream3) {
                   throw new Error("Stream not found for given live input ID");
                 }
 
-                await connection3.streamRepository.updateStreamRepository(stream3.streams[0]?._id, { thumbnailUrl });
+                await connection3.streamRepository.updateStreamRepository(stream3._id, { thumbnailUrl });
                 break;
             }
 
