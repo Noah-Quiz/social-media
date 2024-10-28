@@ -48,16 +48,11 @@ class UpdateExchangeRateDto {
       "exchangeRateCoinToBalance",
       "coinPer1000View",
       "pointToCoin",
+      "dailyPoint",
+      "streakBonus",
     ];
 
-    if (!this.id) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Invalid ID format."
-      );
-    }
-
-    if (!this.name || !allowedNames.includes(this.name)) {
+    if (!this.id && (!this.name || !allowedNames.includes(this.name))) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         `Invalid field: name must be one of ${allowedNames.join(", ")}.`
