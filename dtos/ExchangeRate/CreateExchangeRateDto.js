@@ -43,6 +43,8 @@ class CreateExchangeRateDto {
       "exchangeRateCoinToBalance",
       "coinPer1000View",
       "pointToCoin",
+      "dailyPoint",
+      "streakBonus",
     ];
 
     if (!this.name || !allowedNames.includes(this.name)) {

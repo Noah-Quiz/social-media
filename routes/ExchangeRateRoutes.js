@@ -2,17 +2,17 @@ const express = require("express");
 const ExchangeRateController = require("../controllers/ExchangeRateController");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const exchangeRateController = new ExchangeRateController();
-
+const requireRole = require("../middlewares/requireRole");
+const UserEnum = require("../enums/UserEnum");
 const exchangeRateRoutes = express.Router();
 exchangeRateRoutes.use(AuthMiddleware);
-
 
 /**
  * @swagger
  * /api/exchange-rate/:
  *   post:
  *     security:
- *      - bearerAuth: [] 
+ *      - bearerAuth: []
  *     summary: Create a exchange rate
  *     tags: [ExchangeRates]
  *     requestBody:
@@ -31,6 +31,7 @@ exchangeRateRoutes.use(AuthMiddleware);
  */
 exchangeRateRoutes.post(
   "/",
+  requireRole(UserEnum.ADMIN),
   exchangeRateController.createExchangeRateController
 );
 
@@ -39,7 +40,7 @@ exchangeRateRoutes.post(
  * /api/exchange-rate:
  *   get:
  *     security:
- *      - bearerAuth: [] 
+ *      - bearerAuth: []
  *     summary: Get current exchange rate
  *     tags: [ExchangeRates]
  *     responses:
@@ -50,14 +51,18 @@ exchangeRateRoutes.post(
  *       500:
  *         description: Internal server error
  */
-exchangeRateRoutes.get("/", exchangeRateController.getExchangeRateController);
+exchangeRateRoutes.get(
+  "/",
+  requireRole(UserEnum.ADMIN),
+  exchangeRateController.getExchangeRateController
+);
 
 /**
  * @swagger
  * /api/exchange-rate/{id}:
  *   put:
  *     security:
- *      - bearerAuth: [] 
+ *      - bearerAuth: []
  *     summary: Update a exchange rate by ID
  *     tags: [ExchangeRates]
  *     parameters:
@@ -81,7 +86,8 @@ exchangeRateRoutes.get("/", exchangeRateController.getExchangeRateController);
  *         description: Internal server error
  */
 exchangeRateRoutes.put(
-  "/:id",
+  "/",
+  requireRole(UserEnum.ADMIN),
   exchangeRateController.updateExchangeRateController
 );
 
@@ -90,7 +96,7 @@ exchangeRateRoutes.put(
  * /api/exchange-rate/{id}:
  *   delete:
  *     security:
- *      - bearerAuth: [] 
+ *      - bearerAuth: []
  *     summary: Delete a exchange rate by ID
  *     tags: [ExchangeRates]
  *     parameters:
@@ -108,7 +114,8 @@ exchangeRateRoutes.put(
  *         description: Internal server error
  */
 exchangeRateRoutes.delete(
-  "/:id",
+  "/",
+  requireRole(UserEnum.ADMIN),
   exchangeRateController.deleteExchangeRateController
 );
 

@@ -12,6 +12,8 @@ const ExchangeRateSchema = new mongoose.Schema({
       "exchangeRateCoinToBalance",
       "coinPer1000View",
       "pointToCoin",
+      "dailyPoint",
+      "streakBonus",
     ],
   },
   value: {
