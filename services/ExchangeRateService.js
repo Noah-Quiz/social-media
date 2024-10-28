@@ -26,12 +26,12 @@ const getExchangeRateService = async () => {
   }
 };
 
-const updateExchangeRateService = async (id, value, description) => {
+const updateExchangeRateService = async (id, name, value, description) => {
   const connection = new DatabaseTransaction();
   try {
     const exchangeRate =
       await connection.exchangeRateRepository.updateRateRepository(
-        { id }, // Passing id as an object
+        { id, name },
         value,
         description
       );
@@ -41,11 +41,14 @@ const updateExchangeRateService = async (id, value, description) => {
   }
 };
 
-const deleteExchangeRateService = async (id) => {
+const deleteExchangeRateService = async (id, name) => {
   const connection = new DatabaseTransaction();
   try {
     const exchangeRate =
-      await connection.exchangeRateRepository.softDeleteRateRepository({ id });
+      await connection.exchangeRateRepository.softDeleteRateRepository({
+        name,
+        id,
+      });
     return exchangeRate;
   } catch (error) {
     throw new Error(error.message);
