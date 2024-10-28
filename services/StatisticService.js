@@ -96,9 +96,24 @@ const countVideosService = async () => {
   }
 };
 
+const calculateStreamViewsService = async () => {
+  try {
+    const connection = new DatabaseTransaction();
+    const average = await connection.streamRepository.calculateAvgViewsRepository();
+    const highest =
+      await connection.streamRepository.calculateHighestViewsRepository();
+    const lowest =
+      await connection.streamRepository.calculateLowestViewsRepository();
+    return { highest, lowest, average };
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   countNewUsersService,
   countRevenueService,
   countStreamsService,
   countVideosService,
+  calculateStreamViewsService,
 };

@@ -15,7 +15,7 @@ class StreamRepository {
     }
   }
 
-  async getStreamByCloudflareId(uid) {
+async getStreamByCloudflareId(uid) {
     try {
       const stream = await Stream.findOne({ uid });
 
@@ -489,6 +489,71 @@ class StreamRepository {
       return relevantStreams;
     } catch (error) {
       throw error;
+    }
+  }
+
+  async calculateAvgViewsRepository() {
+    try {
+      const result = await Stream.aggregate([
+        {
+          $match: { isDeleted: false, peakViewCount: { $gt: 0 } }, // Include all records that are not deleted & have peak view count > 0
+        },
+        {
+          $group: {
+            _id: null,
+            totalPeakViewCount: { $sum: "$peakViewCount" }, // Sum of all peak view counts
+            count: { $sum: 1 }, // Count of all documents
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            averagePeakViewCount: {
+              $divide: ["$totalPeakViewCount", "$count"],
+            }, // Divide total by count
+          },
+        },
+      ]);
+      return result.length > 0 ? Math.floor(result[0].averagePeakViewCount) : 0;
+    } catch (error) {
+      throw new Error(`Error calculating average views: ${error.message}`);
+    }
+  }
+  async calculateHighestViewsRepository() {
+    try {
+      const result = await Stream.aggregate([
+        {
+          $match: { isDeleted: false, peakViewCount: { $gt: 0 } }, // Include all records that are not deleted & have peak view count > 0
+        },
+        {
+          $sort: { peakViewCount: -1 },
+        },
+        {
+          $limit: 1,
+        },
+      ]);
+      return result.length > 0 ? result[0].peakViewCount : 0;
+    } catch (error) {
+      throw new Error(`Error calculating highest view: ${error.message}`);
+    }
+  }
+
+  async calculateLowestViewsRepository() {
+    try {
+      const result = await Stream.aggregate([
+        {
+          $match: { isDeleted: false, peakViewCount: { $gt: 0 } }, // Include all records that are not deleted & have peak view count > 0
+        },
+        {
+          $sort: { peakViewCount: 1 },
+        },
+        {
+          $limit: 1,
+        },
+      ]);
+      return result.length > 0 ? result[0].peakViewCount : 0;
+    } catch (error) {
+      throw new Error(`Error calculating lowest view: ${error.message}`);
     }
   }
 }
