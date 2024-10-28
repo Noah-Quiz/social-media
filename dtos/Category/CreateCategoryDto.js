@@ -7,6 +7,8 @@ const CoreException = require("../../exceptions/CoreException");
  *   schemas:
  *     CreateCategoryDto:
  *       type: object
+ *       required:
+ *         - name
  *       properties:
  *         name:
  *           type: string

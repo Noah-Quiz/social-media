@@ -1,3 +1,4 @@
+const { default: axios } = require("axios");
 const Stream = require("../entities/StreamEntity.js");
 const User = require("../entities/UserEntity.js");
 const StatusCodeEnums = require("../enums/StatusCodeEnum.js");
@@ -178,31 +179,9 @@ const deleteStreamService = async (userId, streamId) => {
 
     await connection.streamRepository.deleteStreamRepository(streamId, session);
 
-    await deleteCloudFlareStreamLiveInput(stream.uid);
-
-    await connection.commitTransaction();
-    return stream;
-  } catch (error) {
-    await connection.abortTransaction();
-    throw error;
-  } finally {
-    await connection.endSession();
-  }
-};
-
-const endStreamService = async (streamId) => {
-  const connection = new DatabaseTransaction();
-  const session = await connection.startTransaction();
-
-  try {
-    const stream = await connection.streamRepository.endStreamRepository(
-      streamId,
-      session
-    );
-
-    if (!stream) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
-    }
+    await axios.delete(`${baseUrl}/api/cloudflare/live-input`, {
+      uid: stream.uid,
+    });
 
     await connection.commitTransaction();
     return stream;
@@ -356,7 +335,6 @@ const checkMemberShip = async (requester, userId) => {
 module.exports = {
   getStreamService,
   getStreamsService,
-  endStreamService,
   updateStreamService,
   deleteStreamService,
   createStreamService,
