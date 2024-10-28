@@ -3,7 +3,7 @@ const UserController = require("../controllers/UserController");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const requireRole = require("../middlewares/requireRole");
 const UserEnum = require("../enums/UserEnum");
-const { uploadImage } = require("../utils/stores/storeImage");
+const { uploadFile } = require("../middlewares/storeFile");
 const HistoryController = require("../controllers/HistoryController");
 const userController = new UserController();
 const historyController = new HistoryController();
@@ -303,7 +303,7 @@ route.get("/:userId", userController.getUserByIdController);
  */
 route.put(
   "/:userId/profile",
-  uploadImage.single("avatar"),
+  uploadFile.single("avatar"),
   userController.updateUserProfileByIdController
 );
 

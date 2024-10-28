@@ -1,6 +1,6 @@
 const express = require("express");
 const StreamController = require("../controllers/StreamController");
-const { uploadImage } = require("../utils/stores/storeImage");
+const { uploadFile } = require("../middlewares/storeFile");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const checkUserSuspended = require("../middlewares/checkUserSuspended");
 
@@ -22,7 +22,11 @@ const streamRoutes = express.Router();
  *       description: Internal server error
  *
  */
-streamRoutes.get("/relevant", AuthMiddleware, streamController.getRelevantStreamsController);
+streamRoutes.get(
+  "/relevant",
+  AuthMiddleware,
+  streamController.getRelevantStreamsController
+);
 
 /**
  * @swagger
@@ -39,7 +43,11 @@ streamRoutes.get("/relevant", AuthMiddleware, streamController.getRelevantStream
  *       description: Internal server error
  *
  */
-streamRoutes.get("/recommendation", AuthMiddleware, streamController.getRecommendedStreamsController);
+streamRoutes.get(
+  "/recommendation",
+  AuthMiddleware,
+  streamController.getRecommendedStreamsController
+);
 
 /**
  * @swagger
@@ -180,7 +188,7 @@ streamRoutes.get(
 streamRoutes.patch(
   "/:streamId",
   AuthMiddleware,
-  uploadImage.single("streamThumbnail"),
+  uploadFile.single("streamThumbnail"),
   streamController.updateStreamController
 );
 

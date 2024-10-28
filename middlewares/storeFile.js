@@ -2,7 +2,7 @@ const { default: mongoose } = require("mongoose");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const getLogger = require("../logger");
+const getLogger = require("../utils/logger");
 const logger = getLogger("FILE_UPLOAD");
 
 const checkFileSuccess = async (filePath) => {
@@ -171,14 +171,9 @@ const videoFilter = (req, file, cb) => {
   logger.error("Error: Videos Only!");
 };
 
-const uploadImage = multer({
+const uploadFile = multer({
   storage: storage,
   fileFilter: fileFilter,
 });
 
-const uploadVideo = multer({
-  storage: storage,
-  fileFilter: videoFilter,
-});
-
-module.exports = { uploadImage, uploadVideo, deleteFile, checkFileSuccess };
+module.exports = { uploadFile, deleteFile, checkFileSuccess };
