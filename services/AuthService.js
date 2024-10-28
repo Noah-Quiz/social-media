@@ -229,7 +229,7 @@ const sendVerificationEmailService = async (email) => {
     </tr>
     <tr>
       <td>
-        <a href="${process.env.DEVELOPMENT_URL}:${process.env.DEVELOPMENT_PORT}/api/auth/verify/email?token=${token}">Click here to verify your email</a>
+        <a href="${process.env.APP_BASE_URL}/api/auth/verify/email?token=${token}">Click here to verify your email</a>
       </td>
     </tr>
     <tr>
