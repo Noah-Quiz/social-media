@@ -1,5 +1,5 @@
 // vnpayController.js
-const config = require("../vnpay/vnpay.config.js");
+const config = require("../configs/vnpay.config.js");
 const moment = require("moment");
 const crypto = require("crypto");
 const querystring = require("qs");

@@ -2,7 +2,7 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
-const countNewUsersService = async () => {
+const  countNewUsersService = async () => {
   try {
     const connection = new DatabaseTransaction();
     const today =
