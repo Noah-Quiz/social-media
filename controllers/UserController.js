@@ -137,17 +137,17 @@ class UserController {
 
   async updateUserEmailByIdController(req, res) {
     try {
-    const {userId} = req.params;
-    const { email } = req.body;
+      const { userId } = req.params;
+      const { email } = req.body;
 
-    if (req.userId !== userId) {
-      return res
-        .status(StatusCodeEnums.Forbidden_403)
-        .json({ message: "Forbidden access" });
-    }
+      if (req.userId !== userId) {
+        return res
+          .status(StatusCodeEnums.Forbidden_403)
+          .json({ message: "Forbidden access" });
+      }
 
-    const updateUserEmailDto = new UpdateUserEmailDto(userId, email);
-    await updateUserEmailDto.validate();
+      const updateUserEmailDto = new UpdateUserEmailDto(userId, email);
+      await updateUserEmailDto.validate();
 
       const result = await updateUserEmailByIdService(userId, email);
       return res
@@ -277,7 +277,6 @@ class UserController {
       }
 
       const { amount, actionCurrencyType } = req.body;
-
       const updateUserWalletDto = new UpdateUserWalletDto(
         userId,
         amount,
