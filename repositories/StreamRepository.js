@@ -15,26 +15,13 @@ class StreamRepository {
     }
   }
 
-  // End a stream by setting the endedAt field
-  async endStreamRepository(streamId, session) {
+async getStreamByCloudflareId(uid) {
     try {
-      const stream = await Stream.findByIdAndUpdate(
-        streamId,
-        {
-          endedAt: Date.now(),
-          lastUpdated: Date.now(),
-          status: "offline",
-        },
-        { new: true, runValidators: true, session }
-      );
-
-      if (!stream) {
-        throw new Error(`Stream with ID ${streamId} not found`);
-      }
+      const stream = await Stream.findOne({ uid });
 
       return stream;
     } catch (error) {
-      throw new Error(`Error ending stream: ${error.message}`);
+      throw new Error(`Error getting stream: ${error.message}`);
     }
   }
 
@@ -265,11 +252,76 @@ class StreamRepository {
     }
   }
 
+  async countTotalStreamsRepository() {
+    return await Stream.countDocuments({ isDeleted: false });
+  }
+
+  async countTodayStreamsRepository() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    return await Stream.countDocuments({
+      isDeleted: false,
+      dateCreated: {
+        $gte: new Date(currentYear, currentMonth - 1, now.getDate()),
+        $lt: new Date(currentYear, currentMonth - 1, now.getDate() + 1),
+      },
+    });
+  }
+
+  async countThisWeekStreamsRepository() {
+    const now = new Date();
+    const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+    const streamsThisWeek = await Stream.countDocuments({
+      isDeleted: false,
+      dateCreated: { $gte: weekStart },
+    });
+    return streamsThisWeek;
+  }
+
+  async countThisMonthStreamsRepository() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    const streamsThisMonth = await Stream.countDocuments({
+      isDeleted: false,
+      dateCreated: {
+        $gte: new Date(currentYear, currentMonth - 1, 1),
+        $lt: new Date(currentYear, currentMonth, 1),
+      },
+    });
+    return streamsThisMonth;
+  }
+
+  async countMonthlyStreamsRepository() {
+    const streamsMonthly = await Stream.aggregate([
+      {
+        $match: { isDeleted: false },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$dateCreated" },
+            month: { $month: "$dateCreated" },
+          },
+          streamCount: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ]);
+    return streamsMonthly;
+  }
   async getRecommendedStreamsRepository(data) {
     try {
       const { userId } = data;
 
+<<<<<<< HEAD
       // Step 1: Retrieve recent liked categories
+=======
+      // Step 1: Find the categories of the most recent liked streams
+>>>>>>> 83da8ce7076dfee1ca701fffbb55b06c727fa3b9
       const recentLikedStreams = await Stream.aggregate([
         {
           $match: { likedBy: new mongoose.Types.ObjectId(userId) },
@@ -287,7 +339,13 @@ class StreamRepository {
           $project: { _id: 0, categoryIds: 1 },
         },
       ]);
+<<<<<<< HEAD
 
+=======
+      console.log(recentLikedStreams);
+
+      // Check if there are any categories to recommend from
+>>>>>>> 83da8ce7076dfee1ca701fffbb55b06c727fa3b9
       if (
         !recentLikedStreams.length ||
         !recentLikedStreams[0].categoryIds.length
@@ -297,7 +355,11 @@ class StreamRepository {
 
       const categoryIds = recentLikedStreams[0].categoryIds;
 
+<<<<<<< HEAD
       // Step 2: Retrieve live streams with matching category IDs
+=======
+      // Step 2: Find live streams with matching category IDs and populate necessary fields
+>>>>>>> 83da8ce7076dfee1ca701fffbb55b06c727fa3b9
       const recommendedStreams = await Stream.aggregate([
         {
           $match: {
@@ -429,6 +491,71 @@ class StreamRepository {
       return relevantStreams;
     } catch (error) {
       throw error;
+    }
+  }
+
+  async calculateAvgViewsRepository() {
+    try {
+      const result = await Stream.aggregate([
+        {
+          $match: { isDeleted: false, peakViewCount: { $gt: 0 } }, // Include all records that are not deleted & have peak view count > 0
+        },
+        {
+          $group: {
+            _id: null,
+            totalPeakViewCount: { $sum: "$peakViewCount" }, // Sum of all peak view counts
+            count: { $sum: 1 }, // Count of all documents
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            averagePeakViewCount: {
+              $divide: ["$totalPeakViewCount", "$count"],
+            }, // Divide total by count
+          },
+        },
+      ]);
+      return result.length > 0 ? Math.floor(result[0].averagePeakViewCount) : 0;
+    } catch (error) {
+      throw new Error(`Error calculating average views: ${error.message}`);
+    }
+  }
+  async calculateHighestViewsRepository() {
+    try {
+      const result = await Stream.aggregate([
+        {
+          $match: { isDeleted: false, peakViewCount: { $gt: 0 } }, // Include all records that are not deleted & have peak view count > 0
+        },
+        {
+          $sort: { peakViewCount: -1 },
+        },
+        {
+          $limit: 1,
+        },
+      ]);
+      return result.length > 0 ? result[0].peakViewCount : 0;
+    } catch (error) {
+      throw new Error(`Error calculating highest view: ${error.message}`);
+    }
+  }
+
+  async calculateLowestViewsRepository() {
+    try {
+      const result = await Stream.aggregate([
+        {
+          $match: { isDeleted: false, peakViewCount: { $gt: 0 } }, // Include all records that are not deleted & have peak view count > 0
+        },
+        {
+          $sort: { peakViewCount: 1 },
+        },
+        {
+          $limit: 1,
+        },
+      ]);
+      return result.length > 0 ? result[0].peakViewCount : 0;
+    } catch (error) {
+      throw new Error(`Error calculating lowest view: ${error.message}`);
     }
   }
 }

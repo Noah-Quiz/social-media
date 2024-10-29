@@ -1,107 +1,119 @@
+const { default: mongoose } = require("mongoose");
 const ExchangeRate = require("../entities/ExchangeRateEntity");
 
 class ExchangeRateRepository {
-  async createNewExchangeRateRepository(
-    topUpBalanceRate = 1,
-    topUpCoinRate = 1000,
-    exchangeRateBalanceToCoin = 1000,
-    exchangeRateCoinToBalance = 0.0008,
-    coinPer1000View = 100000
-  ) {
+  // Create a new exchange rate, marking the previous one as deleted if it exists
+  async createNewExchangeRateRepository(data) {
+    const session = await mongoose.startSession(); // Start a session for the transaction
+    session.startTransaction(); // Begin the transaction
+
     try {
-      // Mark all previous rates as deleted
-      await this.DeleteAllRateRepository();
-      const newExchangeRate = await ExchangeRate.create({
-        topUpBalanceRate,
-        topUpCoinRate,
-        exchangeRateBalanceToCoin,
-        exchangeRateCoinToBalance,
-        coinPer1000View,
+      // Check if there is an existing rate with the same name
+      const previous = await this.getCurrentRateRepository({ name: data.name });
+
+      // If previous rate exists, mark it as soft deleted
+      if (previous) {
+        await this.softDeleteRateRepository({ name: previous.name }, session); // Pass session for transaction
+      }
+
+      // Create the new exchange rate document
+      const exchangeRate = await ExchangeRate.create([data], { session }); // Create within the transaction
+
+      // Commit the transaction
+      await session.commitTransaction();
+
+      // End the session
+      session.endSession();
+
+      return exchangeRate;
+    } catch (error) {
+      // Abort the transaction on error
+      await session.abortTransaction();
+      session.endSession();
+
+      throw new Error("Error creating exchange rate: " + error.message);
+    }
+  }
+
+  // Get the current non-deleted exchange rate by name or id
+  async getCurrentRateRepository({ name, id }) {
+    try {
+      const query = id
+        ? { _id: new mongoose.Types.ObjectId(id) }
+        : { name: name };
+      const exchangeRate = await ExchangeRate.findOne({
+        ...query,
+        isDeleted: false,
       });
-      return newExchangeRate;
+      return exchangeRate;
     } catch (error) {
-      throw new Error("Error creating new exchange rate: " + error.message);
+      throw new Error(`Error getting rate: ${error.message}`);
     }
   }
 
-  async DeleteAllRateRepository() {
+  // Soft delete an exchange rate by marking it as isDeleted, can accept either name or id
+  async softDeleteRateRepository({ name, id }) {
+    console.log(name);
     try {
-      // Update many documents to mark them as deleted
-      await ExchangeRate.updateMany(
-        { isDeleted: false },
-        { $set: { isDeleted: true } }
-      );
-    } catch (error) {
-      throw new Error("Error deleting all exchange rates: " + error.message);
-    }
-  }
-
-  async getCurrentRateRepository() {
-    try {
-      const currentRate = await ExchangeRate.findOne({ isDeleted: false });
-      return currentRate;
-    } catch (error) {
-      throw new Error("Error getting current exchange rate: " + error.message);
-    }
-  }
-
-  async softDeleteExchangeRateRepository(id) {
-    try {
-      const currentRate = await ExchangeRate.findOneAndUpdate(
-        { _id: id },
-        { $set: { isDeleted: true } },
+      const query = id
+        ? { _id: new mongoose.Types.ObjectId(id) }
+        : { name: name };
+      const exchangeRate = await ExchangeRate.findOneAndUpdate(
+        { ...query, isDeleted: false },
+        { isDeleted: true },
         { new: true }
       );
-      return currentRate;
+      return exchangeRate;
     } catch (error) {
-      throw new Error("Error soft deleting the rate: " + error.message);
+      throw new Error(`Error soft deleting rate: ${error.message}`);
     }
   }
 
-  async updateExchangeRateRepository(
-    id,
-    topUpBalanceRate,
-    topUpCoinRate,
-    exchangeRateBalanceToCoin,
-    exchangeRateCoinToBalance,
-    coinPer1000View
-  ) {
+  // Update the value and/or description of a rate, can accept either name or id
+  async updateRateRepository({ name, id }, value, description) {
     try {
-      const currentRate = await ExchangeRate.findOne({
-        _id: id,
+      const query = id
+        ? { _id: new mongoose.Types.ObjectId(id) }
+        : { name: name };
+      const exchangeRate = await ExchangeRate.findOne({
+        ...query,
         isDeleted: false,
       });
 
-      if (!currentRate) {
-        throw new Error("Exchange rate not found or is deleted.");
+      if (exchangeRate) {
+        if (value && value !== exchangeRate.value) {
+          exchangeRate.value = value;
+        }
+        if (description && description !== exchangeRate.description) {
+          exchangeRate.description = description;
+        }
+        await exchangeRate.save();
+        return exchangeRate;
+      } else {
+        throw new Error("Rate not found or is deleted");
       }
-
-      // Update fields only if they are provided and valid
-      if (topUpBalanceRate !== undefined && topUpBalanceRate > 0) {
-        currentRate.topUpBalanceRate = topUpBalanceRate;
-      }
-      if (topUpCoinRate !== undefined && topUpCoinRate > 0) {
-        currentRate.topUpCoinRate = topUpCoinRate;
-      }
-      if (
-        exchangeRateBalanceToCoin !== undefined &&
-        exchangeRateBalanceToCoin > 0
-      ) {
-        currentRate.exchangeRateBalanceToCoin = exchangeRateBalanceToCoin;
-      }
-      if (
-        exchangeRateCoinToBalance !== undefined &&
-        exchangeRateCoinToBalance > 0
-      ) {
-        currentRate.exchangeRateCoinToBalance = exchangeRateCoinToBalance;
-      }
-      if (coinPer1000View !== undefined && coinPer1000View > 0) {
-        currentRate.coinPer1000View = coinPer1000View;
-      }
-      await currentRate.save();
-      return currentRate;
     } catch (error) {
-      throw new Error("Error updating the rate: " + error.message);
+      throw new Error(`Error updating rate: ${error.message}`);
+    }
+  }
+
+  // Method to fetch all exchange rates as a key-value object
+  async getAllRatesAsObjectRepository() {
+    try {
+      // Fetch all non-deleted exchange rates
+      const exchangeRates = await ExchangeRate.find({
+        isDeleted: false,
+      });
+
+      // Aggregate them into an object
+      const ratesObject = exchangeRates.reduce((acc, rate) => {
+        acc[rate.name] = rate.value;
+        return acc;
+      }, {});
+
+      return ratesObject;
+    } catch (error) {
+      throw new Error(`Error fetching all rates: ${error.message}`);
     }
   }
 }

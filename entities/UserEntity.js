@@ -55,6 +55,10 @@ const userEntitySchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  streak: {
+    type: Number,
+    default: 0,
+  },
   isActive: {
     type: Boolean,
     required: true,

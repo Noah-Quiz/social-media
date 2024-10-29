@@ -30,7 +30,7 @@ const deleteReceiptService = async (id) => {
     throw new Error(error.message);
   }
 };
-const createReceiptService = async (
+const createReceiptService = async ({
   userId,
   paymentMethod,
   paymentPort,
@@ -38,8 +38,8 @@ const createReceiptService = async (
   amount,
   transactionId,
   type,
-  exchangeRate
-) => {
+  exchangeRate,
+}) => {
   const connection = new DatabaseTransaction();
   try {
     const receipt = await connection.receiptRepository.createReceiptRepository(

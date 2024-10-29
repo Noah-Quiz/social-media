@@ -29,7 +29,8 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
     if (userWallet.coin < totalCost) {
       throw new Error("Insufficient coins in the user's wallet.");
     }
-
+    const rate =
+      await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
     // Create gift history in the repository
     const giftHistory =
       await connection.giftHistoryRepository.createGiftHistoryRepository(
@@ -50,7 +51,7 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
     await connection.userRepository.updateUserWalletRepository(
       stream.userId,
       "ReceiveCoin",
-      totalCost
+      totalCost * rate.ReceivePercentage //service fees when streamer receive gives
     );
     await connection.commitTransaction(); // Commit transaction if all operations succeed
     return giftHistory;

@@ -139,30 +139,48 @@ const updateCommentService = async (userId, id, content) => {
   }
 };
 
-//video owner xoa dc, comment owner xoa duoc
+//video owner xoa dc, comment owner xoa duoc, admin cung xoa duoc
 const softDeleteCommentService = async (userId, id) => {
-  console.log("service: ", userId, id);
   const connection = new DatabaseTransaction();
   try {
     const originalComment = await connection.commentRepository.getComment(id);
-    if (!originalComment) {
+    if (!originalComment || originalComment.length === 0) {
       throw new Error("Comment not found");
     }
+
     const video = await connection.videoRepository.getVideoRepository(
-      originalComment[0].videoId
+      originalComment.videoId
     );
-    let notCommentOwner =
-      originalComment[0].userId.toString() !== userId.toString();
+    if (!video) {
+      throw new Error("Video not found for the comment");
+    }
+
+    const user = await connection.userRepository.getAnUserByIdRepository(
+      userId
+    );
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    let notAdmin = user.role !== 1;
+
     let notVideoOwner = userId.toString() !== video.userId.toString();
-    if (notCommentOwner && notVideoOwner) {
+
+    let notCommentOwner =
+      originalComment.userId.toString() !== userId.toString();
+
+    if (notCommentOwner && notVideoOwner && notAdmin) {
       throw new Error("Not authorized to delete this comment");
     }
-    const comment = await connection.commentRepository.softDeleteComment(id);
+
+    const comment =
+      await connection.commentRepository.softDeleteCommentRepository(id);
     return comment;
   } catch (error) {
     throw new Error(error.message);
   }
 };
+
 const likeService = async (userId, commentId) => {
   const connection = new DatabaseTransaction();
 

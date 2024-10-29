@@ -1,5 +1,5 @@
 // vnpayController.js
-const config = require("../vnpay/vnpay.config.js");
+const config = require("../configs/vnpay.config.js");
 const moment = require("moment");
 const crypto = require("crypto");
 const querystring = require("qs");
@@ -94,10 +94,15 @@ exports.vnpayReturn = async (req, res) => {
     // Slice the first 24 characters as userId, the rest as amount
     const userId = orderInfo.slice(0, 24);
     const amount = parseFloat(orderInfo.slice(27).trim());
-
+    const paymentParams = {
+      id: vnp_Params.vnp_TxnRef,
+      paymentMethod: vnp_Params.vnp_CardType,
+      paymentPort: "VNPAY",
+      bankCode: vnp_Params.vnp_BankCode,
+    };
     try {
       //queue in rabbitMQ then dequeue
-      await processPaymentQueue(userId, amount, vnp_Params);
+      await processPaymentQueue(userId, amount, paymentParams);
       await consumePaymentQueue();
       await consumeResponseQueue();
 

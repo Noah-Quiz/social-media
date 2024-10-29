@@ -7,7 +7,7 @@ const {
 } = require("../services/CategoryService");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
-const { checkFileSuccess, deleteFile } = require("../utils/stores/storeImage");
+const { checkFileSuccess, deleteFile } = require("../middlewares/storeFile");
 const CreateCategoryDto = require("../dtos/Category/CreateCategoryDto");
 const DeleteCategoryDto = require("../dtos/Category/DeleteCategoryDto");
 const UpdateCategoryDto = require("../dtos/Category/UpdateCategoryDto");
@@ -27,11 +27,11 @@ class CategoryController {
 
       if (req.file) {
         await checkFileSuccess(imageUrl);
-      }
 
-      return res
-        .status(StatusCodeEnums.Created_201)
-        .json({ category: result, message: "Success" });
+        return res
+          .status(StatusCodeEnums.Created_201)
+          .json({ category: result, message: "Success" });
+      }
     } catch (error) {
       if (req.file) {
         await deleteFile(req.file.path);

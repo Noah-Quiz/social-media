@@ -16,9 +16,10 @@ const {
   getStatsByDateService,
   getFollowerService,
   getFollowingService,
+  updatePointService,
 } = require("../services/UserService");
 const mongoose = require("mongoose");
-const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
+const { deleteFile, checkFileSuccess } = require("../middlewares/storeFile");
 const UpdateUserPasswordDto = require("../dtos/User/UpdateUserPasswordDto");
 const UpdateUserEmailDto = require("../dtos/User/UpdateUserEmailDto");
 const GetUserWalletDto = require("../dtos/User/GetUserWalletDto");
@@ -103,9 +104,10 @@ class UserController {
       );
       await updateUserProfileDto.validate();
       if (req.userId !== userId) {
-        return res
-          .status(StatusCodeEnums.Forbidden_403)
-          .json({ message: "Forbidden access" });
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "Forbidden access"
+        );
       }
 
       const result = await updateUserProfileByIdService(userId, {
@@ -134,7 +136,7 @@ class UserController {
   }
 
   async updateUserEmailByIdController(req, res) {
-    const userId  = req.userId;
+    const userId = req.userId;
     const { email } = req.body;
 
     if (req.userId !== userId) {
@@ -168,9 +170,10 @@ class UserController {
       const { oldPassword, newPassword } = req.body;
 
       if (req.userId !== userId) {
-        return res
-          .status(StatusCodeEnums.Forbidden_403)
-          .json({ message: "Forbidden access" });
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "Forbidden access"
+        );
       }
       const updateUserPasswordDto = new UpdateUserPasswordDto(
         userId,
@@ -273,21 +276,19 @@ class UserController {
           .json({ message: "Forbidden access" });
       }
 
-      const { amount, actionCurrencyType, exchangeRate } = req.body;
+      const { amount, actionCurrencyType } = req.body;
 
       const updateUserWalletDto = new UpdateUserWalletDto(
         userId,
         amount,
-        actionCurrencyType,
-        exchangeRate
+        actionCurrencyType
       );
       await updateUserWalletDto.validate();
 
       const user = await updateUserWalletService(
         userId,
         actionCurrencyType,
-        amount,
-        exchangeRate
+        amount
       );
       return res
         .status(StatusCodeEnums.OK_200)
@@ -364,6 +365,35 @@ class UserController {
       return res
         .status(StatusCodeEnums.InternalServerError_500)
         .json(error.message);
+    }
+  }
+  async updatePointController(req, res) {
+    const { amount, type } = req.body;
+    const userId = req.userId;
+    if (!amount || !type || !userId) {
+      return res
+        .status(StatusCodeEnums.BadRequest_400)
+        .json({ message: "Please fill in all the required field" });
+    }
+    if (isNaN(amount) || amount < 0) {
+      return res.status(StatusCodeEnums.BadRequest_400).json({
+        message: "Invalid amount",
+      });
+    }
+    if (!["add", "remove", "exchange"].includes(type)) {
+      return res.status(StatusCodeEnums.BadRequest_400).json({
+        message: "Invalid type",
+      });
+    }
+    try {
+      const result = await updatePointService(userId, amount, type);
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ data: result, message: "Success" });
+    } catch (error) {
+      return res
+        .status(StatusCodeEnums.InternalServerError_500)
+        .json({ message: error.message });
     }
   }
 }

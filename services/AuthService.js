@@ -7,8 +7,12 @@ const {
   sendVerificationCode,
   checkVerification,
 } = require("../utils/phoneVerification");
+const getLogger = require("../utils/logger.js");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const {
+  handleLoginStreakService,
+} = require("./LoginStreakService.js");
 const signUpService = async (
   fullName,
   email,
@@ -18,7 +22,7 @@ const signUpService = async (
 ) => {
   try {
     const connection = new DatabaseTransaction();
-
+    const logger = getLogger("SIGNUP");
     const existingEmail = await connection.userRepository.findUserByEmail(
       email
     );
@@ -40,14 +44,22 @@ const signUpService = async (
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-
+    const rate =
+      await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
     const user = await connection.userRepository.createUser({
       fullName: fullName,
       email: email,
       phoneNumber: formattedPhoneNumber,
       password: hashedPassword,
       ipAddress: ipAddress,
+      streak: 1,
+      point: rate.dailyPoint + rate.streakBonus * 1,
     });
+    logger.info(
+      `[LOGIN]: new user signup successfully, receive ${
+        rate.dailyPoint + rate.streakBonus * 1
+      }`
+    );
 
     return user;
   } catch (error) {
@@ -57,6 +69,7 @@ const signUpService = async (
 
 const loginService = async (email, password, ipAddress) => {
   try {
+    const logger = getLogger("LOGIN");
     const connection = new DatabaseTransaction();
 
     const user = await connection.userRepository.findUserByEmail(email);
@@ -100,6 +113,9 @@ const loginService = async (email, password, ipAddress) => {
       );
     }
 
+    const rate =
+      await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
+    await handleLoginStreakService(user, rate);
     user.lastLogin = Date.now();
     await user.save();
 
@@ -111,10 +127,13 @@ const loginService = async (email, password, ipAddress) => {
 
 const loginGoogleService = async (user, ipAddress) => {
   try {
+    const logger = getLogger("LOGIN_GOOGLE"); // Create a LOGIN labeled logger instance
     const connection = new DatabaseTransaction();
     const existingUser = await connection.userRepository.findUserByEmail(
       user.emails[0].value
     );
+    const rate =
+      await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
     if (existingUser) {
       // await checkIpAddressMismatch(existingUser, ipAddress);
 
@@ -127,17 +146,29 @@ const loginGoogleService = async (user, ipAddress) => {
       if (existingUser.avatar === "") {
         existingUser.avatar = user.photos[0].value;
       }
+      await handleLoginStreakService(existingUser, rate);
+
       existingUser.lastLogin = Date.now();
       await existingUser.save();
       return existingUser;
     }
+
     const newUser = await connection.userRepository.createUser({
       fullName: user.displayName,
       email: user.emails[0].value,
       googleId: user.id,
       avatar: user.photos[0].value,
       verify: true,
+      lastLogin: Date.now(),
+      streak: 1,
+      point: rate.dailyPoint + rate.streakBonus * 1,
     });
+    logger.info(
+      `New user login by Google successfully, receive ${
+        rate.dailyPoint + rate.streakBonus * 1
+      }`
+    );
+
     return newUser;
   } catch (error) {
     throw new Error(`Error when login with Google: ${error.message}`);
@@ -145,19 +176,23 @@ const loginGoogleService = async (user, ipAddress) => {
 };
 const loginAppleService = async (user, ipAddress) => {
   try {
+    const logger = getLogger("LOGIN_APPLE"); // Create a LOGIN labeled logger instance
     const connection = new DatabaseTransaction();
     const existingUser = await connection.userRepository.findUserByEmail(
       user.email
     );
+    const rate =
+      await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
     if (existingUser) {
       // await checkIpAddressMismatch(existingUser, ipAddress);
-      
       if (existingUser.verify === false) {
         existingUser.verify = true;
       }
       if (existingUser.appleUser === false) {
         existingUser.appleUser = true;
       }
+      await handleLoginStreakService(existingUser, rate);
+
       existingUser.lastLogin = Date.now();
       await existingUser.save();
       return existingUser;
@@ -166,7 +201,16 @@ const loginAppleService = async (user, ipAddress) => {
       fullName: user.name,
       email: user.email,
       verify: true,
+      lastLogin: Date.now(),
+      streak: 1,
+      point: rate.dailyPoint + rate.streakBonus * 1,
     });
+    logger.info(
+      `New user login by Apple successfully, receive ${
+        rate.dailyPoint + rate.streakBonus * 1
+      }`
+    );
+
     return newUser;
   } catch (error) {
     throw new Error(`Error when login with Apple: ${error.message}`);
@@ -229,7 +273,7 @@ const sendVerificationEmailService = async (email) => {
     </tr>
     <tr>
       <td>
-        <a href="${process.env.DEVELOPMENT_URL}:${process.env.DEVELOPMENT_PORT}/api/auth/verify/email?token=${token}">Click here to verify your email</a>
+        <a href="${process.env.APP_BASE_URL}/api/auth/verify/email?token=${token}">Click here to verify your email</a>
       </td>
     </tr>
     <tr>
@@ -366,7 +410,7 @@ const createResetPasswordTokenService = async (email) => {
   </tr>
   <tr>
     <td>
-      <a href="http://localhost:4000/api/auth/reset-password/${token}">Click here to reset your password</a>
+      <a href="${process.env.APP_BASE_URL}/api/auth/reset-password/${token}">Click here to reset your password</a>
     </td>
   </tr> 
   <tr>
