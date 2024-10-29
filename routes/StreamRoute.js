@@ -1,6 +1,6 @@
 const express = require("express");
 const StreamController = require("../controllers/StreamController");
-const { uploadImage } = require("../utils/stores/storeImage");
+const { uploadFile } = require("../middlewares/storeFile");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const checkUserSuspended = require("../middlewares/checkUserSuspended");
 
@@ -11,35 +11,43 @@ const streamRoutes = express.Router();
  * @swagger
  * /api/streams/relevant:
  *   get:
- *     summary: Get streams
+ *     summary: Get streams relevant
  *     tags: [Streams]
  *     responses:
  *      200:
- *       description: Create stream successfully
+ *       description: Get streams relevant successfully
  *      400:
  *       description: Bad request
  *      500:
  *       description: Internal server error
  *
  */
-streamRoutes.get("/relevant", AuthMiddleware, streamController.getRelevantStreamsController);
+streamRoutes.get(
+  "/relevant",
+  AuthMiddleware,
+  streamController.getRelevantStreamsController
+);
 
 /**
  * @swagger
  * /api/streams/recommendation:
  *   get:
- *     summary: Get streams
+ *     summary: Get streams recommendation
  *     tags: [Streams]
  *     responses:
  *      200:
- *       description: Create stream successfully
+ *       description: Get streams recommendation successfully
  *      400:
  *       description: Bad request
  *      500:
  *       description: Internal server error
  *
  */
-streamRoutes.get("/recommendation", AuthMiddleware, streamController.getRecommendedStreamsController);
+streamRoutes.get(
+  "/recommendation",
+  AuthMiddleware,
+  streamController.getRecommendedStreamsController
+);
 
 /**
  * @swagger
@@ -49,7 +57,7 @@ streamRoutes.get("/recommendation", AuthMiddleware, streamController.getRecommen
  *     tags: [Streams]
  *     responses:
  *      200:
- *       description: Create stream successfully
+ *       description: Get streams successfully
  *      400:
  *       description: Bad request
  *      500:
@@ -60,18 +68,12 @@ streamRoutes.get("/", AuthMiddleware, streamController.getStreamsController);
 
 /**
  * @swagger
- * /api/streams/{streamId}:
+ * /api/streams:
  *   post:
  *     security:
  *      - bearerAuth: []
  *     summary: Create a stream
  *     tags: [Streams]
- *     parameters:
- *      - in: path
- *        name: streamId
- *        schema:
- *         type: string
- *         required: true
  *     requestBody:
  *       content:
  *         application/json:
@@ -163,6 +165,10 @@ streamRoutes.get(
  *        schema:
  *         type: string
  *         required: true
+ *      - in: formData
+ *        name: streamThumbnail
+ *        schema:
+ *         type: file
  *     requestBody:
  *       content:
  *         application/json:
@@ -180,7 +186,7 @@ streamRoutes.get(
 streamRoutes.patch(
   "/:streamId",
   AuthMiddleware,
-  uploadImage.single("streamThumbnail"),
+  uploadFile.single("streamThumbnail"),
   streamController.updateStreamController
 );
 

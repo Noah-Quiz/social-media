@@ -1,11 +1,4 @@
 const result = require("dotenv").config();
-const getLogger = require("../utils/logger");
-const logger = getLogger("VNPAY");
-if (result.error) {
-  logger.error("Error loading .env file:", result.error);
-} else {
-  logger.info(".env file loaded successfully");
-}
 
 module.exports = {
   vnp_TmnCode: process.env.VNP_TMNCODE,

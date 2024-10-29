@@ -2,6 +2,7 @@ const { version } = require("../package.json");
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const getLogger = require("./logger");
+require("dotenv").config();
 const options = {
   definition: {
     openapi: "3.0.0",
@@ -135,7 +136,7 @@ function swaggerDoc(app, port) {
     res.send(swaggerSpec);
   });
 
-  logger.info(`Swagger is running at: http://localhost:${port}/api-docs`);
+  logger.info(`Swagger is running at: ${process.env.APP_BASE_URL}/api-docs`);
 }
 
 module.exports = swaggerDoc;
