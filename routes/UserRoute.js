@@ -12,11 +12,203 @@ const route = express.Router();
 
 route.use(AuthMiddleware);
 
+/**
+ * @swagger
+ * /api/users/point:
+ *   put:
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Update user points
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 description: The amount of points to add/remove/exchange
+ *                 example: 100
+ *               type:
+ *                 type: string
+ *                 enum: [add, remove, exchange]
+ *                 description: The type of point operation
+ *                 example: "add"
+ *     responses:
+ *       200:
+ *         description: Update points successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     point:
+ *                       type: number
+ *                       example: 13000
+ *                     wallet:
+ *                       type: object
+ *                       properties:
+ *                         balance:
+ *                           type: number
+ *                           example: 2958375
+ *                         coin:
+ *                           type: number
+ *                           example: 150000
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
 route.put("/point", userController.updatePointController);
+/**
+ * @swagger
+ * /api/users/follower/{userId}:
+ *   get:
+ *     summary: Get followers of a user
+ *     description: Retrieve a list of followers for a specific user by their ID.
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         description: ID of the user to get followers for
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved followers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 follower:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "66e1185472404e6811cf15bc"
+ *                       fullName:
+ *                         type: string
+ *                         example: "string"
+ *                       avatar:
+ *                         type: string
+ *                         example: "string"
+ *                       nickName:
+ *                         type: string
+ *                         example: "string"
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Internal server error
+ */
 
 route.get("/follower/:userId", userController.getFollowerController);
-route.get("/following/:userId", userController.getFollowingController);
 
+/**
+ * @swagger
+ * /api/users/following/{userId}:
+ *   get:
+ *     summary: Get users that a user is following
+ *     description: Retrieve a list of users that a specific user is following by their ID.
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         description: ID of the user to get following users for
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved following users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 following:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "66e1185472404e6811cf15ba"
+ *                       fullName:
+ *                         type: string
+ *                         example: "string"
+ *                       avatar:
+ *                         type: string
+ *                         example: "https://example.com/avatar.jpg"
+ *                       nickName:
+ *                         type: string
+ *                         example: "string"
+ *                 message:
+ *                   type: string
+ *                   example: "success"
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Internal server error
+ */
+route.get("/following/:userId", userController.getFollowingController);
+/**
+ * @swagger
+ * /api/dashboard:
+ *   get:
+ *     security:
+ *      - bearerAuth: []
+ *     summary: Get user dashboard statistics
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 example: "string"
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved dashboard statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *                 result:
+ *                   type: object
+ *                   properties:
+ *                     totalFollows:
+ *                       type: number
+ *                       example: 0
+ *                     totalFollowers:
+ *                       type: number
+ *                       example: 0
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
 route.get("/dashboard", userController.getStatsByDateController);
 
 /**
@@ -41,12 +233,24 @@ route.get("/dashboard", userController.getStatsByDateController);
  *             schema:
  *               type: object
  *               properties:
- *                 balance:
- *                   type: number
- *                   example: 150.75
- *                 coin:
- *                   type: number
- *                   example: 50
+ *                 wallet:
+ *                   type: object
+ *                   properties:
+ *                     balance:
+ *                       type: number
+ *                       example: 2969375
+ *                     coin:
+ *                       type: number
+ *                       example: 0
+ *                     formatedBalance:
+ *                       type: string
+ *                       example: "2,969,375"
+ *                     formatedCoin:
+ *                       type: string
+ *                       example: "0"
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
  *       400:
  *         description: Bad request
  *       500:
@@ -76,7 +280,30 @@ route.get("/:userId/wallet", userController.getUserWalletController);
  *             $ref: '#/components/schemas/UpdateUserWalletDto'
  *     responses:
  *      200:
- *       description: Update user wallet successfully
+ *         description: update user wallet successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 wallet:
+ *                   type: object
+ *                   properties:
+ *                     balance:
+ *                       type: number
+ *                       example: 2968375
+ *                     coin:
+ *                       type: number
+ *                       example: 0
+ *                     formatedBalance:
+ *                       type: string
+ *                       example: "2,968,375"
+ *                     formatedCoin:
+ *                       type: string
+ *                       example: "0"
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
  *      400:
  *       description: Bad request
  *      500:
@@ -90,7 +317,7 @@ route.put("/:userId/wallet", userController.updateUserWalletController);
  * /api/users/follow:
  *   post:
  *     security:
- *      - bearerAuth: []
+ *       - bearerAuth: []
  *     summary: Toggle follow user by ID
  *     description: Your user will follow or unfollow another user
  *     tags: [Users]
@@ -100,14 +327,22 @@ route.put("/:userId/wallet", userController.updateUserWalletController);
  *           schema:
  *             $ref: '#/components/schemas/ToggleFollowDto'
  *     responses:
- *      200:
- *       description: Toggle follow user successfully
- *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
- *
+ *       200:
+ *         description: Toggle follow user successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Follow success"
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
  */
+
 route.post("/follow", userController.toggleFollowController);
 
 /**
@@ -115,31 +350,73 @@ route.post("/follow", userController.toggleFollowController);
  * /api/users/history:
  *   get:
  *     security:
- *      - bearerAuth: []
+ *       - bearerAuth: []
  *     summary: Get all history records
  *     tags: [Users]
  *     parameters:
- *      - in: path
- *        name: page
- *        schema:
- *         type: number
- *         default: 1
- *         description: Page number
- *      - in: path
- *        name: size
- *        schema:
- *         type: string
- *         default: 10
- *         description: Number of items per page
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: number
+ *           default: 1
+ *           description: Page number
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: number
+ *           default: 10
+ *           description: Number of items per page
  *     responses:
- *      200:
- *       description: Get all history records successfully
- *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
- *
+ *       200:
+ *         description: Get all history records successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 historyRecords:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "string"
+ *                       userId:
+ *                         type: string
+ *                         example: "string"
+ *                       videoId:
+ *                         type: string
+ *                         example: "string"
+ *                       dateCreated:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-10-29T08:59:12.203Z"
+ *                       isDeleted:
+ *                         type: boolean
+ *                         example: false
+ *                       lastUpdated:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-10-29T08:59:12.201Z"
+ *                 total:
+ *                   type: number
+ *                   example: 1
+ *                 page:
+ *                   type: number
+ *                   example: 1
+ *                 totalPages:
+ *                   type: number
+ *                   example: 1
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
  */
+
 route.get("/history", historyController.getAllHistoryRecordsController);
 
 /**
@@ -157,7 +434,38 @@ route.get("/history", historyController.getAllHistoryRecordsController);
  *             $ref: '#/components/schemas/CreateHistoryRecordDto'
  *     responses:
  *      200:
- *       description: Create history record successfully
+ *         description: Create history record successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 historyRecord:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "string"
+ *                     userId:
+ *                       type: string
+ *                       example: "string"
+ *                     videoId:
+ *                       type: string
+ *                       example: "string"
+ *                     dateCreated:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-10-29T08:59:12.203Z"
+ *                     isDeleted:
+ *                       type: boolean
+ *                       example: false
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-10-29T08:59:12.201Z"
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
  *      400:
  *       description: Bad request
  *      500:
@@ -171,18 +479,26 @@ route.post("/history", historyController.createHistoryRecordController);
  * /api/users/history:
  *   delete:
  *     security:
- *      - bearerAuth: []
+ *       - bearerAuth: []
  *     summary: Delete history records of a user
  *     tags: [Users]
  *     responses:
- *      200:
- *       description: Delete all history records successfully
- *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
- *
+ *       200:
+ *         description: Delete all history records successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
  */
+
 route.delete("/history", historyController.clearAllHistoryRecordsController);
 
 /**
@@ -190,30 +506,77 @@ route.delete("/history", historyController.clearAllHistoryRecordsController);
  * /api/users/history/{historyId}:
  *   delete:
  *     security:
- *      - bearerAuth: []
- *     summary: Delete history record by id
+ *       - bearerAuth: []
+ *     summary: Delete history record by ID
  *     tags: [Users]
  *     parameters:
- *      - in: path
- *        name: historyId
- *        schema:
- *         type: string
+ *       - in: path
+ *         name: historyId
  *         required: true
- *         description: The history record's id
+ *         schema:
+ *           type: string
+ *         description: The history record's ID
  *     responses:
- *      200:
- *       description: Delete history record successfully
- *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
- *
+ *       200:
+ *         description: Delete history record successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Bad request
+ *       404:
+ *         description: History record not found
+ *       500:
+ *         description: Internal server error
  */
+
 route.delete(
   "/history/:historyId",
   historyController.deleteHistoryRecordController
 );
-
+/**
+ * @swagger
+ * /api/users/watch-time:
+ *   put:
+ *     summary: Update total watch time
+ *     description: Update the total watch time for the authenticated user.
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 example: "string"
+ *               watchTime:
+ *                 type: number
+ *                 example: 120
+ *     responses:
+ *       200:
+ *         description: Successfully updated watch time
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Update watch time successfully"
+ *       400:
+ *         description: Bad request
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Internal server error
+ */
 route.put("/watch-time", userController.updateTotalWatchTimeController);
 
 /**
@@ -412,7 +775,7 @@ route.get("/:userId", userController.getUserByIdController);
  *             $ref: '#/components/schemas/UpdateUserProfileDto'
  *     responses:
  *      200:
- *         description: Get user successfully
+ *         description: Update user profile successfully
  *         content:
  *           application/json:
  *             schema:
@@ -464,7 +827,25 @@ route.put(
  *             $ref: '#/components/schemas/UpdateUserEmailDto'
  *     responses:
  *      200:
- *       description: Update user email successfully
+ *         description: Update user email successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                 message:
+ *                   type: string
+ *                   example: "Update user email successfully"
  *      400:
  *       description: Bad request
  *      500:
@@ -494,7 +875,16 @@ route.put("/:userId/email", userController.updateUserEmailByIdController);
  *             $ref: '#/components/schemas/UpdateUserPasswordDto'
  *     responses:
  *      200:
- *       description: Update user password successfully
+ *         description: Update user password successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *
+ *                 message:
+ *                   type: string
+ *                   example: "Update user password successfully"
  *      400:
  *       description: Bad request
  *      500:
