@@ -225,7 +225,7 @@ class UserController {
   }
 
   async getStatsByDateController(req, res) {
-    const { userId, fromDate, toDate } = req.body;
+    const { userId, fromDate, toDate } = req.query;
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res
         .status(StatusCodeEnums.BadRequest_400)
