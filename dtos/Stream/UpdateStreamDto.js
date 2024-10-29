@@ -12,22 +12,26 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *         - title
  *       properties:
  *         title:
- *            type: string
- *            description: The stream's title.
+ *           type: string
+ *           description: The stream's title.
  *         description:
- *            type: string
- *            description: The stream's description. 
+ *           type: string
+ *           description: The stream's description.
  *         addedCategoryIds:
  *           type: array
  *           items:
- *            type: string
- *           description: The added category ids.
+ *             type: string
+ *           description: The added category IDs.
  *         removedCategoryIds:
  *           type: array
  *           items:
- *            type: string
- *           description: The removed category ids.
- */
+ *             type: string
+ *           description: The removed category IDs.
+ *         streamThumbnail:
+ *           type: string
+ *           format: binary
+ *           description: The thumbnail file for the stream.
+ */ 
 class UpdateStreamDto {
   constructor(
     streamId,
