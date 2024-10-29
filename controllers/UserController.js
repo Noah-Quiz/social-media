@@ -276,21 +276,19 @@ class UserController {
           .json({ message: "Forbidden access" });
       }
 
-      const { amount, actionCurrencyType, exchangeRate } = req.body;
+      const { amount, actionCurrencyType } = req.body;
 
       const updateUserWalletDto = new UpdateUserWalletDto(
         userId,
         amount,
-        actionCurrencyType,
-        exchangeRate
+        actionCurrencyType
       );
       await updateUserWalletDto.validate();
 
       const user = await updateUserWalletService(
         userId,
         actionCurrencyType,
-        amount,
-        exchangeRate
+        amount
       );
       return res
         .status(StatusCodeEnums.OK_200)

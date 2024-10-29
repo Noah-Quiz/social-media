@@ -50,6 +50,7 @@ class UpdateExchangeRateDto {
       "pointToCoin",
       "dailyPoint",
       "streakBonus",
+      "ReceivePercentage",
     ];
 
     if (!this.id && (!this.name || !allowedNames.includes(this.name))) {
