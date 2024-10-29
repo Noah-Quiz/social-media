@@ -222,7 +222,11 @@ module.exports = {
         await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
       exchangeRate = Rates.exchangeRateBalanceToCoin;
     }
-
+    if ((actionCurrencyType = "ExchangeCoinToBalance")) {
+      const Rates =
+        await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
+      exchangeRate = Rates.exchangeRateCoinToBalance;
+    }
     try {
       const parseAmount = parseFloat(amount);
       if (parseFloat <= 0) {
