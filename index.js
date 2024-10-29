@@ -112,7 +112,7 @@ app.use("/api/advertisement-packages", packageRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 
-server.listen(port, (err) => {
+server.listen(port, async (err) => {
   const logger = getLogger("APP");
   const cron = require("./utils/cronJob.js");
   if (err) {
@@ -120,6 +120,7 @@ server.listen(port, (err) => {
     process.exit(1);
   } else {
     logger.info(`Server is running at: http://localhost:${port}`);
+
     swaggerDoc(app, port);
   }
 });
