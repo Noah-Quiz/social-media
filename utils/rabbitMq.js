@@ -36,7 +36,7 @@ async function consumeMessageFromQueue(queue, callback) {
         if (msg) {
           try {
             const { live_input_id, streamOnlineUrl, streamServerUrl, thumbnailUrl } = JSON.parse(msg.content.toString());
-
+            
             switch (queue) {
               case "bunny_video_dev_hung":
                 const { bunnyId, videoFilePath } = JSON.parse(
@@ -91,17 +91,10 @@ async function consumeMessageFromQueue(queue, callback) {
                   }
 
                   const updateData = {
-                    rtmps: null,
-                    rtmpsPlayback: null,
-                    srt: null,
-                    srtPlayback: null,
-                    webRTC: null,
-                    webRTCPlayback: null,
                     streamOnlineUrl,
                     status: "offline",
                     endedAt: Date.now(),
                     lastUpdated: Date.now(),
-                    uid: "",
                   };
 
                   await connection2.streamRepository.updateStreamRepository(stream2._id, updateData, null, session2);
