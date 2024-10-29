@@ -268,23 +268,15 @@ class StreamRepository {
   async getRecommendedStreamsRepository(data) {
     try {
       const { userId } = data;
-  
-      // Step 1: Find the categories of the most recent liked streams
+
+      // Step 1: Retrieve recent liked categories
       const recentLikedStreams = await Stream.aggregate([
         {
-          $match: {
-            likedBy: new mongoose.Types.ObjectId(userId),
-          },
+          $match: { likedBy: new mongoose.Types.ObjectId(userId) },
         },
-        {
-          $sort: { createdAt: -1 },
-        },
-        {
-          $limit: 100,
-        },
-        {
-          $unwind: "$categoryIds",
-        },
+        { $sort: { createdAt: -1 } },
+        { $limit: 100 },
+        { $unwind: "$categoryIds" },
         {
           $group: {
             _id: null,
@@ -295,16 +287,17 @@ class StreamRepository {
           $project: { _id: 0, categoryIds: 1 },
         },
       ]);
-      console.log(recentLikedStreams)
-  
-      // Check if there are any categories to recommend from
-      if (!recentLikedStreams.length || !recentLikedStreams[0].categoryIds.length) {
-        return []; 
+
+      if (
+        !recentLikedStreams.length ||
+        !recentLikedStreams[0].categoryIds.length
+      ) {
+        return [];
       }
-  
+
       const categoryIds = recentLikedStreams[0].categoryIds;
-  
-      // Step 2: Find live streams with matching category IDs and populate necessary fields
+
+      // Step 2: Retrieve live streams with matching category IDs
       const recommendedStreams = await Stream.aggregate([
         {
           $match: {
@@ -320,7 +313,7 @@ class StreamRepository {
             as: "user",
           },
         },
-        { $unwind: "$user" }, // Unwind user array to single document
+        { $unwind: "$user" },
         {
           $lookup: {
             from: "categories",
@@ -331,10 +324,10 @@ class StreamRepository {
         },
         {
           $project: {
-            _id: 1, // Include stream ID
-            userId: 1, // Include user ID
-            status: 1, // Include stream status
-            createdAt: 1, // Include stream creation time
+            _id: 1,
+            userId: 1,
+            status: 1,
+            createdAt: 1,
             user: {
               fullName: "$user.fullName",
               nickName: "$user.nickName",
@@ -350,26 +343,26 @@ class StreamRepository {
                 },
               },
             },
-            likesCount: { $size: "$likedBy" }, // Calculate number of likes
+            likesCount: { $size: "$likedBy" },
           },
         },
-        {
-          $sort: { createdAt: -1 }, // Sort by created time
-        },
-        { $limit: 50 }, // Limit the number of recommended streams
+        { $sort: { createdAt: -1 } },
+        { $limit: 50 },
       ]);
-  
+
       return recommendedStreams;
     } catch (error) {
       console.error("Error fetching recommended streams:", error);
       throw error;
     }
-  }  
+  }
 
   async getRelevantStreamsRepository(data) {
     try {
       const { categoryIds, streamerId } = data;
-      const categoryIdsObjectIds = categoryIds.map(id => new mongoose.Types.ObjectId(id));
+      const categoryIdsObjectIds = categoryIds.map(
+        (id) => new mongoose.Types.ObjectId(id)
+      );
       console.log(data);
 
       const query = {
@@ -380,24 +373,24 @@ class StreamRepository {
 
       const relevantStreams = await Stream.aggregate([
         {
-          $match: query
+          $match: query,
         },
         {
           $lookup: {
-            from: 'users',
-            localField: 'userId',
-            foreignField: '_id',
-            as: 'user'
-          }
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
         },
         { $unwind: "$user" },
         {
           $lookup: {
-            from: 'categories', 
-            localField: 'categoryIds',
-            foreignField: '_id',
-            as: 'categories'
-          }
+            from: "categories",
+            localField: "categoryIds",
+            foreignField: "_id",
+            as: "categories",
+          },
         },
         {
           $project: {
@@ -420,17 +413,17 @@ class StreamRepository {
                   _id: "$$category._id",
                   name: "$$category.name",
                   imageUrl: "$$category.imageUrl",
-                }
-              }
-            }
-          }
+                },
+              },
+            },
+          },
         },
         {
           $sort: {
             likesCount: -1,
-            createdAt: -1
-          }
-        }
+            createdAt: -1,
+          },
+        },
       ]);
 
       return relevantStreams;
