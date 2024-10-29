@@ -136,7 +136,8 @@ class UserController {
   }
 
   async updateUserEmailByIdController(req, res) {
-    const userId = req.userId;
+    try {
+    const {userId} = req.params;
     const { email } = req.body;
 
     if (req.userId !== userId) {
@@ -148,7 +149,6 @@ class UserController {
     const updateUserEmailDto = new UpdateUserEmailDto(userId, email);
     await updateUserEmailDto.validate();
 
-    try {
       const result = await updateUserEmailByIdService(userId, email);
       return res
         .status(StatusCodeEnums.OK_200)
