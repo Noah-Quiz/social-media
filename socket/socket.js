@@ -1,7 +1,11 @@
-const { updateStreamViewsService } = require("./services/StreamService");
-const { createAMessageService } = require("./services/MessageService");
-const { getAnUserByIdService } = require("./services/UserService");
-const getLogger = require("./utils/logger.js");
+const {
+  updateStreamViewsService,
+  getStreamService,
+} = require("../services/StreamService");
+const { createAMessageService } = require("../services/MessageService");
+const { getAnUserByIdService } = require("../services/UserService");
+const getLogger = require("../utils/logger.js");
+const { getRoomService } = require("../services/RoomService.js");
 
 let viewersCount = 0;
 
@@ -47,24 +51,33 @@ module.exports = (io) => {
   });
 
   // Update viewers count for a specific stream
-  function updateViewersCount(streamId) {
+  async function updateViewersCount(streamId) {
     const viewersCount = io.sockets.adapter.rooms.get(streamId)?.size || 0;
-    updateStreamViewsService(streamId, { currentViewCount: viewersCount });
+    await updateStreamViewsService(streamId, {
+      currentViewCount: viewersCount,
+    });
     io.to(streamId).emit("viewers_count", viewersCount);
   }
 
   // Handle the logic when a user leaves a livestream
-  function handleLeaveLiveStream(socket, streamId) {
+  async function handleLeaveLiveStream(socket, streamId) {
     socket.leave(streamId);
-    updateStreamViewsService(streamId);
+    await updateStreamViewsService(streamId);
   }
 
   // Update viewers count for all rooms
-  function updateViewersCountForAllRooms() {
+  async function updateViewersCountForAllRooms() {
     const rooms = io.sockets.adapter.rooms;
     rooms.forEach((room, roomId) => {
       const viewersCount = room.size || 0;
       io.to(roomId).emit("viewers_count", viewersCount);
     });
   }
+
+  //   async function handleIfTypeOfRoomIsMember(roomId, senderId) {
+  //     try {
+  //       const room = await getRoomService(roomId);
+  //       const stream = await getStreamService();
+  //     } catch (error) {}
+  //   }
 };

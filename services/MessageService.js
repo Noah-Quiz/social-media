@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const { contentModeration } = require("../utils/validator");
 
 const findMessageService = async (messageId) => {
   try {
@@ -72,6 +73,7 @@ const deleteMessageService = async (userId, messageId) => {
 const createAMessageService = async (userId, roomId, content) => {
   try {
     const connection = new DatabaseTransaction();
+    contentModeration(content);
     const response = await connection.messageRepository.createMessage({
       userId,
       roomId,
