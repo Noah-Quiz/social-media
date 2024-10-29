@@ -1,7 +1,7 @@
 const express = require("express");
 const VideoController = require("../controllers/VideoController");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
-const { uploadImage } = require("../utils/stores/storeImage");
+const { uploadFile } = require("../middlewares/storeFile");
 const videoRoutes = express.Router();
 const videoController = new VideoController();
 /**
@@ -98,7 +98,7 @@ videoRoutes.get(
 videoRoutes.put(
   "/:videoId",
   AuthMiddleware,
-  uploadImage.fields([
+  uploadFile.fields([
     { name: "video", maxCount: 1 },
     { name: "videoThumbnail", maxCount: 1 },
   ]),
@@ -132,7 +132,7 @@ videoRoutes.post(
 videoRoutes.patch(
   "/:videoId",
   AuthMiddleware,
-  uploadImage.fields([{ name: "videoThumbnail" }]),
+  uploadFile.fields([{ name: "videoThumbnail" }]),
   videoController.updateAVideoByIdController
 );
 

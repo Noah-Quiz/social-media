@@ -5,7 +5,7 @@ const session = require("express-session");
 const MemoryStore = require("memorystore")(session);
 const authRoutes = express.Router();
 const authController = new AuthController();
-require("../utils/passportAuth");
+require("../middlewares/passportAuth");
 
 authRoutes.use(
   session({

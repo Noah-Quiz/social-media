@@ -11,7 +11,7 @@ const {
   getRecommendedStreamsService,
   getRelevantStreamsService,
 } = require("../services/StreamService");
-const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
+const { deleteFile, checkFileSuccess } = require("../middlewares/storeFile");
 const CreateStreamDto = require("../dtos/Stream/CreateStreamDto");
 const DeleteStreamDto = require("../dtos/Stream/DeleteStreamDto");
 const UpdateStreamDto = require("../dtos/Stream/UpdateStreamDto");

@@ -20,13 +20,16 @@ const giftRoutes = require("./routes/GiftRoute");
 const giftHistoryRoutes = require("./routes/GiftHistoryRoute");
 const exchangeRateRoutes = require("./routes/ExchangeRateRoutes");
 const { default: helmet } = require("helmet");
-const limiter = require("./middlewares/RateLimiter.js");
+const limiter = require("./middlewares/rateLimiter.js");
 const packageRoutes = require("./routes/AdvertisementPackageRoute.js");
 const advertisementRoutes = require("./routes/AdvertisementRoute.js");
 const memberPackRoutes = require("./routes/MemberPackRoute.js");
 const memberGroupRoutes = require("./routes/MemberGroupRoute.js");
 const paymentRouters = require("./routes/PaymentRoute.js");
 const statisticRoutes = require("./routes/StatisticRoute.js");
+
+process.env.TZ = 'Asia/Ho_Chi_Minh';
+
 const app = express();
 const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
@@ -112,7 +115,7 @@ server.listen(port, (err) => {
     logger.error("Failed to start server:", err);
     process.exit(1);
   } else {
-    logger.info(`Server is running at: http://localhost:${port}`);
+    logger.info(`Server is running at: ${process.env.APP_BASE_URL}`);
     swaggerDoc(app, port);
   }
 });
