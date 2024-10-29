@@ -15,7 +15,7 @@ class StreamRepository {
     }
   }
 
-async getStreamByCloudflareId(uid) {
+  async getStreamByCloudflareId(uid) {
     try {
       const stream = await Stream.findOne({ uid });
 
@@ -316,22 +316,13 @@ async getStreamByCloudflareId(uid) {
     try {
       const { userId } = data;
 
-      // Step 1: Find the categories of the most recent liked streams
       const recentLikedStreams = await Stream.aggregate([
         {
-          $match: {
-            likedBy: new mongoose.Types.ObjectId(userId),
-          },
+          $match: { likedBy: new mongoose.Types.ObjectId(userId) },
         },
-        {
-          $sort: { createdAt: -1 },
-        },
-        {
-          $limit: 100,
-        },
-        {
-          $unwind: "$categoryIds",
-        },
+        { $sort: { createdAt: -1 } },
+        { $limit: 100 },
+        { $unwind: "$categoryIds" },
         {
           $group: {
             _id: null,
@@ -342,9 +333,7 @@ async getStreamByCloudflareId(uid) {
           $project: { _id: 0, categoryIds: 1 },
         },
       ]);
-      console.log(recentLikedStreams);
 
-      // Check if there are any categories to recommend from
       if (
         !recentLikedStreams.length ||
         !recentLikedStreams[0].categoryIds.length
@@ -354,7 +343,6 @@ async getStreamByCloudflareId(uid) {
 
       const categoryIds = recentLikedStreams[0].categoryIds;
 
-      // Step 2: Find live streams with matching category IDs and populate necessary fields
       const recommendedStreams = await Stream.aggregate([
         {
           $match: {
@@ -370,7 +358,7 @@ async getStreamByCloudflareId(uid) {
             as: "user",
           },
         },
-        { $unwind: "$user" }, // Unwind user array to single document
+        { $unwind: "$user" },
         {
           $lookup: {
             from: "categories",
@@ -381,10 +369,10 @@ async getStreamByCloudflareId(uid) {
         },
         {
           $project: {
-            _id: 1, // Include stream ID
-            userId: 1, // Include user ID
-            status: 1, // Include stream status
-            createdAt: 1, // Include stream creation time
+            _id: 1,
+            userId: 1,
+            status: 1,
+            createdAt: 1,
             user: {
               fullName: "$user.fullName",
               nickName: "$user.nickName",
@@ -400,19 +388,16 @@ async getStreamByCloudflareId(uid) {
                 },
               },
             },
-            likesCount: { $size: "$likedBy" }, // Calculate number of likes
+            likesCount: { $size: "$likedBy" },
           },
         },
-        {
-          $sort: { createdAt: -1 }, // Sort by created time
-        },
-        { $limit: 50 }, // Limit the number of recommended streams
+        { $sort: { createdAt: -1 } },
+        { $limit: 50 },
       ]);
 
       return recommendedStreams;
     } catch (error) {
-      console.error("Error fetching recommended streams:", error);
-      throw error;
+      throw new Error("Error fetching recommended streams:", error.message);
     }
   }
 
@@ -422,7 +407,6 @@ async getStreamByCloudflareId(uid) {
       const categoryIdsObjectIds = categoryIds.map(
         (id) => new mongoose.Types.ObjectId(id)
       );
-      console.log(data);
 
       const query = {
         status: "live",

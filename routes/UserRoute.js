@@ -34,8 +34,19 @@ route.get("/dashboard", userController.getStatsByDateController);
  *         type: string
  *         required: true
  *     responses:
- *       201:
+ *       200:
  *         description: Get user wallet successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 balance:
+ *                   type: number
+ *                   example: 150.75
+ *                 coin:
+ *                   type: number
+ *                   example: 50
  *       400:
  *         description: Bad request
  *       500:
@@ -214,26 +225,90 @@ route.put("/watch-time", userController.updateTotalWatchTimeController);
  *     summary: Get all users
  *     tags: [Users]
  *     parameters:
- *      - in: path
+ *      - in: query
  *        name: page
  *        schema:
- *         type: number
- *         default: 1
- *         description: Page number
- *      - in: path
+ *          type: integer
+ *          default: 1
+ *        description: Page number
+ *      - in: query
  *        name: size
  *        schema:
- *         type: number
- *         default: 10
- *         description: Number of items per page
- *      - in: path
+ *          type: integer
+ *          default: 10
+ *        description: Number of items per page
+ *      - in: query
  *        name: name
  *        schema:
- *         type: string
- *         description: Search by name
+ *          type: string
+ *        description: Search by name
  *     responses:
- *       201:
- *         description: Get users successfully
+ *       200:
+ *         description: Get all users successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "66e1185472404e6811cf15bc"
+ *                       email:
+ *                         type: string
+ *                         example: "user@example.com"
+ *                       fullName:
+ *                         type: string
+ *                         example: "string"
+ *                       avatar:
+ *                         type: string
+ *                         example: "string"
+ *                       nickName:
+ *                         type: string
+ *                         example: "string"
+ *                       phoneNumber:
+ *                         type: string
+ *                         example: "string"
+ *                       follow:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             followId:
+ *                               type: string
+ *                               example: "66f6577eb4ffd9ae01870e52"
+ *                             followDate:
+ *                               type: string
+ *                               format: date-time
+ *                               example: "2024-10-18T02:31:33.735Z"
+ *                       followBy:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             followById:
+ *                               type: string
+ *                               example: "66f6577eb4ffd9ae01870e52"
+ *                             followByDate:
+ *                               type: string
+ *                               format: date-time
+ *                               example: "2024-10-18T02:36:17.291Z"
+ *                 message:
+ *                   type: string
+ *                   example: "Get all users successfully"
+ *                 page:
+ *                   type: integer
+ *                   example: 1
+ *                 total:
+ *                   type: integer
+ *                   example: 10
+ *                 totalPages:
+ *                   type: integer
+ *                   example: 1
  *       400:
  *         description: Bad request
  *       500:
@@ -256,8 +331,51 @@ route.get("/", userController.getAllUsersController);
  *         type: string
  *         required: true
  *     responses:
- *       201:
+ *       200:
  *         description: Get user successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     nickName:
+ *                       type: string
+ *                     role:
+ *                       type: integer
+ *                     avatar:
+ *                       type: string
+ *                       nullable: true
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                     phoneNumber:
+ *                       type: string
+ *                       nullable: true
+ *                     follow:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           followId:
+ *                             type: string
+ *                           followDate:
+ *                             type: string
+ *                             format: date-time
+ *                     followBy:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties: {}
+ *                 message:
+ *                   type: string
+ *                   example: "Get user successfully"
  *       400:
  *         description: Bad request
  *       500:
@@ -294,7 +412,25 @@ route.get("/:userId", userController.getUserByIdController);
  *             $ref: '#/components/schemas/UpdateUserProfileDto'
  *     responses:
  *      200:
- *       description: Update user profile successfully
+ *         description: Get user successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                 message:
+ *                   type: string
+ *                   example: "Update user profile successfully"
  *      400:
  *       description: Bad request
  *      500:
@@ -383,7 +519,14 @@ route.put("/:userId/password", userController.updateUserPasswordByIdController);
  *         required: true
  *     responses:
  *      200:
- *       description: Delete user successfully
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                message:
+ *                   type: string
+ *                   example: "Success"
  *      400:
  *       description: Bad request
  *      500:

@@ -45,6 +45,7 @@ class CreateExchangeRateDto {
       "pointToCoin",
       "dailyPoint",
       "streakBonus",
+      "ReceivePercentage",
     ];
 
     if (!this.name || !allowedNames.includes(this.name)) {

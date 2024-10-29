@@ -99,11 +99,7 @@ exports.consumePaymentQueue = async () => {
           try {
             // Fetch the current exchange rate and top-up the user's wallet
             const rate = await getExchangeRateService();
-            const coin = await updateUserWalletService(
-              userId,
-              "ReceiveCoin",
-              amount * rate.topUpCoinRate
-            );
+            const coin = await topUpUserService(userId, amount);
 
             // Create a receipt for the top-up
             const receipt = await createReceiptService({
@@ -113,7 +109,7 @@ exports.consumePaymentQueue = async () => {
               bankCode: params.bankCode || "N/A",
               amount: amount,
               transactionId: params.id,
-              type: "TopUpCoin",
+              type: "TopUpBalance",
               exchangeRate: rate.topUpCoinRate,
             });
 
