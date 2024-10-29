@@ -1,9 +1,14 @@
 const GiftHistory = require("../entities/GiftHistoryEntity");
-
+const ExchangeRateRepository = require("./ExchangeRateRepository");
 class GiftHistoryRepository {
+  constructor() {
+    this.exchangeRateRepository = new ExchangeRateRepository();
+  }
   async createGiftHistoryRepository(streamId, userId, gifts) {
     try {
       const existingHistory = await this.findExistingHistory(streamId, userId);
+      const rate =
+        await this.exchangeRateRepository.getAllRatesAsObjectRepository();
 
       if (existingHistory && existingHistory.length > 0) {
         const history = existingHistory[0]; // Get the existing record
@@ -29,6 +34,11 @@ class GiftHistoryRepository {
           0
         );
 
+        history.streamerTotal +=
+          gifts.reduce(
+            (acc, gift) => acc + gift.quantity * gift.pricePerUnit,
+            0
+          ) * rate.ReceivePercentage;
         // Save the updated history
         return await history.save();
       } else {
@@ -41,7 +51,13 @@ class GiftHistoryRepository {
             (acc, gift) => acc + gift.quantity * gift.pricePerUnit,
             0
           ),
+          streamerTotal:
+            gifts.reduce(
+              (acc, gift) => acc + gift.quantity * gift.pricePerUnit,
+              0
+            ) * rate.ReceivePercentage,
         });
+        console.log();
 
         return await newGiftHistory.save();
       }

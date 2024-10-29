@@ -19,7 +19,6 @@ const createVideoService = async (
   }
 ) => {
   try {
-
     const connection = new DatabaseTransaction();
 
     // const { videoUrl, embedUrl, thumbnailUrl } = await uploadFiles(
@@ -398,6 +397,7 @@ const getVideosByPlaylistIdService = async (
   }
 };
 
+//add admin delete
 const deleteVideoService = async (videoId, userId) => {
   const connection = new DatabaseTransaction();
 
@@ -408,12 +408,15 @@ const deleteVideoService = async (videoId, userId) => {
       videoId,
       session
     );
-
+    const user = await connection.userRepository.getAnUserByIdRepository(
+      userId
+    );
+    const notAdmin = user.role !== 1;
     if (!video || video.isDeleted === true) {
       throw new CoreException(StatusCodeEnums.NotFound_404, `Video not found`);
     }
 
-    if (video.userId.toString() !== userId) {
+    if (video.userId.toString() !== userId && notAdmin) {
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
         "You do not have permission to perform this action"
