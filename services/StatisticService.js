@@ -2,7 +2,7 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
-const  countNewUsersService = async () => {
+const countNewUsersService = async () => {
   try {
     const connection = new DatabaseTransaction();
     const today =
@@ -28,14 +28,15 @@ const countRevenueService = async () => {
   try {
     const connection = new DatabaseTransaction();
     const today =
-      await connection.receiptRepository.countTodayRevenueRepository();
+      await connection.giftHistoryRepository.countTodayRevenueRepository();
     const thisWeek =
-      await connection.receiptRepository.countThisWeekRevenueRepository();
+      await connection.giftHistoryRepository.countThisWeekRevenueRepository();
     const thisMonth =
-      await connection.receiptRepository.countThisMonthRevenue();
-    const monthly = await connection.receiptRepository.countMonthlyRevenue();
+      await connection.giftHistoryRepository.countThisMonthRevenue();
+    const monthly =
+      await connection.giftHistoryRepository.countMonthlyRevenue();
     const total =
-      await connection.receiptRepository.countTotalRevenueRepository();
+      await connection.giftHistoryRepository.countTotalRevenueRepository();
     return {
       today,
       thisWeek,
@@ -99,7 +100,8 @@ const countVideosService = async () => {
 const calculateStreamViewsService = async () => {
   try {
     const connection = new DatabaseTransaction();
-    const average = await connection.streamRepository.calculateAvgViewsRepository();
+    const average =
+      await connection.streamRepository.calculateAvgViewsRepository();
     const highest =
       await connection.streamRepository.calculateHighestViewsRepository();
     const lowest =

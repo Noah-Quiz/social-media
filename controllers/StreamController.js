@@ -18,7 +18,8 @@ const UpdateStreamDto = require("../dtos/Stream/UpdateStreamDto");
 const StreamRecommendationDto = require("../dtos/Stream/StreamRecommendationDto");
 const { default: axios } = require("axios");
 
-const baseUrl = process.env.CLOUDFLARE_SERVER || 'http://localhost:3101'
+const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
+
 class StreamController {
   async getStreamController(req, res) {
     const { streamId } = req.params;
@@ -165,12 +166,15 @@ class StreamController {
       const creatorId = userId;
       const streamName = title;
 
-      const response = await axios.post(`${baseUrl}/api/cloudflare/live-input`, {
-        creatorId,
-        streamName,
-      });
-      console.log("CLOUDFLARE LIVE INPUT")
-      console.log(response.data)
+      let response = null;
+      try {
+        response = await axios.post(`${streamServerBaseUrl}/api/cloudflare/live-input`, {
+          creatorId,
+          streamName,
+        });
+      } catch (error) {
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: "Internal Server Error. Fail to create live stream" });
+      }
 
       const cloudflareStream = response.data?.liveInput;
 
@@ -187,7 +191,6 @@ class StreamController {
         srtPlayback: cloudflareStream?.srtPlayback,
         webRTC: cloudflareStream?.webRTC,
         webRTCPlayback: cloudflareStream?.webRTCPlayback,
-        status: cloudflareStream?.status,
         meta: cloudflareStream?.meta,
       };
 
@@ -203,7 +206,7 @@ class StreamController {
       } else {
         return res
           .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
+          .json({ message: error });
       }
     }
   }

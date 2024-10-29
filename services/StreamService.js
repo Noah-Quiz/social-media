@@ -8,6 +8,8 @@ const {
   deleteCloudFlareStreamLiveInput,
 } = require("./CloudFlareStreamService.js");
 
+const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
+
 const getStreamService = async (streamId, requester) => {
   try {
     const connection = new DatabaseTransaction();
@@ -179,9 +181,13 @@ const deleteStreamService = async (userId, streamId) => {
 
     await connection.streamRepository.deleteStreamRepository(streamId, session);
 
-    await axios.delete(`${baseUrl}/api/cloudflare/live-input`, {
-      uid: stream.uid,
-    });
+    try {
+      await axios.delete(`${streamServerBaseUrl}/api/cloudflare/live-input`, {
+        uid: stream.uid,
+      });
+    } catch (error) {
+      throw error;
+    }
 
     await connection.commitTransaction();
     return stream;
