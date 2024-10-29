@@ -214,17 +214,13 @@ module.exports = {
       throw error;
     }
   },
-  updateUserWalletService: async (
-    userId,
-    actionCurrencyType,
-    amount,
-    exchangeRate
-  ) => {
-    let rate;
-    if (!exchangeRate) {
-      rate = 1000; //default
-    } else {
-      rate = parseFloat(exchangeRate);
+  updateUserWalletService: async (userId, actionCurrencyType, amount) => {
+    let exchangeRate;
+    const connection = new DatabaseTransaction();
+    if (actionCurrencyType === "ExchangeBalanceToCoin") {
+      const Rates =
+        await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
+      exchangeRate = Rates.exchangeRateBalanceToCoin;
     }
 
     try {
@@ -232,12 +228,12 @@ module.exports = {
       if (parseFloat <= 0) {
         throw error("Invalid amount");
       }
-      const connection = new DatabaseTransaction();
+
       const user = await connection.userRepository.updateUserWalletRepository(
         userId,
         actionCurrencyType,
         parseAmount,
-        rate
+        exchangeRate
       );
       if (!user) {
         throw new CoreException(
@@ -253,9 +249,11 @@ module.exports = {
   async topUpUserService(userId, amount) {
     try {
       const connection = new DatabaseTransaction();
+      const rate =
+        await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
       const user = await connection.userRepository.topUpUserBalance(
         userId,
-        amount
+        amount * rate.topUpBalanceRate
       );
       return user;
     } catch (error) {
