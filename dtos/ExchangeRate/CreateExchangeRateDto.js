@@ -8,89 +8,57 @@ const CoreException = require("../../exceptions/CoreException");
  *     CreateExchangeRateDto:
  *       type: object
  *       required:
- *         - topUpBalanceRate
- *         - topUpCoinRate
- *         - exchangeRateBalanceToCoin
- *         - exchangeRateCoinToBalance 
- *         - coinPer1000View 
+ *         - name
+ *         - value
  *       properties:
- *         topUpBalanceRate:
+ *         name:
+ *           type: string
+ *           enum:
+ *             - topUpBalanceRate
+ *             - topUpCoinRate
+ *             - exchangeRateBalanceToCoin
+ *             - exchangeRateCoinToBalance
+ *             - coinPer1000View
+ *             - pointToCoin
+ *           description: The specific type of exchange rate.
+ *         value:
  *           type: number
- *           description: The .
- *         topUpCoinRate:
- *           type: number
- *           description: The .
- *         exchangeRateBalanceToCoin:
- *           type: number
- *           description: The .
- *         exchangeRateCoinToBalance:
- *           type: number
- *           description: The .
- *         coinPer1000View:
- *           type: number
- *           description: The .   
+ *           description: The value for the exchange rate.
+ *         description:
+ *           type: string
+ *           description: An optional description.
  */
 class CreateExchangeRateDto {
-  constructor(
-    topUpBalanceRate,
-    topUpCoinRate,
-    exchangeRateBalanceToCoin,
-    exchangeRateCoinToBalance,
-    coinPer1000View
-  ) {
-    this.topUpBalanceRate = topUpBalanceRate;
-    this.topUpCoinRate = topUpCoinRate;
-    this.exchangeRateBalanceToCoin = exchangeRateBalanceToCoin;
-    this.exchangeRateCoinToBalance = exchangeRateCoinToBalance;
-    this.coinPer1000View = coinPer1000View;
+  constructor(name, value, description) {
+    this.name = name;
+    this.value = value;
+    this.description = description;
   }
+
   async validate() {
-    if (
-      this.topUpBalanceRate !== undefined &&
-      (typeof this.topUpBalanceRate !== "number" ||
-        isNaN(this.topUpBalanceRate))
-    ) {
+    const allowedNames = [
+      "topUpBalanceRate",
+      "topUpCoinRate",
+      "exchangeRateBalanceToCoin",
+      "exchangeRateCoinToBalance",
+      "coinPer1000View",
+      "pointToCoin",
+      "dailyPoint",
+      "streakBonus",
+      "ReceivePercentage",
+    ];
+
+    if (!this.name || !allowedNames.includes(this.name)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid field: topUpBalanceRate must be a valid number."
+        `Invalid field: name must be one of ${allowedNames.join(", ")}.`
       );
     }
-    if (
-      this.topUpCoinRate !== undefined &&
-      (typeof this.topUpCoinRate !== "number" || isNaN(this.topUpCoinRate))
-    ) {
+
+    if (typeof this.value !== "number" || isNaN(this.value)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid field: topUpCoinRate must be a valid number."
-      );
-    }
-    if (
-      this.exchangeRateBalanceToCoin !== undefined &&
-      (typeof this.exchangeRateBalanceToCoin !== "number" ||
-        isNaN(this.exchangeRateBalanceToCoin))
-    ) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Invalid field: exchangeRateBalanceToCoin must be a valid number."
-      );
-    }
-    if (
-      this.exchangeRateCoinToBalance !== undefined &&
-      (typeof this.exchangeRateCoinToBalance !== "number" ||
-        isNaN(this.exchangeRateCoinToBalance))
-    ) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Invalid field: exchangeRateCoinToBalance must be a valid number."
-      );
-    }
-    if (
-      this.coinPer1000View !== undefined &&
-      (typeof this.coinPer1000View !== "number" || isNaN(this.coinPer1000View))
-    ) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Invalid field: coinPer1000View must be a valid number."
+        "Invalid field: value must be a valid number."
       );
     }
   }

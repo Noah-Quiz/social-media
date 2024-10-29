@@ -2,27 +2,31 @@ const mongoose = require("mongoose");
 const baseEntitySchema = require("./BaseEntity.js");
 
 const ExchangeRateSchema = new mongoose.Schema({
-  topUpBalanceRate: {
-    type: Number,
-    default: 1,
+  name: {
+    type: String,
+    required: true,
+    enum: [
+      "topUpBalanceRate",
+      "topUpCoinRate",
+      "exchangeRateBalanceToCoin",
+      "exchangeRateCoinToBalance",
+      "coinPer1000View",
+      "pointToCoin",
+      "dailyPoint",
+      "streakBonus",
+      "ReceivePercentage",
+    ],
   },
-  topUpCoinRate: {
+  value: {
     type: Number,
-    default: 1000,
+    required: true,
   },
-  exchangeRateBalanceToCoin: {
-    type: Number,
-    default: 1000, //1 balance = 1000 coin
-  },
-  exchangeRateCoinToBalance: {
-    type: Number,
-    default: 0.0008, //1250coin = 1 balance =>service fee 250 coin
-  },
-  coinPer1000View: {
-    type: Number,
-    default: 100000,
+  description: {
+    type: String,
+    required: false,
   },
   ...baseEntitySchema.obj,
 });
+
 const ExchangeRate = mongoose.model("ExchangeRate", ExchangeRateSchema);
 module.exports = ExchangeRate;

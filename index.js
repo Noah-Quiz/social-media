@@ -20,14 +20,16 @@ const giftRoutes = require("./routes/GiftRoute");
 const giftHistoryRoutes = require("./routes/GiftHistoryRoute");
 const exchangeRateRoutes = require("./routes/ExchangeRateRoutes");
 const { default: helmet } = require("helmet");
-const limiter = require("./middlewares/RateLimiter.js");
+const limiter = require("./middlewares/rateLimiter.js");
 const packageRoutes = require("./routes/AdvertisementPackageRoute.js");
 const advertisementRoutes = require("./routes/AdvertisementRoute.js");
 const memberPackRoutes = require("./routes/MemberPackRoute.js");
 const memberGroupRoutes = require("./routes/MemberGroupRoute.js");
 const paymentRouters = require("./routes/PaymentRoute.js");
-const { updateStreamViewsService } = require("./services/StreamService.js");
-const path = require("path");
+const statisticRoutes = require("./routes/StatisticRoute.js");
+
+process.env.TZ = "Asia/Ho_Chi_Minh";
+
 const app = express();
 const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
@@ -40,6 +42,7 @@ const io = require("socket.io")(server, {
 // Security
 app.use(helmet());
 app.disable("x-powered-by");
+app.set("trust proxy", 1);
 app.use(limiter(15, 100));
 
 // Middleware
@@ -66,14 +69,6 @@ app.use("/", express.static(__dirname));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-const Vimeo = require("vimeo").Vimeo;
-
-const vimeoClient = new Vimeo(
-  process.env.VIMEO_CLIENT_ID,
-  process.env.VIMEO_CLIENT_SECRET,
-  process.env.VIMEO_ACCESS_TOKEN
-);
 
 app.get("/", (req, res) => {
   res.send(
@@ -108,6 +103,7 @@ app.use("/api/gift-history/", giftHistoryRoutes);
 app.use("/api/exchange-rate/", exchangeRateRoutes);
 app.use("/api/member-pack", memberPackRoutes);
 app.use("/api/member-group", memberGroupRoutes);
+app.use("/api/statistics", statisticRoutes);
 app.use("/api/advertisement-packages", packageRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
@@ -119,8 +115,7 @@ server.listen(port, async (err) => {
     logger.error("Failed to start server:", err);
     process.exit(1);
   } else {
-    logger.info(`Server is running at: http://localhost:${port}`);
-
+    logger.info(`Server is running at: ${process.env.APP_BASE_URL}`);
     swaggerDoc(app, port);
   }
 });

@@ -1,5 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const Comment = require("../entities/CommentEntity");
+const { pipeline } = require("nodemailer/lib/xoauth2");
 
 class CommentRepository {
   async createComment(commentData) {
@@ -75,6 +76,7 @@ class CommentRepository {
               avatar: "$user.avatar",
             },
             level: 1,
+            videoId: 1,
           },
         },
       ]);
@@ -138,6 +140,7 @@ class CommentRepository {
             },
             responseTo: 1,
             level: 1,
+            videoId: 1,
           },
         },
       ];
@@ -204,10 +207,11 @@ class CommentRepository {
       throw new Error(error.message);
     }
   }
+
   async getCommentThread(commentId, limit) {
     const numericLimit = parseInt(limit, 10); // Ensure limit is a number
 
-    return Comment.aggregate([
+    const comment = await Comment.aggregate([
       // Match the parent comment and ensure it is not deleted
       {
         $match: {
@@ -224,7 +228,7 @@ class CommentRepository {
           pipeline: [
             {
               $project: {
-                _id: 0,
+                _id: 0, // Remove _id from parent comment's user details
                 fullName: 1,
                 nickName: 1,
                 avatar: 1,
@@ -247,7 +251,7 @@ class CommentRepository {
           connectToField: "responseTo",
           as: "children",
           maxDepth: 10, // Set max depth to control how deep replies go
-          depthField: "graphLevel", // Rename to avoid conflict with schema `level`
+          depthField: "graphLevel", // Depth for hierarchical sorting
         },
       },
 
@@ -277,7 +281,6 @@ class CommentRepository {
                 avatar: 1,
                 fullName: 1,
                 nickName: 1,
-                _id: 0,
               },
             },
           ],
@@ -316,8 +319,7 @@ class CommentRepository {
           },
         },
       },
-
-      // Sort by graphLevel (optional)
+      // Sort by graphLevel (depth)
       {
         $addFields: {
           children: {
@@ -328,7 +330,36 @@ class CommentRepository {
 
       // Limit the total number of replies returned
       { $addFields: { children: { $slice: ["$children", numericLimit] } } }, // Use numericLimit here
+      // Project to remove unnecessary fields like 'isDeleted', '__v', 'graphLevel'
+      {
+        $project: {
+          "children.isDeleted": 0,
+          "children.__v": 0,
+          "children.graphLevel": 0,
+          "children.lastUpdated": 0,
+          isDeleted: 0,
+          __v: 0,
+          graphLevel: 0,
+          lastUpdated: 0,
+          childUsers: 0, // Remove childUsers from final output
+        },
+      },
     ]);
+
+    return comment;
+  }
+  async softDeleteCommentRepository(id) {
+    try {
+      const comment = await Comment.findById(id);
+      if (!comment) {
+        throw new Error("No comment found");
+      }
+      comment.isDeleted = true;
+      await comment.save();
+      return comment;
+    } catch (error) {
+      throw new Error(`Error deleting comment: ${error.message}`);
+    }
   }
 }
 

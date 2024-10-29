@@ -41,7 +41,7 @@ async function createChannel() {
 
 // Function to send a payment task to the payment queue (Producer)
 // This is the message producer that sends tasks to RabbitMQ to be processed
-exports.processPaymentQueue = async (userId, amount, vnp_Params) => {
+exports.processPaymentQueue = async (userId, amount, params) => {
   console.log("Payment queue is called");
 
   try {
@@ -51,7 +51,7 @@ exports.processPaymentQueue = async (userId, amount, vnp_Params) => {
     const paymentData = {
       userId,
       amount,
-      vnp_Params,
+      params,
     };
 
     // Ensure the payment queue exists and is durable (persists on server restarts)
@@ -94,28 +94,24 @@ exports.consumePaymentQueue = async () => {
       async (msg) => {
         if (msg !== null) {
           const paymentData = JSON.parse(msg.content.toString());
-          const { userId, amount, vnp_Params } = paymentData;
+          const { userId, amount, params } = paymentData;
 
           try {
             // Fetch the current exchange rate and top-up the user's wallet
             const rate = await getExchangeRateService();
-            const coin = await updateUserWalletService(
-              userId,
-              "ReceiveCoin",
-              amount * rate.topUpCoinRate
-            );
+            const coin = await topUpUserService(userId, amount);
 
             // Create a receipt for the top-up
-            const receipt = await createReceiptService(
-              userId,
-              vnp_Params.vnp_CardType,
-              "VNPAY",
-              vnp_Params.vnp_BankCode,
-              amount,
-              vnp_Params.vnp_TxnRef,
-              "TopUpCoin",
-              rate.topUpCoinRate
-            );
+            const receipt = await createReceiptService({
+              userId: userId,
+              paymentMethod: params.paymentMethod || "N/A",
+              paymentPort: params.paymentPort || "N/A",
+              bankCode: params.bankCode || "N/A",
+              amount: amount,
+              transactionId: params.id,
+              type: "TopUpBalance",
+              exchangeRate: rate.topUpCoinRate,
+            });
 
             if (!coin) {
               console.error(

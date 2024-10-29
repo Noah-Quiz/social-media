@@ -22,7 +22,7 @@ const {
   generateVideoEmbedUrlToken,
 } = require("../services/VideoService");
 const { default: mongoose } = require("mongoose");
-const { deleteFile, checkFileSuccess } = require("../utils/stores/storeImage");
+const { deleteFile, checkFileSuccess } = require("../middlewares/storeFile");
 const UploadVideoDto = require("../dtos/Video/UploadVideoDto");
 const DeleteVideoDto = require("../dtos/Video/DeleteVideoDto");
 const GenerateVideoEmbedUrlTokenDto = require("../dtos/Video/GenerateVideoEmbedUrlTokenDto");
