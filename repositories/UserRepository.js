@@ -341,7 +341,13 @@ class UserRepository {
           user.wallet.balance -= amount;
           user.wallet.coin += amount * exchangeRate;
           break;
-
+        case "ExchangeCoinToBalance":
+          if (user.wallet.coin < amount) {
+            throw new Error("Insufficient coin");
+          }
+          user.wallet.coin -= amount;
+          user.wallet.balance += amount * exchangeRate;
+          break;
         default:
           throw new Error("Invalid action currency type");
       }
