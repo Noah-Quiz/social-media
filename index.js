@@ -28,7 +28,7 @@ const memberGroupRoutes = require("./routes/MemberGroupRoute.js");
 const paymentRouters = require("./routes/PaymentRoute.js");
 const statisticRoutes = require("./routes/StatisticRoute.js");
 
-process.env.TZ = 'Asia/Ho_Chi_Minh';
+process.env.TZ = "Asia/Ho_Chi_Minh";
 
 const app = express();
 const server = require("http").createServer(app);
@@ -108,7 +108,7 @@ app.use("/api/advertisement-packages", packageRoutes);
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 
-server.listen(port, (err) => {
+server.listen(port, async (err) => {
   const logger = getLogger("APP");
   const cron = require("./utils/cronJob.js");
   if (err) {
