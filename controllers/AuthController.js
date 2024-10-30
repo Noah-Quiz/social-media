@@ -242,15 +242,15 @@ class AuthController {
       );
       await createResetPasswordTokenDto.validate();
 
-      const user = await createResetPasswordTokenService(email);
-      if (user) {
-        res
-          .status(StatusCodeEnums.Created_201)
-          .json({ message: "Reset password token created successfully" });
+      const token = await createResetPasswordTokenService(email);
+      if (token) {
+        res.status(StatusCodeEnums.Created_201).json({
+          message: "We have sent an reset password link to your email!",
+        });
       }
     } catch (error) {
       if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
+        res.status(error.code).json({ token, message: error.message });
       } else {
         res
           .status(StatusCodeEnums.InternalServerError_500)
@@ -268,7 +268,7 @@ class AuthController {
       if (user) {
         res
           .status(StatusCodeEnums.OK_200)
-          .json({ message: "Reset password successfully  " });
+          .json({ message: "Reset password successfully!" });
       }
     } catch (error) {
       if (error instanceof CoreException) {
