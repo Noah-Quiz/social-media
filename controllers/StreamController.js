@@ -168,12 +168,20 @@ class StreamController {
 
       let response = null;
       try {
-        response = await axios.post(`${streamServerBaseUrl}/api/cloudflare/live-input`, {
-          creatorId,
-          streamName,
-        });
+        response = await axios.post(
+          `${streamServerBaseUrl}/api/cloudflare/live-input`,
+          {
+            creatorId,
+            streamName,
+          }
+        );
       } catch (error) {
-        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: "Internal Server Error. Fail to create live stream" });
+        console.log("Server tuni: " + error);
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({
+            message: "Internal Server Error. Fail to create live stream",
+          });
       }
 
       const cloudflareStream = response.data?.liveInput;
@@ -242,9 +250,11 @@ class StreamController {
     const data = { userId };
 
     try {
-      const streams = await getRecommendedStreamsService(data)
+      const streams = await getRecommendedStreamsService(data);
 
-      return res.status(StatusCodeEnums.OK_200).json({ streams, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ streams, message: "Success" });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
@@ -261,17 +271,22 @@ class StreamController {
     const userId = req.userId;
 
     try {
-      const streamRecommendationDto = new StreamRecommendationDto(streamerId, categoryIds);
+      const streamRecommendationDto = new StreamRecommendationDto(
+        streamerId,
+        categoryIds
+      );
       await streamRecommendationDto.validate();
 
       const data = {
         streamerId,
         categoryIds,
-      }
+      };
 
-      const streams = await getRelevantStreamsService(data)
+      const streams = await getRelevantStreamsService(data);
 
-      return res.status(StatusCodeEnums.OK_200).json({ streams, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ streams, message: "Success" });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
