@@ -81,6 +81,7 @@ const uploadBunnyStreamVideoService = async (libraryId, videoId, filePath) => {
       maxBodyLength: Infinity,
     });
     logger.info(`Upload video response: ${JSON.stringify(res.data)}`);
+    await deleteFile(filePath);
     return JSON.parse(JSON.stringify(res.data));
   } catch (error) {
     logger.error(`Upload video error: ${error}`);
@@ -100,7 +101,6 @@ const updateBunnyStreamVideoService = async (libraryId, videoId, title) => {
       },
     });
     logger.info(`Update video response: ${JSON.stringify(res.data)}`);
-    await deleteFile(filePath);
     return JSON.parse(JSON.stringify(res.data));
   } catch (error) {
     logger.error(`Update video error: ${error}`);
