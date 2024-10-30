@@ -19,6 +19,29 @@ const videoController = new VideoController();
  *    responses:
  *      201:
  *        description: Create video successfully
+ *        content:
+ *          application/json:
+ *            example:
+ *              message: "Create Video successfully"
+ *              video:
+ *                title: "string"
+ *                description: "string"
+ *                bunnyId: "string"
+ *                videoUrl: "string"
+ *                videoEmbedUrl: "string"
+ *                videoServerUrl: ""
+ *                isUploaded: false
+ *                numOfViews: 0
+ *                likedBy: []
+ *                enumMode: "public"
+ *                thumbnailUrl: ""
+ *                categoryIds: []
+ *                userId: "string"
+ *                isDeleted: false
+ *                _id: "string"
+ *                dateCreated: "string"
+ *                lastUpdated: "string"
+ *                __v: 0
  *      400:
  *        description: Bad request
  *      500:
