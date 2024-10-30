@@ -4,28 +4,35 @@ const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const { uploadFile } = require("../middlewares/storeFile");
 const videoRoutes = express.Router();
 const videoController = new VideoController();
+
 /**
  * @swagger
  * /api/videos/:
  *  post:
- *    tags: [Videos]
- *    summary: Create a video
- *    requestBody:
- *      required: true
- *      content:
- *        application/json:
- *          schema:
- *            $ref: '#/components/schemas/CreateVideoDto'
- *    responses:
- *      201:
- *        description: Create video successfully
- *      400:
- *        description: Bad request
- *      500:
- *        description: Internal server error
+ *   summary: Create a video
+ *   tags: [Videos]
+ *   consumes:
+ *    - multipart/form-data
+ *   parameters:
+ *    - in: formData
+ *      name: video
+ *      schema:
+ *       type: file
+ *      description: The video file
+ *   responses:
+ *    200:
+ *      description: Update video by id successfully
+ *    400:
+ *      description: Bad request
+ *    500:
+ *      description: Internal server error
  */
-
-videoRoutes.post("/", AuthMiddleware, videoController.createVideoController);
+videoRoutes.post(
+  "/",
+  AuthMiddleware,
+  uploadFile.fields([{ name: "video" }]),
+  videoController.createVideoController
+);
 
 /**
  * @swagger
@@ -95,35 +102,34 @@ videoRoutes.get(
   videoController.getVideosByPlaylistIdController
 );
 
-videoRoutes.put(
-  "/:videoId",
-  AuthMiddleware,
-  uploadFile.fields([
-    { name: "video", maxCount: 1 },
-    { name: "videoThumbnail", maxCount: 1 },
-  ]),
-  videoController.uploadVideoController
-);
-
-videoRoutes.post(
-  "/:videoId/generate-token",
-  videoController.generateVideoEmbedUrlTokenController
-);
-
 /**
  * @swagger
  * /api/videos/{videoId}:
  *  patch:
- *    summary: Update a video by id
- *    tags: [Videos]
- *    requestBody:
- *      required: true
- *      content:
- *        application/json:
- *          schema:
- *            $ref: '#/components/schemas/UpdateVideoDto'
+ *   summary: Update video by id
+ *   tags: [Videos]
+ *   consumes:
+ *    - multipart/form-data
+ *   parameters:
+ *    - in: path
+ *      name: videoId
+ *      schema:
+ *       type: string
+ *       required: true
+ *    - in: formData
+ *      name: videoThumbnail
+ *      schema:
+ *       type: file
+ *      description: The video's thumbnail image file
+ *   requestBody:
+ *     required: true
+ *     content:
+ *       application/json:
+ *         schema:
+ *           $ref: '#/components/schemas/UpdateVideoDto'
+ *   responses:
  *    200:
- *      description: Update a video by id successfully
+ *      description: Update video by id successfully
  *    400:
  *      description: Bad request
  *    500:
