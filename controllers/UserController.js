@@ -152,7 +152,11 @@ class UserController {
       const result = await updateUserEmailByIdService(userId, email);
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ user: result, message: "Update user email successfully" });
+        .json({
+          user: result,
+          message:
+            "Update user email successfully, the verification link will be sent to your new email!",
+        });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
