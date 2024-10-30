@@ -1,9 +1,15 @@
 const GiftHistory = require("../entities/GiftHistoryEntity");
-
+const DatabaseTransaction = require("./DatabaseTransaction");
+const ExchangeRateRepository = require("./ExchangeRateRepository");
 class GiftHistoryRepository {
+  constructor() {
+    this.exchangeRateRepository = new ExchangeRateRepository();
+  }
   async createGiftHistoryRepository(streamId, userId, gifts) {
     try {
       const existingHistory = await this.findExistingHistory(streamId, userId);
+      const rate =
+        await this.exchangeRateRepository.getAllRatesAsObjectRepository();
 
       if (existingHistory && existingHistory.length > 0) {
         const history = existingHistory[0]; // Get the existing record
@@ -29,6 +35,11 @@ class GiftHistoryRepository {
           0
         );
 
+        history.streamerTotal +=
+          gifts.reduce(
+            (acc, gift) => acc + gift.quantity * gift.pricePerUnit,
+            0
+          ) * rate.ReceivePercentage;
         // Save the updated history
         return await history.save();
       } else {
@@ -41,7 +52,13 @@ class GiftHistoryRepository {
             (acc, gift) => acc + gift.quantity * gift.pricePerUnit,
             0
           ),
+          streamerTotal:
+            gifts.reduce(
+              (acc, gift) => acc + gift.quantity * gift.pricePerUnit,
+              0
+            ) * rate.ReceivePercentage,
         });
+        console.log();
 
         return await newGiftHistory.save();
       }
@@ -105,6 +122,120 @@ class GiftHistoryRepository {
     } catch (error) {
       throw new Error("Error deleting gift history:", error.message);
     }
+  }
+
+  async countTotalRevenueRepository() {
+    try {
+      const result = await GiftHistory.aggregate([
+        {
+          $project: {
+            revenue: { $subtract: ["$total", "$streamerTotal"] }, // Calculate total - streamerTotal for each document
+          },
+        },
+        { $group: { _id: null, totalAmount: { $sum: "$revenue" } } },
+      ]);
+      const rate =
+        await this.exchangeRateRepository.getAllRatesAsObjectRepository();
+      return result.length > 0
+        ? result[0].totalAmount * rate.exchangeRateCoinToBalance
+        : 0;
+    } catch (error) {
+      console.log(error);
+      throw new Error("Error counting total revenue: ", error.message);
+    }
+  }
+
+  async countTodayRevenueRepository() {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const result = await GiftHistory.aggregate([
+      { $match: { dateCreated: { $gte: startOfDay, $lte: endOfDay } } },
+      {
+        $project: {
+          revenue: { $subtract: ["$total", "$streamerTotal"] }, // Calculate total - streamerTotal for each document
+        },
+      },
+      { $group: { _id: null, totalAmount: { $sum: "$revenue" } } },
+    ]);
+    const rate =
+      await this.exchangeRateRepository.getAllRatesAsObjectRepository();
+    return result.length > 0
+      ? result[0].totalAmount * rate.exchangeRateCoinToBalance
+      : 0;
+  }
+
+  async countThisWeekRevenueRepository() {
+    const today = new Date();
+    const startOfWeek = new Date(
+      today.setDate(today.getDate() - today.getDay())
+    );
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const result = await GiftHistory.aggregate([
+      { $match: { dateCreated: { $gte: startOfWeek } } },
+      {
+        $project: {
+          revenue: { $subtract: ["$total", "$streamerTotal"] }, // Calculate total - streamerTotal for each document
+        },
+      },
+      { $group: { _id: null, totalAmount: { $sum: "$revenue" } } },
+    ]);
+    const rate =
+      await this.exchangeRateRepository.getAllRatesAsObjectRepository();
+    return result.length > 0
+      ? result[0].totalAmount * rate.exchangeRateCoinToBalance
+      : 0;
+  }
+
+  async countThisMonthRevenue() {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const result = await GiftHistory.aggregate([
+      { $match: { dateCreated: { $gte: startOfMonth } } },
+      {
+        $project: {
+          revenue: { $subtract: ["$total", "$streamerTotal"] }, // Calculate total - streamerTotal for each document
+        },
+      },
+      { $group: { _id: null, totalAmount: { $sum: "$revenue" } } },
+    ]);
+    const rate =
+      await this.exchangeRateRepository.getAllRatesAsObjectRepository();
+    return result.length > 0
+      ? result[0].totalAmount * rate.exchangeRateCoinToBalance
+      : 0;
+  }
+
+  async countMonthlyRevenue() {
+    const result = await GiftHistory.aggregate([
+      {
+        $project: {
+          year: { $year: "$dateCreated" },
+          month: { $month: "$dateCreated" },
+          revenue: { $subtract: ["$total", "$streamerTotal"] }, // Calculate total - streamerTotal for each document
+        },
+      },
+      {
+        $group: {
+          _id: { year: "$year", month: "$month" },
+          totalAmount: { $sum: "$revenue" }, // Sum the calculated differences for each month
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } }, // Sort by year and month in ascending order
+    ]);
+    const rate =
+      await this.exchangeRateRepository.getAllRatesAsObjectRepository();
+    return result.map((r) => ({
+      year: r._id.year,
+      month: r._id.month,
+      totalAmount: r.totalAmount * rate.exchangeRateCoinToBalance,
+    }));
   }
 }
 

@@ -2,6 +2,7 @@ const validator = require("validator");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const mongoose = require("mongoose");
+const banWords = require("../enums/BanWords");
 
 const validMongooseObjectId = async (id) => {
   if (!mongoose.Types.ObjectId.isValid(id))
@@ -59,10 +60,21 @@ const validPhoneNumber = async (phoneNumber) => {
       "Phone number is invalid"
     );
 };
+
+const contentModeration = (content) => {
+  const words = content.trim().replace(/\s+/g, " ");
+  const eachWord = words.split(" ");
+  for (const word of eachWord) {
+    if (banWords.includes(word)) {
+      throw new Error("This content violates community guidelines");
+    }
+  }
+};
 module.exports = {
   validMongooseObjectId,
   validFullName,
   validEmail,
   validPassword,
   validPhoneNumber,
+  contentModeration,
 };
