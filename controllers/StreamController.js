@@ -85,12 +85,13 @@ class StreamController {
   }
 
   async updateStreamController(req, res) {
+    const { streamId } = req.params;
+    const { title, description, addedCategoryIds, removedCategoryIds } =
+      req.body;
+    let thumbnailFile = req.file ? req.file.path : null;
+    const userId = req.userId;
+    
     try {
-      const { streamId } = req.params;
-      const { title, description, addedCategoryIds, removedCategoryIds } =
-        req.body;
-      let thumbnailFile = req.file ? req.file.path : null;
-      const userId = req.userId;
       const updateStreamDto = new UpdateStreamDto(
         streamId,
         userId,
