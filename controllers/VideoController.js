@@ -58,7 +58,10 @@ class VideoController {
         videoFilePath: videoFile.path,
       };
 
-      await sendMessageToQueue("bunny_video_dev_hung", queueMessage);
+      await sendMessageToQueue(
+        process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE,
+        queueMessage
+      );
 
       await deleteFile(videoFile.path);
 
