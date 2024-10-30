@@ -8,15 +8,7 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const crypto = require("crypto");
 const createVideoService = async (
   userId,
-  {
-    title,
-    description,
-    enumMode,
-    categoryIds,
-    bunnyId,
-    videoUrl,
-    videoEmbedUrl,
-  }
+  { title, bunnyId, videoUrl, videoEmbedUrl, thumbnailUrl }
 ) => {
   try {
     const connection = new DatabaseTransaction();
@@ -29,11 +21,9 @@ const createVideoService = async (
     const video = await connection.videoRepository.createVideoRepository({
       userId,
       title,
-      description,
-      categoryIds,
-      enumMode,
       videoUrl,
       videoEmbedUrl,
+      thumbnailUrl,
       bunnyId,
     });
 
@@ -43,12 +33,7 @@ const createVideoService = async (
   }
 };
 
-const uploadVideoService = async (
-  videoId,
-  userId,
-  videoFilePath,
-  videoThumbnailFilePath
-) => {
+const uploadVideoService = async (videoId, userId) => {
   try {
     const connection = new DatabaseTransaction();
     const video = await connection.videoRepository.getVideoRepository(videoId);
@@ -68,8 +53,6 @@ const uploadVideoService = async (
       );
     }
     video.isUploaded = true;
-    video.videoServerUrl = videoFilePath;
-    video.thumbnailUrl = videoThumbnailFilePath;
     await connection.videoRepository.updateAVideoByIdRepository(videoId, video);
     return video;
   } catch (error) {
