@@ -23,6 +23,7 @@ const giftHistorySchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   gifts: [giftSchema], // Use the giftSchema for the "gifts" array
   total: { type: Number, required: true },
+  streamerTotal: { type: Number, required: true },
   ...baseEntitySchema.obj,
 });
 
