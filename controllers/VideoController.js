@@ -63,8 +63,6 @@ class VideoController {
         queueMessage
       );
 
-      await deleteFile(videoFile.path);
-
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ video, message: "Success" });
