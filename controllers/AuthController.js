@@ -73,9 +73,12 @@ class AuthController {
         process.env.ACCESS_TOKEN_EXPIRE
       );
 
-      res
-        .status(StatusCodeEnums.OK_200)
-        .json({ accessToken, message: "Login successfully" });
+      // res
+      //   .status(StatusCodeEnums.OK_200)
+      //   .json({ accessToken, message: "Login successfully" });
+      res.redirect(
+        `http://localhost:3001?accessToken=${accessToken}&userId=${user._id}`
+      );
     } catch (error) {
       if (error instanceof CoreException) {
         res.status(error.code).json({ message: error.message });
@@ -107,9 +110,12 @@ class AuthController {
         process.env.ACCESS_TOKEN_SECRET,
         process.env.ACCESS_TOKEN_EXPIRE
       );
-      res
-        .status(200)
-        .json({ accessToken, message: "Login with Google successfully" });
+      // res
+      //   .status(200)
+      //   .json({ accessToken, message: "Login with Google successfully" });
+      res.redirect(
+        `http://localhost:3001?accessToken=${accessToken}&userId=${user._id}`
+      );
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
@@ -144,9 +150,12 @@ class AuthController {
         process.env.ACCESS_TOKEN_SECRET,
         process.env.ACCESS_TOKEN_EXPIRE
       );
-      res
-        .status(StatusCodeEnums.OK_200)
-        .json({ accessToken, message: "Login with Apple successfully" });
+      // res
+      //   .status(StatusCodeEnums.OK_200)
+      //   .json({ accessToken, message: "Login with Apple successfully" });
+      res.redirect(
+        `http://localhost:3001?accessToken=${accessToken}&userId=${loggedUser._id}`
+      );
     } catch (error) {
       return res
         .status(StatusCodeEnums.InternalServerError_500)
