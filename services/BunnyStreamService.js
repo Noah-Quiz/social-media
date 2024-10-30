@@ -2,6 +2,7 @@ require("dotenv").config();
 const { default: axios } = require("axios");
 const fs = require("fs");
 const getLogger = require("../utils/logger");
+const { deleteFile } = require("../middlewares/storeFile");
 const logger = getLogger("BUNNY_STREAM");
 
 const getBunnyStreamVideoService = async (libraryId, videoId) => {
@@ -99,6 +100,7 @@ const updateBunnyStreamVideoService = async (libraryId, videoId, title) => {
       },
     });
     logger.info(`Update video response: ${JSON.stringify(res.data)}`);
+    await deleteFile(filePath);
     return JSON.parse(JSON.stringify(res.data));
   } catch (error) {
     logger.error(`Update video error: ${error}`);
