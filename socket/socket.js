@@ -10,6 +10,7 @@ const { getVideoService } = require("../services/VideoService.js");
 const {
   getBunnyStreamVideoService,
 } = require("../services/BunnyStreamService.js");
+const eventEmitter = require("./events.js");
 require("dotenv").config();
 let viewersCount = 0;
 
@@ -53,11 +54,15 @@ module.exports = (io) => {
       logger.info(`User disconnected: ${socket.id}`);
     });
 
+    eventEmitter.on("upload_progress", ({ videoId, progress }) => {
+      io.to(socket.id).emit("upload_progress", progress);
+      logger.info(`Upload progress for ${videoId}: ${progress}`);
+    });
     socket.on("check_video_status", async (videoId) => {
       try {
         const video = await getVideoService(videoId);
         const bunnyVideo = await getBunnyStreamVideoService(
-          process.env.BUNNY_STREAM_LIBRARY_ID,
+          process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
           video.bunnyId
         );
         io.to(socket.id).emit("video_upload_status", bunnyVideo.status);
@@ -91,11 +96,4 @@ module.exports = (io) => {
       io.to(roomId).emit("viewers_count", viewersCount);
     });
   }
-
-  //   async function handleIfTypeOfRoomIsMember(roomId, senderId) {
-  //     try {
-  //       const room = await getRoomService(roomId);
-  //       const stream = await getStreamService();
-  //     } catch (error) {}
-  //   }
 };

@@ -143,3 +143,5 @@ dist
 *.avi
 *.mov
 *.wmv
+*.ts
+*.m3u8
