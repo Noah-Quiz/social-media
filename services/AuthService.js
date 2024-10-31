@@ -428,7 +428,7 @@ const createResetPasswordTokenService = async (email) => {
       "Click the link below to reset your password",
       mailBody
     );
-    return user;
+    return token;
   } catch (error) {
     throw error;
   }
