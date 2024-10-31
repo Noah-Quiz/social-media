@@ -112,6 +112,7 @@ const uploadBunnyStorageFileService = async (
           await connection.videoRepository.updateAVideoByIdRepository(videoId, {
             videoUrl: url,
           });
+          await deleteFile(filePath);
           // await uploadVideoService(videoId, video.userId);
         }
       }
