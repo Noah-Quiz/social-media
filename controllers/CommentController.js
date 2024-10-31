@@ -21,6 +21,7 @@ class CommentController {
       const videoId = req.body.videoId;
       const content = req.body.content;
       const responseTo = req.body.responseTo;
+      console.log(req.body);
       const createCommentDto = new CreateCommentDto(
         userId,
         videoId,

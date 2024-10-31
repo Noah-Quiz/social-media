@@ -73,11 +73,4 @@ module.exports = (io) => {
       io.to(roomId).emit("viewers_count", viewersCount);
     });
   }
-
-  //   async function handleIfTypeOfRoomIsMember(roomId, senderId) {
-  //     try {
-  //       const room = await getRoomService(roomId);
-  //       const stream = await getStreamService();
-  //     } catch (error) {}
-  //   }
 };
