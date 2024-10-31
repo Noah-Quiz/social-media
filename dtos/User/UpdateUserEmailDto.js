@@ -18,6 +18,7 @@ const { validEmail, validMongooseObjectId } = require("../../utils/validator");
  */
 class UpdateUserEmailDto {
   constructor(userId, email) {
+    this.userId = userId;
     this.email = email;
   }
   async validate() {

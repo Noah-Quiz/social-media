@@ -136,23 +136,27 @@ class UserController {
   }
 
   async updateUserEmailByIdController(req, res) {
-    const userId = req.userId;
-    const { email } = req.body;
-
-    if (req.userId !== userId) {
-      return res
-        .status(StatusCodeEnums.Forbidden_403)
-        .json({ message: "Forbidden access" });
-    }
-
-    const updateUserEmailDto = new UpdateUserEmailDto(userId, email);
-    await updateUserEmailDto.validate();
-
     try {
+      const { userId } = req.params;
+      const { email } = req.body;
+
+      if (req.userId !== userId) {
+        return res
+          .status(StatusCodeEnums.Forbidden_403)
+          .json({ message: "Forbidden access" });
+      }
+
+      const updateUserEmailDto = new UpdateUserEmailDto(userId, email);
+      await updateUserEmailDto.validate();
+
       const result = await updateUserEmailByIdService(userId, email);
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ user: result, message: "Update user email successfully" });
+        .json({
+          user: result,
+          message:
+            "Update user email successfully, the verification link will be sent to your new email!",
+        });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
@@ -225,7 +229,7 @@ class UserController {
   }
 
   async getStatsByDateController(req, res) {
-    const { userId, fromDate, toDate } = req.body;
+    const { userId, fromDate, toDate } = req.query;
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res
         .status(StatusCodeEnums.BadRequest_400)
@@ -277,7 +281,6 @@ class UserController {
       }
 
       const { amount, actionCurrencyType } = req.body;
-
       const updateUserWalletDto = new UpdateUserWalletDto(
         userId,
         amount,

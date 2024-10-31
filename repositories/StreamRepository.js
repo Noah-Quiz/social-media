@@ -33,7 +33,6 @@ class StreamRepository {
           $match: {
             _id: new mongoose.Types.ObjectId(streamId),
             isDeleted: false,
-            status: "live",
           },
         },
         {
@@ -171,7 +170,7 @@ class StreamRepository {
       const searchQuery = { isDeleted: false };
 
       if (query.title) {
-        searchQuery.name = query.title;
+        searchQuery.title = query.title;
       }
       if (query.uid) {
         searchQuery.uid = query.uid;
@@ -187,7 +186,7 @@ class StreamRepository {
       });
 
       const streams = await Stream.aggregate([
-        { $match: { ...searchQuery, status: "live" } },
+        { $match: searchQuery },
         { $skip: skip },
         { $limit: size },
         {

@@ -18,7 +18,8 @@ const UpdateStreamDto = require("../dtos/Stream/UpdateStreamDto");
 const StreamRecommendationDto = require("../dtos/Stream/StreamRecommendationDto");
 const { default: axios } = require("axios");
 
-const baseUrl = process.env.CLOUDFLARE_SERVER || 'http://localhost:3101'
+const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
+
 class StreamController {
   async getStreamController(req, res) {
     const { streamId } = req.params;
@@ -84,12 +85,13 @@ class StreamController {
   }
 
   async updateStreamController(req, res) {
+    const { streamId } = req.params;
+    const { title, description, addedCategoryIds, removedCategoryIds } =
+      req.body;
+    let thumbnailFile = req.file ? req.file.path : null;
+    const userId = req.userId;
+    
     try {
-      const { streamId } = req.params;
-      const { title, description, addedCategoryIds, removedCategoryIds } =
-        req.body;
-      let thumbnailFile = req.file ? req.file.path : null;
-      const userId = req.userId;
       const updateStreamDto = new UpdateStreamDto(
         streamId,
         userId,
@@ -165,12 +167,23 @@ class StreamController {
       const creatorId = userId;
       const streamName = title;
 
-      const response = await axios.post(`${baseUrl}/api/cloudflare/live-input`, {
-        creatorId,
-        streamName,
-      });
-      console.log("CLOUDFLARE LIVE INPUT")
-      console.log(response.data)
+      let response = null;
+      try {
+        response = await axios.post(
+          `${streamServerBaseUrl}/api/cloudflare/live-input`,
+          {
+            creatorId,
+            streamName,
+          }
+        );
+      } catch (error) {
+        console.log("Server tuni: " + error);
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({
+            message: "Internal Server Error. Fail to create live stream",
+          });
+      }
 
       const cloudflareStream = response.data?.liveInput;
 
@@ -187,7 +200,6 @@ class StreamController {
         srtPlayback: cloudflareStream?.srtPlayback,
         webRTC: cloudflareStream?.webRTC,
         webRTCPlayback: cloudflareStream?.webRTCPlayback,
-        status: cloudflareStream?.status,
         meta: cloudflareStream?.meta,
       };
 
@@ -203,7 +215,7 @@ class StreamController {
       } else {
         return res
           .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
+          .json({ message: error });
       }
     }
   }
@@ -239,9 +251,11 @@ class StreamController {
     const data = { userId };
 
     try {
-      const streams = await getRecommendedStreamsService(data)
+      const streams = await getRecommendedStreamsService(data);
 
-      return res.status(StatusCodeEnums.OK_200).json({ streams, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ streams, message: "Success" });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
@@ -258,17 +272,22 @@ class StreamController {
     const userId = req.userId;
 
     try {
-      const streamRecommendationDto = new StreamRecommendationDto(streamerId, categoryIds);
+      const streamRecommendationDto = new StreamRecommendationDto(
+        streamerId,
+        categoryIds
+      );
       await streamRecommendationDto.validate();
 
       const data = {
         streamerId,
         categoryIds,
-      }
+      };
 
-      const streams = await getRelevantStreamsService(data)
+      const streams = await getRelevantStreamsService(data);
 
-      return res.status(StatusCodeEnums.OK_200).json({ streams, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ streams, message: "Success" });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });

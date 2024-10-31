@@ -35,10 +35,15 @@ async function consumeMessageFromQueue(queue, callback) {
       async (msg) => {
         if (msg) {
           try {
-            const { live_input_id, streamOnlineUrl, streamServerUrl, thumbnailUrl } = JSON.parse(msg.content.toString());
+            const {
+              live_input_id,
+              streamOnlineUrl,
+              streamServerUrl,
+              thumbnailUrl,
+            } = JSON.parse(msg.content.toString());
 
             switch (queue) {
-              case "bunny_video_dev_hung":
+              case process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE:
                 const { bunnyId, videoFilePath } = JSON.parse(
                   msg.content.toString()
                 );
@@ -55,21 +60,30 @@ async function consumeMessageFromQueue(queue, callback) {
                 break;
 
               case "live_stream.connected":
-                logger.info("Consuming live stream connect event")
+                logger.info("Consuming live stream connect event");
                 const connection = new DatabaseTransaction();
                 const session = await connection.startTransaction();
 
                 try {
                   const uid = live_input_id || null;
-                  const stream = await connection.streamRepository.getStreamByCloudflareId(uid);
+                  const stream =
+                    await connection.streamRepository.getStreamByCloudflareId(
+                      uid
+                    );
                   if (!stream) {
                     throw new Error("Stream not found for given live input ID");
                   }
 
-                  const result = await connection.streamRepository.updateStreamRepository(stream._id, {
-                    status: "live",
-                    streamServerUrl
-                  }, null, session);
+                  const result =
+                    await connection.streamRepository.updateStreamRepository(
+                      stream._id,
+                      {
+                        status: "live",
+                        streamServerUrl,
+                      },
+                      null,
+                      session
+                    );
 
                   connection.commitTransaction();
                 } catch (error) {
@@ -79,32 +93,33 @@ async function consumeMessageFromQueue(queue, callback) {
                 }
 
               case "live_stream.disconnected":
-                logger.info("Consuming live stream disconnect event")
+                logger.info("Consuming live stream disconnect event");
                 const connection2 = new DatabaseTransaction();
                 const session2 = await connection2.startTransaction();
 
                 try {
                   const uid = live_input_id || null;
-                  const stream2 = await connection2.streamRepository.getStreamByCloudflareId(uid);
+                  const stream2 =
+                    await connection2.streamRepository.getStreamByCloudflareId(
+                      uid
+                    );
                   if (!stream2) {
                     throw new Error("Stream not found for given live input ID");
                   }
 
                   const updateData = {
-                    rtmps: null,
-                    rtmpsPlayback: null,
-                    srt: null,
-                    srtPlayback: null,
-                    webRTC: null,
-                    webRTCPlayback: null,
                     streamOnlineUrl,
                     status: "offline",
                     endedAt: Date.now(),
                     lastUpdated: Date.now(),
-                    uid: "",
                   };
 
-                  await connection2.streamRepository.updateStreamRepository(stream2._id, updateData, null, session2);
+                  await connection2.streamRepository.updateStreamRepository(
+                    stream2._id,
+                    updateData,
+                    null,
+                    session2
+                  );
 
                   connection2.commitTransaction();
                 } catch (error) {
@@ -114,16 +129,22 @@ async function consumeMessageFromQueue(queue, callback) {
                 }
 
               case "bunny_livestream_thumbnail":
-                logger.info("Consuming live stream thumbnail event")
+                logger.info("Consuming live stream thumbnail event");
                 const connection3 = new DatabaseTransaction();
 
                 const uid = live_input_id || null;
-                const stream3 = await connection3.streamRepository.getStreamByCloudflareId(uid);
+                const stream3 =
+                  await connection3.streamRepository.getStreamByCloudflareId(
+                    uid
+                  );
                 if (!stream3) {
                   throw new Error("Stream not found for given live input ID");
                 }
 
-                await connection3.streamRepository.updateStreamRepository(stream3._id, { thumbnailUrl });
+                await connection3.streamRepository.updateStreamRepository(
+                  stream3._id,
+                  { thumbnailUrl }
+                );
                 break;
             }
 
@@ -137,7 +158,9 @@ async function consumeMessageFromQueue(queue, callback) {
       { noAck: false }
     );
   } catch (error) {
-    logger.error(`Error while consuming message from queue ${queue}: ${error.stack}`);
+    logger.error(
+      `Error while consuming message from queue ${queue}: ${error.stack}`
+    );
   } finally {
     // Optional: Clean up the connection and channel when you're done
     process.on("SIGINT", async () => {
