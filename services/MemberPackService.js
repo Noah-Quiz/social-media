@@ -9,7 +9,7 @@ const createMemberPackService = async (
 ) => {
   const connection = new DatabaseTransaction();
   if (isNaN(price) || isNaN(durationNumber)) {
-    throw new Error("In valid price or duration number");
+    throw new Error("Invalid price or duration number");
   }
   try {
     const memberPack =
@@ -34,9 +34,6 @@ const updateMemberPackService = async (
   durationNumber
 ) => {
   const connection = new DatabaseTransaction();
-  if (isNaN(price) || isNaN(durationNumber)) {
-    throw new Error("In valid price or duration number");
-  }
   try {
     const memberPack =
       connection.memberPackRepository.updateMemberPackRepository(
