@@ -35,9 +35,13 @@ class CategoryRepository {
     }
   }
 
-  async getAllCategoryRepository() {
+  async getAllCategoryRepository(query) {
     try {
-      let categories = await Category.find({ isDeleted: false }).lean();
+      const searchCriteria = {
+        isDeleted: false,
+        ...(query ? { name: { $regex: query, $options: "i" } } : {}), // Match name if query is provided
+      };
+      let categories = await Category.find(searchCriteria).lean();
 
       // Remove unwanted fields from each category
       categories = categories.map((category) => {

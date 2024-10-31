@@ -8,10 +8,11 @@ const createCategoryService = async (categoryData) => {
 
     const session = await connection.startTransaction();
 
-    const category = await connection.categoryRepository.createCategoryRepository(
-      categoryData,
-      session
-    );
+    const category =
+      await connection.categoryRepository.createCategoryRepository(
+        categoryData,
+        session
+      );
 
     await connection.commitTransaction();
     return category;
@@ -25,10 +26,15 @@ const getCategoryService = async (categoryId) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const category = await connection.categoryRepository.getCategoryRepository(categoryId);
+    const category = await connection.categoryRepository.getCategoryRepository(
+      categoryId
+    );
 
     if (!category) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, `Category not found` );
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        `Category not found`
+      );
     }
 
     return category;
@@ -37,11 +43,11 @@ const getCategoryService = async (categoryId) => {
   }
 };
 
-const getAllCategoryService = async () => {
+const getAllCategoryService = async (query) => {
   try {
     const connection = new DatabaseTransaction();
 
-    return await connection.categoryRepository.getAllCategoryRepository();
+    return await connection.categoryRepository.getAllCategoryRepository(query);
   } catch (error) {
     throw error;
   }
@@ -51,15 +57,21 @@ const updateCategoryService = async (categoryId, categoryData) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const category = await connection.categoryRepository.getCategoryRepository(categoryId);
+    const category = await connection.categoryRepository.getCategoryRepository(
+      categoryId
+    );
     if (!category) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Category not found");
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Category not found"
+      );
     }
 
-    const updatedCategory = await connection.categoryRepository.updateCategoryRepository(
-      categoryId,
-      categoryData,
-    );
+    const updatedCategory =
+      await connection.categoryRepository.updateCategoryRepository(
+        categoryId,
+        categoryData
+      );
 
     return updatedCategory;
   } catch (error) {
@@ -72,17 +84,23 @@ const deleteCategoryService = async (categoryId) => {
   try {
     const session = await connection.startTransaction();
 
-    const category = await connection.categoryRepository.getCategoryRepository(categoryId);
+    const category = await connection.categoryRepository.getCategoryRepository(
+      categoryId
+    );
 
     if (!category || category.isDeleted === true) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Category not found")
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Category not found"
+      );
     }
 
-    const deletedCategory = await connection.categoryRepository.deleteCategoryRepository(
-      categoryId,
-      session
-    );
-    
+    const deletedCategory =
+      await connection.categoryRepository.deleteCategoryRepository(
+        categoryId,
+        session
+      );
+
     await connection.commitTransaction();
     return deletedCategory;
   } catch (error) {

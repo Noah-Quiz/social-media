@@ -70,9 +70,9 @@ class CategoryController {
   }
 
   async getAllCategoryController(req, res) {
+    const { name } = req.query;
     try {
-      const categories = await getAllCategoryService();
-
+      const categories = await getAllCategoryService(name);
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ categories, message: "Success" });
