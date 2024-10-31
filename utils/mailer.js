@@ -1,4 +1,6 @@
 const nodemailer = require("nodemailer");
+const getLogger = require("./logger");
+const logger = getLogger("MAIL");
 require("dotenv").config();
 const sendMail = (to, subject, text, html) => {
   const transport = nodemailer.createTransport({
@@ -17,7 +19,14 @@ const sendMail = (to, subject, text, html) => {
     text: text,
     html: html,
   };
-  return transport.sendMail(options);
+  return transport
+    .sendMail(options)
+    .then((info) => {
+      logger.info(`Email sent: ${info.response}`);
+    })
+    .catch((error) => {
+      logger.error(`Error sending email: ${error}`);
+    });
 };
 
-module.exports = {sendMail};
+module.exports = { sendMail };

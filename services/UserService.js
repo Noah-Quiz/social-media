@@ -4,6 +4,7 @@ const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const { validFullName, validEmail } = require("../utils/validator");
 const bcrypt = require("bcrypt");
+const { sendVerificationEmailService } = require("./AuthService");
 module.exports = {
   getAllUsersService: async (page, size, name) => {
     const connection = new DatabaseTransaction();
@@ -106,12 +107,12 @@ module.exports = {
         );
       }
 
-      await validEmail(email);
-
       const result = await connection.userRepository.updateAnUserByIdRepository(
         userId,
         { email, verify: false }
       );
+
+      await sendVerificationEmailService(email);
       return result;
     } catch (error) {
       throw error;
@@ -222,7 +223,11 @@ module.exports = {
         await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
       exchangeRate = Rates.exchangeRateBalanceToCoin;
     }
-
+    if (actionCurrencyType === "ExchangeCoinToBalance") {
+      const Rates =
+        await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
+      exchangeRate = Rates.exchangeRateCoinToBalance;
+    }
     try {
       const parseAmount = parseFloat(amount);
       if (parseFloat <= 0) {

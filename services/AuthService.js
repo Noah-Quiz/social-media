@@ -10,9 +10,7 @@ const {
 const getLogger = require("../utils/logger.js");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
-const {
-  handleLoginStreakService,
-} = require("./LoginStreakService.js");
+const { handleLoginStreakService } = require("./LoginStreakService.js");
 const signUpService = async (
   fullName,
   email,
@@ -85,11 +83,13 @@ const loginService = async (email, password, ipAddress) => {
       );
 
     // Check if user is verified
-    if (user.verify === false)
+    if (user.verify === false) {
+      await sendVerificationEmailService(email);
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "User is not verified. Please check your email or phone message for verification"
       );
+    }
 
     // Check if already login with google
     if (user.googleId !== "" && !user.password) {
@@ -428,7 +428,7 @@ const createResetPasswordTokenService = async (email) => {
       "Click the link below to reset your password",
       mailBody
     );
-    return user;
+    return token;
   } catch (error) {
     throw error;
   }

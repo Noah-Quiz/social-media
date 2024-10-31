@@ -6,7 +6,11 @@ const { createAMessageService } = require("../services/MessageService");
 const { getAnUserByIdService } = require("../services/UserService");
 const getLogger = require("../utils/logger.js");
 const { getRoomService } = require("../services/RoomService.js");
-
+const { getVideoService } = require("../services/VideoService.js");
+const {
+  getBunnyStreamVideoService,
+} = require("../services/BunnyStreamService.js");
+require("dotenv").config();
 let viewersCount = 0;
 
 module.exports = (io) => {
@@ -47,6 +51,20 @@ module.exports = (io) => {
     socket.on("disconnect", () => {
       updateViewersCountForAllRooms();
       logger.info(`User disconnected: ${socket.id}`);
+    });
+
+    socket.on("check_video_status", async (videoId) => {
+      try {
+        const video = await getVideoService(videoId);
+        const bunnyVideo = await getBunnyStreamVideoService(
+          process.env.BUNNY_STREAM_LIBRARY_ID,
+          video.bunnyId
+        );
+        io.to(socket.id).emit("video_upload_status", bunnyVideo.status);
+        logger.info(`Video status: ${bunnyVideo.status}`);
+      } catch (error) {
+        logger.error(`Error checking video status: ${error}`);
+      }
     });
   });
 
