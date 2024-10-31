@@ -84,7 +84,7 @@ const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
   try {
     if (
       data.enumMode &&
-      !["public", "private", "unlisted"].includes(data.enumMode)
+      !["public", "private", "unlisted", "member"].includes(data.enumMode)
     ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
