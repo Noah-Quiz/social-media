@@ -56,7 +56,6 @@ module.exports = (io) => {
 
     eventEmitter.on("upload_progress", ({ videoId, progress }) => {
       io.to(socket.id).emit("upload_progress", progress);
-      logger.info(`Upload progress for ${videoId}: ${progress}`);
     });
     socket.on("check_video_status", async (videoId) => {
       try {
