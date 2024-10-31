@@ -4,7 +4,7 @@ const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const messageController = new MessageController();
 
 const messageRoutes = express.Router();
-// messageRoutes.use(AuthMiddleware);
+messageRoutes.use(AuthMiddleware);
 
 /**
  * @swagger
@@ -52,7 +52,7 @@ messageRoutes.post("/", messageController.createAMessageController);
  *       500:
  *         description: Internal server error
  */
-messageRoutes.get("/:roomId", messageController.getMessagesController);
+messageRoutes.get("/room/:roomId", messageController.getMessagesController);
 
 /**
  * @swagger

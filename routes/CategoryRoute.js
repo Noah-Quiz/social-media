@@ -15,16 +15,55 @@ router.use(AuthMiddleware);
  * /api/categories:
  *   get:
  *     security:
- *      - bearerAuth: []
+ *       - bearerAuth: []
  *     summary: Get all categories
+ *     description: Retrieves a list of all categories.
  *     tags: [Categories]
  *     responses:
  *       200:
- *         description: Get all categories successfully
+ *         description: Get all categories successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     example: "607d1b2f9f1b2c0017f9d2e5"
+ *                   name:
+ *                     type: string
+ *                     example: "Electronics"
+ *                   imageUrl:
+ *                     type: string
+ *                     example: "https://example.com/image.png"
+ *                   dateCreated:
+ *                     type: string
+ *                     example: "2024-10-25T02:29:35.346+00:00"
+ *                   lastUpdated:
+ *                     type: string
+ *                     example: "2024-10-25T02:29:35.346+00:00"
  *       400:
- *         description: Bad request
+ *         description: Bad request. Possible validation errors.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid request parameters."
  *       500:
- *         description: Internal server error
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "An unexpected error occurred while retrieving categories."
  */
 router.get("/", categoryController.getAllCategoryController);
 
@@ -33,9 +72,9 @@ router.get("/", categoryController.getAllCategoryController);
  * /api/categories:
  *   post:
  *     security:
- *      - bearerAuth: []
+ *       - bearerAuth: []
  *     summary: Create a category
- *     description: Create a category with name and image url
+ *     description: Creates a new category with a name and image URL.
  *     tags: [Categories]
  *     requestBody:
  *       content:
@@ -44,11 +83,58 @@ router.get("/", categoryController.getAllCategoryController);
  *             $ref: '#/components/schemas/CreateCategoryDto'
  *     responses:
  *       201:
- *         description: Create category successfully
+ *         description: Category created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Category created successfully."
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     name:
+ *                       type: string
+ *                       example: "Electronics"
+ *                     imageUrl:
+ *                       type: string
+ *                       example: "https://example.com/image.png"
+ *                     dateCreated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
+ *                     lastUpdated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
  *       400:
- *         description: Bad request
+ *         description: Bad request. Possible validation errors.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Validation failed: 'name' is required."
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["'name' is required.", "'imageUrl' must be a valid URL."]
  *       500:
- *         description: Internal server error
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "An unexpected error occurred while creating the category."
  */
 router.post(
   "/",
@@ -73,10 +159,52 @@ router.post(
  *     responses:
  *       200:
  *         description: Get category successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Category created successfully."
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     name:
+ *                       type: string
+ *                       example: "Electronics"
+ *                     imageUrl:
+ *                       type: string
+ *                       example: "https://example.com/image.png"
+ *                     dateCreated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
+ *                     lastUpdated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
  *       400:
  *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Not found"
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "An unexpected error occurred while retrive the category."
  */
 router.get("/:categoryId", categoryController.getCategoryController);
 
@@ -110,11 +238,57 @@ router.get("/:categoryId", categoryController.getCategoryController);
  *     responses:
  *      200:
  *       description: Update user profile successfully
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Category created successfully."
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     name:
+ *                       type: string
+ *                       example: "Electronics"
+ *                     imageUrl:
+ *                       type: string
+ *                       example: "https://example.com/image.png"
+ *                     dateCreated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
+ *                     lastUpdated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
  *      400:
  *       description: Bad request
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Validation failed: 'name' is required."
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["'name' is required.", "'imageUrl' must be a valid URL."]
  *      500:
  *       description: Internal server error
- *
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "An unexpected error occurred while update the category."
  */
 router.put(
   "/:categoryId",
@@ -140,12 +314,35 @@ router.put(
  *         required: true
  *     responses:
  *      200:
- *       description: Delete user successfully
+ *       description: Delete category successfully
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Delete successfully"
  *      400:
  *       description: Bad request
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "CategoryId not found"
  *      500:
  *       description: Internal server error
- *
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "An unexpected error occurred while delete the category."
  */
 router.delete(
   "/:categoryId",
