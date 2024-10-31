@@ -19,7 +19,7 @@ const videoSchema = new mongoose.Schema({
   ],
   enumMode: {
     type: String,
-    enum: ["public", "private", "unlisted", "member"],
+    enum: ["public", "private", "unlisted", "member", "draft"],
     default: "public",
   },
   thumbnailUrl: { type: String, default: "" },

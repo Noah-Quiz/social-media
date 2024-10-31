@@ -30,7 +30,7 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *         enumMode:
  *           type: string
  *           default: public
- *           description: Value of enum mode [public, private, unlisted]
+ *           description: Value of enum mode [public, private, unlisted, member, draft]
  *         thumbnailUrl:
  *           type: string
  *           default: https://example.com

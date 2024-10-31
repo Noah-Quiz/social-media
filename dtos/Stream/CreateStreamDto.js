@@ -51,7 +51,7 @@ class CreateStreamDto {
         "Category IDs must be an array"
       );
     }
-    if (this.categoryIds) {
+    if (this.categoryIds&& this.categoryIds.length > 0) {
       this.categoryIds.forEach(async (id) => {
         await validMongooseObjectId(id);
       });

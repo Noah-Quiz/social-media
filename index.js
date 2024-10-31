@@ -39,6 +39,22 @@ const io = require("socket.io")(server, {
   },
 });
 
+const {
+  uploadBunnyStreamVideoService,
+} = require("./services/BunnyStreamService");
+const { consumeMessageFromQueue } = require("./utils/rabbitMq");
+
+consumeMessageFromQueue(
+  process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE,
+  uploadBunnyStreamVideoService
+);
+
+consumeMessageFromQueue("live_stream.connected");
+
+consumeMessageFromQueue("live_stream.disconnected");
+
+consumeMessageFromQueue("bunny_livestream_thumbnail");
+
 // Security
 app.use(helmet());
 app.disable("x-powered-by");
