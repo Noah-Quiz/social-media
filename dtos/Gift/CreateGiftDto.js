@@ -20,8 +20,8 @@ const CoreException = require("../../exceptions/CoreException");
  *           type: string
  *           description: The gift's image.
  *         valuePerUnit:
- *           type: string
- *           description: The value per unit of a gift.   
+ *           type: number
+ *           description: The value per unit of a gift.
  */
 class CreateGiftDto {
   constructor(name, image, valuePerUnit) {
@@ -43,13 +43,13 @@ class CreateGiftDto {
         "Image is required"
       );
     }
-    if (!this.valuePerUnit) {
+    if (this.valuePerUnit == null || isNaN(this.valuePerUnit)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Value per unit is required"
+        "Value per unit is required and must be a number"
       );
     }
-    if (!isFloat(this.valuePerUnit.toString())) {
+    if (!isFloat(this.valuePerUnit.toString(), { min: 0 })) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid price format"

@@ -74,7 +74,7 @@ class GiftController {
 
     try {
       const gift = await deleteGiftService(id);
-      return res.status(200).json({ gift: gift, message: "Deletion success" });
+      return res.status(200).json({ message: "Deletion success" });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
