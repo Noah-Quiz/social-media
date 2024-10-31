@@ -27,7 +27,7 @@ const memberPackRoutes = require("./routes/MemberPackRoute.js");
 const memberGroupRoutes = require("./routes/MemberGroupRoute.js");
 const paymentRouters = require("./routes/PaymentRoute.js");
 const statisticRoutes = require("./routes/StatisticRoute.js");
-
+const socket=require('./socket/socket')
 process.env.TZ = "Asia/Ho_Chi_Minh";
 
 const app = express();
@@ -39,21 +39,24 @@ const io = require("socket.io")(server, {
   },
 });
 
+socket(io);
+
 const {
   uploadBunnyStreamVideoService,
+  uploadBunnyStorageFileService,
 } = require("./services/BunnyStreamService");
 const { consumeMessageFromQueue } = require("./utils/rabbitMq");
 
 consumeMessageFromQueue(
   process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE,
-  uploadBunnyStreamVideoService
+  uploadBunnyStorageFileService
 );
 
-consumeMessageFromQueue("live_stream.connected");
+// consumeMessageFromQueue("live_stream.connected");
 
-consumeMessageFromQueue("live_stream.disconnected");
+// consumeMessageFromQueue("live_stream.disconnected");
 
-consumeMessageFromQueue("bunny_livestream_thumbnail");
+// consumeMessageFromQueue("bunny_livestream_thumbnail");
 
 // Security
 app.use(helmet());

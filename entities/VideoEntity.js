@@ -5,7 +5,7 @@ const videoSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, default: "" },
   bunnyId: { type: String, default: "" },
-  videoUrl: { type: String, required: true },
+  videoUrl: { type: String, default: "" },
   videoEmbedUrl: { type: String, default: "" },
   videoServerUrl: { type: String, default: "" },
   isUploaded: { type: Boolean, default: false },
