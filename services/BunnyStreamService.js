@@ -86,6 +86,8 @@ const uploadBunnyStorageFileService = async (
 ) => {
   try {
     const files = fs.readdirSync(videoFolderPath);
+    const totalFiles = files.length; // Total number of files to upload
+    let uploadedFilesCount = 0; // Count of successfully uploaded files
     for (const file of files) {
       const filePath = `${videoFolderPath}/${file}`;
       console.log(filePath);
@@ -113,8 +115,14 @@ const uploadBunnyStorageFileService = async (
             videoUrl: url,
           });
           await deleteFile(filePath);
+          uploadedFilesCount++;
           // await uploadVideoService(videoId, video.userId);
         }
+        const uploadPercentage = ((uploadedFilesCount / totalFiles) * 100).toFixed(2);
+        eventEmitter.emit("upload_progress", {
+          videoId,
+          progress: uploadPercentage,
+        });
       }
     }
   } catch (error) {
