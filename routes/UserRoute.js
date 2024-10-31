@@ -166,24 +166,36 @@ route.get("/follower/:userId", userController.getFollowerController);
  *         description: Internal server error
  */
 route.get("/following/:userId", userController.getFollowingController);
+
 /**
  * @swagger
- * /api/dashboard:
+ * /api/users/dashboard:
  *   get:
  *     security:
  *      - bearerAuth: []
  *     summary: Get user dashboard statistics
  *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userId:
- *                 type: string
- *                 example: "string"
+ *     parameters:
+ *      - in: query
+ *        name: userId
+ *        required: true
+ *        schema:
+ *          type: string
+ *          example: "string"
+ *      - in: query
+ *        name: fromDate
+ *        required: false
+ *        schema:
+ *          type: string
+ *          format: date
+ *          example: "2024-10-01"
+ *      - in: query
+ *        name: toDate
+ *        required: false
+ *        schema:
+ *          type: string
+ *          format: date
+ *          example: "2024-10-31"
  *     responses:
  *       200:
  *         description: Successfully retrieved dashboard statistics

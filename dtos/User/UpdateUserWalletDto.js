@@ -18,8 +18,8 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           example: 1000
  *         actionCurrencyType:
  *           type: string
- *           description: Type of update currency ["SpendBalance", "SpendCoin", "ExchangeBalanceToCoin"].
- *           enum: ["SpendBalance", "SpendCoin", "ExchangeBalanceToCoin"]
+ *           description: Type of update currency ["SpendBalance", "SpendCoin", "ExchangeBalanceToCoin","ExchangeCoinToBalance"].
+ *           enum: ["SpendBalance", "SpendCoin", "ExchangeBalanceToCoin","ExchangeCoinToBalance"]
  *           example: SpendBalance
  *         exchangeRate:
  *           type: number
