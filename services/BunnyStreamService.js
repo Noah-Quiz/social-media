@@ -2,12 +2,22 @@ require("dotenv").config();
 const { default: axios } = require("axios");
 const fs = require("fs");
 const getLogger = require("../utils/logger");
-const { deleteFile } = require("../middlewares/storeFile");
+const {
+  deleteFile,
+  changeFileName,
+  extractFilenameFromUrl,
+  extractFilenameFromPath,
+} = require("../middlewares/storeFile");
 const logger = getLogger("BUNNY_STREAM");
-
+const https = require("https");
+const eventEmitter = require("../socket/events");
+const { uploadVideoService } = require("./VideoService");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const getBunnyStreamVideoService = async (libraryId, videoId) => {
   try {
     const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${libraryId}/videos/${videoId}`;
+    console.log(url);
     const res = await axios.get(url, {
       headers: {
         AccessKey: process.env.BUNNY_STREAM_API_KEY,
@@ -69,16 +79,70 @@ const createBunnyStreamVideoService = async (
   }
 };
 
-const uploadBunnyStreamVideoService = async (libraryId, videoId, filePath) => {
+const uploadBunnyStorageFileService = async (
+  userId,
+  videoId,
+  videoFolderPath
+) => {
   try {
-    const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${libraryId}/videos/${videoId}`;
+    const files = fs.readdirSync(videoFolderPath);
+    for (const file of files) {
+      const filePath = `${videoFolderPath}/${file}`;
+      console.log(filePath);
+      const fileStream = fs.createReadStream(filePath);
+      const fileSize = fs.statSync(filePath).size;
+      const fileName = await extractFilenameFromPath(filePath);
+
+      const url = `https://${process.env.BUNNY_STORAGE_HOST_NAME}/${process.env.BUNNY_STORAGE_ZONE_NAME}/video/${videoId}/${fileName}`;
+      const res = await axios.put(url, fileStream, {
+        headers: {
+          AccessKey: process.env.BUNNY_STORAGE_PASSWORD,
+          "Content-Type": "application/octet-stream",
+        },
+        maxBodyLength: Infinity,
+      });
+
+      if (res.status === StatusCodeEnums.Created_201) {
+        logger.info(`Upload video response: ${JSON.stringify(res.data)}`);
+        const connection = new DatabaseTransaction();
+        const video = await connection.videoRepository.getVideoByIdRepository(
+          videoId
+        );
+        if (video) {
+          await connection.videoRepository.updateAVideoByIdRepository(videoId, {
+            videoUrl: url,
+          });
+          await deleteFile(filePath);
+          // await uploadVideoService(videoId, video.userId);
+        }
+      }
+    }
+  } catch (error) {
+    logger.error(`Upload video error: ${error}`);
+    throw error;
+  }
+};
+
+const uploadBunnyStreamVideoService = async (userId, videoId, filePath) => {
+  try {
+    const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/videos/${videoId}`;
+    logger.info(`Uploading video to Bunny Stream: ${url}`);
     const fileStream = fs.createReadStream(filePath);
+    const fileSize = fs.statSync(filePath).size;
     const res = await axios.put(url, fileStream, {
       headers: {
         AccessKey: process.env.BUNNY_STREAM_API_KEY,
         "Content-Type": "application/octet-stream",
       },
       maxBodyLength: Infinity,
+      onUploadProgress: (progressEvent) => {
+        const progress = ((progressEvent.loaded / fileSize) * 100).toFixed(2);
+        console.log(`Uploading: ${progress}%`);
+        eventEmitter.emit("upload_progress", {
+          videoId,
+          progress,
+        });
+      },
     });
     logger.info(`Upload video response: ${JSON.stringify(res.data)}`);
     await deleteFile(filePath);
@@ -129,6 +193,7 @@ module.exports = {
   getAllBunnyStreamVideosService,
   createBunnyStreamVideoService,
   uploadBunnyStreamVideoService,
+  uploadBunnyStorageFileService,
   updateBunnyStreamVideoService,
   deleteBunnyStreamVideoService,
 };

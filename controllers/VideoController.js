@@ -7,6 +7,7 @@ const {
   deleteBunnyStreamVideoService,
   updateBunnyStreamVideoService,
   getBunnyStreamVideoService,
+  uploadBunnyStorageFileService,
 } = require("../services/BunnyStreamService");
 const {
   createVideoService,
@@ -23,16 +24,93 @@ const {
   generateVideoEmbedUrlToken,
 } = require("../services/VideoService");
 const { default: mongoose } = require("mongoose");
-const { deleteFile, checkFileSuccess } = require("../middlewares/storeFile");
+const {
+  deleteFile,
+  checkFileSuccess,
+  changeFileName,
+  convertMp4ToTsSegments,
+  convertTsSegmentsToM3u8,
+  removeExtension,
+  removeFileName,
+  replaceTsSegmentLinksInM3u8,
+  convertMp4ToHls,
+} = require("../middlewares/storeFile");
 const UploadVideoDto = require("../dtos/Video/UploadVideoDto");
 const DeleteVideoDto = require("../dtos/Video/DeleteVideoDto");
 const GenerateVideoEmbedUrlTokenDto = require("../dtos/Video/GenerateVideoEmbedUrlTokenDto");
 const { sendMessageToQueue } = require("../utils/rabbitMq");
 const CreateVideoDto = require("../dtos/Video/CreateVideoDto");
 require("dotenv").config();
-
+const getLogger = require("../utils/logger");
+const logger = getLogger("VIDEO_CONTROLLER");
 class VideoController {
   async createVideoController(req, res) {
+    try {
+      const userId = req.userId;
+      const videoFile = req.files.video[0];
+      const title = videoFile.originalname;
+
+      // const bunnyVideo = await createBunnyStreamVideoService(
+      //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
+      //   title
+      // );
+
+      const video = await createVideoService(userId, {
+        title,
+        // bunnyId: bunnyVideo.guid,
+        // videoUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/playlist.m3u8`,
+        // videoEmbedUrl: `https://iframe.mediadelivery.net/embed/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/${bunnyVideo.guid}`,
+        // thumbnailUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/thumbnail.jpg`,
+      });
+
+      if (!video) {
+        logger.error("Create video failed");
+        throw new CoreException(
+          StatusCodeEnums.InternalServerError_500,
+          "Create video failed"
+        );
+      }
+
+      const newFilePath = await changeFileName(videoFile.path, video._id);
+      // await convertMp4ToTsSegments(newFilePath);
+      // await deleteFile(newFilePath);
+      // const folderPath = await removeFileName(newFilePath);
+
+      const m3u8 = await convertMp4ToHls(newFilePath);
+      const folderPath = await removeFileName(newFilePath);
+      // const m3u8 = await convertTsSegmentsToM3u8(folderPath);
+      await replaceTsSegmentLinksInM3u8(m3u8, video._id);
+      await deleteFile(newFilePath);
+
+      const queueMessage = {
+        userId: userId,
+        videoId: video._id,
+        videoFolderPath: folderPath,
+      };
+
+      await sendMessageToQueue(
+        process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE,
+        queueMessage
+      );
+
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ video, message: "Success" });
+    } catch (error) {
+      // if (req.files) {
+      //   await deleteFile(req.files.video[0].path);
+      // }
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res
+          .status(StatusCodeEnums.InternalServerError_500)
+          .json({ message: error.message });
+      }
+    }
+  }
+
+  async createVideoControllerV1(req, res) {
     try {
       const userId = req.userId;
       const videoFile = req.files.video[0];
@@ -54,7 +132,8 @@ class VideoController {
       const upload = await uploadVideoService(video._id, userId);
 
       const queueMessage = {
-        bunnyId: video.bunnyId,
+        userId: userId,
+        videoId: video.bunnyId,
         videoFilePath: videoFile.path,
       };
 
@@ -79,46 +158,6 @@ class VideoController {
       }
     }
   }
-
-  // async createVideoController(req, res) {
-  //   try {
-  //     const { title, description, enumMode, categoryIds } = req.body;
-  //     const userId = req.userId;
-  //     const createVideoDto = new CreateVideoDto(
-  //       title,
-  //       description,
-  //       enumMode,
-  //       categoryIds
-  //     );
-  //     await createVideoDto.validate();
-
-  //     const bunnyVideo = await createBunnyStreamVideoService(
-  //       process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-  //       title
-  //     );
-  //     const video = await createVideoService(userId, {
-  //       title,
-  //       description,
-  //       categoryIds,
-  //       enumMode,
-  //       bunnyId: bunnyVideo.guid,
-  //       videoUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/playlist.m3u8`,
-  //       videoEmbedUrl: `https://iframe.mediadelivery.net/embed/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/${bunnyVideo.guid}`,
-  //     });
-
-  //     return res
-  //       .status(StatusCodeEnums.Created_201)
-  //       .json({ message: "Create Video successfully", video });
-  //   } catch (error) {
-  //     if (error instanceof CoreException) {
-  //       return res.status(error.code).json({ message: error.message });
-  //     } else {
-  //       return res
-  //         .status(StatusCodeEnums.InternalServerError_500)
-  //         .json({ message: error.message });
-  //     }
-  //   }
-  // }
 
   async generateVideoEmbedUrlTokenController(req, res) {
     try {

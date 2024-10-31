@@ -25,6 +25,7 @@ const createVideoService = async (
       videoEmbedUrl,
       thumbnailUrl,
       bunnyId,
+      enumMode: "draft",
     });
 
     return video;
