@@ -1,4 +1,4 @@
-class CoreException{
+class CoreException {
   code;
   message;
   constructor(code, message) {
