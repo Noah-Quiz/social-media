@@ -53,11 +53,11 @@ consumeMessageFromQueue(
   uploadBunnyStorageFileService
 );
 
-// consumeMessageFromQueue("live_stream.connected");
+consumeMessageFromQueue("live_stream.connected");
 
-// consumeMessageFromQueue("live_stream.disconnected");
+consumeMessageFromQueue("live_stream.disconnected");
 
-// consumeMessageFromQueue("bunny_livestream_thumbnail");
+consumeMessageFromQueue("bunny_livestream_thumbnail");
 
 // Security
 app.use(helmet());
