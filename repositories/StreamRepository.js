@@ -188,7 +188,7 @@ class StreamRepository {
       const streams = await Stream.aggregate([
         { $match: searchQuery },
         { $skip: skip },
-        { $limit: size },
+        { $limit: Number(size) },
         {
           $lookup: {
             from: "users",
