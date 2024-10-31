@@ -76,6 +76,7 @@ class AuthController {
       // res
       //   .status(StatusCodeEnums.OK_200)
       //   .json({ accessToken, message: "Login successfully" });
+      console.log(accessToken);
       res.redirect(
         `http://localhost:3001?accessToken=${accessToken}&userId=${user._id}`
       );
