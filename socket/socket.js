@@ -54,8 +54,13 @@ module.exports = (io) => {
       logger.info(`User disconnected: ${socket.id}`);
     });
 
-    eventEmitter.on("upload_progress", ({ videoId, progress }) => {
-      io.to(socket.id).emit("upload_progress", progress);
+    socket.on("upload_video", async (userId) => {
+      eventEmitter.on("upload_progress", ({ videoId, progress }) => {
+        io.to(socket.id).emit(
+          "upload_progress",
+          `User ${userId} uploaded video: ${progress}%`
+        );
+      });
     });
     socket.on("check_video_status", async (videoId) => {
       try {

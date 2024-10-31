@@ -6,6 +6,7 @@ const { uploadThumbnail, uploadFiles } = require("../middlewares/LoadFile");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const crypto = require("crypto");
+const { deleteBunnyStorageFileService } = require("./BunnyStreamService");
 const createVideoService = async (
   userId,
   { title, bunnyId, videoUrl, videoEmbedUrl, thumbnailUrl }
@@ -29,53 +30,6 @@ const createVideoService = async (
     });
 
     return video;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const uploadVideoService = async (videoId, userId) => {
-  try {
-    const connection = new DatabaseTransaction();
-    const video = await connection.videoRepository.getVideoRepository(videoId);
-    if (!video) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
-    }
-    if (video.userId.toString() !== userId.toString()) {
-      throw new CoreException(
-        StatusCodeEnums.Forbidden_403,
-        "You do not have permission to perform this action"
-      );
-    }
-    if (video.isUploaded === true) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Video is already uploaded"
-      );
-    }
-    video.isUploaded = true;
-    await connection.videoRepository.updateAVideoByIdRepository(videoId, video);
-    return video;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const generateVideoEmbedUrlToken = async (videoId, dateExpire) => {
-  try {
-    const connection = new DatabaseTransaction();
-    const video = await connection.videoRepository.getVideoRepository(videoId);
-    if (!video) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
-    }
-    const input = `${process.env.BUNNY_STREAM_TOKEN_AUTHENTICATION_KEY}${video.bunnyId}${dateExpire}`;
-    const hash = crypto.createHash("sha256").update(input).digest("hex");
-    const url = new URL(video.videoEmbedUrl);
-    url.searchParams.set("token", hash);
-    url.searchParams.set("expires", dateExpire);
-    await connection.videoRepository.updateAVideoByIdRepository(videoId, {
-      videoEmbedUrl: url.toString(),
-    });
   } catch (error) {
     throw error;
   }
@@ -407,23 +361,6 @@ const deleteVideoService = async (videoId, userId) => {
       );
     }
 
-    // let vimeoVideoId = video.videoUrl.split("/").pop();
-    // const response = await axios.delete(
-    //   `https://api.vimeo.com/videos/${vimeoVideoId}`,
-    //   {
-    //     headers: {
-    //       Authorization: `Bearer ${process.env.VIMEO_ACCESS_TOKEN}`,
-    //     },
-    //   }
-    // );
-
-    // if (response.status !== 204) {
-    //   throw new CoreException(
-    //     StatusCodeEnums.NoContent_204,
-    //     "Failed to delete video on Vimeo. Video not found"
-    //   );
-    // }
-
     const result = await connection.videoRepository.deleteVideoRepository(
       video._id,
       session
@@ -435,6 +372,8 @@ const deleteVideoService = async (videoId, userId) => {
         "Failed to delete video. Video not found"
       );
     }
+
+    await deleteBunnyStorageFileService(videoId);
 
     await connection.commitTransaction();
 
@@ -503,6 +442,4 @@ module.exports = {
   deleteVideoService,
   getVideoService,
   getVideosService,
-  uploadVideoService,
-  generateVideoEmbedUrlToken,
 };
