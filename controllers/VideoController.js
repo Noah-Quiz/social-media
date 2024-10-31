@@ -126,11 +126,11 @@ class VideoController {
 
       await sendMessageToQueue("bunny_video_dev_hung", queueMessage);
 
-      // const bunnyVideo = await uploadBunnyStreamVideoService(
-      //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-      //   video.bunnyId,
-      //   videoFile.path
-      // );
+      const bunnyVideo = await uploadBunnyStreamVideoService(
+        process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
+        video.bunnyId,
+        videoFile.path
+      );
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
