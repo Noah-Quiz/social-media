@@ -7,7 +7,7 @@ const {
 } = require("../services/MemberPackService");
 
 const CreateMemberPackDto = require("../dtos/MemberPack/CreateMemberPackDto");
-const UpdateMemberPackDto = require("../dtos/memberPack/UpdateMemberPackDto");
+const UpdateMemberPackDto = require("../dtos/MemberPack/UpdateMemberPackDto");
 
 class MemberPackController {
   async getAllMemberPackController(req, res) {
