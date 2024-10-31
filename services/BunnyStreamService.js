@@ -4,14 +4,10 @@ const fs = require("fs");
 const getLogger = require("../utils/logger");
 const {
   deleteFile,
-  changeFileName,
-  extractFilenameFromUrl,
   extractFilenameFromPath,
 } = require("../middlewares/storeFile");
 const logger = getLogger("BUNNY_STREAM");
-const https = require("https");
 const eventEmitter = require("../socket/events");
-const { uploadVideoService } = require("./VideoService");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const getBunnyStreamVideoService = async (libraryId, videoId) => {
@@ -116,10 +112,13 @@ const uploadBunnyStorageFileService = async (
           });
           await deleteFile(filePath);
           uploadedFilesCount++;
-          // await uploadVideoService(videoId, video.userId);
         }
-        const uploadPercentage = ((uploadedFilesCount / totalFiles) * 100).toFixed(2);
+        const uploadPercentage = (
+          (uploadedFilesCount / totalFiles) *
+          100
+        ).toFixed(2);
         eventEmitter.emit("upload_progress", {
+          userId,
           videoId,
           progress: uploadPercentage,
         });
@@ -130,7 +129,21 @@ const uploadBunnyStorageFileService = async (
     throw error;
   }
 };
-
+const deleteBunnyStorageFileService = async (videoId) => {
+  try {
+    const url = `https://${process.env.BUNNY_STORAGE_HOST_NAME}/${process.env.BUNNY_STORAGE_ZONE_NAME}/video/${videoId}/.`;
+    logger.info(url);
+    const res = await axios.delete(url, {
+      headers: {
+        AccessKey: process.env.BUNNY_STORAGE_PASSWORD,
+      },
+    });
+    logger.info(`Delete video response: ${JSON.stringify(res.data)}`);
+  } catch (error) {
+    logger.error(`Delete video error: ${error}`);
+    throw error;
+  }
+};
 const uploadBunnyStreamVideoService = async (userId, videoId, filePath) => {
   try {
     const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/videos/${videoId}`;
@@ -201,6 +214,7 @@ module.exports = {
   getAllBunnyStreamVideosService,
   createBunnyStreamVideoService,
   uploadBunnyStreamVideoService,
+  deleteBunnyStorageFileService,
   uploadBunnyStorageFileService,
   updateBunnyStreamVideoService,
   deleteBunnyStreamVideoService,

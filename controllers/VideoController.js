@@ -3,11 +3,8 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const {
   createBunnyStreamVideoService,
-  uploadBunnyStreamVideoService,
-  deleteBunnyStreamVideoService,
   updateBunnyStreamVideoService,
   getBunnyStreamVideoService,
-  uploadBunnyStorageFileService,
 } = require("../services/BunnyStreamService");
 const {
   createVideoService,
@@ -19,25 +16,17 @@ const {
   deleteVideoService,
   getVideoService,
   getVideosService,
-  getStatsByDateService,
-  uploadVideoService,
-  generateVideoEmbedUrlToken,
 } = require("../services/VideoService");
 const { default: mongoose } = require("mongoose");
 const {
   deleteFile,
   checkFileSuccess,
   changeFileName,
-  convertMp4ToTsSegments,
-  convertTsSegmentsToM3u8,
-  removeExtension,
   removeFileName,
   replaceTsSegmentLinksInM3u8,
   convertMp4ToHls,
 } = require("../middlewares/storeFile");
-const UploadVideoDto = require("../dtos/Video/UploadVideoDto");
 const DeleteVideoDto = require("../dtos/Video/DeleteVideoDto");
-const GenerateVideoEmbedUrlTokenDto = require("../dtos/Video/GenerateVideoEmbedUrlTokenDto");
 const { sendMessageToQueue } = require("../utils/rabbitMq");
 const CreateVideoDto = require("../dtos/Video/CreateVideoDto");
 require("dotenv").config();
@@ -49,11 +38,6 @@ class VideoController {
       const userId = req.userId;
       const videoFile = req.files.video[0];
       const title = videoFile.originalname;
-
-      // const bunnyVideo = await createBunnyStreamVideoService(
-      //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-      //   title
-      // );
 
       const video = await createVideoService(userId, {
         title,
@@ -72,13 +56,8 @@ class VideoController {
       }
 
       const newFilePath = await changeFileName(videoFile.path, video._id);
-      // await convertMp4ToTsSegments(newFilePath);
-      // await deleteFile(newFilePath);
-      // const folderPath = await removeFileName(newFilePath);
-
       const m3u8 = await convertMp4ToHls(newFilePath);
       const folderPath = await removeFileName(newFilePath);
-      // const m3u8 = await convertTsSegmentsToM3u8(folderPath);
       await replaceTsSegmentLinksInM3u8(m3u8, video._id);
       await deleteFile(newFilePath);
 
@@ -158,83 +137,6 @@ class VideoController {
       }
     }
   }
-
-  async generateVideoEmbedUrlTokenController(req, res) {
-    try {
-      const { videoId } = req.params;
-      const { dateExpire } = req.body; // UNIX format
-      const generateVideoEmbedUrlTokenDto = new GenerateVideoEmbedUrlTokenDto(
-        videoId,
-        dateExpire
-      );
-      await generateVideoEmbedUrlTokenDto.validate();
-
-      await generateVideoEmbedUrlToken(videoId, dateExpire);
-      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
-    } catch (error) {
-      if (req.files) {
-        await deleteFile(req.files.video[0].path);
-        await deleteFile(req.files.videoThumbnail[0].path);
-      }
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
-    }
-  }
-
-  // async uploadVideoController(req, res) {
-  //   try {
-  //     const userId = req.userId;
-  //     const { videoId } = req.params;
-  //     const videoFile = req.files.video[0];
-  //     const thumbnailFile = req.files.videoThumbnail[0];
-  //     const uploadVideoDto = new UploadVideoDto(
-  //       userId,
-  //       videoId,
-  //       videoFile,
-  //       thumbnailFile
-  //     );
-  //     await uploadVideoDto.validate();
-
-  //     const video = await uploadVideoService(
-  //       videoId,
-  //       userId,
-  //       videoFile.path,
-  //       thumbnailFile.path
-  //     );
-
-  //     const queueMessage = {
-  //       bunnyId: video.bunnyId,
-  //       videoFilePath: videoFile.path,
-  //     };
-
-  //     await sendMessageToQueue("bunny_video_dev_hung", queueMessage);
-
-  //     // const bunnyVideo = await uploadBunnyStreamVideoService(
-  //     //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-  //     //   video.bunnyId,
-  //     //   videoFile.path
-  //     // );
-
-  //     return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
-  //   } catch (error) {
-  //     if (req.files) {
-  //       await deleteFile(req.files.video[0].path);
-  //       await deleteFile(req.files.videoThumbnail[0].path);
-  //     }
-  //     if (error instanceof CoreException) {
-  //       return res.status(error.code).json({ message: error.message });
-  //     } else {
-  //       return res
-  //         .status(StatusCodeEnums.InternalServerError_500)
-  //         .json({ message: error.message });
-  //     }
-  //   }
-  // }
 
   async toggleLikeVideoController(req, res) {
     const { videoId } = req.params;
@@ -331,11 +233,6 @@ class VideoController {
       await deleteVideoDto.validate();
 
       const video = await deleteVideoService(videoId, userId);
-
-      const bunnyVideo = await deleteBunnyStreamVideoService(
-        process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-        video.bunnyId
-      );
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
