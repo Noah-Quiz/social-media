@@ -20,12 +20,73 @@ router.use(AuthMiddleware);
  *           schema:
  *             $ref: '#/components/schemas/CreateCommentDto'
  *     responses:
- *      200:
- *       description: Create comment successfully
+ *      201:
+ *         description: Comment created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Comment created successfully."
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     content:
+ *                       type: string
+ *                       example: "Hello everybody"
+ *                     userId:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     videoId:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     level:
+ *                       type: number
+ *                       example: 2
+ *                     responseTo:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     likeBy:
+ *                       type: array
+ *                       items:
+ *                          type: string
+ *                       example: []
+ *                     dateCreated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
+ *                     lastUpdated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
  *      400:
  *       description: Bad request
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Validation failed: 'userId' is required."
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["'userId' is required."]
  *      500:
  *       description: Internal server error
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "An unexpected error occurred while creating the comment."
  *
  */
 router.post("/", commentController.createCommentController);
@@ -51,11 +112,62 @@ router.post("/", commentController.createCommentController);
  *     responses:
  *      200:
  *       description: Get children comments successfully
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                  type: object
+ *                  properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     content:
+ *                       type: string
+ *                       example: "Hello everybody"
+ *                     userId:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     videoId:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     level:
+ *                       type: number
+ *                       example: 2
+ *                     responseTo:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     likeBy:
+ *                       type: array
+ *                       items:
+ *                          type: string
+ *                       example: []
+ *                     dateCreated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
+ *                     lastUpdated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
  *      400:
  *       description: Bad request
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid request parameters."
  *      500:
  *       description: Internal server error
- *
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "An unexpected error occurred while retrieving children comment."
  */
 router.get(
   "/:commentId/children",
@@ -83,10 +195,62 @@ router.get(
  *     responses:
  *      200:
  *       description: Get comments of a video successfully
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                  type: object
+ *                  properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     content:
+ *                       type: string
+ *                       example: "Hello everybody"
+ *                     userId:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     videoId:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     level:
+ *                       type: number
+ *                       example: 2
+ *                     responseTo:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     likeBy:
+ *                       type: array
+ *                       items:
+ *                          type: string
+ *                       example: []
+ *                     dateCreated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
+ *                     lastUpdated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
  *      400:
  *       description: Bad request
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid request parameters."
  *      500:
  *       description: Internal server error
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "An unexpected error occurred while retrieving children comment."
  *
  */
 router.get("/video/:videoId", commentController.getVideoCommentsController);

@@ -22,10 +22,63 @@ const myPlaylistRoutes = express.Router();
  *     responses:
  *       201:
  *         description: Create playlist successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Playlist created successfully."
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     playlistName:
+ *                       type: string
+ *                       example: "Electronics"
+ *                     userId:
+ *                      type: string
+ *                      example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     videoIds:
+ *                      type: array
+ *                      items:
+ *                        type: string
+ *                      example: ["607d1b2f9f1b2c0017f9d2e5", "607d1b2f9f1b2c0017f9d2e5"]
+ *                     dateCreated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
+ *                     lastUpdated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
+ *
  *       400:
  *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Validation failed: 'name' is required."
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["'name' is required."]
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "An unexpected error occurred while creating the playlist."
  */
 myPlaylistRoutes.post(
   "/",
@@ -53,12 +106,64 @@ myPlaylistRoutes.post(
  *           schema:
  *             $ref: '#/components/schemas/UpdatePlaylistDto'
  *     responses:
- *       201:
+ *       200:
  *         description: Update playlist successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Playlist updated successfully."
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     playlistName:
+ *                       type: string
+ *                       example: "Electronics"
+ *                     userId:
+ *                      type: string
+ *                      example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     videoIds:
+ *                      type: array
+ *                      items:
+ *                        type: string
+ *                      example: ["607d1b2f9f1b2c0017f9d2e5", "607d1b2f9f1b2c0017f9d2e5"]
+ *                     dateCreated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
+ *                     lastUpdated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
  *       400:
  *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Validation failed: 'videoIds' does not exist."
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["'name' is required."]
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "An unexpected error occurred while updating the category."
  */
 myPlaylistRoutes.patch(
   "/:playlistId",
@@ -79,12 +184,36 @@ myPlaylistRoutes.patch(
  *         type: string
  *         required: true
  *     responses:
- *       201:
- *         description: Delete playlist successfully
- *       400:
- *         description: Bad request
- *       500:
- *         description: Internal server error
+ *      200:
+ *       description: Delete playlist successfully
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Delete successfully"
+ *      400:
+ *       description: Bad request
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Playlist not found"
+ *      500:
+ *       description: Internal server error
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "An unexpected error occurred while delete the playlist."
  */
 myPlaylistRoutes.delete(
   "/:playlistId",
@@ -105,12 +234,59 @@ myPlaylistRoutes.delete(
  *         type: string
  *         required: true
  *     responses:
- *       201:
+ *       200:
  *         description: Get playlist successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Get Playlist successfully."
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     playlistName:
+ *                       type: string
+ *                       example: "Electronics"
+ *                     userId:
+ *                      type: string
+ *                      example: "607d1b2f9f1b2c0017f9d2e5"
+ *                     videoIds:
+ *                      type: array
+ *                      items:
+ *                        type: string
+ *                      example: ["607d1b2f9f1b2c0017f9d2e5", "607d1b2f9f1b2c0017f9d2e5"]
+ *                     dateCreated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
+ *                     lastUpdated:
+ *                       type: string
+ *                       example: "2024-10-25T02:29:35.346+00:00"
  *       400:
  *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Not found"
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "An unexpected error occurred while retrive the playlist."
  */
 myPlaylistRoutes.get(
   "/:playlistId",
@@ -131,12 +307,55 @@ myPlaylistRoutes.get(
  *         type: string
  *         required: true
  *     responses:
- *       201:
- *         description: Get playlists successfully
+ *       200:
+ *         description: Get all playlists successfully
+ *         content:
+ *          application/json:
+ *            schema:
+ *               type: array
+ *               items:
+ *                type: object
+ *                properties:
+ *                 _id:
+ *                   type: string
+ *                   example: "607d1b2f9f1b2c0017f9d2e5"
+ *                 playlistName:
+ *                   type: string
+ *                   example: "Electronics"
+ *                 userId:
+ *                  type: string
+ *                  example: "607d1b2f9f1b2c0017f9d2e5"
+ *                 videoIds:
+ *                  type: array
+ *                  items:
+ *                    type: string
+ *                  example: ["607d1b2f9f1b2c0017f9d2e5", "607d1b2f9f1b2c0017f9d2e5"]
+ *                 dateCreated:
+ *                   type: string
+ *                   example: "2024-10-25T02:29:35.346+00:00"
+ *                 lastUpdated:
+ *                   type: string
+ *                   example: "2024-10-25T02:29:35.346+00:00"
  *       400:
  *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "You do not have permission to do this action"
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "An unexpected error occurred while retrive the playlist."
  */
 myPlaylistRoutes.get(
   "/user/:userId",
