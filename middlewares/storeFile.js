@@ -69,7 +69,7 @@ const convertMp4ToHls = async (filePath) => {
         "-f",
         "hls", // Output format
         "-hls_time",
-        "10", // Duration of each segment
+        "1", // Duration of each segment
         "-hls_list_size",
         "0", // All segments in playlist
         "-hls_flags",
@@ -299,6 +299,19 @@ const deleteFile = async (filePath) => {
   });
 };
 
+const deleteFolder = async (folderPath) => {
+  return new Promise((resolve, reject) => {
+    fs.rm(folderPath, { recursive: true }, (err) => {
+      if (err) {
+        logger.error(`Failed to delete folder ${folderPath}: ${err.message}`);
+        return reject(err);
+      }
+      logger.info(`Deleted folder ${folderPath} successfully`);
+      resolve();
+    });
+  });
+};
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let dir = "";
@@ -438,6 +451,7 @@ const uploadFile = multer({
 module.exports = {
   uploadFile,
   deleteFile,
+  deleteFolder,
   checkFileSuccess,
   splitVideo,
   changeFileName,
