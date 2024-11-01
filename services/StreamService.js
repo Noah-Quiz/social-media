@@ -67,10 +67,10 @@ const getStreamsService = async (query, requester) => {
       .filter(
         (stream) =>
           stream.enumMode !== "private" ||
-          stream.userId.toString() === requester.toString()
+          stream.userId?.toString() === requester.toString()
       )
       .map(async (stream) => {
-        const isOwner = stream.userId.toString() === requester.toString();
+        const isOwner = stream.userId?.toString() === requester.toString();
         if (isOwner) {
           return stream; // Return unmodified stream if requester is owner
         }
