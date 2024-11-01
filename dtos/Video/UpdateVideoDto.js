@@ -44,7 +44,7 @@ class UpdateVideoDto {
     description,
     enumMode,
     categoryIds,
-    videoThumbnailFile
+    videoThumbnailFile = null // Mark as optional
   ) {
     this.videoId = videoId;
     this.title = title;
@@ -111,7 +111,7 @@ class UpdateVideoDto {
     if (!this.videoThumbnailFile) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Video thumbnail file is required"
+        "Invalid video thumbnail format"
       );
     }
   }

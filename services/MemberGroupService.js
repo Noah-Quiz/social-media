@@ -37,10 +37,18 @@ const getAllMemberGroupService = async () => {
     throw new Error(error.message);
   }
 };
-const deleteMemberGroupService = async (ownerId) => {
+const deleteMemberGroupService = async (requester, ownerId) => {
   try {
     console.log("Service: ", ownerId);
     const connection = new DatabaseTransaction();
+    const user = await connection.userRepository.getAnUserByIdRepository(
+      requester
+    );
+    const notAdmin = user.role !== 1;
+    const notOwner = requester !== ownerId;
+    if (notAdmin && notOwner) {
+      throw new Error("You don't have authorization to delete this group");
+    }
     const room =
       await connection.memberGroupRepository.getMemberGroupRepository(ownerId);
     if (!room) {

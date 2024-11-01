@@ -58,11 +58,12 @@ class MemberGroupController {
       next(error);
     }
   }
-  async deleteMemberGroupController(req, res, next) {
-    const ownerId = req.userId;
+  async deleteMemberGroupController(req, res) {
+    const requester = req.userId;
+    const { ownerId } = req.params;
     console.log("Controller: ", ownerId);
     try {
-      const result = await deleteMemberGroupService(ownerId);
+      const result = await deleteMemberGroupService(requester, ownerId);
       if (!result) {
         throw new CoreException(
           StatusCodeEnums.NotFound_404,

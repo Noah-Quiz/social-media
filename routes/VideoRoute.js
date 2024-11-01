@@ -380,29 +380,42 @@ videoRoutes.get(
  * @swagger
  * /api/videos/{videoId}:
  *   patch:
- *     summary: Update video by id
+ *     summary: Update video details
  *     tags: [Videos]
- *     consumes:
- *       - multipart/form-data
+ *     description: Updates the details of a specific video.
  *     parameters:
  *       - in: path
  *         name: videoId
- *         schema:
- *           type: string
  *         required: true
- *         description: The ID of the video to update
- *       - in: formData
- *         name: videoThumbnail
  *         schema:
  *           type: string
- *           format: binary
- *         description: The new thumbnail image file for the video
+ *         description: The unique ID of the video to update
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/UpdateVideoDto'
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: Video title
+ *               description:
+ *                 type: string
+ *                 description: Video description
+ *               categoryIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: List of category IDs
+ *               enumMode:
+ *                 type: string
+ *                 enum: [public, private, unlisted, member, draft]
+ *                 description: Video accessibility
+ *               videoThumbnail:
+ *                 type: string
+ *                 format: binary
+ *                 description: Thumbnail image file for the video
  *     responses:
  *       200:
  *         description: Update video by id successfully
@@ -471,8 +484,8 @@ videoRoutes.get(
  *                       example: 0
  *       400:
  *         description: Bad request
- *       500:
- *         description: Internal server error
+ *       404:
+ *         description: Video not found
  */
 
 videoRoutes.patch(
