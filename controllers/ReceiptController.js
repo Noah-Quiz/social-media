@@ -1,3 +1,5 @@
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 const {
   deleteReceiptService,
   getAllUserReceiptService,
@@ -5,38 +7,45 @@ const {
 } = require("../services/ReceiptService");
 
 class ReceiptController {
-  async getReceiptController(req, res) {
+  async getReceiptController(req, res, next) {
     const { id } = req.params;
     try {
       const receipt = await getReceiptService(id);
       if (!receipt) {
-        return res.status(404).json({ message: "Receipt not found" });
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Receipt not found"
+        );
       }
-      return res.status(200).json({ receipt: receipt, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ receipt: receipt, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async getAllUserReceiptsController(req, res) {
+  async getAllUserReceiptsController(req, res, next) {
     try {
       const userId = req.userId;
       const receipts = await getAllUserReceiptService(userId);
-      return res.status(200).json({
+      return res.status(StatusCodeEnums.OK_200).json({
         receipts: receipts,
         size: receipts.length,
         message: "Success",
       });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async deleteReceiptController(req, res) {
+  async deleteReceiptController(req, res, next) {
     try {
       const { id } = req.params;
       const receipt = await deleteReceiptService(id);
-      return res.status(200).json({ receipt: receipt, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ receipt: receipt, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 }
