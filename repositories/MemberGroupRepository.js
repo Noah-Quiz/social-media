@@ -113,7 +113,7 @@ class MemberGroupRepository {
           time = 86400000 * 30 * memberPack.durationNumber;
           break;
         case "YEAR":
-          time = 86400000 * 30 * 12 * memberPack.durationNumber;
+          time = 86400000 * 365 * memberPack.durationNumber;
           break;
         default:
           throw new Error("Invalid duration unit");
@@ -221,9 +221,7 @@ class MemberGroupRepository {
           number++;
         }
       }
-      logger.info(
-        `Number of people expired and removed: ${number}`
-      );
+      logger.info(`Number of people expired and removed: ${number}`);
     } catch (error) {
       console.log(`Error handling expired users: ${error.message}`);
     }
