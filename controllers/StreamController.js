@@ -44,7 +44,7 @@ class StreamController {
 
   async getStreamsController(req, res, next) {
     const requester = req.userId;
-  
+
     const query = {
       size: req.query.size,
       page: req.query.page,
@@ -52,37 +52,52 @@ class StreamController {
       sortBy: req.query.sortBy,
       order: req.query.order,
     };
-  
+
     if (!query.page) query.page = 1;
     if (!query.size) query.size = 10;
-  
+
     // Validate `sortBy` and `order`
     const validSortByOptions = ["like", "view", "date"];
     const validOrderOptions = ["ascending", "descending"];
-  
+
     if (query.sortBy && !validSortByOptions.includes(query.sortBy)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid query sortBy, must be in ['like', 'view', 'date']");
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid query sortBy, must be in ['like', 'view', 'date']"
+      );
     }
-  
+
     if (query.order && !validOrderOptions.includes(query.order)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid query order, must be in ['ascending', 'descending']");
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid query order, must be in ['ascending', 'descending']"
+      );
     }
-  
+
     // Additional validation checks for `page` and `size`
     if (query.page < 1) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Page cannot be less than 1");
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Page cannot be less than 1"
+      );
     }
     if (query.size < 1) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Size cannot be less than 1");
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Size cannot be less than 1"
+      );
     }
-  
+
     if (query.title) {
       query.title = { $regex: query.title, $options: "i" };
     }
-  
+
     try {
-      const { streams, total, page, totalPages } = await getStreamsService(query, requester);
-  
+      const { streams, total, page, totalPages } = await getStreamsService(
+        query,
+        requester
+      );
+
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ streams, total, page, totalPages, message: "Success" });
@@ -93,8 +108,7 @@ class StreamController {
 
   async updateStreamController(req, res, next) {
     const { streamId } = req.params;
-    const { title, description, addedCategoryIds, removedCategoryIds } =
-      req.body;
+    const { title, description, categoryIds } = req.body;
     let thumbnailFile = req.file ? req.file.path : null;
     const userId = req.userId;
 
@@ -104,20 +118,28 @@ class StreamController {
         userId,
         title,
         description,
-        addedCategoryIds,
-        removedCategoryIds
+        categoryIds
       );
       await updateStreamDto.validate();
 
-      const categoryData = { addedCategoryIds, removedCategoryIds };
-      const updateData = { title, description, thumbnailUrl: thumbnailFile };
+      const updateData = {
+        title,
+        description,
+        categoryIds: categoryIds,
+        thumbnailUrl: thumbnailFile,
+      };
 
-      const stream = await updateStreamService(
-        userId,
-        streamId,
-        updateData,
-        categoryData
-      );
+      if (updateData.categoryIds && updateData.categoryIds.length > 0) {
+        updateData.categoryIds = updateData.categoryIds.filter(
+          (id) => id !== ""
+        );
+      }
+
+      // Filter out duplicate category IDs
+      if (updateData.categoryIds && updateData.categoryIds.length > 0) {
+        updateData.categoryIds = [...new Set(updateData.categoryIds)];
+      }
+      const stream = await updateStreamService(userId, streamId, updateData);
 
       if (thumbnailFile) await checkFileSuccess(thumbnailFile);
 
