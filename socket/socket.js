@@ -54,26 +54,11 @@ module.exports = (io) => {
       logger.info(`User disconnected: ${socket.id}`);
     });
 
-    socket.on("upload_video", async (userId) => {
-      eventEmitter.on("upload_progress", ({ videoId, progress }) => {
-        io.to(socket.id).emit(
-          "upload_progress",
-          `User ${userId} uploaded video: ${progress}%`
-        );
-      });
-    });
-    socket.on("check_video_status", async (videoId) => {
-      try {
-        const video = await getVideoService(videoId);
-        const bunnyVideo = await getBunnyStreamVideoService(
-          process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-          video.bunnyId
-        );
-        io.to(socket.id).emit("video_upload_status", bunnyVideo.status);
-        logger.info(`Video status: ${bunnyVideo.status}`);
-      } catch (error) {
-        logger.error(`Error checking video status: ${error}`);
-      }
+    eventEmitter.on("upload_video_progress", ({ userId, progress }) => {
+      io.to(socket.id).emit(
+        "upload_video_progress",
+        `User ${userId} uploaded video: ${progress}%`
+      );
     });
   });
 

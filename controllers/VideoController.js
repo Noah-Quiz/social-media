@@ -89,55 +89,6 @@ class VideoController {
     }
   }
 
-  async createVideoControllerV1(req, res) {
-    try {
-      const userId = req.userId;
-      const videoFile = req.files.video[0];
-      const title = videoFile.originalname;
-
-      const bunnyVideo = await createBunnyStreamVideoService(
-        process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-        title
-      );
-
-      const video = await createVideoService(userId, {
-        title,
-        bunnyId: bunnyVideo.guid,
-        videoUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/playlist.m3u8`,
-        videoEmbedUrl: `https://iframe.mediadelivery.net/embed/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/${bunnyVideo.guid}`,
-        thumbnailUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/thumbnail.jpg`,
-      });
-
-      const upload = await uploadVideoService(video._id, userId);
-
-      const queueMessage = {
-        userId: userId,
-        videoId: video.bunnyId,
-        videoFilePath: videoFile.path,
-      };
-
-      await sendMessageToQueue(
-        process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE,
-        queueMessage
-      );
-
-      return res
-        .status(StatusCodeEnums.OK_200)
-        .json({ video, message: "Success" });
-    } catch (error) {
-      if (req.files) {
-        await deleteFile(req.files.video[0].path);
-      }
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
-    }
-  }
-
   async toggleLikeVideoController(req, res) {
     const { videoId } = req.params;
     const { action } = req.query;
