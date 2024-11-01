@@ -40,8 +40,6 @@ const io = require("socket.io")(server, {
 });
 socket(io);
 
-socket(io);
-
 const {
   uploadBunnyStreamVideoService,
   uploadBunnyStorageFileService,
