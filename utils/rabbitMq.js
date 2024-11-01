@@ -27,31 +27,31 @@ async function consumeMessageFromQueue(queue, callback) {
 
   try {
     connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL, {
-      // heartbeat: 30,
+      heartbeat: 30,
     });
-    // connection.on("error", (error) => {
-    //   logger.error(`RabbitMQ connection error: ${error}`);
-    //   if (error.code === "ECONNRESET") {
-    //     logger.warn("ECONNRESET detected, reconnecting...");
-    //   }
-    // });
-    // connection.on("close", async () => {
-    //   logger.warn("RabbitMQ connection closed, attempting reconnection...");
-    //   setTimeout(consumeMessageFromQueue, 5000); // Retry connection after delay
-    // });
+    connection.on("error", (error) => {
+      logger.error(`RabbitMQ connection error: ${error}`);
+      if (error.code === "ECONNRESET") {
+        logger.warn("ECONNRESET detected, reconnecting...");
+      }
+    });
+    connection.on("close", async () => {
+      logger.warn("RabbitMQ connection closed, attempting reconnection...");
+      setTimeout(consumeMessageFromQueue, 5000); // Retry connection after delay
+    });
 
     channel = await connection.createChannel();
-    // channel.on("error", (error) => {
-    //   channel.on("error", (error) => {
-    //     logger.error(`Channel error: ${error}`);
-    //   });
+    channel.on("error", (error) => {
+      channel.on("error", (error) => {
+        logger.error(`Channel error: ${error}`);
+      });
 
-    //   // Reconnect the channel if it closes unexpectedly
-    //   channel.on("close", async () => {
-    //     logger.warn("Channel closed, attempting to recreate...");
-    //     setTimeout(consumeMessageFromQueue, 5000); // Retry connection after delay
-    //   });
-    // });
+      // Reconnect the channel if it closes unexpectedly
+      channel.on("close", async () => {
+        logger.warn("Channel closed, attempting to recreate...");
+        setTimeout(consumeMessageFromQueue, 5000); // Retry connection after delay
+      });
+    });
     await channel.assertQueue(queue, { durable: true });
 
     channel.consume(
@@ -75,11 +75,11 @@ async function consumeMessageFromQueue(queue, callback) {
                 logger.info(
                   `Message received from queue ${queue}: ${msg.content.toString()}`
                 );
-                await callback(
-                  userId,
-                  videoId,
-                  videoFolderPath
-                );
+                await callback({
+                  userId: userId,
+                  videoId: videoId,
+                  videoFolderPath:videoFolderPath,
+                });
                 logger.info(`Message processed successfully`);
                 break;
 
