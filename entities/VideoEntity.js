@@ -4,11 +4,9 @@ const baseEntitySchema = require("./BaseEntity.js");
 const videoSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, default: "" },
-  bunnyId: { type: String, default: "" },
   videoUrl: { type: String, default: "" },
   videoEmbedUrl: { type: String, default: "" },
   videoServerUrl: { type: String, default: "" },
-  isUploaded: { type: Boolean, default: false },
   numOfViews: { type: Number, default: 0 },
   likedBy: [
     {

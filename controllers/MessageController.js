@@ -15,7 +15,7 @@ const GetMessageDto = require("../dtos/Message/GetMessageDto");
 const DeleteMessageDto = require("../dtos/Message/DeleteMessageDto");
 
 class MessageController {
-  async getMessageController(req, res) {
+  async getMessageController(req, res, next) {
     try {
       const { messageId } = req.params;
       const getMessageDto = new GetMessageDto(messageId);
@@ -23,25 +23,20 @@ class MessageController {
 
       const message = await findMessageService(messageId);
       if (!message) {
-        res
-          .status(404)
-          .json({ message: `No message found for id: ${messageId}` });
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          `Message with id ${messageId} not found`
+        );
       }
       res
         .status(StatusCodeEnums.OK_200)
         .json({ data: message, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getMessagesController(req, res) {
+  async getMessagesController(req, res, next) {
     try {
       const query = req.query;
 
@@ -55,9 +50,10 @@ class MessageController {
       const { messages, totalPages, page, totalMessages } =
         await findMessagesByRoomIdService(roomId, query.page, query.size);
       if (!messages || messages.length === 0) {
-        return res
-          .status(404)
-          .json({ message: `No messages found for room: ${roomId}` });
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "No messages found"
+        );
       }
       res.status(StatusCodeEnums.OK_200).json({
         messages,
@@ -67,17 +63,11 @@ class MessageController {
         message: "Success",
       });
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async updateMessageController(req, res) {
+  async updateMessageController(req, res, next) {
     try {
       const { messageId } = req.params;
       const { content } = req.body;
@@ -93,17 +83,11 @@ class MessageController {
         .status(StatusCodeEnums.OK_200)
         .json({ data: message, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async deleteMessageController(req, res) {
+  async deleteMessageController(req, res, next) {
     try {
       const { messageId } = req.params;
       const userId = req.userId;
@@ -113,17 +97,11 @@ class MessageController {
       await deleteMessageService(userId, messageId);
       res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async createAMessageController(req, res) {
+  async createAMessageController(req, res, next) {
     try {
       const userId = req.userId;
       const { roomId, content } = req.body;
@@ -136,13 +114,7 @@ class MessageController {
         .status(StatusCodeEnums.OK_200)
         .json({ data: message, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 }

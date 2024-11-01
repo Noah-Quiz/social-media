@@ -13,20 +13,20 @@ const {
 
 class MyPlaylistController {
   // get a playlist
-  async getAPlaylistController(req, res) {
+  async getAPlaylistController(req, res, next) {
     const { playlistId } = req.params;
 
     try {
       const playlist = await getAPlaylistService(playlistId);
 
-      res.status(200).json({ playlist, message: "Success" });
+      res.status(StatusCodeEnums.OK_200).json({ playlist, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
   // get all playlists
-  async getAllMyPlaylistsController(req, res) {
+  async getAllMyPlaylistsController(req, res, next) {
     try {
       const query = {};
       const userId = req.userId;
@@ -35,14 +35,16 @@ class MyPlaylistController {
 
       const playlists = await getAllMyPlaylistsService(data);
 
-      res.status(200).json({ playlists, message: "Success" });
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ playlists, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
   //update playlist
-  async updatePlaylistController(req, res) {
+  async updatePlaylistController(req, res, next) {
     try {
       const { addedVideoIds, removedVideoIds, playlistName } = req.body;
       const { playlistId } = req.params;
@@ -71,18 +73,12 @@ class MyPlaylistController {
         .status(StatusCodeEnums.OK_200)
         .json({ playlist: updatedPlaylist, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
   // delete a playlist
-  async deletePlaylist(req, res) {
+  async deletePlaylist(req, res, next) {
     try {
       const { playlistId } = req.params;
       const deletePlaylistDto = new DeletePlaylistDto(playlistId);
@@ -96,17 +92,11 @@ class MyPlaylistController {
         .status(StatusCodeEnums.OK_200)
         .json({ message: "Delete playlist success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async createAPlaylist(req, res) {
+  async createAPlaylist(req, res, next) {
     try {
       const { playlistName } = req.body;
       const userId = req.userId;
@@ -115,9 +105,9 @@ class MyPlaylistController {
 
       const playlist = await createAPlaylistService(userId, playlistName);
 
-      res.status(200).json({ playlist, message: "Success" });
+      res.status(StatusCodeEnums.OK_200).json({ playlist, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 }
