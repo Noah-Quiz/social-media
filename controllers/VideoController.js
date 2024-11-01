@@ -132,7 +132,6 @@ class VideoController {
       }
 
       const data = req.body;
-
       const updateVideoDto = new UpdateVideoDto(
         videoId,
         data.title,
