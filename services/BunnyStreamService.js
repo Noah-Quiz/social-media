@@ -5,11 +5,11 @@ const getLogger = require("../utils/logger");
 const {
   deleteFile,
   extractFilenameFromPath,
+  deleteFolder,
 } = require("../middlewares/storeFile");
-const logger = getLogger("BUNNY_STREAM");
+const logger = getLogger("BUNNY_STREAM_SERVICE");
 const eventEmitter = require("../socket/events");
-const StatusCodeEnums = require("../enums/StatusCodeEnum");
-const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const getBunnyStreamVideoService = async (libraryId, videoId) => {
   try {
     const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${libraryId}/videos/${videoId}`;
@@ -75,11 +75,11 @@ const createBunnyStreamVideoService = async (
   }
 };
 
-const uploadBunnyStorageFileService = async (
+const uploadBunnyStorageFileService = async ({
   userId,
   videoId,
-  videoFolderPath
-) => {
+  videoFolderPath,
+}) => {
   try {
     const files = fs.readdirSync(videoFolderPath);
     const totalFiles = files.length; // Total number of files to upload
@@ -102,28 +102,33 @@ const uploadBunnyStorageFileService = async (
 
       if (res.status === StatusCodeEnums.Created_201) {
         logger.info(`Upload video response: ${JSON.stringify(res.data)}`);
-        const connection = new DatabaseTransaction();
-        const video = await connection.videoRepository.getVideoByIdRepository(
-          videoId
-        );
-        if (video) {
-          await connection.videoRepository.updateAVideoByIdRepository(videoId, {
-            videoUrl: url,
-          });
-          await deleteFile(filePath);
-          uploadedFilesCount++;
+        if (fileName.includes(".m3u8")) {
+          const connection = new DatabaseTransaction();
+          const video = await connection.videoRepository.getVideoByIdRepository(
+            videoId
+          );
+          if (video) {
+            await connection.videoRepository.updateAVideoByIdRepository(
+              videoId,
+              {
+                videoUrl: url,
+              }
+            );
+          }
         }
+        uploadedFilesCount++;
         const uploadPercentage = (
           (uploadedFilesCount / totalFiles) *
           100
         ).toFixed(2);
-        eventEmitter.emit("upload_progress", {
-          userId,
-          videoId,
+        logger.info(`Upload percentage: ${uploadPercentage}%`);
+        eventEmitter.emit("upload_video_progress", {
+          userId: userId,
           progress: uploadPercentage,
         });
       }
     }
+    await deleteFolder(videoFolderPath);
   } catch (error) {
     logger.error(`Upload video error: ${error}`);
     throw error;
