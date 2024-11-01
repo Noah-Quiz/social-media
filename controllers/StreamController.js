@@ -21,7 +21,7 @@ const { default: axios } = require("axios");
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
 class StreamController {
-  async getStreamController(req, res) {
+  async getStreamController(req, res, next) {
     const { streamId } = req.params;
     const requester = req.userId;
 
@@ -38,17 +38,11 @@ class StreamController {
         .status(StatusCodeEnums.OK_200)
         .json({ stream, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getStreamsController(req, res) {
+  async getStreamsController(req, res, next) {
     const query = req.query;
     const requester = req.userId;
 
@@ -57,9 +51,9 @@ class StreamController {
 
     try {
       if (query.page < 1) {
-        return res
-          .status(StatusCodeEnums.BadRequest_400)
-          .json({ message: "Page cannot be less than 1" });
+        throw new CoreException(StatusCodeEnums.BadRequest_400).json({
+          message: "Invalid page number",
+        });
       }
       if (query.title) {
         query.title = { $regex: query.title, $options: "i" };
@@ -74,23 +68,17 @@ class StreamController {
         .status(StatusCodeEnums.OK_200)
         .json({ streams, total, page, totalPages, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async updateStreamController(req, res) {
+  async updateStreamController(req, res, next) {
     const { streamId } = req.params;
     const { title, description, addedCategoryIds, removedCategoryIds } =
       req.body;
     let thumbnailFile = req.file ? req.file.path : null;
     const userId = req.userId;
-    
+
     try {
       const updateStreamDto = new UpdateStreamDto(
         streamId,
@@ -120,17 +108,11 @@ class StreamController {
     } catch (error) {
       if (req.file) await deleteFile(thumbnailFile);
 
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async deleteStreamController(req, res) {
+  async deleteStreamController(req, res, next) {
     try {
       const { streamId } = req.params;
       const userId = req.userId;
@@ -141,17 +123,11 @@ class StreamController {
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async createStreamController(req, res) {
+  async createStreamController(req, res, next) {
     try {
       const { title, description, categoryIds } = req.body;
       const userId = req.userId;
@@ -177,12 +153,9 @@ class StreamController {
           }
         );
       } catch (error) {
-        console.log("Server tuni: " + error);
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({
-            message: "Internal Server Error. Fail to create live stream",
-          });
+        throw new CoreException(StatusCodeEnums.InternalServerError_500).json({
+          message: "Failed to create live stream",
+        });
       }
 
       const cloudflareStream = response.data?.liveInput;
@@ -210,43 +183,31 @@ class StreamController {
         .status(StatusCodeEnums.Created_201)
         .json({ stream, message: "Live Stream created successfully" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error });
-      }
+      next(error);
     }
   }
 
-  async toggleLikeStreamController(req, res) {
+  async toggleLikeStreamController(req, res, next) {
     const { streamId } = req.params;
     const { action } = req.query;
     const userId = req.userId;
 
-    if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Valid stream ID is required" });
-    }
-
     try {
+      if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
+        throw new CoreException(StatusCodeEnums.BadRequest_400).json({
+          message: "Valid stream ID is required",
+        });
+      }
+
       await toggleLikeStreamService(streamId, userId, action);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getRecommendedStreamsController(req, res) {
+  async getRecommendedStreamsController(req, res, next) {
     const userId = req.userId;
     const data = { userId };
 
@@ -257,17 +218,11 @@ class StreamController {
         .status(StatusCodeEnums.OK_200)
         .json({ streams, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getRelevantStreamsController(req, res) {
+  async getRelevantStreamsController(req, res, next) {
     const { streamerId, categoryIds } = req.body;
     const userId = req.userId;
 
@@ -289,13 +244,7 @@ class StreamController {
         .status(StatusCodeEnums.OK_200)
         .json({ streams, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 }

@@ -8,22 +8,25 @@ const {
 } = require("../services/GiftService");
 const CreateGiftDto = require("../dtos/Gift/CreateGiftDto");
 const UpdateGiftDto = require("../dtos/Gift/UpdateGiftDto");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 
 class GiftController {
-  async createGiftController(req, res) {
+  async createGiftController(req, res, next) {
     try {
       const { name, image, valuePerUnit } = req.body;
       const createGiftDto = new CreateGiftDto(name, image, valuePerUnit);
       await createGiftDto.validate();
 
       const gift = await createGiftService(name, image, valuePerUnit);
-      return res.status(200).json({ gift: gift, message: "Success" });
+      return res
+        .status(StatusCodeEnums.Created_201)
+        .json({ gift: gift, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
-  async updateGiftController(req, res) {
+  async updateGiftController(req, res, next) {
     try {
       const { id } = req.params;
       const { name, image, valuePerUnit } = req.body;
@@ -36,47 +39,58 @@ class GiftController {
         image || "",
         valuePerUnit || 0
       );
-      return res.status(200).json({ gift: gift, message: "Update success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ gift: gift, message: "Update success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
-  async getGiftController(req, res) {
+  async getGiftController(req, res, next) {
     const { id } = req.params;
 
     try {
       const gift = await getGiftService(id);
       if (!gift) {
-        return res.status(404).json({ message: "Gift not found" });
+        throw new CoreException(StatusCodeEnums.NotFound_404, "Gift not found");
       }
-      return res.status(200).json({ gift: gift, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ gift: gift, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
-  async getAllGiftController(req, res) {
+  async getAllGiftController(req, res, next) {
     try {
       const gifts = await getAllGiftService();
-      return res.status(200).json({ gifts: gifts, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ gifts: gifts, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
-  async deleteGiftController(req, res) {
+  async deleteGiftController(req, res, next) {
     const { id } = req.params;
 
-    if (!id) {
-      return res.status(400).json({ message: "ID is required" });
-    }
-
     try {
+      if (!id) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "ID is required"
+        );
+      }
+
       const gift = await deleteGiftService(id);
-      return res.status(200).json({ message: "Deletion success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Deletion success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 }

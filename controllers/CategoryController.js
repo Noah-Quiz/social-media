@@ -14,7 +14,7 @@ const UpdateCategoryDto = require("../dtos/Category/UpdateCategoryDto");
 const GetCategoryDto = require("../dtos/Category/GetCategoryDto");
 
 class CategoryController {
-  async createCategoryController(req, res) {
+  async createCategoryController(req, res, next) {
     try {
       const { name } = req.body;
       let imageUrl = req.file ? req.file.path : null;
@@ -36,18 +36,11 @@ class CategoryController {
       if (req.file) {
         await deleteFile(req.file.path);
       }
-
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getCategoryController(req, res) {
+  async getCategoryController(req, res, next) {
     try {
       const { categoryId } = req.params;
       const getCategoryDto = new GetCategoryDto(categoryId);
@@ -59,17 +52,11 @@ class CategoryController {
         .status(StatusCodeEnums.OK_200)
         .json({ category, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getAllCategoryController(req, res) {
+  async getAllCategoryController(req, res, next) {
     const { name } = req.query;
     try {
       const categories = await getAllCategoryService(name);
@@ -77,17 +64,11 @@ class CategoryController {
         .status(StatusCodeEnums.OK_200)
         .json({ categories, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async updateCategoryController(req, res) {
+  async updateCategoryController(req, res, next) {
     try {
       const { categoryId } = req.params;
       const { name } = req.body;
@@ -110,18 +91,11 @@ class CategoryController {
       if (req.file) {
         await deleteFile(req.file.path);
       }
-
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async deleteCategoryController(req, res) {
+  async deleteCategoryController(req, res, next) {
     try {
       const { categoryId } = req.params;
       const deleteCategoryDto = new DeleteCategoryDto(categoryId);
@@ -132,13 +106,7 @@ class CategoryController {
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 }

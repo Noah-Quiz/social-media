@@ -238,9 +238,6 @@ videoRoutes.get("/", AuthMiddleware, videoController.getVideosController);
  *                       description:
  *                         type: string
  *                         example: "string"
- *                       bunnyId:
- *                         type: string
- *                         example: "string"
  *                       videoUrl:
  *                         type: string
  *                         example: "string"
@@ -392,105 +389,49 @@ videoRoutes.get(
  * @swagger
  * /api/videos/{videoId}:
  *   patch:
- *     summary: Update video by id
+ *     summary: Update video details
  *     tags: [Videos]
- *     consumes:
- *       - multipart/form-data
+ *     description: Updates the details of a specific video.
  *     parameters:
  *       - in: path
  *         name: videoId
- *         schema:
- *           type: string
  *         required: true
- *         description: The ID of the video to update
- *       - in: formData
- *         name: videoThumbnail
  *         schema:
  *           type: string
- *           format: binary
- *         description: The new thumbnail image file for the video
+ *         description: The unique ID of the video to update
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/UpdateVideoDto'
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: Video title
+ *               description:
+ *                 type: string
+ *                 description: Video description
+ *               categoryIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: List of category IDs
+ *               enumMode:
+ *                 type: string
+ *                 enum: [public, private, unlisted, member, draft]
+ *                 description: Video accessibility
+ *               videoThumbnail:
+ *                 type: string
+ *                 format: binary
+ *                 description: Thumbnail image file for the video
  *     responses:
  *       200:
- *         description: Update video by id successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Update video successfully"
- *                 video:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                       example: "string"
- *                     title:
- *                       type: string
- *                       example: "string"
- *                     description:
- *                       type: string
- *                       example: "string"
- *                     bunnyId:
- *                       type: string
- *                       example: "string"
- *                     videoUrl:
- *                       type: string
- *                       example: "string"
- *                     videoEmbedUrl:
- *                       type: string
- *                       example: "string"
- *                     videoServerUrl:
- *                       type: string
- *                       example: "string"
- *                     isUploaded:
- *                       type: boolean
- *                       example: true
- *                     numOfViews:
- *                       type: integer
- *                       example: 0
- *                     likedBy:
- *                       type: array
- *                       items:
- *                         type: string
- *                     enumMode:
- *                       type: string
- *                       example: "public"
- *                     thumbnailUrl:
- *                       type: string
- *                       example: "string"
- *                     categoryIds:
- *                       type: array
- *                       items:
- *                         type: string
- *                     userId:
- *                       type: string
- *                       example: "string"
- *                     isDeleted:
- *                       type: boolean
- *                       example: false
- *                     dateCreated:
- *                       type: string
- *                       format: date-time
- *                       example: "2024-10-31T04:06:49.351Z"
- *                     lastUpdated:
- *                       type: string
- *                       format: date-time
- *                       example: "2024-10-31T04:06:49.351Z"
- *                     __v:
- *                       type: integer
- *                       example: 0
+ *         description: Video updated successfully
  *       400:
  *         description: Bad request
- *       500:
- *         description: Internal server error
+ *       404:
+ *         description: Video not found
  */
 
 videoRoutes.patch(
@@ -524,11 +465,9 @@ videoRoutes.patch(
  *              _id: "string"
  *              title: "string"
  *              description: "string"
- *              bunnyId: "string"
  *              videoUrl: "string"
  *              videoEmbedUrl: "string"
  *              videoServerUrl: "string"
- *              isUploaded: true
  *              numOfViews: 0
  *              likedBy: []
  *              enumMode: "member"
@@ -629,9 +568,6 @@ videoRoutes.post(
  *                  description:
  *                    type: string
  *                    example: "string"
- *                  bunnyId:
- *                    type: string
- *                    example: "string"
  *                  videoUrl:
  *                    type: string
  *                    example: "string"
@@ -641,9 +577,6 @@ videoRoutes.post(
  *                  videoServerUrl:
  *                    type: string
  *                    example: "string"
- *                  isUploaded:
- *                    type: boolean
- *                    example: true
  *                  numOfViews:
  *                    type: integer
  *                    example: 1  # Incremented view count

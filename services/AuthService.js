@@ -243,7 +243,7 @@ const sendVerificationEmailService = async (email) => {
 
     const user = await connection.userRepository.findUserByEmail(email);
     if (!user)
-      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User with email not found");
     if (user.verify === true)
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,

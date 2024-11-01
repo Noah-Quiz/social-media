@@ -38,8 +38,19 @@ const { validMongooseObjectId } = require("../../utils/validator");
  */
 
 class UpdateVideoDto {
-  constructor(videoId, videoThumbnailFile) {
+  constructor(
+    videoId,
+    title,
+    description,
+    enumMode,
+    categoryIds,
+    videoThumbnailFile = null // Mark as optional
+  ) {
     this.videoId = videoId;
+    this.title = title;
+    this.description = description;
+    this.enumMode = enumMode;
+    this.categoryIds = categoryIds;
     this.videoThumbnailFile = videoThumbnailFile;
   }
 
@@ -51,10 +62,66 @@ class UpdateVideoDto {
       );
     }
     await validMongooseObjectId(this.videoId);
-    if (!this.videoThumbnailFile) {
+
+    if (!this.title) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Video thumbnail file is required"
+        "Title is required"
+      );
+    }
+
+    if (!this.enumMode) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Enum mode is required"
+      );
+    }
+
+    if (
+      this.enumMode &&
+      !["public", "private", "unlisted", "member", "draft"].includes(
+        this.enumMode
+      )
+    ) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid video accessibility"
+      );
+    }
+
+    if (this.categoryIds && !Array.isArray(this.categoryIds)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Category IDs must be an array"
+      );
+    }
+
+    if (this.categoryIds && this.categoryIds.length < 1) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Category IDs must not be empty"
+      );
+    }
+
+    if (this.categoryIds && this.categoryIds.length > 0) {
+      this.categoryIds.forEach(async (id) => {
+        if (!id || id.length === 0) {
+          throw new CoreException(
+            StatusCodeEnums.BadRequest_400,
+            "Category ID is invalid"
+          );
+        }
+        await validMongooseObjectId(id);
+      });
+    }
+
+    if (
+      this.videoThumbnailFile &&
+      typeof this.videoThumbnailFile !== "object"
+    ) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid video thumbnail format"
       );
     }
   }
