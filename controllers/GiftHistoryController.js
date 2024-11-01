@@ -1,3 +1,4 @@
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const {
   createGiftHistoryService,
   deleteGiftHistoryService,
@@ -7,7 +8,7 @@ const {
 } = require("../services/GiftHistoryService");
 
 class GiftHistoryController {
-  async createGiftHistoryController(req, res) {
+  async createGiftHistoryController(req, res, next) {
     const { streamId, gifts } = req.body;
     const userId = req.userId;
     try {
@@ -17,52 +18,54 @@ class GiftHistoryController {
         gifts
       );
       return res
-        .status(200)
+        .status(StatusCodeEnums.Created_201)
         .json({ giftHistory: giftHistory, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async getGiftHistoryByStreamIdController(req, res) {
+  async getGiftHistoryByStreamIdController(req, res, next) {
     const { streamId } = req.params;
     try {
       const giftHistory = await getGiftHistoryByStreamIdService(streamId);
       return res
-        .status(200)
+        .status(StatusCodeEnums.OK_200)
         .json({ giftHistory: giftHistory, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async getGiftHistoryByUserIdController(req, res) {
+  async getGiftHistoryByUserIdController(req, res, next) {
     const userId = req.userId;
     try {
       const giftHistory = await getGiftHistoryByUserIdService(userId);
       return res
-        .status(200)
+        .status(StatusCodeEnums.OK_200)
         .json({ giftHistory: giftHistory, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async getGiftController(req, res) {
+  async getGiftController(req, res, next) {
     const { id } = req.params;
     try {
       const gift = await getGiftService(id);
-      return res.status(200).json({ gift: gift, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ gift: gift, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async deleteGiftHistoryController(req, res) {
+  async deleteGiftHistoryController(req, res, next) {
     const { id } = req.params;
     try {
       const giftHistory = await deleteGiftHistoryService(id);
       return res
-        .status(200)
+        .status(StatusCodeEnums.OK_200)
         .json({ giftHistory: giftHistory, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 }

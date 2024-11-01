@@ -37,35 +37,7 @@ const createVideoService = async (
 
 const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
   try {
-    if (
-      data.enumMode &&
-      !["public", "private", "unlisted", "member", "draft"].includes(
-        data.enumMode
-      )
-    ) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Invalid video accessibility"
-      );
-    }
-
     const categoryIds = data.categoryIds;
-    if (categoryIds && !Array.isArray(categoryIds)) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "CategoryIds must be an array"
-      );
-    }
-    if (categoryIds && categoryIds.length !== 0) {
-      categoryIds.forEach((id) => {
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-          throw new CoreException(
-            StatusCodeEnums.BadRequest_400,
-            `Invalid category ID`
-          );
-        }
-      });
-    }
 
     const connection = new DatabaseTransaction();
 
@@ -73,15 +45,7 @@ const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
     if (!video) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
-
-    if (thumbnailFile) {
-      // const vimeoVideoId = video.videoUrl.split("/").pop();
-      // const thumbnailUrl = await uploadThumbnail(
-      //   `/videos/${vimeoVideoId}`,
-      //   thumbnailFile
-      // );
-      data.thumbnailUrl = thumbnailFile.path;
-    }
+    data.thumbnailUrl = `${process.env.APP_BASE_URL}/${thumbnailFile.path}`;
 
     const updatedVideo =
       await connection.videoRepository.updateAVideoByIdRepository(

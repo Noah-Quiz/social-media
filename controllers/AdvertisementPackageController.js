@@ -8,7 +8,7 @@ const {
 } = require("../services/AdvertisementPackageService");
 
 class AdvertisementPackageController {
-  async createAPackageController(req, res) {
+  async createAPackageController(req, res, next) {
     const { coin, dateUnit, numberOfDateUnit } = req.body;
     try {
       const result = await createAPackageService(
@@ -18,36 +18,30 @@ class AdvertisementPackageController {
       );
       return res.status(StatusCodeEnums.OK_200).json(result);
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 
-  async getAllAvailablePackageController(req, res) {
+  async getAllAvailablePackageController(req, res, next) {
     try {
       const result = await getAllAvailablePackageService();
       return res.status(StatusCodeEnums.OK_200).json(result);
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 
-  async getAPackageByIdController(req, res) {
+  async getAPackageByIdController(req, res, next) {
     const { id } = req.params;
     try {
       const result = await getAPackageByIdService(id);
       return res.status(StatusCodeEnums.OK_200).json(result);
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 
-  async updateAPackageByIdController(req, res) {
+  async updateAPackageByIdController(req, res, next) {
     const { id, coin, dateUnit, numberOfDateUnit } = req.body;
 
     try {
@@ -59,21 +53,17 @@ class AdvertisementPackageController {
       );
       return res.status(StatusCodeEnums.OK_200).json(result);
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 
-  async deleteAPackageByIdController(req, res) {
+  async deleteAPackageByIdController(req, res, next) {
     const { id } = req.params;
     try {
       const result = await deleteAPackageByIdService(id);
       return res.status(StatusCodeEnums.OK_200).json(result);
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 }
