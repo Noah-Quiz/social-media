@@ -1,3 +1,5 @@
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 const {
   updateVipService,
   getAllMemberGroupService,
@@ -6,52 +8,72 @@ const {
 } = require("../services/MemberGroupService");
 
 class MemberGroupController {
-  async updateVipController(req, res) {
-    const { userId, ownerId, packId } = req.body;
-    if (!userId || !ownerId || !packId) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
+  async updateVipController(req, res, next) {
     try {
+      const { userId, ownerId, packId } = req.body;
+      if (!userId || !ownerId || !packId) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Missing fields"
+        );
+      }
       const result = await updateVipService(userId, ownerId, packId);
-      return res.status(200).json({ MemberGroup: result, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ MemberGroup: result, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async getMemberGroupController(req, res) {
+  async getMemberGroupController(req, res, next) {
     const ownerId = req.userId;
     try {
       const result = await getMemberGroupService(ownerId);
       if (!result) {
-        return res.status(404).json({ message: "Member Group not found" });
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "No MemberGroup found"
+        );
       }
-      return res.status(200).json({ MemberGroup: result, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ MemberGroup: result, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async getAllMemberGroupController(req, res) {
+  async getAllMemberGroupController(req, res, next) {
     try {
       const result = await getAllMemberGroupService();
       if (!result) {
-        return res.status(404).json({ message: "No MemberGroup found" });
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "No MemberGroup found"
+        );
       }
-      return res.status(200).json({ MemberGroup: result, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ MemberGroup: result, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async deleteMemberGroupController(req, res) {
+  async deleteMemberGroupController(req, res, next) {
     const ownerId = req.userId;
     console.log("Controller: ", ownerId);
     try {
       const result = await deleteMemberGroupService(ownerId);
       if (!result) {
-        return res.status(404).json({ message: "Member Group not found" });
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "No MemberGroup found"
+        );
       }
-      return res.status(200).json({ MemberGroup: result, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ MemberGroup: result, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 }

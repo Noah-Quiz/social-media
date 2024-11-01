@@ -46,9 +46,6 @@ const videoController = new VideoController();
  *                     description:
  *                       type: string
  *                       example: "string"
- *                     bunnyId:
- *                       type: string
- *                       example: "string"
  *                     videoUrl:
  *                       type: string
  *                       example: "string"
@@ -130,9 +127,6 @@ videoRoutes.post(
  *                       description:
  *                         type: string
  *                         example: string
- *                       bunnyId:
- *                         type: string
- *                         example: string
  *                       videoUrl:
  *                         type: string
  *                         example: string
@@ -142,9 +136,6 @@ videoRoutes.post(
  *                       videoServerUrl:
  *                         type: string
  *                         example: string
- *                       isUploaded:
- *                         type: boolean
- *                         example: true
  *                       numOfViews:
  *                         type: integer
  *                         example: 0
@@ -236,9 +227,6 @@ videoRoutes.get("/", AuthMiddleware, videoController.getVideosController);
  *                         type: string
  *                         example: "string"
  *                       description:
- *                         type: string
- *                         example: "string"
- *                       bunnyId:
  *                         type: string
  *                         example: "string"
  *                       videoUrl:
@@ -438,9 +426,6 @@ videoRoutes.get(
  *                     description:
  *                       type: string
  *                       example: "string"
- *                     bunnyId:
- *                       type: string
- *                       example: "string"
  *                     videoUrl:
  *                       type: string
  *                       example: "string"
@@ -450,9 +435,6 @@ videoRoutes.get(
  *                     videoServerUrl:
  *                       type: string
  *                       example: "string"
- *                     isUploaded:
- *                       type: boolean
- *                       example: true
  *                     numOfViews:
  *                       type: integer
  *                       example: 0
@@ -524,11 +506,9 @@ videoRoutes.patch(
  *              _id: "string"
  *              title: "string"
  *              description: "string"
- *              bunnyId: "string"
  *              videoUrl: "string"
  *              videoEmbedUrl: "string"
  *              videoServerUrl: "string"
- *              isUploaded: true
  *              numOfViews: 0
  *              likedBy: []
  *              enumMode: "member"
@@ -629,9 +609,6 @@ videoRoutes.post(
  *                  description:
  *                    type: string
  *                    example: "string"
- *                  bunnyId:
- *                    type: string
- *                    example: "string"
  *                  videoUrl:
  *                    type: string
  *                    example: "string"
@@ -641,9 +618,6 @@ videoRoutes.post(
  *                  videoServerUrl:
  *                    type: string
  *                    example: "string"
- *                  isUploaded:
- *                    type: boolean
- *                    example: true
  *                  numOfViews:
  *                    type: integer
  *                    example: 1  # Incremented view count

@@ -8,55 +8,65 @@ const {
 
 const CreateMemberPackDto = require("../dtos/MemberPack/CreateMemberPackDto");
 const UpdateMemberPackDto = require("../dtos/MemberPack/UpdateMemberPackDto");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 
 class MemberPackController {
-  async getAllMemberPackController(req, res) {
+  async getAllMemberPackController(req, res, next) {
     try {
       const result = await getAllMemberPackService();
       if (!result || result.length === 0) {
-        return res.status(404).json({ message: "No MemberPack found" });
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "No Member Pack found"
+        );
       }
       res
-        .status(200)
+        .status(StatusCodeEnums.OK_200)
         .json({ memberPack: result, size: result.length, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: "Error" });
+      next(error);
     }
   }
 
-  async getMemberPackController(req, res) {
+  async getMemberPackController(req, res, next) {
     const { id } = req.params;
     try {
       const result = await getMemberPackService(id);
       if (!result) {
-        return res.status(404).json({ message: "Member Pack not found" });
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "No Member Pack found"
+        );
       }
-      res.status(200).json({ memberPack: result, message: "Success" });
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ memberPack: result, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
-  async createMemberPackController(req, res) {
-    const {
-      name,
-      description,
-      price,
-      durationUnit,
-      durationNumber,
-      isDeleted,
-    } = req.body;
-
-    // Create DTO and validate
-    const createMemberPackDto = new CreateMemberPackDto(
-      name,
-      description,
-      price,
-      durationUnit,
-      durationNumber,
-      isDeleted
-    );
+  async createMemberPackController(req, res, next) {
     try {
+      const {
+        name,
+        description,
+        price,
+        durationUnit,
+        durationNumber,
+        isDeleted,
+      } = req.body;
+
+      // Create DTO and validate
+      const createMemberPackDto = new CreateMemberPackDto(
+        name,
+        description,
+        price,
+        durationUnit,
+        durationNumber,
+        isDeleted
+      );
       await createMemberPackDto.validate();
       const result = await createMemberPackService(
         name,
@@ -66,40 +76,36 @@ class MemberPackController {
         durationNumber,
         isDeleted
       );
-      res.status(201).json({
+      res.status(StatusCodeEnums.Created_201).json({
         memberPack: result,
         message: "Member Pack created successfully",
       });
     } catch (error) {
-      if (error) {
-        res.status(500).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: "Internal Server Error" });
-      }
+      next(error);
     }
   }
 
-  async updateMemberPackController(req, res) {
-    const { id } = req.params;
-    const {
-      name,
-      description,
-      price,
-      durationUnit,
-      durationNumber,
-      isDeleted,
-    } = req.body;
-
-    // Create DTO and validate
-    const updateMemberPackDto = new UpdateMemberPackDto({
-      name,
-      description,
-      price,
-      durationUnit,
-      durationNumber,
-      isDeleted,
-    });
+  async updateMemberPackController(req, res, next) {
     try {
+      const { id } = req.params;
+      const {
+        name,
+        description,
+        price,
+        durationUnit,
+        durationNumber,
+        isDeleted,
+      } = req.body;
+
+      // Create DTO and validate
+      const updateMemberPackDto = new UpdateMemberPackDto({
+        name,
+        description,
+        price,
+        durationUnit,
+        durationNumber,
+        isDeleted,
+      });
       await updateMemberPackDto.validate();
       const result = await updateMemberPackService(
         id,
@@ -110,26 +116,24 @@ class MemberPackController {
         durationNumber,
         isDeleted
       );
-      res.status(200).json({ memberPack: result, message: "Success" });
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ memberPack: result, message: "Success" });
     } catch (error) {
-      if (error) {
-        res.status(500).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: "Internal Server Error" });
-      }
+      next(error);
     }
   }
 
-  async deleteMemberPackController(req, res) {
+  async deleteMemberPackController(req, res, next) {
     const { id } = req.params;
     try {
       const result = await deleteMemberPackService(id);
-      return res.status(200).json({
+      return res.status(StatusCodeEnums.OK_200).json({
         memberPack: result,
         message: "Member Pack deleted successfully",
       });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 }

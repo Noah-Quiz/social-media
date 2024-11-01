@@ -12,7 +12,7 @@ const DeleteHistoryRecordsDto = require("../dtos/History/DeleteHistoryRecordsDto
 const DeleteHistoryRecordDto = require("../dtos/History/DeleteHistoryRecordDto");
 
 class HistoryController {
-  async createHistoryRecordController(req, res) {
+  async createHistoryRecordController(req, res, next) {
     try {
       const { videoId } = req.body;
       const userId = req.userId;
@@ -31,17 +31,11 @@ class HistoryController {
         .status(StatusCodeEnums.Created_201)
         .json({ historyRecord, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async clearAllHistoryRecordsController(req, res) {
+  async clearAllHistoryRecordsController(req, res, next) {
     try {
       const userId = req.userId;
       const deleteHistoryRecordsDto = new DeleteHistoryRecordsDto(userId);
@@ -51,17 +45,11 @@ class HistoryController {
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async deleteHistoryRecordController(req, res) {
+  async deleteHistoryRecordController(req, res, next) {
     try {
       const { historyId } = req.params;
       const deleteHistoryRecordDto = new DeleteHistoryRecordDto(historyId);
@@ -71,17 +59,11 @@ class HistoryController {
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getAllHistoryRecordsController(req, res) {
+  async getAllHistoryRecordsController(req, res, next) {
     try {
       const userId = req.userId;
       const query = req.query;
@@ -101,13 +83,7 @@ class HistoryController {
         .status(StatusCodeEnums.OK_200)
         .json({ historyRecords, total, page, totalPages, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 }
