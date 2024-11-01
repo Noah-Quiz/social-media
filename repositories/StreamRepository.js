@@ -342,7 +342,7 @@ class StreamRepository {
       }
 
       const categoryIds = recentLikedStreams[0].categoryIds;
-
+      console.log(categoryIds)
       const recommendedStreams = await Stream.aggregate([
         {
           $match: {
@@ -367,13 +367,17 @@ class StreamRepository {
             as: "categories",
           },
         },
+        { $unwind: "$categories" },
         {
           $project: {
             _id: 1,
-            userId: 1,
+            thumbnailUrl: 1,
+            streamServerUrl: 1,
+            streamOnlineUrl: 1,
             status: 1,
             createdAt: 1,
             user: {
+              _id: 1,
               fullName: "$user.fullName",
               nickName: "$user.nickName",
               avatar: "$user.avatar",
@@ -385,6 +389,7 @@ class StreamRepository {
                 in: {
                   _id: "$$category._id",
                   name: "$$category.name",
+                  imageUrl: "$$category.imageUrl",
                 },
               },
             },
@@ -439,9 +444,11 @@ class StreamRepository {
           $project: {
             _id: 1,
             likesCount: { $size: "$likedBy" },
+            thumbnailUrl: 1,
             streamServerUrl: 1,
             streamOnlineUrl: 1,
             createdAt: 1,
+            status: 1,
             user: {
               _id: 1,
               fullName: "$user.fullName",
