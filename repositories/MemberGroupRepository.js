@@ -5,7 +5,11 @@ const User = require("../entities/UserEntity");
 const getLogger = require("../utils/logger");
 const logger = getLogger("MEMBERSHIP");
 const DatabaseTransaction = require("./DatabaseTransaction");
+const ExchangeRateRepository = require("./ExchangeRateRepository");
 class MemberGroupRepository {
+  constructor() {
+    this.exchangeRateRepository = new ExchangeRateRepository();
+  }
   async getMemberGroupRepository(ownerId) {
     try {
       const memberGroup = await MemberGroup.findOne({
@@ -51,6 +55,8 @@ class MemberGroupRepository {
 
   //try DatabaseTransaction => error DatabaseTransaction not a constructor
   async updateVip(userId, ownerId, packId) {
+    const rate =
+      await this.exchangeRateRepository.getAllRatesAsObjectRepository();
     const session = await mongoose.startSession(); // Step 1: Start a session
     session.startTransaction();
     try {
@@ -85,7 +91,9 @@ class MemberGroupRepository {
       if (!user) {
         throw new Error("User not found");
       }
-
+      if (user.wallet.coin < memberPack.price) {
+        throw new Error("Insufficient coin");
+      }
       // Deduct the price from the user's wallet
       user.wallet.coin -= memberPack.price;
       await user.save({ session }); // Pass the session to save()
@@ -100,7 +108,7 @@ class MemberGroupRepository {
       }
 
       // Add the price to the owner's wallet
-      owner.wallet.coin += memberPack.price;
+      owner.wallet.coin += memberPack.price * rate.ReceivePercentage;
       await owner.save({ session }); // Pass the session to save()
 
       // Calculate the duration in milliseconds based on the pack's durationUnit and durationNumber
