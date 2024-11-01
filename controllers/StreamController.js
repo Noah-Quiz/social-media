@@ -108,8 +108,7 @@ class StreamController {
 
   async updateStreamController(req, res, next) {
     const { streamId } = req.params;
-    const { title, description, addedCategoryIds, removedCategoryIds } =
-      req.body;
+    const { title, description, categoryIds } = req.body;
     let thumbnailFile = req.file ? req.file.path : null;
     const userId = req.userId;
 
@@ -119,20 +118,28 @@ class StreamController {
         userId,
         title,
         description,
-        addedCategoryIds,
-        removedCategoryIds
+        categoryIds
       );
       await updateStreamDto.validate();
 
-      const categoryData = { addedCategoryIds, removedCategoryIds };
-      const updateData = { title, description, thumbnailUrl: thumbnailFile };
+      const updateData = {
+        title,
+        description,
+        categoryIds: categoryIds,
+        thumbnailUrl: thumbnailFile,
+      };
 
-      const stream = await updateStreamService(
-        userId,
-        streamId,
-        updateData,
-        categoryData
-      );
+      if (updateData.categoryIds && updateData.categoryIds.length > 0) {
+        updateData.categoryIds = updateData.categoryIds.filter(
+          (id) => id !== ""
+        );
+      }
+
+      // Filter out duplicate category IDs
+      if (updateData.categoryIds && updateData.categoryIds.length > 0) {
+        updateData.categoryIds = [...new Set(updateData.categoryIds)];
+      }
+      const stream = await updateStreamService(userId, streamId, updateData);
 
       if (thumbnailFile) await checkFileSuccess(thumbnailFile);
 
