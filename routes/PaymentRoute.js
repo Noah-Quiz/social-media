@@ -15,7 +15,28 @@ paypal.configure({
   client_secret: process.env.PAYPAL_SECRET_KEY,
 });
 
-paymentRouters.get(
+/**
+ * @swagger
+ * /api/payments/paypal:
+ *   post:
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Pay with PayPal
+ *     tags: [Payments]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PayWithPaypalDto'
+ *     responses:
+ *       200:
+ *         description: Pay with Paypal successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
+paymentRouters.post(
   "/paypal",
   AuthMiddleware,
   paymentController.payWithPayPalController

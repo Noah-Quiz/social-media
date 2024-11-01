@@ -45,6 +45,7 @@ const {
   uploadBunnyStorageFileService,
 } = require("./services/BunnyStreamService");
 const { consumeMessageFromQueue } = require("./utils/rabbitMq");
+const auditLogError = require("./middlewares/auditLogError.js");
 
 consumeMessageFromQueue(
   process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE,
@@ -111,7 +112,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/StreauserStreams", roomRoutes);
 app.use("/api/comments", commentRoutes);
-app.use("/api/payment", paymentRouters);
+app.use("/api/payments", paymentRouters);
 app.use("/api/vnpay", vnpayRoutes);
 app.use("/api/receipts", receiptRoutes);
 app.use("/api/streams", streamRoutes);
@@ -123,6 +124,10 @@ app.use("/api/member-pack", memberPackRoutes);
 app.use("/api/member-group", memberGroupRoutes);
 app.use("/api/statistics", statisticRoutes);
 app.use("/api/advertisement-packages", packageRoutes);
+
+app.use(auditLogError);
+
+
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;
 
