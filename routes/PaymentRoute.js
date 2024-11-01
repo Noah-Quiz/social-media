@@ -7,7 +7,7 @@ const paypal = require("paypal-rest-sdk");
 const PaymentController = require("../controllers/PaymentController");
 const paymentController = new PaymentController();
 paymentRouters.post("/vnpay", AuthMiddleware, vnpayController.createPaymentUrl);
-paymentRouters.get("vnpay/callback", vnpayController.vnpayReturn);
+paymentRouters.get("/vnpay/callback", vnpayController.vnpayReturn);
 
 paypal.configure({
   mode: "sandbox",
