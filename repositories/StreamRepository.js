@@ -88,54 +88,15 @@ class StreamRepository {
   }
 
   // Update a stream
-  async updateStreamRepository(
-    streamId,
-    updateData,
-    categoryData,
-    session = null
-  ) {
+  async updateStreamRepository(streamId, updateData, session = null) {
     try {
-      const updateOperations = { lastUpdated: Date.now(), ...updateData };
-
-      if (
-        categoryData &&
-        categoryData.addedCategoryIds &&
-        categoryData.addedCategoryIds.length > 0
-      ) {
-        await Stream.updateOne(
-          { _id: streamId },
-          {
-            $addToSet: {
-              categoryIds: { $each: categoryData.addedCategoryIds },
-            },
-            lastUpdated: Date.now(),
-          },
-          { runValidators: true, session }
-        );
-      }
-
-      if (
-        categoryData &&
-        categoryData.removedCategoryIds &&
-        categoryData.removedCategoryIds.length > 0
-      ) {
-        await Stream.updateOne(
-          { _id: streamId },
-          {
-            $pull: { categoryIds: { $in: categoryData.removedCategoryIds } },
-            lastUpdated: Date.now(),
-          },
-          { runValidators: true, session }
-        );
-      }
-
       const updatedStream = await Stream.findByIdAndUpdate(
         streamId,
-        updateOperations,
-        { new: true, runValidators: true, session }
+        updateData
       );
+      const stream = await Stream.findById(streamId);
 
-      return updatedStream;
+      return stream;
     } catch (error) {
       throw new Error(`Error updating stream: ${error.message}`);
     }
@@ -166,23 +127,23 @@ class StreamRepository {
       const page = query.page || 1;
       const size = query.size || 10;
       const skip = (page - 1) * size;
-  
+
       const searchQuery = { isDeleted: false };
-  
+
       // Prepare query
       if (query.title) searchQuery.title = query.title;
       if (query.uid) searchQuery.uid = query.uid;
       if (query.status) searchQuery.status = query.status;
-  
+
       let sortField = "dateCreated"; // Default sort field
       let sortOrder = -1; // Default to descending order
-      
+
       if (query.sortBy === "like") sortField = "likesCount";
       else if (query.sortBy === "view") sortField = "currentViewCount";
       else if (query.sortBy === "date") sortField = "dateCreated";
-  
+
       sortOrder = query.order === "ascending" ? 1 : -1;
-  
+
       const totalStreams = await Stream.countDocuments({
         ...searchQuery,
         $or: [
@@ -190,7 +151,7 @@ class StreamRepository {
           { userId: new mongoose.Types.ObjectId(requester) },
         ],
       });
-  
+
       // Get streams with sorting on computed fields
       const streams = await Stream.aggregate([
         { $match: searchQuery },
@@ -214,8 +175,8 @@ class StreamRepository {
         {
           $addFields: {
             likesCount: { $size: "$likedBy" },
-            currentViewCount: { $ifNull: ["$currentViewCount", 0] }
-          }
+            currentViewCount: { $ifNull: ["$currentViewCount", 0] },
+          },
         },
         {
           $project: {
@@ -249,9 +210,9 @@ class StreamRepository {
         },
         { $sort: { [sortField]: sortOrder } },
         { $skip: skip },
-        { $limit: Number(size) }
+        { $limit: Number(size) },
       ]);
-  
+
       return {
         streams,
         total: totalStreams,
@@ -262,7 +223,6 @@ class StreamRepository {
       throw new Error(`Error getting streams: ${error.message}`);
     }
   }
-  
 
   async toggleLikeStreamRepository(streamId, userId, action = "like") {
     try {

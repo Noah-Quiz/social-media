@@ -143,7 +143,27 @@ class VideoController {
 
       await updateVideoDto.validate();
 
-      const video = await updateAVideoByIdService(videoId, data, thumbnailFile);
+      const updateData = {
+        title: data.title,
+        description: data.description,
+        enumMode: data.enumMode,
+        categoryIds: data.categoryIds,
+      };
+      if (updateData.categoryIds && updateData.categoryIds.length > 0) {
+        updateData.categoryIds = updateData.categoryIds.filter(
+          (id) => id !== ""
+        );
+      }
+
+      // Filter out duplicate category IDs
+      if (updateData.categoryIds && updateData.categoryIds.length > 0) {
+        updateData.categoryIds = [...new Set(updateData.categoryIds)];
+      }
+      const video = await updateAVideoByIdService(
+        videoId,
+        updateData,
+        thumbnailFile
+      );
       // const bunnyVideo = await updateBunnyStreamVideoService(
       //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
       //   data.title

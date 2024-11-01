@@ -13,7 +13,6 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *         - description
  *         - categoryIds
  *         - enumMode
- *         - thumbnailUrl
  *       properties:
  *         title:
  *           type: string
@@ -31,10 +30,6 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           type: string
  *           default: public
  *           description: Value of enum mode [public, private, unlisted, member, draft]
- *         thumbnailUrl:
- *           type: string
- *           default: https://example.com
- *           description: URL of thumbnail
  */
 
 class UpdateVideoDto {
@@ -91,21 +86,11 @@ class UpdateVideoDto {
         "Category IDs must be an array"
       );
     }
-    if (this.categoryIds && this.categoryIds.length < 1) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Category IDs must not be empty"
-      );
-    }
     if (this.categoryIds && this.categoryIds.length > 0) {
       this.categoryIds.forEach(async (id) => {
-        if (!id || id.length === 0) {
-          throw new CoreException(
-            StatusCodeEnums.BadRequest_400,
-            "Category ID is invalid"
-          );
+        if (id || id.length > 0) {
+          await validMongooseObjectId(id);
         }
-        await validMongooseObjectId(id);
       });
     }
     if (!this.videoThumbnailFile) {
