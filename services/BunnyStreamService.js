@@ -9,7 +9,8 @@ const {
 } = require("../middlewares/storeFile");
 const logger = getLogger("BUNNY_STREAM_SERVICE");
 const eventEmitter = require("../socket/events");
-const StatusCodeEnums = require("../enums/StatusCodeEnum");const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const getBunnyStreamVideoService = async (libraryId, videoId) => {
   try {
     const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${libraryId}/videos/${videoId}`;
@@ -111,7 +112,7 @@ const uploadBunnyStorageFileService = async ({
             await connection.videoRepository.updateAVideoByIdRepository(
               videoId,
               {
-                videoUrl: url,
+                videoUrl: `https://${process.env.BUNNY_DOMAIN_STORAGE_ZONE}/video/${videoId}/${fileName}`,
               }
             );
           }
@@ -181,6 +182,7 @@ const uploadBunnyStreamVideoService = async (userId, videoId, filePath) => {
 
 const updateBunnyStreamVideoService = async (libraryId, videoId, title) => {
   try {
+    logger.info(`Updating video: ${videoId}`);
     const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${libraryId}/videos/${videoId}`;
     const formData = new FormData();
     formData.append("title", title);
