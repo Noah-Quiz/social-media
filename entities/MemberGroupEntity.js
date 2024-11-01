@@ -10,6 +10,7 @@ const memberGroupSchema = new mongoose.Schema({
   },
   members: [
     {
+      _id: false, // Disable _id for each member object here
       memberId: {
         type: mongoose.Types.ObjectId,
         ref: "User", // Reference to the User model for each member
@@ -26,7 +27,7 @@ const memberGroupSchema = new mongoose.Schema({
       },
       endDate: {
         type: Date,
-        require: true,
+        required: true,
       },
     },
   ],

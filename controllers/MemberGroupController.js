@@ -42,10 +42,11 @@ class MemberGroupController {
     }
   }
   async deleteMemberGroupController(req, res) {
-    const ownerId = req.userId;
+    const requester = req.userId;
+    const { ownerId } = req.params;
     console.log("Controller: ", ownerId);
     try {
-      const result = await deleteMemberGroupService(ownerId);
+      const result = await deleteMemberGroupService(requester, ownerId);
       if (!result) {
         return res.status(404).json({ message: "Member Group not found" });
       }
