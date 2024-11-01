@@ -46,9 +46,6 @@ const videoController = new VideoController();
  *                     description:
  *                       type: string
  *                       example: "string"
- *                     bunnyId:
- *                       type: string
- *                       example: "string"
  *                     videoUrl:
  *                       type: string
  *                       example: "string"
@@ -130,9 +127,6 @@ videoRoutes.post(
  *                       description:
  *                         type: string
  *                         example: string
- *                       bunnyId:
- *                         type: string
- *                         example: string
  *                       videoUrl:
  *                         type: string
  *                         example: string
@@ -142,9 +136,6 @@ videoRoutes.post(
  *                       videoServerUrl:
  *                         type: string
  *                         example: string
- *                       isUploaded:
- *                         type: boolean
- *                         example: true
  *                       numOfViews:
  *                         type: integer
  *                         example: 0
@@ -427,7 +418,70 @@ videoRoutes.get(
  *                 description: Thumbnail image file for the video
  *     responses:
  *       200:
- *         description: Video updated successfully
+ *         description: Update video by id successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Update video successfully"
+ *                 video:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "string"
+ *                     title:
+ *                       type: string
+ *                       example: "string"
+ *                     description:
+ *                       type: string
+ *                       example: "string"
+ *                     videoUrl:
+ *                       type: string
+ *                       example: "string"
+ *                     videoEmbedUrl:
+ *                       type: string
+ *                       example: "string"
+ *                     videoServerUrl:
+ *                       type: string
+ *                       example: "string"
+ *                     numOfViews:
+ *                       type: integer
+ *                       example: 0
+ *                     likedBy:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     enumMode:
+ *                       type: string
+ *                       example: "public"
+ *                     thumbnailUrl:
+ *                       type: string
+ *                       example: "string"
+ *                     categoryIds:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     userId:
+ *                       type: string
+ *                       example: "string"
+ *                     isDeleted:
+ *                       type: boolean
+ *                       example: false
+ *                     dateCreated:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-10-31T04:06:49.351Z"
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-10-31T04:06:49.351Z"
+ *                     __v:
+ *                       type: integer
+ *                       example: 0
  *       400:
  *         description: Bad request
  *       404:

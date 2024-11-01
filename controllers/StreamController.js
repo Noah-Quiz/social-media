@@ -43,22 +43,56 @@ class StreamController {
   }
 
   async getStreamsController(req, res, next) {
-    const query = req.query;
     const requester = req.userId;
+
+    const query = {
+      size: req.query.size,
+      page: req.query.page,
+      status: req.query.status,
+      sortBy: req.query.sortBy,
+      order: req.query.order,
+    };
 
     if (!query.page) query.page = 1;
     if (!query.size) query.size = 10;
 
-    try {
-      if (query.page < 1) {
-        throw new CoreException(StatusCodeEnums.BadRequest_400).json({
-          message: "Invalid page number",
-        });
-      }
-      if (query.title) {
-        query.title = { $regex: query.title, $options: "i" };
-      }
+    // Validate `sortBy` and `order`
+    const validSortByOptions = ["like", "view", "date"];
+    const validOrderOptions = ["ascending", "descending"];
 
+    if (query.sortBy && !validSortByOptions.includes(query.sortBy)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid query sortBy, must be in ['like', 'view', 'date']"
+      );
+    }
+
+    if (query.order && !validOrderOptions.includes(query.order)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid query order, must be in ['ascending', 'descending']"
+      );
+    }
+
+    // Additional validation checks for `page` and `size`
+    if (query.page < 1) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Page cannot be less than 1"
+      );
+    }
+    if (query.size < 1) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Size cannot be less than 1"
+      );
+    }
+
+    if (query.title) {
+      query.title = { $regex: query.title, $options: "i" };
+    }
+
+    try {
       const { streams, total, page, totalPages } = await getStreamsService(
         query,
         requester

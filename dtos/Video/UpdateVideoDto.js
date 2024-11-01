@@ -62,21 +62,18 @@ class UpdateVideoDto {
       );
     }
     await validMongooseObjectId(this.videoId);
-
     if (!this.title) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Title is required"
       );
     }
-
     if (!this.enumMode) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Enum mode is required"
       );
     }
-
     if (
       this.enumMode &&
       !["public", "private", "unlisted", "member", "draft"].includes(
@@ -88,21 +85,18 @@ class UpdateVideoDto {
         "Invalid video accessibility"
       );
     }
-
     if (this.categoryIds && !Array.isArray(this.categoryIds)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Category IDs must be an array"
       );
     }
-
     if (this.categoryIds && this.categoryIds.length < 1) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Category IDs must not be empty"
       );
     }
-
     if (this.categoryIds && this.categoryIds.length > 0) {
       this.categoryIds.forEach(async (id) => {
         if (!id || id.length === 0) {
@@ -114,11 +108,7 @@ class UpdateVideoDto {
         await validMongooseObjectId(id);
       });
     }
-
-    if (
-      this.videoThumbnailFile &&
-      typeof this.videoThumbnailFile !== "object"
-    ) {
+    if (!this.videoThumbnailFile) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid video thumbnail format"
