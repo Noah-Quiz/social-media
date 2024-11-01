@@ -1,7 +1,6 @@
-class CoreException {
-  code;
-  message;
+class CoreException extends Error {
   constructor(code, message) {
+    super(message);
     this.code = code;
     this.message = message;
   }

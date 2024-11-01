@@ -3,6 +3,8 @@ const GetChildrenCommentsDto = require("../dtos/Comment/GetChildrenCommentsDto")
 const GetVideoCommentsDto = require("../dtos/Comment/GetVideoCommentsDto");
 const LikeCommentDto = require("../dtos/Comment/LikeCommentDto");
 const UnlikeCommentDto = require("../dtos/Comment/UnlikeCommentDto");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 const {
   createCommentService,
   getCommentService,
@@ -15,7 +17,7 @@ const {
 } = require("../services/CommentService");
 
 class CommentController {
-  async createCommentController(req, res) {
+  async createCommentController(req, res, next) {
     try {
       const userId = req.userId;
       const videoId = req.body.videoId;
@@ -37,24 +39,31 @@ class CommentController {
         content,
         responseTo
       );
-      return res.status(201).json({ comments: comment, message: "Success" });
+      return res
+        .status(StatusCodeEnums.Created_201)
+        .json({ comments: comment, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async getCommentController(req, res) {
+  async getCommentController(req, res, next) {
     const { commentId } = req.params;
     try {
       const comment = await getCommentService(commentId);
       if (!comment) {
-        return res.status(500).json("Comment not found");
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Comment not found"
+        );
       }
-      return res.status(200).json({ comments: comment, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ comments: comment, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async getVideoCommentsController(req, res) {
+  async getVideoCommentsController(req, res, next) {
     try {
       const { sortBy } = req.query;
       const { videoId } = req.params;
@@ -62,43 +71,48 @@ class CommentController {
       await getVideoCommentsDto.validate();
 
       const comments = await getVideoCommentsService(videoId, sortBy);
-      return res.status(200).json({
+      return res.status(StatusCodeEnums.OK_200).json({
         comments: comments,
         size: comments.length,
         message: "Success",
       });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async deleteCommentController(req, res) {
+  async deleteCommentController(req, res, next) {
     const { commentId } = req.params;
     const userId = req.userId;
 
     try {
       const comment = await softDeleteCommentService(userId, commentId);
       return res
-        .status(200)
+        .status(StatusCodeEnums.OK_200)
         .json({ comments: comment, message: "Delete successfully" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async updateCommentController(req, res) {
-    const { commentId } = req.params;
-    const userId = req.userId;
-    const { content } = req.body;
-    if (!content || content === "") {
-      return res.status(400).json({ message: "Content is required" });
-    }
+  async updateCommentController(req, res, next) {
     try {
+      const { commentId } = req.params;
+      const userId = req.userId;
+      const { content } = req.body;
+      if (!content || content === "") {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Content is required"
+        );
+      }
       const comment = await updateCommentService(userId, commentId, content);
-      return res.status(200).json({ comments: comment, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ comments: comment, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async likeCommentController(req, res) {
+  async likeCommentController(req, res, next) {
     try {
       const { commentId } = req.params;
       // const { userId } = req.body;
@@ -107,12 +121,14 @@ class CommentController {
       await likeCommentDto.validate();
 
       const comment = await likeService(userId, commentId);
-      return res.status(200).json({ comments: comment, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ comments: comment, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async unlikeCommentController(req, res) {
+  async unlikeCommentController(req, res, next) {
     try {
       const { commentId } = req.params;
       const userId = req.userId;
@@ -120,12 +136,14 @@ class CommentController {
       await unlikeCommentDto.validate();
 
       const comment = await unlikeService(userId, commentId);
-      return res.status(200).json({ comments: comment, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ comments: comment, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
-  async getChildrenCommentsController(req, res) {
+  async getChildrenCommentsController(req, res, next) {
     try {
       const { commentId } = req.params;
       const { limit } = req.query;
@@ -139,14 +157,14 @@ class CommentController {
         commentId,
         limit || 10
       );
-      return res.status(200).json({
+      return res.status(StatusCodeEnums.OK_200).json({
         comments: comments,
         size: comments.length + comments[0].children.length,
         maxLevel: maxLevel,
         message: "Success",
       });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 }
