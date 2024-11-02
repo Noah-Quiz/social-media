@@ -69,7 +69,7 @@ const convertMp4ToHls = async (filePath) => {
         "-f",
         "hls", // Output format
         "-hls_time",
-        "1", // Duration of each segment
+        "10", // Duration of each segment
         "-hls_list_size",
         "0", // All segments in playlist
         "-hls_flags",
