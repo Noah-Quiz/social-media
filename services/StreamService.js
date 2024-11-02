@@ -116,12 +116,7 @@ const updateStreamViewsService = async (streamId, currentViewCount) => {
   }
 };
 
-const updateStreamService = async (
-  userId,
-  streamId,
-  updateData,
-  categoryData
-) => {
+const updateStreamService = async (userId, streamId, updateData) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -139,12 +134,13 @@ const updateStreamService = async (
         "You do not have permission to perform this action"
       );
     }
+    console.log(updateData.thumbnailUrl);
+    updateData.thumbnailUrl = `${process.env.APP_BASE_URL}/${updateData.thumbnailUrl}`;
 
     const updatedData =
       await connection.streamRepository.updateStreamRepository(
         streamId,
-        updateData,
-        categoryData
+        updateData
       );
 
     return updatedData;
@@ -247,19 +243,20 @@ const toggleLikeStreamService = async (streamId, userId, action) => {
   } catch (error) {
     throw error;
   }
-}
+};
 
 const getRecommendedStreamsService = async (data) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const result = await connection.streamRepository.getRecommendedStreamsRepository(data);
+    const result =
+      await connection.streamRepository.getRecommendedStreamsRepository(data);
 
     return result;
   } catch (error) {
     throw error;
   }
-}
+};
 
 const getRelevantStreamsService = async (data) => {
   try {
@@ -267,19 +264,25 @@ const getRelevantStreamsService = async (data) => {
 
     const { streamerId } = data;
 
-    const streamer = await connection.userRepository.getAnUserByIdRepository(streamerId);
+    const streamer = await connection.userRepository.getAnUserByIdRepository(
+      streamerId
+    );
 
     if (!streamer) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Streamer not found");
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Streamer not found"
+      );
     }
 
-    const result = await connection.streamRepository.getRelevantStreamsRepository(data);
+    const result =
+      await connection.streamRepository.getRelevantStreamsRepository(data);
 
     return result;
   } catch (error) {
     throw error;
   }
-}
+};
 const cleanStreamFromNonOwner = (obj) => {
   const {
     uid,
