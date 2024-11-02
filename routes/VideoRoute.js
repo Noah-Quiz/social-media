@@ -407,7 +407,8 @@ videoRoutes.get(
  *                 type: array
  *                 items:
  *                   type: string
- *                 description: List of category IDs
+ *                   description: List of category IDs
+ *                 example: ["671a01672a386fca99c73c02", "671a01672a386fca99c73c04"]
  *               enumMode:
  *                 type: string
  *                 enum: [public, private, unlisted, member, draft]
