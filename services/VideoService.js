@@ -9,7 +9,7 @@ const crypto = require("crypto");
 const { deleteBunnyStorageFileService } = require("./BunnyStreamService");
 const createVideoService = async (
   userId,
-  { title, bunnyId, videoUrl, videoEmbedUrl, thumbnailUrl }
+  { title, videoUrl, videoEmbedUrl, thumbnailUrl }
 ) => {
   try {
     const connection = new DatabaseTransaction();
@@ -25,7 +25,6 @@ const createVideoService = async (
       videoUrl,
       videoEmbedUrl,
       thumbnailUrl,
-      bunnyId,
       enumMode: "draft",
     });
 
@@ -37,8 +36,6 @@ const createVideoService = async (
 
 const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
   try {
-    const categoryIds = data.categoryIds;
-
     const connection = new DatabaseTransaction();
 
     const video = await connection.videoRepository.getVideoRepository(videoId);
