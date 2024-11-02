@@ -413,8 +413,7 @@ videoRoutes.get(
  *                 enum: [public, private, unlisted, member, draft]
  *                 description: Video accessibility
  *               videoThumbnail:
- *                 type: string
- *                 format: binary
+ *                 type: file
  *                 description: Thumbnail image file for the video
  *     responses:
  *       200:
