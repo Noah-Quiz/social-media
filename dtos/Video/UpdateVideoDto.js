@@ -96,7 +96,7 @@ class UpdateVideoDto {
     if (!this.videoThumbnailFile) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid video thumbnail format"
+        "Video thumbnail is required"
       );
     }
   }
