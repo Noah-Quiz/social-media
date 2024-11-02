@@ -407,16 +407,20 @@ videoRoutes.get(
  *                 type: array
  *                 items:
  *                   type: string
- *                 description: List of category IDs
- *                 example: ["671a01672a386fca99c73c02", "671a01672a386fca99c73c04"]
+ *                   format: uuid
+ *                 description: List of category IDs (as a JSON array or comma-separated string)
+ *                 example: ["671a01672a386fca99c73c02", "anotherCategoryId"]
  *               enumMode:
  *                 type: string
  *                 enum: [public, private, unlisted, member, draft]
  *                 description: Video accessibility
  *               videoThumbnail:
- *                 type: string
- *                 format: binary
+ *                 type: file
  *                 description: Thumbnail image file for the video
+ *           encoding:
+ *             categoryIds:
+ *               style: form
+ *               explode: true
  *     responses:
  *       200:
  *         description: Update video by id successfully
