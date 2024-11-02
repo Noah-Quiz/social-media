@@ -362,54 +362,34 @@ class VideoRepository {
 
   async getAllVideosRepository(query) {
     try {
-      const skip = (query.page - 1) * +query.size; // Ensure query.size is a number
-
+      const page = query.page || 1;
+      const size = query.size || 10;
+      const skip = (page - 1) * size;
       const searchQuery = { isDeleted: false };
+      if (query.title) searchQuery.title = query.title;
+      if (query.uid) searchQuery.uid = query.uid;
 
-      if (query.title) {
-        searchQuery.title = { $regex: query.title, $options: "i" }; // Allow title search with case-insensitive regex
-      }
+      if (query.status) searchQuery.status = query.status;
+      let sortField = "dateCreated"; // Default sort field
+      let sortOrder = -1; // Default to descending order
+
+      if (query.sortBy === "like") sortField = "likesCount";
+      else if (query.sortBy === "view") sortField = "currentViewCount";
+      else if (query.sortBy === "date") sortField = "dateCreated";
+
+      sortOrder = query.order === "ascending" ? 1 : -1;
 
       const totalVideos = await Video.countDocuments({
         enumMode: "public",
         ...searchQuery,
       }); // Count total documents based on search
 
-      let sortCondition;
-      if (query.sortBy && query.sortBy === "like") {
-        // Sort by likes
-        sortCondition = {
-          length: -1, // Sort by number of likes
-          dateCreated: -1, // Sort by creation date as a secondary sort
-        };
-      } else {
-        // Sort by dateCreated only
-        sortCondition = { dateCreated: -1 };
-      }
-
       const videos = await Video.aggregate([
         {
-          $match: {
-            isDeleted: false,
-            enumMode: "public",
-            ...(query.title
-              ? { title: { $regex: query.title, $options: "i" } }
-              : {}), // Add title condition if exists
-          },
+          $match: searchQuery,
         },
-        ...(query.sortBy && query.sortBy === "like"
-          ? [
-              {
-                $addFields: {
-                  length: {
-                    $size: "$likedBy", // Add field to count likes
-                  },
-                },
-              },
-            ]
-          : []), // Add field for sorting by likes if needed
         {
-          $sort: sortCondition, // Dynamic sorting condition based on query
+          $sort: { [sortField]: sortOrder }, // Dynamic sorting condition based on query
         },
         {
           $lookup: {
