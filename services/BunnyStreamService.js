@@ -87,6 +87,9 @@ const uploadBunnyStorageFileService = async ({
     let uploadedFilesCount = 0; // Count of successfully uploaded files
     for (const file of files) {
       const filePath = `${videoFolderPath}/${file}`;
+      if (!filePath.includes(videoId)) {
+        continue;
+      }
       console.log(filePath);
       const fileStream = fs.createReadStream(filePath);
       const fileSize = fs.statSync(filePath).size;
