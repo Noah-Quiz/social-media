@@ -333,15 +333,29 @@ router.get("/:commentId", commentController.getCommentController);
  * /api/comments/{commentId}:
  *   put:
  *     security:
- *      - bearerAuth: []
+ *       - bearerAuth: []
  *     summary: Update a comment by id
  *     tags: [Comments]
  *     parameters:
- *      - in: path
- *        name: commentId
- *        schema:
- *         type: string
+ *       - in: path
+ *         name: commentId
+ *         schema:
+ *           type: string
  *         required: true
+ *         description: ID of the comment to be updated
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 description: The new content of the comment
+ *             required:
+ *               - commentId
+ *               - content
  *     responses:
  *      200:
  *       description: Update comment successfully
