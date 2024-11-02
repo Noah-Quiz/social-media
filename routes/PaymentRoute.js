@@ -6,7 +6,74 @@ const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const paypal = require("paypal-rest-sdk");
 const PaymentController = require("../controllers/PaymentController");
 const paymentController = new PaymentController();
+/**
+ * @swagger
+ * /api/payments/vnpay:
+ *   post:
+ *     summary: Create a VNPay payment URL
+ *     description: Generates a VNPay payment URL for the specified amount, PASTE IT TO A BROWSER TO USE.
+ *     tags:
+ *       - Payments
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 example: 500000
+ *                 description: The amount to be paid in VND
+ *             required:
+ *               - amount
+ *     responses:
+ *       '200':
+ *         description: Successfully generated VNPay payment URL
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url:
+ *                   type: string
+ *                   example: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?..."
+ *                   description: The VNPay payment URL
+ *       '400':
+ *         description: Invalid request parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Invalid amount"
+ *       '401':
+ *         description: Unauthorized - Authentication failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Unauthorized access"
+ *       '500':
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal server error"
+ */
 paymentRouters.post("/vnpay", AuthMiddleware, vnpayController.createPaymentUrl);
+
 paymentRouters.get("/vnpay/callback", vnpayController.vnpayReturn);
 
 paypal.configure({
