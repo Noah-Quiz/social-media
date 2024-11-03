@@ -83,13 +83,11 @@ const uploadBunnyStorageFileService = async ({
 }) => {
   try {
     const files = fs.readdirSync(videoFolderPath);
-    const totalFiles = files.length; // Total number of files to upload
+    const filteredFiles = files.filter(file => file.includes(videoId));
+    const totalFiles = filteredFiles.length; // Total number of files to upload
     let uploadedFilesCount = 0; // Count of successfully uploaded files
-    for (const file of files) {
+    for (const file of filteredFiles) {
       const filePath = `${videoFolderPath}/${file}`;
-      if (!filePath.includes(videoId)) {
-        continue;
-      }
       console.log(filePath);
       const fileStream = fs.createReadStream(filePath);
       const fileSize = fs.statSync(filePath).size;
@@ -116,6 +114,19 @@ const uploadBunnyStorageFileService = async ({
               videoId,
               {
                 videoUrl: `https://${process.env.BUNNY_DOMAIN_STORAGE_ZONE}/video/${videoId}/${fileName}`,
+              }
+            );
+          }
+        }else if(fileName.includes(".png")){
+          const connection = new DatabaseTransaction();
+          const video = await connection.videoRepository.getVideoByIdRepository(
+            videoId
+          );
+          if (video) {
+            await connection.videoRepository.updateAVideoByIdRepository(
+              videoId,
+              {
+                thumbnailUrl: `https://${process.env.BUNNY_DOMAIN_STORAGE_ZONE}/video/${videoId}/${fileName}`,
               }
             );
           }
