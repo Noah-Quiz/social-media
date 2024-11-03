@@ -136,6 +136,149 @@ const convertTsSegmentsToM3u8 = async (folderPath) => {
   });
 };
 
+const getTsFileDuration = (tsFilePath) => {
+  return new Promise((resolve, reject) => {
+    const ffprobe = spawn("ffprobe", [
+      "-v",
+      "error",
+      "-show_entries",
+      "format=duration",
+      "-of",
+      "default=noprint_wrappers=1:nokey=1",
+      tsFilePath,
+    ]);
+
+    let output = "";
+    ffprobe.stdout.on("data", (data) => {
+      output += data;
+    });
+
+    ffprobe.on("close", (code) => {
+      if (code === 0) {
+        resolve(parseFloat(output));
+      } else {
+        reject(new Error(`Failed to get duration for file: ${tsFilePath}`));
+      }
+    });
+  });
+};
+
+const findClosetTsFile = async (directory) => {
+  try {
+    const files = fs.readdirSync(directory);
+    let totalDuration = 0;
+    const durations = [];
+
+    // Filter .ts files and get their durations
+    for (const file of files) {
+      if (path.extname(file) === ".ts") {
+        const filePath = path.join(directory, file);
+        const duration = await getTsFileDuration(filePath);
+        durations.push({ file, duration });
+        totalDuration += duration;
+        console.log(`File: ${file}, Duration: ${duration.toFixed(2)} seconds`);
+      }
+    }
+
+    // Calculate 10% of the total duration
+    const tenPercentDuration = totalDuration * 0.1;
+    console.log(`Total duration: ${totalDuration.toFixed(2)} seconds`);
+    console.log(
+      `10% of the total duration: ${tenPercentDuration.toFixed(2)} seconds`
+    );
+
+    // Find the first file that causes the cumulative duration to exceed or get close to 10%
+    let cumulativeDuration = 0;
+    let selectedFile = null;
+
+    for (const { file, duration } of durations) {
+      cumulativeDuration += duration;
+
+      // If cumulative duration exceeds 10% or is closest to it, return that file
+      if (cumulativeDuration >= tenPercentDuration) {
+        selectedFile = { file, duration };
+        break;
+      }
+    }
+
+    console.log(
+      `File closest to 10% of total duration: ${
+        selectedFile.file
+      }, Duration: ${selectedFile.duration.toFixed(2)} seconds`
+    );
+    return selectedFile;
+  } catch (error) {
+    console.error("Error finding file closest to 10%:", error);
+    throw error;
+  }
+};
+
+const createThumbnailFromTsFile = async (tsFilePath, outputDir) => {
+  try {
+    console.log(`Creating thumbnail for: ${tsFilePath}`);
+
+    // Check if the ts file exists before generating the thumbnail
+    if (!fs.existsSync(tsFilePath)) {
+      throw new Error(`TS file not found: ${tsFilePath}`);
+    }
+
+    // Ensure output directory exists
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const outputFileName = `${path.basename(tsFilePath, ".ts")}-thumbnail.png`;
+    const outputPath = path.join(outputDir, outputFileName);
+
+    // Generate a thumbnail using ffmpeg from 5 seconds
+    await new Promise((resolve, reject) => {
+      const ffmpeg = spawn("ffmpeg", [
+        "-i",
+        tsFilePath,
+        "-vf",
+        "thumbnail",
+        "-frames:v",
+        "1", // Get only one frame
+        outputPath,
+      ]);
+
+      ffmpeg.stderr.on("data", (data) => {
+        console.error(`FFmpeg stderr: ${data.toString()}`);
+      });
+
+      ffmpeg.stdout.on("data", (data) => {
+        console.log(`FFmpeg stdout: ${data.toString()}`);
+      });
+
+      ffmpeg.on("close", (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(
+            new Error(
+              `Failed to create thumbnail, ffmpeg exited with code ${code}`
+            )
+          );
+        }
+      });
+
+      ffmpeg.on("error", (error) => {
+        reject(
+          new Error(
+            `Failed to create thumbnail, ffmpeg error: ${error.message}`
+          )
+        );
+      });
+    });
+
+    console.log(`Thumbnail created at: ${outputPath}`);
+    return outputPath;
+  } catch (error) {
+    console.error("Error creating thumbnail:", error);
+    throw error;
+  }
+};
+
 const replaceTsSegmentLinksInM3u8 = async (filePath, videoId) => {
   logger.info(`Replacing TS segment links in M3U8 file: ${filePath}`);
 
@@ -334,7 +477,7 @@ const storage = multer.diskStorage({
         break;
       case "video":
         const userIdFromToken = req.userId;
-        dir = path.join(`assets/videos/${userIdFromToken}`);
+        dir = path.join(`assets/videos/${userIdFromToken}/${Date.now()}`);
         break;
       case "videoThumbnail":
         const { videoId } = req.params;
@@ -390,7 +533,7 @@ const storage = multer.diskStorage({
       case "video":
         const userIdFromToken = req.userId;
         fileName = `${baseName}${ext}`;
-        dirPath = path.join(`assets/videos/${userIdFromToken}`);
+        dirPath = path.join(`assets/videos/${userIdFromToken}/${Date.now()}`);
       case "videoThumbnail":
         const { videoId } = req.params;
         fileName = `${baseName}${ext}`;
@@ -463,4 +606,7 @@ module.exports = {
   extractFilenameFromUrl,
   extractFilenameFromPath,
   convertMp4ToHls,
+  createThumbnailFromTsFile,
+  findClosetTsFile,
+  getTsFileDuration,
 };
