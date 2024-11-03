@@ -1,4 +1,5 @@
 const GetVideosByPlaylistIdDto = require("../dtos/Video/GetVideosByPlaylistId");
+const path = require("path");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const {
@@ -25,6 +26,8 @@ const {
   removeFileName,
   replaceTsSegmentLinksInM3u8,
   convertMp4ToHls,
+  findClosetTsFile,
+  createThumbnailFromTsFile,
 } = require("../middlewares/storeFile");
 const DeleteVideoDto = require("../dtos/Video/DeleteVideoDto");
 const { sendMessageToQueue } = require("../utils/rabbitMq");
@@ -59,6 +62,8 @@ class VideoController {
       const m3u8 = await convertMp4ToHls(newFilePath);
       const folderPath = await removeFileName(newFilePath);
       await replaceTsSegmentLinksInM3u8(m3u8, video._id);
+      const closestTsFile = await findClosetTsFile(folderPath);
+      await createThumbnailFromTsFile(path.join(folderPath,closestTsFile.file), folderPath);
       await deleteFile(newFilePath);
 
       const queueMessage = {
