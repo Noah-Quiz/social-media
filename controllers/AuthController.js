@@ -109,8 +109,7 @@ class AuthController {
 
   async loginGoogleFromMobileController(req, res, next) {
     try {
-      const googleUser = req.body.user;
-      console.log(req.body);
+      const googleUser = req.body;
       const ipAddress =
         req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
