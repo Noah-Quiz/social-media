@@ -29,12 +29,12 @@ const DeleteUserDto = require("../dtos/User/DeleteUserDto");
 class UserController {
   async getAllUsersController(req, res) {
     try {
-      const { page, size, name } = req.query;
+      const { page, size, search } = req.query;
 
       const result = await getAllUsersService(
         page || 1,
         size || 10,
-        name || ""
+        search || ""
       );
 
       return res.status(StatusCodeEnums.OK_200).json(result);
@@ -150,13 +150,11 @@ class UserController {
       await updateUserEmailDto.validate();
 
       const result = await updateUserEmailByIdService(userId, email);
-      return res
-        .status(StatusCodeEnums.OK_200)
-        .json({
-          user: result,
-          message:
-            "Update user email successfully, the verification link will be sent to your new email!",
-        });
+      return res.status(StatusCodeEnums.OK_200).json({
+        user: result,
+        message:
+          "Update user email successfully, the verification link will be sent to your new email!",
+      });
     } catch (error) {
       if (error instanceof CoreException) {
         return res.status(error.code).json({ message: error.message });
