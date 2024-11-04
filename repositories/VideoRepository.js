@@ -366,6 +366,7 @@ class VideoRepository {
       const size = query.size || 10;
       const skip = (page - 1) * size;
       const searchQuery = { isDeleted: false };
+      
       if (query.title) searchQuery.title = query.title;
       if (query.uid) searchQuery.uid = query.uid;
 
