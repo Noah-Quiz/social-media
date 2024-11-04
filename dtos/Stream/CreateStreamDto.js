@@ -24,20 +24,13 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           description: The category ids.
  */
 class CreateStreamDto {
-  constructor(userId, title, description, categoryIds) {
-    this.userId = userId;
+  constructor(title, description, categoryIds) {
     this.title = title;
     this.description = description;
     this.categoryIds = categoryIds;
   }
 
   async validate() {
-    if (!this.userId) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "User ID is required"
-      );
-    }
     if (!this.title) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
@@ -50,17 +43,21 @@ class CreateStreamDto {
         "Category IDs must be an array"
       );
     }
-    if (this.categoryIds&& this.categoryIds.length > 0) {
-      this.categoryIds.forEach(async (id) => {
-        try {
-          await validMongooseObjectId(id);
-        } catch (error) {
-          throw new CoreException(
-            StatusCodeEnums.BadRequest_400,
-            "Invalid Category ID"
-          );
-        }
-      });
+    if (this.categoryIds && this.categoryIds.length > 0) {
+      await Promise.all(
+        this.categoryIds.map(async (id) => {
+          if (id || id.length > 0) {
+            try {
+              await validMongooseObjectId(id);
+            } catch (error) {
+              throw new CoreException(
+                StatusCodeEnums.BadRequest_400,
+                "Invalid Category ID"
+              );
+            }
+          }
+        })
+      );
     }
   }
 }
