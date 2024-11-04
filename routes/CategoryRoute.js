@@ -74,7 +74,7 @@ router.get("/", categoryController.getAllCategoryController);
  *     security:
  *       - bearerAuth: []
  *     summary: Create a category
- *     description: Creates a new category with a name and image URL.
+ *     description: Creates a new category with a name.
  *     tags: [Categories]
  *     requestBody:
  *       content:

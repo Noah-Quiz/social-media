@@ -6,7 +6,14 @@ const { uploadThumbnail, uploadFiles } = require("../middlewares/LoadFile");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const crypto = require("crypto");
-const { deleteBunnyStorageFileService } = require("./BunnyStreamService");
+const {
+  deleteBunnyStorageFileService,
+  uploadBunnyStorageFileService,
+} = require("./BunnyStreamService");
+const {
+  extractFilenameFromPath,
+  removeFileName,
+} = require("../middlewares/storeFile");
 const createVideoService = async (
   userId,
   { title, videoUrl, videoEmbedUrl, thumbnailUrl }
@@ -42,7 +49,14 @@ const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
     if (!video) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
-    data.thumbnailUrl = `${process.env.APP_BASE_URL}/${thumbnailFile.path}`;
+    if (thumbnailFile) {
+      data.thumbnailUrl = `${process.env.APP_BASE_URL}/${thumbnailFile.path}`;
+      // await uploadBunnyStorageFileService({
+      //   userId: video.userId,
+      //   videoId: videoId,
+      //   videoFolderPath: thumbnailFolder,
+      // });
+    }
 
     const updatedVideo =
       await connection.videoRepository.updateAVideoByIdRepository(

@@ -110,7 +110,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/users", userRoute);
 app.use("/api/messages", messageRoutes);
 app.use("/api/videos", videoRoutes);
-app.use("/api/StreauserStreams", roomRoutes);
+app.use("/api/rooms", roomRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/payments", paymentRouters);
 app.use("/api/vnpay", vnpayRoutes);

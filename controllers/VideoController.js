@@ -63,8 +63,15 @@ class VideoController {
       const folderPath = await removeFileName(newFilePath);
       await replaceTsSegmentLinksInM3u8(m3u8, video._id);
       const closestTsFile = await findClosetTsFile(folderPath);
-      await createThumbnailFromTsFile(path.join(folderPath,closestTsFile.file), folderPath);
+      await createThumbnailFromTsFile(
+        path.join(folderPath, closestTsFile.selectedFile.file),
+        folderPath
+      );
       await deleteFile(newFilePath);
+
+      await updateAVideoByIdService(video._id, {
+        duration: closestTsFile.duration,
+      });
 
       const queueMessage = {
         userId: userId,
@@ -137,14 +144,14 @@ class VideoController {
       }
 
       const data = req.body;
-      // //handle category from swagger being string
-      // if (typeof data.categoryIds === "string") {
-      //   if (data.categoryIds.includes(",")) {
-      //     data.categoryIds = data.categoryIds.split(",").map((id) => id.trim());
-      //   } else {
-      //     data.categoryIds = [data.categoryIds.trim()];
-      //   }
-      // }
+      //handle category from swagger being string
+      if (typeof data.categoryIds === "string") {
+        if (data.categoryIds.includes(",")) {
+          data.categoryIds = data.categoryIds.split(",").map((id) => id.trim());
+        } else {
+          data.categoryIds = [data.categoryIds.trim()];
+        }
+      }
       const updateVideoDto = new UpdateVideoDto(
         videoId,
         data.title,

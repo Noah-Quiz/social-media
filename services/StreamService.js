@@ -112,7 +112,7 @@ const getStreamsService = async (query, requester) => {
 const updateStreamViewsService = async (streamId, currentViewCount) => {
   try {
     const stream = await Stream.findByIdAndUpdate(streamId, {
-      $set: { currentViewCount },
+      $set: { currentViewCount: currentViewCount },
       $max: { peakViewCount: currentViewCount },
     });
   } catch (error) {
