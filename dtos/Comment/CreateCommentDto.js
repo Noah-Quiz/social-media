@@ -38,7 +38,11 @@ class CreateCommentDto {
         "Missing required userId field"
       );
     }
-    await validMongooseObjectId(this.userId); // Validate as ObjectId
+    try {
+      await validMongooseObjectId(this.userId); // Validate as ObjectId
+    } catch (error) {
+      throw error;
+    }
 
     // Validate videoId
     if (!this.videoId) {
@@ -47,7 +51,11 @@ class CreateCommentDto {
         "Missing required videoId field"
       );
     }
-    await validMongooseObjectId(this.videoId); // Validate as ObjectId
+    try {
+      await validMongooseObjectId(this.videoId); // Validate as ObjectId
+    } catch (error) {
+      throw error;
+    }
 
     // Validate content (no need to validate as ObjectId, just check if it exists)
     if (!this.content) {
@@ -60,7 +68,11 @@ class CreateCommentDto {
 
     // Validate responseTo if provided (it's optional)
     if (this.responseTo) {
-      await validMongooseObjectId(this.responseTo); // Only validate if provided
+      try {
+        await validMongooseObjectId(this.responseTo); // Only validate if provided
+      } catch (error) {
+        throw error;
+      }
     }
   }
 }

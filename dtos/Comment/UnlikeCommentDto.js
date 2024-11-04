@@ -14,13 +14,21 @@ class UnlikeCommentDto {
         StatusCodeEnums.BadRequest_400,
         "Comment id is required"
       );
-    await validMongooseObjectId(this.id);
+    try {
+      await validMongooseObjectId(this.id);
+    } catch (error) {
+      throw error;
+    }
     if (!this.userId)
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "User id is required"
       );
-    await validMongooseObjectId(this.userId);
+    try {
+      await validMongooseObjectId(this.userId);
+    } catch (error) {
+      throw error;
+    }
   }
 }
 

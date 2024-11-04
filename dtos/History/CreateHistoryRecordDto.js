@@ -27,7 +27,11 @@ class CreateHistoryRecordDto {
         "User ID is required"
       );
     }
-    await validMongooseObjectId(this.userId);
+    try {
+      await validMongooseObjectId(this.userId);
+    } catch (error) {
+      throw error;
+    }
 
     if (!this.videoId) {
       throw new CoreException(
@@ -35,7 +39,11 @@ class CreateHistoryRecordDto {
         "Video ID is required"
       );
     }
-    await validMongooseObjectId(this.videoId);
+    try {
+      await validMongooseObjectId(this.videoId);
+    } catch (error) {
+      throw error;
+    }
   }
 }
 

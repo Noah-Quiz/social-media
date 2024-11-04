@@ -36,8 +36,12 @@ class UpdateGiftDto {
     if (!this.id) {
       throw new CoreException(StatusCodeEnums.BadRequest_400, "ID is required");
     }
-    await validMongooseObjectId(this.id);
-    if (!isFloat(this.valuePerUnit.toString())) {
+    try {
+      await validMongooseObjectId(this.id);
+    } catch (error) {
+      throw error;
+    }
+    if (!isFloat(this.valuePerUnit?.toString())) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid price format"
