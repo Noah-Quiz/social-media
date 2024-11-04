@@ -120,6 +120,32 @@ authRoutes.get(
 
 /**
  * @swagger
+ * /api/auth/google/callback/mobile:
+ *   post:
+ *     summary: Receive Google user informatin for mobile
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginGoogleDto'
+ *     responses:
+ *      200:
+ *       description: Login with Google successfully
+ *      400:
+ *       description: Bad request
+ *      500:
+ *       description: Internal server error
+ *
+ */
+authRoutes.post(
+  "/google/callback/mobile",
+  authController.loginGoogleFromMobileController
+);
+
+/**
+ * @swagger
  * /api/auth/apple:
  *   get:
  *     summary: Login with Apple
