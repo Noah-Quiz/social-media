@@ -181,9 +181,9 @@ class VideoController {
       //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
       //   data.title
       // );
-      if (req.files && req.files.videoThumbnail) {
-        await checkFileSuccess(thumbnailFile.path);
-      }
+      // if (req.files && req.files.videoThumbnail) {
+      //   await checkFileSuccess(thumbnailFile.path);
+      // }
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -268,6 +268,7 @@ class VideoController {
         status: req.query.status,
         sortBy: req.query.sortBy,
         order: req.query.order,
+        title: req.query.title,
       };
 
       if (!query.page) query.page = 1;
