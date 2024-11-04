@@ -17,6 +17,7 @@ class CategoryController {
   async createCategoryController(req, res, next) {
     try {
       const { name } = req.body;
+      console.log(name);
       let imageUrl = req.file ? req.file.path : null;
       const createCategoryDto = new CreateCategoryDto(name);
       await createCategoryDto.validate();
@@ -27,11 +28,11 @@ class CategoryController {
 
       if (req.file) {
         await checkFileSuccess(imageUrl);
-
-        return res
-          .status(StatusCodeEnums.Created_201)
-          .json({ category: result, message: "Success" });
       }
+
+      return res
+        .status(StatusCodeEnums.Created_201)
+        .json({ category: result, message: "Success" });
     } catch (error) {
       if (req.file) {
         await deleteFile(req.file.path);
@@ -72,7 +73,9 @@ class CategoryController {
     try {
       const { categoryId } = req.params;
       const { name } = req.body;
-      const imageUrl = req.file ? req.file.path : null;
+      const imageUrl = req.file
+        ? req.file.path
+        : null;
       const categoryData = { name, imageUrl };
 
       const updateCategoryDto = new UpdateCategoryDto(categoryId, name);
