@@ -264,19 +264,16 @@ class StreamController {
   }
 
   async getRelevantStreamsController(req, res, next) {
-    const { streamerId, categoryIds } = req.body;
-    const userId = req.userId;
-
+    const { categoryIds } = req.body;
+    console.log(categoryIds)
     try {
       const streamRecommendationDto = new StreamRecommendationDto(
-        streamerId,
         categoryIds
       );
       await streamRecommendationDto.validate();
 
       const data = {
-        streamerId,
-        categoryIds,
+        categoryIds
       };
 
       const streams = await getRelevantStreamsService(data);

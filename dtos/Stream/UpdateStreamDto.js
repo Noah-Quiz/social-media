@@ -10,6 +10,8 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *       type: object
  *       required:
  *         - title
+ *         - description
+ *         - categoryIds
  *       properties:
  *         title:
  *           type: string

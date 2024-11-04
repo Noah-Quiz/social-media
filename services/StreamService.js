@@ -1,12 +1,8 @@
 const { default: axios } = require("axios");
 const Stream = require("../entities/StreamEntity.js");
-const User = require("../entities/UserEntity.js");
 const StatusCodeEnums = require("../enums/StatusCodeEnum.js");
 const CoreException = require("../exceptions/CoreException.js");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction.js");
-const {
-  deleteCloudFlareStreamLiveInput,
-} = require("./CloudFlareStreamService.js");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
@@ -17,15 +13,19 @@ const getStreamService = async (streamId, requester) => {
     const stream = await connection.streamRepository.getStreamRepository(
       streamId
     );
+
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
+
     let process = stream;
-    const isOwner = stream.userId.toString() === requester.toString();
+    const isOwner = stream?.userId?.toString() === requester?.toString();
+
     //if owner => nothing is change
     if (isOwner) {
       return process;
     }
+
     //if not owner => check private stream
     process = cleanStreamFromNonOwner(stream);
     if (stream.enumMode === "private") {
@@ -36,6 +36,7 @@ const getStreamService = async (streamId, requester) => {
         "private"
       );
       return result.length === 1 ? result[0] : result;
+
     } else if (stream.enumMode === "member") {
       //handle not owner member
       const isMember = await checkMemberShip(requester, stream.userId);
@@ -43,13 +44,16 @@ const getStreamService = async (streamId, requester) => {
       if (isMember) {
         return process;
       }
+      
       const result = updateStreamForNonMembership(
         [process],
         [process._id],
         "member"
       );
+
       return result.length === 1 ? result[0] : result;
     }
+
     return process;
   } catch (error) {
     throw error;
@@ -261,19 +265,6 @@ const getRecommendedStreamsService = async (data) => {
 const getRelevantStreamsService = async (data) => {
   try {
     const connection = new DatabaseTransaction();
-
-    const { streamerId } = data;
-
-    const streamer = await connection.userRepository.getAnUserByIdRepository(
-      streamerId
-    );
-
-    if (!streamer) {
-      throw new CoreException(
-        StatusCodeEnums.NotFound_404,
-        "Streamer not found"
-      );
-    }
 
     const result =
       await connection.streamRepository.getRelevantStreamsRepository(data);

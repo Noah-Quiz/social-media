@@ -363,51 +363,30 @@ class VideoRepository {
   async getAllVideosRepository(query) {
     try {
       const page = query.page || 1;
-      const size = query.size || 10;
+      const size = parseInt(query.size, 10) || 10;
       const skip = (page - 1) * size;
-      const searchQuery = { isDeleted: false };
-      
+  
+      // Create search query
+      const searchQuery = { isDeleted: false, enumMode: "public" };
       if (query.title) searchQuery.title = query.title;
-      if (query.uid) searchQuery.uid = query.uid;
-
-      if (query.status) searchQuery.status = query.status;
+  
       let sortField = "dateCreated"; // Default sort field
-      let sortOrder = -1; // Default to descending order
-
+      let sortOrder = query.order === "ascending" ? 1 : -1;
+      
       if (query.sortBy === "like") sortField = "likesCount";
       else if (query.sortBy === "view") sortField = "currentViewCount";
       else if (query.sortBy === "date") sortField = "dateCreated";
-
-      sortOrder = query.order === "ascending" ? 1 : -1;
-
-      const totalVideos = await Video.countDocuments({
-        enumMode: "public",
-        ...searchQuery,
-      }); // Count total documents based on search
-
+  
+      const totalVideos = await Video.countDocuments(searchQuery);
+  
       const videos = await Video.aggregate([
-        {
-          $match: searchQuery,
-        },
-        {
-          $sort: { [sortField]: sortOrder }, // Dynamic sorting condition based on query
-        },
+        { $match: searchQuery },
         {
           $lookup: {
             from: "users",
             localField: "userId",
             foreignField: "_id",
             as: "user",
-            pipeline: [
-              {
-                $project: {
-                  fullName: 1,
-                  _id: 0,
-                  nickName: 1,
-                  avatar: 1,
-                },
-              },
-            ],
           },
         },
         { $unwind: "$user" },
@@ -417,49 +396,56 @@ class VideoRepository {
             localField: "categoryIds",
             foreignField: "_id",
             as: "categories",
-            pipeline: [
-              {
-                $project: {
-                  name: 1,
-                  imageUrl: 1,
-                  _id: 1,
-                },
-              },
-            ],
           },
         },
         {
           $project: {
-            merged: {
-              $mergeObjects: [
-                "$$ROOT",
-                {
-                  user: {
-                    fullName: "$user.fullName",
-                    nickName: "$user.nickName",
-                    avatar: "$user.avatar",
-                  },
+            _id: 1,
+            title: 1,
+            description: 1,
+            videoUrl: 1,
+            videoEmbedUrl: 1,
+            videoServerUrl: 1,
+            thumbnailUrl: 1,
+            enumMode: 1,
+            dateCreated: 1,
+            likesCount: { $size: "$likedBy" },
+            user: {
+              _id: 1,
+              fullName: "$user.fullName",
+              nickName: "$user.nickName",
+              avatar: "$user.avatar",
+            },
+            categories: {
+              $map: {
+                input: "$categories",
+                as: "category",
+                in: {
+                  _id: "$$category._id",
+                  name: "$$category.name",
+                  imageUrl: "$$category.imageUrl",
                 },
-              ],
+              },
             },
           },
         },
-        { $replaceRoot: { newRoot: "$merged" } },
-        { $project: { categoryIds: 0, isDeleted: 0, __v: 0, lastUpdated: 0 } }, // Optionally hide categoryIds
-        { $skip: skip }, // Apply skip for pagination
-        { $limit: +query.size }, // Apply limit for pagination
+        { $sort: { [sortField]: sortOrder } },
+        { $skip: skip },
+        { $limit: Number(size) }
       ]);
-
+  
+      // Return paginated results
       return {
         videos,
         total: totalVideos,
-        page: query.page,
-        totalPages: Math.ceil(totalVideos / +query.size),
+        page: Number(page),
+        totalPages: Math.ceil(totalVideos / Number(size)),
       };
     } catch (error) {
       throw new Error(`Error when fetching all videos: ${error.message}`);
     }
   }
+  
 
   async countTotalVideosRepository() {
     return await Video.countDocuments({ isDeleted: false });
