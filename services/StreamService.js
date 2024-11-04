@@ -172,7 +172,7 @@ const deleteStreamService = async (userId, streamId) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
 
-    if (stream.userId.toString() !== userId) {
+    if (stream.userId?.toString() !== userId) {
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
         "You do not have permission to perform this action"

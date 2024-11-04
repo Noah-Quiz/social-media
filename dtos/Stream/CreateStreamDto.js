@@ -38,7 +38,6 @@ class CreateStreamDto {
         "User ID is required"
       );
     }
-    await validMongooseObjectId(this.userId);
     if (!this.title) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
@@ -53,7 +52,14 @@ class CreateStreamDto {
     }
     if (this.categoryIds&& this.categoryIds.length > 0) {
       this.categoryIds.forEach(async (id) => {
-        await validMongooseObjectId(id);
+        try {
+          await validMongooseObjectId(id);
+        } catch (error) {
+          throw new CoreException(
+            StatusCodeEnums.BadRequest_400,
+            "Invalid Category ID"
+          );
+        }
       });
     }
   }
