@@ -77,6 +77,7 @@ class CommentRepository {
             },
             level: 1,
             videoId: 1,
+            likeBy: 1,
           },
         },
       ]);
@@ -141,6 +142,7 @@ class CommentRepository {
             responseTo: 1,
             level: 1,
             videoId: 1,
+            likeBy: 1,
           },
         },
       ];

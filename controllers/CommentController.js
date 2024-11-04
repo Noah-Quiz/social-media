@@ -48,8 +48,9 @@ class CommentController {
   }
   async getCommentController(req, res, next) {
     const { commentId } = req.params;
+    const requester = req.userId;
     try {
-      const comment = await getCommentService(commentId);
+      const comment = await getCommentService(commentId, requester);
       if (!comment) {
         throw new CoreException(
           StatusCodeEnums.NotFound_404,
@@ -67,10 +68,15 @@ class CommentController {
     try {
       const { sortBy } = req.query;
       const { videoId } = req.params;
+      const requester = req.userId;
       const getVideoCommentsDto = new GetVideoCommentsDto(videoId, sortBy);
       await getVideoCommentsDto.validate();
 
-      const comments = await getVideoCommentsService(videoId, sortBy);
+      const comments = await getVideoCommentsService(
+        videoId,
+        sortBy,
+        requester
+      );
       return res.status(StatusCodeEnums.OK_200).json({
         comments: comments,
         size: comments.length,
@@ -145,6 +151,7 @@ class CommentController {
   }
   async getChildrenCommentsController(req, res, next) {
     try {
+      const requester = req.userId;
       const { commentId } = req.params;
       const { limit } = req.query;
       const getChildrenCommentsDto = new GetChildrenCommentsDto(
@@ -155,7 +162,8 @@ class CommentController {
 
       const { comments, maxLevel } = await getChildrenCommentsService(
         commentId,
-        limit || 10
+        limit || 10,
+        requester
       );
       return res.status(StatusCodeEnums.OK_200).json({
         comments: comments,
