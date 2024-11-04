@@ -67,13 +67,9 @@ class AuthController {
         process.env.ACCESS_TOKEN_EXPIRE
       );
       console.log(accessToken);
-      // res
-      //   .status(StatusCodeEnums.OK_200)
-      //   .json({ accessToken, message: "Login successfully" });
-      console.log(accessToken);
-      res.redirect(
-        `http://localhost:3001?accessToken=${accessToken}&userId=${user._id}`
-      );
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ accessToken, userId: user._id, message: "Login successfully" });
     } catch (error) {
       next(error);
     }
@@ -82,6 +78,7 @@ class AuthController {
   async loginGoogleController(req, res, next) {
     try {
       const googleUser = req.user;
+      console.log(googleUser);
       const ipAddress =
         req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
@@ -146,7 +143,7 @@ class AuthController {
         `http://localhost:3001?accessToken=${accessToken}&userId=${loggedUser._id}`
       );
     } catch (error) {
-     next(error);
+      next(error);
     }
   }
 
@@ -161,7 +158,7 @@ class AuthController {
         .status(StatusCodeEnums.OK_200)
         .json({ message: "Email sent successfully" });
     } catch (error) {
-     next(error);
+      next(error);
     }
   }
 
