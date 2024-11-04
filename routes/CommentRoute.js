@@ -272,6 +272,21 @@ router.get("/video/:videoId", commentController.getVideoCommentsController);
  *     responses:
  *      200:
  *       description: Like video successfully
+ *       content:
+ *         application/json:
+ *           example:
+ *             comments:
+ *               _id: "string"
+ *               videoId: "string"
+ *               userId: "string"
+ *               content: "string"
+ *               likeBy: ["string"]
+ *               level: 0
+ *               isDeleted: false
+ *               dateCreated: "2024-10-18T06:22:49.307Z"
+ *               lastUpdated: "2024-10-18T06:22:49.307Z"
+ *               __v: 0
+ *             message: "Success"
  *      400:
  *       description: Bad request
  *      500:
@@ -297,6 +312,21 @@ router.put("/:commentId/like", commentController.likeCommentController);
  *     responses:
  *      200:
  *       description: Unlike video successfully
+ *       content:
+ *         application/json:
+ *           example:
+ *             comments:
+ *               _id: "string"
+ *               videoId: "string"
+ *               userId: "string"
+ *               content: "aaaa"
+ *               likeBy: []
+ *               level: 0
+ *               isDeleted: false
+ *               dateCreated: "2024-10-18T06:22:49.307Z"
+ *               lastUpdated: "2024-10-18T06:22:49.307Z"
+ *               __v: 0
+ *             message: "Success"
  *      400:
  *       description: Bad request
  *      500:
@@ -321,6 +351,21 @@ router.put("/:commentId/unlike", commentController.unlikeCommentController);
  *     responses:
  *      200:
  *       description: Get comment successfully
+ *       content:
+ *         application/json:
+ *           example:
+ *             comments:
+ *               _id: "string"
+ *               videoId: "string"
+ *               userId: "string"
+ *               content: "string"
+ *               level: 0
+ *               dateCreated: "2024-10-18T06:22:49.307Z"
+ *               user:
+ *                 fullName: "string"
+ *                 nickName: "string"
+ *                 avatar: "string"
+ *             message: "Success"
  *      400:
  *       description: Bad request
  *      500:
@@ -359,6 +404,21 @@ router.get("/:commentId", commentController.getCommentController);
  *     responses:
  *      200:
  *       description: Update comment successfully
+ *       content:
+ *         application/json:
+ *           example:
+ *             comments:
+ *               _id: "string"
+ *               videoId: "string"
+ *               userId: "string"
+ *               content: "string"
+ *               likeBy: []
+ *               level: 0
+ *               isDeleted: false
+ *               dateCreated: "2024-10-18T06:22:49.307Z"
+ *               lastUpdated: "2024-10-18T06:22:49.307Z"
+ *               __v: 0
+ *             message: "Success"
  *      400:
  *       description: Bad request
  *      500:
@@ -383,6 +443,21 @@ router.put("/:commentId", commentController.updateCommentController);
  *     responses:
  *      200:
  *       description: Delete comment successfully
+ *       content:
+ *         application/json:
+ *           example:
+ *             comments:
+ *               _id: "string"
+ *               videoId: "string"
+ *               userId: "string"
+ *               content: "string"
+ *               likeBy: []
+ *               level: 0
+ *               isDeleted: true
+ *               dateCreated: "2024-11-04T03:02:02.965Z"
+ *               lastUpdated: "2024-11-04T03:02:02.965Z"
+ *               __v: 0
+ *             message: "Delete successfully"
  *      400:
  *       description: Bad request
  *      500:

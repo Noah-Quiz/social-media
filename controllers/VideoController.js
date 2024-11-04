@@ -144,14 +144,14 @@ class VideoController {
       }
 
       const data = req.body;
-      // //handle category from swagger being string
-      // if (typeof data.categoryIds === "string") {
-      //   if (data.categoryIds.includes(",")) {
-      //     data.categoryIds = data.categoryIds.split(",").map((id) => id.trim());
-      //   } else {
-      //     data.categoryIds = [data.categoryIds.trim()];
-      //   }
-      // }
+      //handle category from swagger being string
+      if (typeof data.categoryIds === "string") {
+        if (data.categoryIds.includes(",")) {
+          data.categoryIds = data.categoryIds.split(",").map((id) => id.trim());
+        } else {
+          data.categoryIds = [data.categoryIds.trim()];
+        }
+      }
       const updateVideoDto = new UpdateVideoDto(
         videoId,
         data.title,
