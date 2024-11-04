@@ -20,7 +20,7 @@ class PaymentController {
       const userId = req.userId;
       const { name, price } = req.body;
       const payWithPaypalDto = new PayWithPaypalDto(userId, name, price);
-      await payWithPaypalDto.validate(); 
+      await payWithPaypalDto.validate();
 
       req.session.userId = userId;
 
@@ -60,13 +60,15 @@ class PaymentController {
         } else {
           for (let i = 0; i < payment.links.length; i++) {
             if (payment.links[i].rel === "approval_url") {
-              res.redirect(payment.links[i].href);
+              res.status(StatusCodeEnums.OK_200).json({
+                link: payment.links[i].href,
+              });
             }
           }
         }
       });
     } catch (error) {
-      next(error)
+      next(error);
     }
   }
 
