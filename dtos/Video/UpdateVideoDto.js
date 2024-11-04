@@ -13,7 +13,6 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *         - description
  *         - categoryIds
  *         - enumMode
- *         - thumbnailUrl
  *       properties:
  *         title:
  *           type: string
@@ -31,15 +30,22 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           type: string
  *           default: public
  *           description: Value of enum mode [public, private, unlisted, member, draft]
- *         thumbnailUrl:
- *           type: string
- *           default: https://example.com
- *           description: URL of thumbnail
  */
 
 class UpdateVideoDto {
-  constructor(videoId, videoThumbnailFile) {
+  constructor(
+    videoId,
+    title,
+    description,
+    enumMode,
+    categoryIds,
+    videoThumbnailFile = null // Mark as optional
+  ) {
     this.videoId = videoId;
+    this.title = title;
+    this.description = description;
+    this.enumMode = enumMode;
+    this.categoryIds = categoryIds;
     this.videoThumbnailFile = videoThumbnailFile;
   }
 
@@ -51,12 +57,48 @@ class UpdateVideoDto {
       );
     }
     await validMongooseObjectId(this.videoId);
-    if (!this.videoThumbnailFile) {
+    if (!this.title) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Video thumbnail file is required"
+        "Title is required"
       );
     }
+    if (!this.enumMode) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Enum mode is required"
+      );
+    }
+    if (
+      this.enumMode &&
+      !["public", "private", "unlisted", "member", "draft"].includes(
+        this.enumMode
+      )
+    ) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid video accessibility"
+      );
+    }
+    if (this.categoryIds && !Array.isArray(this.categoryIds)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Category IDs must be an array"
+      );
+    }
+    if (this.categoryIds && this.categoryIds.length > 0) {
+      this.categoryIds.forEach(async (id) => {
+        if (id || id.length > 0) {
+          await validMongooseObjectId(id);
+        }
+      });
+    }
+    // if (!this.videoThumbnailFile) {
+    //   throw new CoreException(
+    //     StatusCodeEnums.BadRequest_400,
+    //     "Video thumbnail is required"
+    //   );
+    // }
   }
 }
 

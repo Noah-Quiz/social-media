@@ -88,54 +88,15 @@ class StreamRepository {
   }
 
   // Update a stream
-  async updateStreamRepository(
-    streamId,
-    updateData,
-    categoryData,
-    session = null
-  ) {
+  async updateStreamRepository(streamId, updateData, session = null) {
     try {
-      const updateOperations = { lastUpdated: Date.now(), ...updateData };
-
-      if (
-        categoryData &&
-        categoryData.addedCategoryIds &&
-        categoryData.addedCategoryIds.length > 0
-      ) {
-        await Stream.updateOne(
-          { _id: streamId },
-          {
-            $addToSet: {
-              categoryIds: { $each: categoryData.addedCategoryIds },
-            },
-            lastUpdated: Date.now(),
-          },
-          { runValidators: true, session }
-        );
-      }
-
-      if (
-        categoryData &&
-        categoryData.removedCategoryIds &&
-        categoryData.removedCategoryIds.length > 0
-      ) {
-        await Stream.updateOne(
-          { _id: streamId },
-          {
-            $pull: { categoryIds: { $in: categoryData.removedCategoryIds } },
-            lastUpdated: Date.now(),
-          },
-          { runValidators: true, session }
-        );
-      }
-
       const updatedStream = await Stream.findByIdAndUpdate(
         streamId,
-        updateOperations,
-        { new: true, runValidators: true, session }
+        updateData
       );
+      const stream = await Stream.findById(streamId);
 
-      return updatedStream;
+      return stream;
     } catch (error) {
       throw new Error(`Error updating stream: ${error.message}`);
     }
@@ -165,30 +126,35 @@ class StreamRepository {
     try {
       const page = query.page || 1;
       const size = query.size || 10;
-      const skip = (page - 1) * size || 0;
+      const skip = (page - 1) * size;
 
       const searchQuery = { isDeleted: false };
 
-      if (query.title) {
-        searchQuery.title = query.title;
-      }
-      if (query.uid) {
-        searchQuery.uid = query.uid;
-      }
+      // Prepare query
+      if (query.title) searchQuery.title = query.title;
+      if (query.uid) searchQuery.uid = query.uid;
+      if (query.status) searchQuery.status = query.status;
+
+      let sortField = "dateCreated"; // Default sort field
+      let sortOrder = -1; // Default to descending order
+
+      if (query.sortBy === "like") sortField = "likesCount";
+      else if (query.sortBy === "view") sortField = "currentViewCount";
+      else if (query.sortBy === "date") sortField = "dateCreated";
+
+      sortOrder = query.order === "ascending" ? 1 : -1;
 
       const totalStreams = await Stream.countDocuments({
         ...searchQuery,
-        status: "live",
         $or: [
-          { enumMode: { $ne: "private" } }, // Include public and member streams
-          { userId: new mongoose.Types.ObjectId(requester) }, // Include private streams if the requester is the owner
+          { enumMode: { $ne: "private" } },
+          { userId: new mongoose.Types.ObjectId(requester) },
         ],
       });
 
+      // Get streams with sorting on computed fields
       const streams = await Stream.aggregate([
         { $match: searchQuery },
-        { $skip: skip },
-        { $limit: size },
         {
           $lookup: {
             from: "users",
@@ -199,22 +165,52 @@ class StreamRepository {
         },
         { $unwind: "$user" },
         {
+          $lookup: {
+            from: "categories",
+            localField: "categoryIds",
+            foreignField: "_id",
+            as: "categories",
+          },
+        },
+        {
+          $addFields: {
+            likesCount: { $size: "$likedBy" },
+            currentViewCount: { $ifNull: ["$currentViewCount", 0] },
+          },
+        },
+        {
           $project: {
-            merged: {
-              $mergeObjects: [
-                "$$ROOT",
-                {
-                  user: {
-                    fullName: "$user.fullName",
-                    nickName: "$user.nickName",
-                    avatar: "$user.avatar",
-                  },
+            _id: 1,
+            thumbnailUrl: 1,
+            streamServerUrl: 1,
+            streamOnlineUrl: 1,
+            currentViewCount: 1,
+            peakViewCount: 1,
+            likesCount: 1,
+            status: 1,
+            dateCreated: 1,
+            user: {
+              _id: 1,
+              fullName: "$user.fullName",
+              nickName: "$user.nickName",
+              avatar: "$user.avatar",
+            },
+            categories: {
+              $map: {
+                input: "$categories",
+                as: "category",
+                in: {
+                  _id: "$$category._id",
+                  name: "$$category.name",
+                  imageUrl: "$$category.imageUrl",
                 },
-              ],
+              },
             },
           },
         },
-        { $replaceRoot: { newRoot: "$merged" } },
+        { $sort: { [sortField]: sortOrder } },
+        { $skip: skip },
+        { $limit: Number(size) },
       ]);
 
       return {
@@ -312,6 +308,7 @@ class StreamRepository {
     ]);
     return streamsMonthly;
   }
+
   async getRecommendedStreamsRepository(data) {
     try {
       const { userId } = data;
@@ -320,7 +317,7 @@ class StreamRepository {
         {
           $match: { likedBy: new mongoose.Types.ObjectId(userId) },
         },
-        { $sort: { createdAt: -1 } },
+        { $sort: { dateCreated: -1 } },
         { $limit: 100 },
         { $unwind: "$categoryIds" },
         {
@@ -342,7 +339,6 @@ class StreamRepository {
       }
 
       const categoryIds = recentLikedStreams[0].categoryIds;
-
       const recommendedStreams = await Stream.aggregate([
         {
           $match: {
@@ -370,10 +366,16 @@ class StreamRepository {
         {
           $project: {
             _id: 1,
-            userId: 1,
+            thumbnailUrl: 1,
+            streamServerUrl: 1,
+            streamOnlineUrl: 1,
+            currentViewCount: 1,
+            peakViewCount: 1,
             status: 1,
-            createdAt: 1,
+            dateCreated: 1,
+            likesCount: { $size: "$likedBy" },
             user: {
+              _id: 1,
               fullName: "$user.fullName",
               nickName: "$user.nickName",
               avatar: "$user.avatar",
@@ -385,13 +387,13 @@ class StreamRepository {
                 in: {
                   _id: "$$category._id",
                   name: "$$category.name",
+                  imageUrl: "$$category.imageUrl",
                 },
               },
             },
-            likesCount: { $size: "$likedBy" },
           },
         },
-        { $sort: { createdAt: -1 } },
+        { $sort: { dateCreated: -1 } },
         { $limit: 50 },
       ]);
 
@@ -403,7 +405,7 @@ class StreamRepository {
 
   async getRelevantStreamsRepository(data) {
     try {
-      const { categoryIds, streamerId } = data;
+      const { categoryIds } = data;
       const categoryIdsObjectIds = categoryIds.map(
         (id) => new mongoose.Types.ObjectId(id)
       );
@@ -411,7 +413,6 @@ class StreamRepository {
       const query = {
         status: "live",
         categoryIds: { $in: categoryIdsObjectIds },
-        userId: new mongoose.Types.ObjectId(streamerId),
       };
 
       const relevantStreams = await Stream.aggregate([
@@ -438,10 +439,14 @@ class StreamRepository {
         {
           $project: {
             _id: 1,
-            likesCount: { $size: "$likedBy" },
+            thumbnailUrl: 1,
             streamServerUrl: 1,
             streamOnlineUrl: 1,
-            createdAt: 1,
+            currentViewCount: 1,
+            peakViewCount: 1,
+            status: 1,
+            dateCreated: 1,
+            likesCount: { $size: "$likedBy" },
             user: {
               _id: 1,
               fullName: "$user.fullName",
@@ -464,7 +469,7 @@ class StreamRepository {
         {
           $sort: {
             likesCount: -1,
-            createdAt: -1,
+            dateCreated: -1,
           },
         },
       ]);

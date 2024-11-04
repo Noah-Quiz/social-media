@@ -17,36 +17,23 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *         description:
  *           type: string
  *           description: The stream's description.
- *         addedCategoryIds:
+ *         categoryIds:
  *           type: array
  *           items:
  *             type: string
  *           description: The added category IDs.
- *         removedCategoryIds:
- *           type: array
- *           items:
- *             type: string
- *           description: The removed category IDs.
  *         streamThumbnail:
  *           type: string
  *           format: binary
  *           description: The thumbnail file for the stream.
- */ 
+ */
 class UpdateStreamDto {
-  constructor(
-    streamId,
-    userId,
-    title,
-    description,
-    addedCategoryIds,
-    removedCategoryIds
-  ) {
+  constructor(streamId, userId, title, description, categoryIds) {
     this.streamId = streamId;
     this.userId = userId;
     this.title = title;
     this.description = description;
-    this.addedCategoryIds = addedCategoryIds;
-    this.removedCategoryIds = removedCategoryIds;
+    this.categoryIds = categoryIds;
   }
   async validate() {
     if (!this.userId) {
@@ -69,16 +56,19 @@ class UpdateStreamDto {
         "Title is required"
       );
     }
-    if (this.addedCategoryIds && !Array.isArray(this.addedCategoryIds))
+    if (this.categoryIds && !Array.isArray(this.categoryIds)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "addedCategoryIds must be an array"
+        "Category IDs must be an array"
       );
-    if (this.removedCategoryIds && !Array.isArray(this.removedCategoryIds))
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "removedCategoryIds must be an array"
-      );
+    }
+    if (this.categoryIds && this.categoryIds.length > 0) {
+      this.categoryIds.forEach(async (id) => {
+        if (id || id.length > 0) {
+          await validMongooseObjectId(id);
+        }
+      });
+    }
   }
 }
 

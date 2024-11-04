@@ -7,57 +7,67 @@ const {
   consumeResponseQueue,
 } = require("../queues/paymentQueues");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const PayWithPaypalDto = require("../dtos/Payment/PayWithPaypalDto");
+const CoreException = require("../exceptions/CoreException");
 paypal.configure({
   mode: "sandbox",
   client_id: process.env.PAYPAL_CLIENT_ID,
   client_secret: process.env.PAYPAL_SECRET_KEY,
 });
 class PaymentController {
-  async payWithPayPalController(req, res) {
-    const userId = req.userId;
-    req.session.userId = userId;
+  async payWithPayPalController(req, res, next) {
+    try {
+      const userId = req.userId;
+      const { name, price } = req.body;
+      const payWithPaypalDto = new PayWithPaypalDto(userId, name, price);
+      await payWithPaypalDto.validate(); 
 
-    const create_payment_json = {
-      intent: "sale",
-      payer: {
-        payment_method: "paypal",
-      },
-      redirect_urls: {
-        return_url: process.env.PAYPAL_SUCCESS_URL,
-        cancel_url: process.env.PAYPAL_CANCEL_URL,
-      },
-      transactions: [
-        {
-          item_list: {
-            items: [
-              {
-                name: req.body.name || "Hat",
-                sku: "001",
-                price: req.body.price || "25.00",
-                currency: "USD",
-                quantity: 1,
-              },
-            ],
-          },
-          amount: {
-            currency: "USD",
-            total: req.body.price || "25.00",
-          },
-          description: "This is the payment description.",
+      req.session.userId = userId;
+
+      const create_payment_json = {
+        intent: "sale",
+        payer: {
+          payment_method: "paypal",
         },
-      ],
-    };
-    paypal.payment.create(create_payment_json, function (error, payment) {
-      if (error) {
-        throw error;
-      } else {
-        for (let i = 0; i < payment.links.length; i++) {
-          if (payment.links[i].rel === "approval_url") {
-            res.redirect(payment.links[i].href);
+        redirect_urls: {
+          return_url: process.env.PAYPAL_SUCCESS_URL,
+          cancel_url: process.env.PAYPAL_CANCEL_URL,
+        },
+        transactions: [
+          {
+            item_list: {
+              items: [
+                {
+                  name: name || "Hat",
+                  sku: "001",
+                  price: price || "25.00",
+                  currency: "USD",
+                  quantity: 1,
+                },
+              ],
+            },
+            amount: {
+              currency: "USD",
+              total: price || "25.00",
+            },
+            description: "This is the payment description.",
+          },
+        ],
+      };
+      paypal.payment.create(create_payment_json, function (error, payment) {
+        if (error) {
+          throw error;
+        } else {
+          for (let i = 0; i < payment.links.length; i++) {
+            if (payment.links[i].rel === "approval_url") {
+              res.redirect(payment.links[i].href);
+            }
           }
         }
-      }
-    });
+      });
+    } catch (error) {
+      next(error)
+    }
   }
 
   async successPayPalController(req, res) {

@@ -27,7 +27,7 @@ const UpdateUserWalletDto = require("../dtos/User/UpdateUserWalletDto");
 const DeleteUserDto = require("../dtos/User/DeleteUserDto");
 
 class UserController {
-  async getAllUsersController(req, res) {
+  async getAllUsersController(req, res, next) {
     try {
       const { page, size, search } = req.query;
 
@@ -39,17 +39,11 @@ class UserController {
 
       return res.status(StatusCodeEnums.OK_200).json(result);
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async deleteUserByIdController(req, res) {
+  async deleteUserByIdController(req, res, next) {
     try {
       const { userId } = req.params;
       const deleteUserDto = new DeleteUserDto(userId);
@@ -59,40 +53,29 @@ class UserController {
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getUserByIdController(req, res) {
+  async getUserByIdController(req, res, next) {
     const { userId } = req.params;
 
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Valid user ID is required" });
-    }
     try {
+      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid user ID"
+        );
+      }
       const result = await getUserByIdService(userId);
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ user: result, message: "Get user successfully" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
-  async updateUserProfileByIdController(req, res) {
+  async updateUserProfileByIdController(req, res, next) {
     try {
       const { userId } = req.params;
       const { fullName, nickName } = req.body;
@@ -125,25 +108,20 @@ class UserController {
       if (req.file) {
         await deleteFile(req.file.path);
       }
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async updateUserEmailByIdController(req, res) {
+  async updateUserEmailByIdController(req, res, next) {
     try {
       const { userId } = req.params;
       const { email } = req.body;
 
       if (req.userId !== userId) {
-        return res
-          .status(StatusCodeEnums.Forbidden_403)
-          .json({ message: "Forbidden access" });
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "Forbidden access"
+        );
       }
 
       const updateUserEmailDto = new UpdateUserEmailDto(userId, email);
@@ -156,17 +134,11 @@ class UserController {
           "Update user email successfully, the verification link will be sent to your new email!",
       });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async updateUserPasswordByIdController(req, res) {
+  async updateUserPasswordByIdController(req, res, next) {
     try {
       const { userId } = req.params;
       const { oldPassword, newPassword } = req.body;
@@ -193,16 +165,10 @@ class UserController {
         .status(StatusCodeEnums.OK_200)
         .json({ message: "Update user password successfully" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
-  async toggleFollowController(req, res) {
+  async toggleFollowController(req, res, next) {
     try {
       const { userId, followId, action } = req.body;
       console.log("user: ", userId);
@@ -216,46 +182,36 @@ class UserController {
         message: `${action.charAt(0).toUpperCase() + action.slice(1)} success`,
       });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getStatsByDateController(req, res) {
-    const { userId, fromDate, toDate } = req.query;
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Valid user ID is required" });
-    }
-
+  async getStatsByDateController(req, res, next) {
     try {
+      const { userId, fromDate, toDate } = req.query;
+      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid user ID"
+        );
+      }
+
       const result = await getStatsByDateService(userId, fromDate, toDate);
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ message: "Success", result });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
-  async getUserWalletController(req, res) {
+  async getUserWalletController(req, res, next) {
     try {
       const { userId } = req.params;
       if (userId !== req.userId) {
-        return res
-          .status(StatusCodeEnums.Forbidden_403)
-          .json({ message: "Forbidden access" });
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "Forbidden access"
+        );
       }
       const getUserWalletDto = new GetUserWalletDto(userId);
       await getUserWalletDto.validate();
@@ -264,18 +220,17 @@ class UserController {
         .status(StatusCodeEnums.OK_200)
         .json({ wallet: wallet, message: "Success" });
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
-  async updateUserWalletController(req, res) {
+  async updateUserWalletController(req, res, next) {
     try {
       const { userId } = req.params;
       if (userId !== req.userId) {
-        return res
-          .status(StatusCodeEnums.Forbidden_403)
-          .json({ message: "Forbidden access" });
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "Forbidden access"
+        );
       }
 
       const { amount, actionCurrencyType } = req.body;
@@ -295,106 +250,95 @@ class UserController {
         .status(StatusCodeEnums.OK_200)
         .json({ user: user, message: "Success" });
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 
-  async updateTotalWatchTimeController(req, res) {
-    const { userId, watchTime } = req.body;
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Valid user ID is required" });
-    }
+  async updateTotalWatchTimeController(req, res, next) {
     try {
+      const { userId, watchTime } = req.body;
+      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid user ID"
+        );
+      }
       const result = await updateTotalWatchTimeService(userId, watchTime);
       return res.status(StatusCodeEnums.OK_200).json({
         message: "Update watch time successfully",
       });
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 
-  async getFollowerController(req, res) {
-    const { userId } = req.params;
-
-    if (!userId) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "User ID is required" });
-    }
+  async getFollowerController(req, res, next) {
     try {
+      const { userId } = req.params;
+
+      if (!userId) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "User ID is required"
+        );
+      }
       const result = await getFollowerService(userId);
       if (!result || result.length === 0) {
-        return res
-          .status(StatusCodeEnums.NotFound_404)
-          .json({ message: "No follower found" });
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "No follower found"
+        );
       }
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ follower: result, message: "Success" });
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json(error.message);
+      next(error);
     }
   }
-  async getFollowingController(req, res) {
-    const { userId } = req.params;
-
-    if (!userId) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "User ID is required" });
-    }
+  async getFollowingController(req, res, next) {
     try {
+      const { userId } = req.params;
+
+      if (!userId) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "User ID is required"
+        );
+      }
       const result = await getFollowingService(userId);
       if (!result || result.length === 0) {
-        return res
-          .status(StatusCodeEnums.NotFound_404)
-          .json({ message: "No following found" });
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "No following found"
+        );
       }
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ following: result, message: "success" });
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json(error.message);
+      next(error);
     }
   }
-  async updatePointController(req, res) {
-    const { amount, type } = req.body;
-    const userId = req.userId;
-    if (!amount || !type || !userId) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Please fill in all the required field" });
-    }
-    if (isNaN(amount) || amount < 0) {
-      return res.status(StatusCodeEnums.BadRequest_400).json({
-        message: "Invalid amount",
-      });
-    }
-    if (!["add", "remove", "exchange"].includes(type)) {
-      return res.status(StatusCodeEnums.BadRequest_400).json({
-        message: "Invalid type",
-      });
-    }
+  async updatePointController(req, res, next) {
     try {
+      const { amount, type } = req.body;
+      const userId = req.userId;
+      if (!amount || !type || !userId) {
+        throw new CoreException(StatusCodes.BadRequest_400, "Missing fields");
+      }
+      if (isNaN(amount) || amount < 0) {
+        throw new CoreException(StatusCodes.BadRequest_400, "Invalid amount");
+      }
+      if (!["add", "remove", "exchange"].includes(type)) {
+        throw new CoreException(StatusCodes.BadRequest_400, "Invalid type");
+      }
       const result = await updatePointService(userId, amount, type);
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ data: result, message: "Success" });
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 }

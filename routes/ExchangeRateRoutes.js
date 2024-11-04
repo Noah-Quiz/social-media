@@ -20,10 +20,49 @@ exchangeRateRoutes.use(AuthMiddleware);
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/UpdateExchangeRateDto'
+ *             $ref: '#/components/schemas/CreateExchangeRateDto'
  *     responses:
  *       200:
  *         description: Create a exchange rate successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exchangeRate:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                         example: "string"
+ *                       value:
+ *                         type: number
+ *                         example: 1
+ *                       description:
+ *                         type: string
+ *                         example: "string"
+ *                       isDeleted:
+ *                         type: boolean
+ *                         example: false
+ *                       _id:
+ *                         type: string
+ *                         example: "string"
+ *                       dateCreated:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-10-31T06:51:34.546Z"
+ *                       lastUpdated:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-10-31T06:51:34.546Z"
+ *                       __v:
+ *                         type: integer
+ *                         example: 0
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
  *       400:
  *         description: Bad request
  *       500:
@@ -46,6 +85,45 @@ exchangeRateRoutes.post(
  *     responses:
  *       200:
  *         description: Get exchange rate successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exchangeRate:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                         example: "string"
+ *                       value:
+ *                         type: number
+ *                         example: 1
+ *                       description:
+ *                         type: string
+ *                         example: "string"
+ *                       isDeleted:
+ *                         type: boolean
+ *                         example: false
+ *                       _id:
+ *                         type: string
+ *                         example: "672328f60427946cbe166f45"
+ *                       dateCreated:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-10-31T06:51:34.546Z"
+ *                       lastUpdated:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-10-31T06:51:34.546Z"
+ *                       __v:
+ *                         type: integer
+ *                         example: 0
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
  *       400:
  *         description: Bad request
  *       500:
@@ -59,27 +137,69 @@ exchangeRateRoutes.get(
 
 /**
  * @swagger
- * /api/exchange-rate/{id}:
+ * /api/exchange-rate:
  *   put:
  *     security:
  *      - bearerAuth: []
- *     summary: Update a exchange rate by ID
+ *     summary: Update an exchange rate
  *     tags: [ExchangeRates]
- *     parameters:
- *      - in: path
- *        name: id
- *        schema:
- *         type: string
- *         required: true
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/UpdateExchangeRateDto'
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 required: true
+ *                 example: "topUpBalanceRate"
+ *               value:
+ *                 type: number
+ *                 example: 1
+ *               description:
+ *                 type: string
+ *                 example: "Updated description"
  *     responses:
  *       200:
- *         description: Update a exchange rate successfully
+ *         description: Update exchange rate successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exchangeRate:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                       example: "topUpBalanceRate"
+ *                     value:
+ *                       type: number
+ *                       example: 1
+ *                     description:
+ *                       type: string
+ *                       example: "Updated description"
+ *                     isDeleted:
+ *                       type: boolean
+ *                       example: false
+ *                     _id:
+ *                       type: string
+ *                       example: "672328f60427946cbe166f45"
+ *                     dateCreated:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-10-31T06:51:34.546Z"
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-10-31T06:51:34.546Z"
+ *                     __v:
+ *                       type: integer
+ *                       example: 0
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
  *       400:
  *         description: Bad request
  *       500:
@@ -93,21 +213,34 @@ exchangeRateRoutes.put(
 
 /**
  * @swagger
- * /api/exchange-rate/{id}:
+ * /api/exchange-rate:
  *   delete:
  *     security:
  *      - bearerAuth: []
- *     summary: Delete a exchange rate by ID
+ *     summary: Delete an exchange rate
  *     tags: [ExchangeRates]
- *     parameters:
- *      - in: path
- *        name: id
- *        schema:
- *         type: string
- *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 required: true
+ *                 example: "topUpBalanceRate"
  *     responses:
  *       200:
- *         description: Delete a exchange rate successfully
+ *         description: Delete exchange rate successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
  *       400:
  *         description: Bad request
  *       500:

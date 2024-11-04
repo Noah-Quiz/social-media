@@ -1,6 +1,7 @@
 const CreateExchangeRateDto = require("../dtos/ExchangeRate/CreateExchangeRateDto");
 const UpdateExchangeRateDto = require("../dtos/ExchangeRate/UpdateExchangeRateDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 const {
   createExchangeRateService,
   deleteExchangeRateService,
@@ -9,19 +10,21 @@ const {
 } = require("../services/ExchangeRateService");
 
 class ExchangeRateController {
-  async createExchangeRateController(req, res) {
-    const { name, value = 1, description } = req.body;
-    if (!name || !value) {
-      res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Please fill in all required fields" });
-    }
-    if (isNaN(value)) {
-      res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Value must be a number" });
-    }
+  async createExchangeRateController(req, res, next) {
     try {
+      const { name, value = 1, description } = req.body;
+      if (!name || !value) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid input"
+        );
+      }
+      if (isNaN(value)) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid value"
+        );
+      }
       const createExchangeRateDto = new CreateExchangeRateDto(
         name,
         value,
@@ -30,29 +33,36 @@ class ExchangeRateController {
       await createExchangeRateDto.validate();
 
       const result = await createExchangeRateService(name, value, description);
-      res.status(201).json({ exchangeRate: result, message: "Success" });
+      res
+        .status(StatusCodeEnums.Created_201)
+        .json({ exchangeRate: result, message: "Success" });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
-  async deleteExchangeRateController(req, res) {
-    const { id } = req.params;
-    const { name } = req.body;
-    console.log(name);
-    if (!name) {
-      return res.status(400).json({ message: "Invalid name" });
-    }
-
+  async deleteExchangeRateController(req, res, next) {
     try {
+      const { id } = req.params;
+      const { name } = req.body;
+      console.log(name);
+      if (!name) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid input"
+        );
+      }
+
       const result = await deleteExchangeRateService(id, name);
-      return res.status(200).json({ exchangeRate: result, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ exchangeRate: result, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
-  async updateExchangeRateController(req, res) {
+  async updateExchangeRateController(req, res, next) {
     try {
       const { id } = req.params;
       const { name, value, description } = req.body;
@@ -70,18 +80,22 @@ class ExchangeRateController {
         value,
         description
       );
-      res.status(200).json({ exchangeRate: result, message: "Success" });
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ exchangeRate: result, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
-  async getExchangeRateController(req, res) {
+  async getExchangeRateController(req, res, next) {
     try {
       const result = await getExchangeRateService();
-      return res.status(200).json({ exchangeRate: result, message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ exchangeRate: result, message: "Success" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 }

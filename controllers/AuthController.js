@@ -27,7 +27,7 @@ const VerifyEmailDto = require("../dtos/Auth/VerifyEmailDto");
 require("dotenv").config();
 
 class AuthController {
-  async signUpController(req, res) {
+  async signUpController(req, res, next) {
     try {
       const { fullName, email, phoneNumber, password } = req.body;
       const signupDto = new SignupDto(fullName, email, phoneNumber, password);
@@ -47,17 +47,11 @@ class AuthController {
         .status(StatusCodeEnums.Created_201)
         .json({ message: "Signup successfully" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async loginController(req, res) {
+  async loginController(req, res, next) {
     try {
       const { email, password } = req.body;
       const ipAddress =
@@ -76,21 +70,16 @@ class AuthController {
       // res
       //   .status(StatusCodeEnums.OK_200)
       //   .json({ accessToken, message: "Login successfully" });
+      console.log(accessToken);
       res.redirect(
         `http://localhost:3001?accessToken=${accessToken}&userId=${user._id}`
       );
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async loginGoogleController(req, res) {
+  async loginGoogleController(req, res, next) {
     try {
       const googleUser = req.user;
       const ipAddress =
@@ -117,11 +106,11 @@ class AuthController {
         `http://localhost:3001?accessToken=${accessToken}&userId=${user._id}`
       );
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      next(error);
     }
   }
 
-  async loginAppleController(req, res) {
+  async loginAppleController(req, res, next) {
     try {
       const loginAppleDtoIdToken = new LoginAppleDto(req.body.id_token);
       await loginAppleDtoIdToken.validate();
@@ -157,13 +146,11 @@ class AuthController {
         `http://localhost:3001?accessToken=${accessToken}&userId=${loggedUser._id}`
       );
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+     next(error);
     }
   }
 
-  async sendVerificationEmailController(req, res) {
+  async sendVerificationEmailController(req, res, next) {
     try {
       const { email } = req.params;
       const sendVerificationEmailDto = new SendVerificationEmailDto(email);
@@ -174,17 +161,11 @@ class AuthController {
         .status(StatusCodeEnums.OK_200)
         .json({ message: "Email sent successfully" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+     next(error);
     }
   }
 
-  async verifyEmailController(req, res) {
+  async verifyEmailController(req, res, next) {
     try {
       const { token } = req.query;
       const verifyEmailDto = new VerifyEmailDto(token);
@@ -193,17 +174,11 @@ class AuthController {
       const user = await verifyEmailService(token);
       res.status(200).json({ message: "Email verified successfully" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async sendVerificationPhoneController(req, res) {
+  async sendVerificationPhoneController(req, res, next) {
     try {
       const { phoneNumber } = req.body;
       const sendVerificationPhoneDto = new SendVerificationPhoneDto(
@@ -215,17 +190,11 @@ class AuthController {
         .status(StatusCodeEnums.OK_200)
         .json({ message: "SMS sent successfully" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async verifyPhoneController(req, res) {
+  async verifyPhoneController(req, res, next) {
     const { phoneNumber, code } = req.body;
     try {
       const status = await verifyPhoneService(phoneNumber, code);
@@ -233,17 +202,11 @@ class AuthController {
         .status(StatusCodeEnums.OK_200)
         .json({ message: "Phone number verified successfully" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async createResetPasswordTokenController(req, res) {
+  async createResetPasswordTokenController(req, res, next) {
     try {
       const { email } = req.body;
       const createResetPasswordTokenDto = new CreateResetPasswordTokenDto(
@@ -258,17 +221,11 @@ class AuthController {
         });
       }
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ token, message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async resetPasswordController(req, res) {
+  async resetPasswordController(req, res, next) {
     try {
       const { token } = req.params;
       const { newPassword } = req.body;
@@ -280,13 +237,7 @@ class AuthController {
           .json({ message: "Reset password successfully!" });
       }
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 }

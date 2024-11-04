@@ -46,9 +46,6 @@ const videoController = new VideoController();
  *                     description:
  *                       type: string
  *                       example: "string"
- *                     bunnyId:
- *                       type: string
- *                       example: "string"
  *                     videoUrl:
  *                       type: string
  *                       example: "string"
@@ -130,9 +127,6 @@ videoRoutes.post(
  *                       description:
  *                         type: string
  *                         example: string
- *                       bunnyId:
- *                         type: string
- *                         example: string
  *                       videoUrl:
  *                         type: string
  *                         example: string
@@ -142,9 +136,6 @@ videoRoutes.post(
  *                       videoServerUrl:
  *                         type: string
  *                         example: string
- *                       isUploaded:
- *                         type: boolean
- *                         example: true
  *                       numOfViews:
  *                         type: integer
  *                         example: 0
@@ -236,9 +227,6 @@ videoRoutes.get("/", AuthMiddleware, videoController.getVideosController);
  *                         type: string
  *                         example: "string"
  *                       description:
- *                         type: string
- *                         example: "string"
- *                       bunnyId:
  *                         type: string
  *                         example: "string"
  *                       videoUrl:
@@ -392,29 +380,47 @@ videoRoutes.get(
  * @swagger
  * /api/videos/{videoId}:
  *   patch:
- *     summary: Update video by id
+ *     summary: Update video details
  *     tags: [Videos]
- *     consumes:
- *       - multipart/form-data
+ *     description: Updates the details of a specific video.
  *     parameters:
  *       - in: path
  *         name: videoId
- *         schema:
- *           type: string
  *         required: true
- *         description: The ID of the video to update
- *       - in: formData
- *         name: videoThumbnail
  *         schema:
  *           type: string
- *           format: binary
- *         description: The new thumbnail image file for the video
+ *         description: The unique ID of the video to update
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/UpdateVideoDto'
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: Video title
+ *               description:
+ *                 type: string
+ *                 description: Video description
+ *               categoryIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *                 description: List of category IDs (as a JSON array or comma-separated string)
+ *                 example: ["671a01672a386fca99c73c02", "anotherCategoryId"]
+ *               enumMode:
+ *                 type: string
+ *                 enum: [public, private, unlisted, member, draft]
+ *                 description: Video accessibility
+ *               videoThumbnail:
+ *                 type: file
+ *                 description: Thumbnail image file for the video
+ *           encoding:
+ *             categoryIds:
+ *               style: form
+ *               explode: true
  *     responses:
  *       200:
  *         description: Update video by id successfully
@@ -438,9 +444,6 @@ videoRoutes.get(
  *                     description:
  *                       type: string
  *                       example: "string"
- *                     bunnyId:
- *                       type: string
- *                       example: "string"
  *                     videoUrl:
  *                       type: string
  *                       example: "string"
@@ -450,9 +453,6 @@ videoRoutes.get(
  *                     videoServerUrl:
  *                       type: string
  *                       example: "string"
- *                     isUploaded:
- *                       type: boolean
- *                       example: true
  *                     numOfViews:
  *                       type: integer
  *                       example: 0
@@ -489,8 +489,8 @@ videoRoutes.get(
  *                       example: 0
  *       400:
  *         description: Bad request
- *       500:
- *         description: Internal server error
+ *       404:
+ *         description: Video not found
  */
 
 videoRoutes.patch(
@@ -524,11 +524,9 @@ videoRoutes.patch(
  *              _id: "string"
  *              title: "string"
  *              description: "string"
- *              bunnyId: "string"
  *              videoUrl: "string"
  *              videoEmbedUrl: "string"
  *              videoServerUrl: "string"
- *              isUploaded: true
  *              numOfViews: 0
  *              likedBy: []
  *              enumMode: "member"
@@ -629,9 +627,6 @@ videoRoutes.post(
  *                  description:
  *                    type: string
  *                    example: "string"
- *                  bunnyId:
- *                    type: string
- *                    example: "string"
  *                  videoUrl:
  *                    type: string
  *                    example: "string"
@@ -641,9 +636,6 @@ videoRoutes.post(
  *                  videoServerUrl:
  *                    type: string
  *                    example: "string"
- *                  isUploaded:
- *                    type: boolean
- *                    example: true
  *                  numOfViews:
  *                    type: integer
  *                    example: 1  # Incremented view count
