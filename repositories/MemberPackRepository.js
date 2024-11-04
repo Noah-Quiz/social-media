@@ -46,7 +46,7 @@ class MemberPackRepository {
       if (description !== undefined && description !== memberPack.description) {
         memberPack.description = description;
       }
-      if (price !== undefined && price !== memberPack.price) {
+      if (price !== undefined && price !== memberPack.price && !isNaN(price)) {
         memberPack.price = price;
       }
       if (
@@ -57,7 +57,8 @@ class MemberPackRepository {
       }
       if (
         durationNumber !== undefined &&
-        durationNumber !== memberPack.durationNumber
+        durationNumber !== memberPack.durationNumber &&
+        !isNaN(durationNumber)
       ) {
         memberPack.durationNumber = durationNumber;
       }

@@ -26,8 +26,32 @@ async function consumeMessageFromQueue(queue, callback) {
   let channel;
 
   try {
-    connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL);
+    connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL, {
+      heartbeat: 30,
+    });
+    connection.on("error", (error) => {
+      logger.error(`RabbitMQ connection error: ${error}`);
+      if (error.code === "ECONNRESET") {
+        logger.warn("ECONNRESET detected, reconnecting...");
+      }
+    });
+    connection.on("close", async () => {
+      logger.warn("RabbitMQ connection closed, attempting reconnection...");
+      setTimeout(consumeMessageFromQueue, 5000); // Retry connection after delay
+    });
+
     channel = await connection.createChannel();
+    channel.on("error", (error) => {
+      channel.on("error", (error) => {
+        logger.error(`Channel error: ${error}`);
+      });
+
+      // Reconnect the channel if it closes unexpectedly
+      channel.on("close", async () => {
+        logger.warn("Channel closed, attempting to recreate...");
+        setTimeout(consumeMessageFromQueue, 5000); // Retry connection after delay
+      });
+    });
     await channel.assertQueue(queue, { durable: true });
 
     channel.consume(
@@ -44,18 +68,18 @@ async function consumeMessageFromQueue(queue, callback) {
 
             switch (queue) {
               case process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE:
-                const { bunnyId, videoFilePath } = JSON.parse(
+                const { userId, videoId, videoFolderPath } = JSON.parse(
                   msg.content.toString()
                 );
-                logger.info(`Path: ${videoFilePath}`);
+                logger.info(`Path: ${videoFolderPath}`);
                 logger.info(
                   `Message received from queue ${queue}: ${msg.content.toString()}`
                 );
-                await callback(
-                  process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-                  bunnyId,
-                  videoFilePath
-                );
+                await callback({
+                  userId: userId,
+                  videoId: videoId,
+                  videoFolderPath:videoFolderPath,
+                });
                 logger.info(`Message processed successfully`);
                 break;
 

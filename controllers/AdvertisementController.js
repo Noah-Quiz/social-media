@@ -9,6 +9,7 @@ const {
 } = require("../services/AdvertisementService");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const { getVideoService } = require("../services/VideoService");
+const CoreException = require("../exceptions/CoreException");
 
 class AdvertisementController {
   async createAnAdvertisementController(req, res) {
@@ -25,6 +26,7 @@ class AdvertisementController {
       }
 
       const video = await getVideoService(videoId);
+      const video = await getVideoService(videoId);
 
       const checkUserId = new mongoose.Types.ObjectId(userId);
       if (!video.userId.equals(checkUserId)) {
@@ -33,11 +35,9 @@ class AdvertisementController {
           .json({ message: "This user does not own this video" });
       }
       if (video.enumMode != "public" || video.enumMode != "member") {
-        return res
-          .status(StatusCodeEnums.BadRequest_400)
-          .json({
-            message: "Type of video for advertisement must be public or member",
-          });
+        return res.status(StatusCodeEnums.BadRequest_400).json({
+          message: "Type of video for advertisement must be public or member",
+        });
       }
       const result = await createAnAdvertisementService(
         userId,
@@ -46,36 +46,30 @@ class AdvertisementController {
       );
       return res.status(StatusCodeEnums.Created_201).json({ data: result });
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 
-  async extendAdvertisementController(req, res) {
+  async extendAdvertisementController(req, res, next) {
     const { adsId, packageId } = req.body;
     try {
       const result = await extendAdvertisementService(adsId, packageId);
       return res.status(StatusCodeEnums.OK_200).json({ data: result });
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 
-  async getAllAvailableAdvertisementsController(req, res) {
+  async getAllAvailableAdvertisementsController(req, res, next) {
     try {
       const result = await getAllAvailableAdvertisementsService();
       return res.status(StatusCodeEnums.OK_200).json({ data: result });
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 
-  async updateAnAdvertisementByIdController(req, res) {
+  async updateAnAdvertisementByIdController(req, res, next) {
     const { adsId, coin, expDate } = req.body;
     try {
       const result = await updateAnAdvertisementByIdService(
@@ -85,33 +79,27 @@ class AdvertisementController {
       );
       return res.status(StatusCodeEnums.OK_200).json({ data: result });
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 
-  async getAnAdvertisementByIdController(req, res) {
+  async getAnAdvertisementByIdController(req, res, next) {
     const { adsId } = req.params;
     try {
       const result = await getAnAdvertisementByIdService(adsId);
       return res.status(StatusCodeEnums.OK_200).json({ data: result });
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 
-  async deleteAnAdvertisementByIdController(req, res) {
+  async deleteAnAdvertisementByIdController(req, res, next) {
     const { adsId } = req.params;
     try {
       const result = await deleteAnAdvertisementByIdService(adsId);
       return res.status(StatusCodeEnums.OK_200).json({ data: result });
     } catch (error) {
-      return res
-        .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: error.message });
+      next(error);
     }
   }
 }

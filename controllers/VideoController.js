@@ -1,10 +1,9 @@
 const GetVideosByPlaylistIdDto = require("../dtos/Video/GetVideosByPlaylistId");
+const path = require("path");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const {
   createBunnyStreamVideoService,
-  uploadBunnyStreamVideoService,
-  deleteBunnyStreamVideoService,
   updateBunnyStreamVideoService,
   getBunnyStreamVideoService,
 } = require("../services/BunnyStreamService");
@@ -18,44 +17,59 @@ const {
   deleteVideoService,
   getVideoService,
   getVideosService,
-  getStatsByDateService,
-  uploadVideoService,
-  generateVideoEmbedUrlToken,
 } = require("../services/VideoService");
 const { default: mongoose } = require("mongoose");
-const { deleteFile, checkFileSuccess } = require("../middlewares/storeFile");
-const UploadVideoDto = require("../dtos/Video/UploadVideoDto");
+const {
+  deleteFile,
+  checkFileSuccess,
+  changeFileName,
+  removeFileName,
+  replaceTsSegmentLinksInM3u8,
+  convertMp4ToHls,
+  findClosetTsFile,
+  createThumbnailFromTsFile,
+} = require("../middlewares/storeFile");
 const DeleteVideoDto = require("../dtos/Video/DeleteVideoDto");
-const GenerateVideoEmbedUrlTokenDto = require("../dtos/Video/GenerateVideoEmbedUrlTokenDto");
 const { sendMessageToQueue } = require("../utils/rabbitMq");
 const CreateVideoDto = require("../dtos/Video/CreateVideoDto");
 require("dotenv").config();
-
+const getLogger = require("../utils/logger");
+const UpdateVideoDto = require("../dtos/Video/UpdateVideoDto");
+const logger = getLogger("VIDEO_CONTROLLER");
 class VideoController {
-  async createVideoController(req, res) {
+  async createVideoController(req, res, next) {
     try {
       const userId = req.userId;
       const videoFile = req.files.video[0];
       const title = videoFile.originalname;
 
-      const bunnyVideo = await createBunnyStreamVideoService(
-        process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-        title
-      );
-
       const video = await createVideoService(userId, {
         title,
-        bunnyId: bunnyVideo.guid,
-        videoUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/playlist.m3u8`,
-        videoEmbedUrl: `https://iframe.mediadelivery.net/embed/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/${bunnyVideo.guid}`,
-        thumbnailUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/thumbnail.jpg`,
+        // bunnyId: bunnyVideo.guid,
+        // videoUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/playlist.m3u8`,
+        // videoEmbedUrl: `https://iframe.mediadelivery.net/embed/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/${bunnyVideo.guid}`,
+        // thumbnailUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/thumbnail.jpg`,
       });
 
-      const upload = await uploadVideoService(video._id, userId);
+      if (!video) {
+        throw new CoreException(
+          StatusCodeEnums.InternalServerError_500,
+          "Create video failed"
+        );
+      }
+
+      const newFilePath = await changeFileName(videoFile.path, video._id);
+      const m3u8 = await convertMp4ToHls(newFilePath);
+      const folderPath = await removeFileName(newFilePath);
+      await replaceTsSegmentLinksInM3u8(m3u8, video._id);
+      const closestTsFile = await findClosetTsFile(folderPath);
+      await createThumbnailFromTsFile(path.join(folderPath,closestTsFile.file), folderPath);
+      await deleteFile(newFilePath);
 
       const queueMessage = {
-        bunnyId: video.bunnyId,
-        videoFilePath: videoFile.path,
+        userId: userId,
+        videoId: video._id,
+        videoFolderPath: folderPath,
       };
 
       await sendMessageToQueue(
@@ -67,189 +81,53 @@ class VideoController {
         .status(StatusCodeEnums.OK_200)
         .json({ video, message: "Success" });
     } catch (error) {
-      if (req.files) {
-        await deleteFile(req.files.video[0].path);
-      }
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  // async createVideoController(req, res) {
-  //   try {
-  //     const { title, description, enumMode, categoryIds } = req.body;
-  //     const userId = req.userId;
-  //     const createVideoDto = new CreateVideoDto(
-  //       title,
-  //       description,
-  //       enumMode,
-  //       categoryIds
-  //     );
-  //     await createVideoDto.validate();
-
-  //     const bunnyVideo = await createBunnyStreamVideoService(
-  //       process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-  //       title
-  //     );
-  //     const video = await createVideoService(userId, {
-  //       title,
-  //       description,
-  //       categoryIds,
-  //       enumMode,
-  //       bunnyId: bunnyVideo.guid,
-  //       videoUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/playlist.m3u8`,
-  //       videoEmbedUrl: `https://iframe.mediadelivery.net/embed/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/${bunnyVideo.guid}`,
-  //     });
-
-  //     return res
-  //       .status(StatusCodeEnums.Created_201)
-  //       .json({ message: "Create Video successfully", video });
-  //   } catch (error) {
-  //     if (error instanceof CoreException) {
-  //       return res.status(error.code).json({ message: error.message });
-  //     } else {
-  //       return res
-  //         .status(StatusCodeEnums.InternalServerError_500)
-  //         .json({ message: error.message });
-  //     }
-  //   }
-  // }
-
-  async generateVideoEmbedUrlTokenController(req, res) {
+  async toggleLikeVideoController(req, res, next) {
     try {
       const { videoId } = req.params;
-      const { dateExpire } = req.body; // UNIX format
-      const generateVideoEmbedUrlTokenDto = new GenerateVideoEmbedUrlTokenDto(
-        videoId,
-        dateExpire
-      );
-      await generateVideoEmbedUrlTokenDto.validate();
+      const { action } = req.query;
+      const userId = req.userId;
 
-      await generateVideoEmbedUrlToken(videoId, dateExpire);
-      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
-    } catch (error) {
-      if (req.files) {
-        await deleteFile(req.files.video[0].path);
-        await deleteFile(req.files.videoThumbnail[0].path);
+      if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Valid video ID is required"
+        );
       }
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
-    }
-  }
 
-  // async uploadVideoController(req, res) {
-  //   try {
-  //     const userId = req.userId;
-  //     const { videoId } = req.params;
-  //     const videoFile = req.files.video[0];
-  //     const thumbnailFile = req.files.videoThumbnail[0];
-  //     const uploadVideoDto = new UploadVideoDto(
-  //       userId,
-  //       videoId,
-  //       videoFile,
-  //       thumbnailFile
-  //     );
-  //     await uploadVideoDto.validate();
-
-  //     const video = await uploadVideoService(
-  //       videoId,
-  //       userId,
-  //       videoFile.path,
-  //       thumbnailFile.path
-  //     );
-
-  //     const queueMessage = {
-  //       bunnyId: video.bunnyId,
-  //       videoFilePath: videoFile.path,
-  //     };
-
-  //     await sendMessageToQueue("bunny_video_dev_hung", queueMessage);
-
-  //     // const bunnyVideo = await uploadBunnyStreamVideoService(
-  //     //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-  //     //   video.bunnyId,
-  //     //   videoFile.path
-  //     // );
-
-  //     return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
-  //   } catch (error) {
-  //     if (req.files) {
-  //       await deleteFile(req.files.video[0].path);
-  //       await deleteFile(req.files.videoThumbnail[0].path);
-  //     }
-  //     if (error instanceof CoreException) {
-  //       return res.status(error.code).json({ message: error.message });
-  //     } else {
-  //       return res
-  //         .status(StatusCodeEnums.InternalServerError_500)
-  //         .json({ message: error.message });
-  //     }
-  //   }
-  // }
-
-  async toggleLikeVideoController(req, res) {
-    const { videoId } = req.params;
-    const { action } = req.query;
-    const userId = req.userId;
-
-    if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Valid video ID is required" });
-    }
-
-    try {
       await toggleLikeVideoService(videoId, userId, action);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async viewIncrementController(req, res) {
-    const { videoId } = req.params;
-
-    if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Valid video ID is required" });
-    }
-
+  async viewIncrementController(req, res, next) {
     try {
+      const { videoId } = req.params;
+
+      if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
+        throw new CoreException(
+          StatusCodes.BadRequest_400,
+          "Valid video ID is required"
+        );
+      }
+
       const video = await viewIncrementService(videoId);
 
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ video: video, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async updateAVideoByIdController(req, res) {
+  async updateAVideoByIdController(req, res, next) {
     try {
       const { videoId } = req.params;
 
@@ -259,32 +137,63 @@ class VideoController {
       }
 
       const data = req.body;
-
-      const video = await updateAVideoByIdService(videoId, data, thumbnailFile);
-      const bunnyVideo = await updateBunnyStreamVideoService(
-        process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-        video.bunnyId,
-        data.title
+      // //handle category from swagger being string
+      // if (typeof data.categoryIds === "string") {
+      //   if (data.categoryIds.includes(",")) {
+      //     data.categoryIds = data.categoryIds.split(",").map((id) => id.trim());
+      //   } else {
+      //     data.categoryIds = [data.categoryIds.trim()];
+      //   }
+      // }
+      const updateVideoDto = new UpdateVideoDto(
+        videoId,
+        data.title,
+        data.description,
+        data.enumMode,
+        data.categoryIds,
+        thumbnailFile
       );
-      if (req.files && req.files.videoThumbnail) {
-        await checkFileSuccess(thumbnailFile.path);
+
+      await updateVideoDto.validate();
+
+      const updateData = {
+        title: data.title,
+        description: data.description,
+        enumMode: data.enumMode,
+        categoryIds: data.categoryIds,
+      };
+      if (updateData.categoryIds && updateData.categoryIds.length > 0) {
+        updateData.categoryIds = updateData.categoryIds.filter(
+          (id) => id !== ""
+        );
       }
+
+      // Filter out duplicate category IDs
+      if (updateData.categoryIds && updateData.categoryIds.length > 0) {
+        updateData.categoryIds = [...new Set(updateData.categoryIds)];
+      }
+      const video = await updateAVideoByIdService(
+        videoId,
+        updateData,
+        thumbnailFile
+      );
+      // const bunnyVideo = await updateBunnyStreamVideoService(
+      //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
+      //   data.title
+      // );
+      // if (req.files && req.files.videoThumbnail) {
+      //   await checkFileSuccess(thumbnailFile.path);
+      // }
 
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ video, message: "Update video successfully" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async deleteVideoController(req, res) {
+  async deleteVideoController(req, res, next) {
     try {
       const { videoId } = req.params;
       const userId = req.userId;
@@ -293,97 +202,103 @@ class VideoController {
 
       const video = await deleteVideoService(videoId, userId);
 
-      const bunnyVideo = await deleteBunnyStreamVideoService(
-        process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-        video.bunnyId
-      );
-
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getVideosByUserIdController(req, res) {
-    const { userId } = req.params;
-    const { sortBy } = req.query;
-    const requester = req.userId;
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Valid user ID is required" });
-    }
-
+  async getVideosByUserIdController(req, res, next) {
     try {
+      const { userId } = req.params;
+      const { sortBy } = req.query;
+      const requester = req.userId;
+      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Valid user ID is required"
+        );
+      }
+
       const videos = await getVideosByUserIdService(userId, sortBy, requester);
 
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ message: "Success", videos });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getVideoController(req, res) {
-    const { videoId } = req.params;
-    const requester = req.userId;
-
-    if (!videoId || !mongoose.Types.ObjectId.isValid(videoId, requester)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Valid video ID is required" });
-    }
-
+  async getVideoController(req, res, next) {
     try {
+      const { videoId } = req.params;
+      const requester = req.userId;
+
+      if (!videoId || !mongoose.Types.ObjectId.isValid(videoId, requester)) {
+        throw new CoreException(
+          StatusCodes.BadRequest_400,
+          "Valid video ID is required"
+        );
+      }
+
       const video = await getVideoService(videoId, requester);
-      const bunnyVideo = await getBunnyStreamVideoService(
-        process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
-        video.bunnyId
-      );
+      // const bunnyVideo = await getBunnyStreamVideoService(
+      //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
+      //   video.bunnyId
+      // );
 
       const result = {
         video,
-        bunnyVideo,
       };
 
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ message: "Success", result });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getVideosController(req, res) {
-    const query = req.query;
-
-    if (!query.page) query.page = 1;
-    if (!query.size) query.size = 10;
-
+  async getVideosController(req, res, next) {
     try {
+      const query = {
+        size: req.query.size,
+        page: req.query.page,
+        status: req.query.status,
+        sortBy: req.query.sortBy,
+        order: req.query.order,
+        title: req.query.title,
+      };
+
+      if (!query.page) query.page = 1;
+      if (!query.size) query.size = 10;
+      const validSortByOptions = ["like", "view", "date"];
+      const validOrderOptions = ["ascending", "descending"];
+      if (query.sortBy && !validSortByOptions.includes(query.sortBy)) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid query sortBy, must be in ['like', 'view', 'date']"
+        );
+      }
+
+      if (query.order && !validOrderOptions.includes(query.order)) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid query order, must be in ['ascending', 'descending']"
+        );
+      }
       if (query.page < 1) {
-        return res
-          .status(StatusCodeEnums.BadRequest_400)
-          .json({ message: "Page cannot be less than 1" });
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid page number"
+        );
+      }
+      if (query.size < 1) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Size cannot be less than 1"
+        );
       }
       if (query.title) {
         query.title = { $regex: query.title, $options: "i" };
@@ -395,17 +310,11 @@ class VideoController {
         .status(StatusCodeEnums.OK_200)
         .json({ message: "Success", videos, total, page, totalPages });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getVideosByPlaylistIdController(req, res) {
+  async getVideosByPlaylistIdController(req, res, next) {
     try {
       const { playlistId } = req.params;
       const { page, size } = req.query;
@@ -428,13 +337,7 @@ class VideoController {
         .status(StatusCodeEnums.OK_200)
         .json({ videos, message: "Get videos by playlistId successfully" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        res.status(error.code).json({ message: error.message });
-      } else {
-        res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 }

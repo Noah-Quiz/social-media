@@ -18,7 +18,49 @@ route.use(AuthMiddleware);
  *     tags: [Receipts]
  *     responses:
  *       200:
- *         description: Get all user receipts successfully
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 receipts:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       userId:
+ *                         type: string
+ *                       paymentMethod:
+ *                         type: string
+ *                       paymentPort:
+ *                         type: string
+ *                       bankCode:
+ *                         type: string
+ *                       amount:
+ *                         type: integer
+ *                       transactionId:
+ *                         type: string
+ *                       type:
+ *                         type: string
+ *                       exchangeRate:
+ *                         type: integer
+ *                       isDeleted:
+ *                         type: boolean
+ *                         example: "false"
+ *                       dateCreated:
+ *                         type: string
+ *                         format: date-time
+ *                       lastUpdated:
+ *                         type: string
+ *                         format: date-time
+ *                 size:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
  *       400:
  *         description: Bad request
  *       500:
@@ -43,6 +85,44 @@ route.get("/", receiptController.getAllUserReceiptsController);
  *     responses:
  *       200:
  *         description: Get a receipt successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 receipts:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       userId:
+ *                         type: string
+ *                       paymentMethod:
+ *                         type: string
+ *                       paymentPort:
+ *                         type: string
+ *                       bankCode:
+ *                         type: string
+ *                       amount:
+ *                         type: integer
+ *                       transactionId:
+ *                         type: string
+ *                       type:
+ *                         type: string
+ *                       exchangeRate:
+ *                         type: integer
+ *                       isDeleted:
+ *                         type: boolean
+ *                         example: "false"
+ *                       dateCreated:
+ *                         type: string
+ *                         format: date-time
+ *                       lastUpdated:
+ *                         type: string
+ *                         format: date-time
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
  *       400:
  *         description: Bad request
  *       500:
@@ -66,7 +146,44 @@ route.get("/:id", receiptController.getReceiptController);
  *         required: true
  *     responses:
  *       200:
- *         description: Delete a receipt successfully
+ *         description: Successful deletion response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 receipt:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     userId:
+ *                       type: string
+ *                     paymentMethod:
+ *                       type: string
+ *                     paymentPort:
+ *                       type: string
+ *                     bankCode:
+ *                       type: string
+ *                     amount:
+ *                       type: integer
+ *                     transactionId:
+ *                       type: string
+ *                     type:
+ *                       type: string
+ *                     exchangeRate:
+ *                       type: integer
+ *                     isDeleted:
+ *                       type: boolean
+ *                     dateCreated:
+ *                       type: string
+ *                       format: date-time
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
  *       400:
  *         description: Bad request
  *       500:

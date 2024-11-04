@@ -21,7 +21,7 @@ const { default: axios } = require("axios");
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
 class StreamController {
-  async getStreamController(req, res) {
+  async getStreamController(req, res, next) {
     const { streamId } = req.params;
     const requester = req.userId;
 
@@ -38,33 +38,61 @@ class StreamController {
         .status(StatusCodeEnums.OK_200)
         .json({ stream, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getStreamsController(req, res) {
-    const query = req.query;
+  async getStreamsController(req, res, next) {
     const requester = req.userId;
+
+    const query = {
+      size: req.query.size,
+      page: req.query.page,
+      status: req.query.status,
+      sortBy: req.query.sortBy,
+      order: req.query.order,
+    };
 
     if (!query.page) query.page = 1;
     if (!query.size) query.size = 10;
 
-    try {
-      if (query.page < 1) {
-        return res
-          .status(StatusCodeEnums.BadRequest_400)
-          .json({ message: "Page cannot be less than 1" });
-      }
-      if (query.title) {
-        query.title = { $regex: query.title, $options: "i" };
-      }
+    // Validate `sortBy` and `order`
+    const validSortByOptions = ["like", "view", "date"];
+    const validOrderOptions = ["ascending", "descending"];
 
+    if (query.sortBy && !validSortByOptions.includes(query.sortBy)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid query sortBy, must be in ['like', 'view', 'date']"
+      );
+    }
+
+    if (query.order && !validOrderOptions.includes(query.order)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid query order, must be in ['ascending', 'descending']"
+      );
+    }
+
+    // Additional validation checks for `page` and `size`
+    if (query.page < 1) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Page cannot be less than 1"
+      );
+    }
+    if (query.size < 1) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Size cannot be less than 1"
+      );
+    }
+
+    if (query.title) {
+      query.title = { $regex: query.title, $options: "i" };
+    }
+
+    try {
       const { streams, total, page, totalPages } = await getStreamsService(
         query,
         requester
@@ -74,43 +102,44 @@ class StreamController {
         .status(StatusCodeEnums.OK_200)
         .json({ streams, total, page, totalPages, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async updateStreamController(req, res) {
+  async updateStreamController(req, res, next) {
     const { streamId } = req.params;
-    const { title, description, addedCategoryIds, removedCategoryIds } =
-      req.body;
+    const { title, description, categoryIds } = req.body;
     let thumbnailFile = req.file ? req.file.path : null;
     const userId = req.userId;
-    
+
     try {
       const updateStreamDto = new UpdateStreamDto(
         streamId,
         userId,
         title,
         description,
-        addedCategoryIds,
-        removedCategoryIds
+        categoryIds
       );
       await updateStreamDto.validate();
 
-      const categoryData = { addedCategoryIds, removedCategoryIds };
-      const updateData = { title, description, thumbnailUrl: thumbnailFile };
+      const updateData = {
+        title,
+        description,
+        categoryIds: categoryIds,
+        thumbnailUrl: thumbnailFile,
+      };
 
-      const stream = await updateStreamService(
-        userId,
-        streamId,
-        updateData,
-        categoryData
-      );
+      if (updateData.categoryIds && updateData.categoryIds.length > 0) {
+        updateData.categoryIds = updateData.categoryIds.filter(
+          (id) => id !== ""
+        );
+      }
+
+      // Filter out duplicate category IDs
+      if (updateData.categoryIds && updateData.categoryIds.length > 0) {
+        updateData.categoryIds = [...new Set(updateData.categoryIds)];
+      }
+      const stream = await updateStreamService(userId, streamId, updateData);
 
       if (thumbnailFile) await checkFileSuccess(thumbnailFile);
 
@@ -120,17 +149,11 @@ class StreamController {
     } catch (error) {
       if (req.file) await deleteFile(thumbnailFile);
 
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async deleteStreamController(req, res) {
+  async deleteStreamController(req, res, next) {
     try {
       const { streamId } = req.params;
       const userId = req.userId;
@@ -141,17 +164,11 @@ class StreamController {
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async createStreamController(req, res) {
+  async createStreamController(req, res, next) {
     try {
       const { title, description, categoryIds } = req.body;
       const userId = req.userId;
@@ -177,12 +194,9 @@ class StreamController {
           }
         );
       } catch (error) {
-        console.log("Server tuni: " + error);
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({
-            message: "Internal Server Error. Fail to create live stream",
-          });
+        throw new CoreException(StatusCodeEnums.InternalServerError_500).json({
+          message: "Failed to create live stream",
+        });
       }
 
       const cloudflareStream = response.data?.liveInput;
@@ -210,43 +224,31 @@ class StreamController {
         .status(StatusCodeEnums.Created_201)
         .json({ stream, message: "Live Stream created successfully" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error });
-      }
+      next(error);
     }
   }
 
-  async toggleLikeStreamController(req, res) {
+  async toggleLikeStreamController(req, res, next) {
     const { streamId } = req.params;
     const { action } = req.query;
     const userId = req.userId;
 
-    if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Valid stream ID is required" });
-    }
-
     try {
+      if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
+        throw new CoreException(StatusCodeEnums.BadRequest_400).json({
+          message: "Valid stream ID is required",
+        });
+      }
+
       await toggleLikeStreamService(streamId, userId, action);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getRecommendedStreamsController(req, res) {
+  async getRecommendedStreamsController(req, res, next) {
     const userId = req.userId;
     const data = { userId };
 
@@ -257,17 +259,11 @@ class StreamController {
         .status(StatusCodeEnums.OK_200)
         .json({ streams, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 
-  async getRelevantStreamsController(req, res) {
+  async getRelevantStreamsController(req, res, next) {
     const { streamerId, categoryIds } = req.body;
     const userId = req.userId;
 
@@ -289,13 +285,7 @@ class StreamController {
         .status(StatusCodeEnums.OK_200)
         .json({ streams, message: "Success" });
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
-        return res
-          .status(StatusCodeEnums.InternalServerError_500)
-          .json({ message: error.message });
-      }
+      next(error);
     }
   }
 }
