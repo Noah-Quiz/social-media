@@ -26,7 +26,6 @@ class AdvertisementController {
       }
 
       const video = await getVideoService(videoId);
-      const video = await getVideoService(videoId);
 
       const checkUserId = new mongoose.Types.ObjectId(userId);
       if (!video.userId.equals(checkUserId)) {
