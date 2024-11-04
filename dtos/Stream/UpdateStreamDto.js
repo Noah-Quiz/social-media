@@ -44,14 +44,20 @@ class UpdateStreamDto {
         "User ID is required"
       );
     }
-    await validMongooseObjectId(this.userId);
     if (!this.streamId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Stream ID is required"
       );
     }
-    await validMongooseObjectId(this.streamId);
+    try {
+      await validMongooseObjectId(this.streamId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid Stream ID"
+      );
+    }
     if (!this.title) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
@@ -67,7 +73,14 @@ class UpdateStreamDto {
     if (this.categoryIds && this.categoryIds.length > 0) {
       this.categoryIds.forEach(async (id) => {
         if (id || id.length > 0) {
-          await validMongooseObjectId(id);
+          try {
+            await validMongooseObjectId(this.id);
+          } catch (error) {
+            throw new CoreException(
+              StatusCodeEnums.BadRequest_400,
+              "Invalid Category ID"
+            );
+          }
         }
       });
     }
