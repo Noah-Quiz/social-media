@@ -10,8 +10,10 @@ const CoreException = require("../../exceptions/CoreException");
  *       required:
  *         - id
  *         - email
- *         - displayName
- *         - avavtar
+ *         - name
+ *         - familyName
+ *         - givenName
+ *         - photo
  *       properties:
  *         id:
  *           type: string
@@ -20,12 +22,18 @@ const CoreException = require("../../exceptions/CoreException");
  *           type: string
  *           format: email
  *           description: The user's email address.
- *         displayName:
+ *         name:
  *           type: string
- *           description: The user's display name.
- *         avavtar:
+ *           description: The user's fullname.
+ *         familyName:
  *           type: string
- *           description: The user's avatar.
+ *           description: The user's family name.
+ *         givenName:
+ *           type: string
+ *           description: The user's given name. 
+ *         photo:
+ *           type: string
+ *           description: The user's photo url.
  */
 class LoginGoogleDto {
   constructor(id, email, displayName, avavtar) {

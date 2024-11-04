@@ -77,18 +77,18 @@ class AuthController {
 
   async loginGoogleController(req, res, next) {
     try {
-      const googleUser = req.user;
+      const googleUser = req.user._json;
       console.log(googleUser);
       const ipAddress =
         req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
-      const loginGoogleDto = new LoginGoogleDto(
-        googleUser.id,
-        googleUser.email,
-        googleUser.displayName,
-        googleUser.avatar
-      );
-      await loginGoogleDto.validate();
+      // const loginGoogleDto = new LoginGoogleDto(
+      //   googleUser.id,
+      //   googleUser.email,
+      //   googleUser.displayName,
+      //   googleUser.avatar
+      // );
+      // await loginGoogleDto.validate();
 
       const user = await loginGoogleService(googleUser, ipAddress);
       const accessToken = createAccessToken(
@@ -102,6 +102,40 @@ class AuthController {
       res.redirect(
         `http://localhost:3001?accessToken=${accessToken}&userId=${user._id}`
       );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async loginGoogleFromMobileController(req, res, next) {
+    try {
+      const googleUser = req.body.user;
+      console.log(req.body);
+      const ipAddress =
+        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+      // const loginGoogleDto = new LoginGoogleDto(
+      //   googleUser.id,
+      //   googleUser.email,
+      //   googleUser.displayName,
+      //   googleUser.avatar
+      // );
+      // await loginGoogleDto.validate();
+
+      const user = await loginGoogleService(googleUser, ipAddress);
+      const accessToken = createAccessToken(
+        { _id: user._id, ip: ipAddress },
+        process.env.ACCESS_TOKEN_SECRET,
+        process.env.ACCESS_TOKEN_EXPIRE
+      );
+      res.status(200).json({
+        accessToken,
+        userId: user._id,
+        message: "Login with Google successfully",
+      });
+      // res.redirect(
+      //   `http://localhost:3001?accessToken=${accessToken}&userId=${user._id}`
+      // );
     } catch (error) {
       next(error);
     }
