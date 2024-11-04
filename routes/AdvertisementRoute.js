@@ -4,7 +4,7 @@ const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const AdvertisementController = require("../controllers/AdvertisementController");
 const advertisementController = new AdvertisementController();
 
-// advertisementRoutes.use(AuthMiddleware);
+advertisementRoutes.use(AuthMiddleware);
 
 /**
  * @swagger
