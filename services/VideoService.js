@@ -50,15 +50,12 @@ const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
     if (thumbnailFile) {
-      const thumbnailName = await extractFilenameFromPath(thumbnailFile.path);
-      const thumbnailFolder = await removeFileName(thumbnailFile.path);
-      console.log(thumbnailFolder);
-      data.thumbnailUrl = `https://${process.env.BUNNY_DOMAIN_STORAGE_ZONE}/video/${videoId}/${thumbnailName}`;
-      await uploadBunnyStorageFileService({
-        userId: video.userId,
-        videoId: videoId,
-        videoFolderPath: thumbnailFolder,
-      });
+      data.thumbnailUrl = `${process.env.APP_BASE_URL}/${thumbnailFile.path}`;
+      // await uploadBunnyStorageFileService({
+      //   userId: video.userId,
+      //   videoId: videoId,
+      //   videoFolderPath: thumbnailFolder,
+      // });
     }
 
     const updatedVideo =
