@@ -64,10 +64,14 @@ class VideoController {
       await replaceTsSegmentLinksInM3u8(m3u8, video._id);
       const closestTsFile = await findClosetTsFile(folderPath);
       await createThumbnailFromTsFile(
-        path.join(folderPath, closestTsFile.file),
+        path.join(folderPath, closestTsFile.selectedFile.file),
         folderPath
       );
       await deleteFile(newFilePath);
+
+      await updateAVideoByIdService(video._id, {
+        duration: closestTsFile.duration,
+      });
 
       const queueMessage = {
         userId: userId,

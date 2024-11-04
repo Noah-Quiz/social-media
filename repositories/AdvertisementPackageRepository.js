@@ -54,7 +54,6 @@ class AdvertisementPackageRepository {
 
   async getAPackageByIdRepository(id) {
     try {
-      console.log(id);
       const advertisementPackage = await AdvertisementPackage.findOne({
         _id: new mongoose.Types.ObjectId(id),
       });
