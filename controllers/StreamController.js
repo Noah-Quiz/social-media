@@ -111,7 +111,8 @@ class StreamController {
     let { title, description, categoryIds } = req.body;
     let thumbnailFile = req.file ? req.file.path : null;
     const userId = req.userId;
-    //adjust incase single category
+
+    // Adjust incase single category
     if (typeof categoryIds === "string") {
       if (categoryIds.includes(",")) {
         categoryIds = categoryIds.split(",").map((id) => id.trim());
@@ -119,10 +120,10 @@ class StreamController {
         categoryIds = [categoryIds.trim()];
       }
     }
+
     try {
       const updateStreamDto = new UpdateStreamDto(
         streamId,
-        userId,
         title,
         description,
         categoryIds
@@ -180,7 +181,6 @@ class StreamController {
       const { title, description, categoryIds } = req.body;
       const userId = req.userId;
       const createStreamDto = new CreateStreamDto(
-        userId,
         title,
         description,
         categoryIds
