@@ -12,7 +12,7 @@ const { getVideoService } = require("../services/VideoService");
 const CoreException = require("../exceptions/CoreException");
 
 class AdvertisementController {
-  async createAnAdvertisementController(req, res) {
+  async createAnAdvertisementController(req, res, next) {
     const userId = req.userId;
     const { videoId, packageId } = req.body;
     try {
