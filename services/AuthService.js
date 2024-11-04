@@ -130,7 +130,7 @@ const loginGoogleService = async (user, ipAddress) => {
     const logger = getLogger("LOGIN_GOOGLE"); // Create a LOGIN labeled logger instance
     const connection = new DatabaseTransaction();
     const existingUser = await connection.userRepository.findUserByEmail(
-      user.emails[0].value
+      user.email
     );
     const rate =
       await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
@@ -154,10 +154,10 @@ const loginGoogleService = async (user, ipAddress) => {
     }
 
     const newUser = await connection.userRepository.createUser({
-      fullName: user.displayName,
-      email: user.emails[0].value,
-      googleId: user.id,
-      avatar: user.photos[0].value,
+      fullName: user.name,
+      email: user.email,
+      googleId: user.sub||user.id,
+      avatar: user.picture||user.photo,
       verify: true,
       lastLogin: Date.now(),
       streak: 1,
