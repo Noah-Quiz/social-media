@@ -242,6 +242,9 @@ const getChildrenCommentsService = async (commentId, limit) => {
     throw new Error(error.message);
   }
 };
+const checkLiked = (likeBy, requester) => {
+  return likeBy.includes(requester);
+};
 module.exports = {
   createCommentService,
   getCommentService,
