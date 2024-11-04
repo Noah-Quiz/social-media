@@ -3,7 +3,7 @@ const {
   getStreamService,
 } = require("../services/StreamService");
 const { createAMessageService } = require("../services/MessageService");
-const { getAnUserByIdService } = require("../services/UserService");
+const { getUserByIdService } = require("../services/UserService");
 const getLogger = require("../utils/logger.js");
 const { getRoomService } = require("../services/RoomService.js");
 const { getVideoService } = require("../services/VideoService.js");
@@ -30,7 +30,7 @@ module.exports = (io) => {
     // Handle sending messages in rooms
     socket.on("send_message", async ({ roomId, userId, message }) => {
       await createAMessageService(userId, roomId, message);
-      const user = await getAnUserByIdService(userId);
+      const user = await getUserByIdService(userId);
       io.to(roomId).emit("receive_message", {
         sender: user.fullName,
         message,
