@@ -29,14 +29,20 @@ module.exports = (io) => {
 
     // Handle sending messages in rooms
     socket.on("send_message", async ({ roomId, userId, message }) => {
-      await createAMessageService(userId, roomId, message);
-      const user = await getUserByIdService(userId);
-      io.to(roomId).emit("receive_message", {
-        sender: user.fullName,
-        message,
-        avatar: user.avatar,
-      });
-      logger.info(`Message sent to room ${roomId}`);
+      try {
+        await createAMessageService(userId, roomId, message);
+        const user = await getUserByIdService(userId);
+        io.to(roomId).emit("receive_message", {
+          sender: user.nickName,
+          message,
+          avatar: user.avatar,
+        });
+        logger.info(`Message sent to room ${roomId}`);
+      } catch (error) {
+        io.to(roomId).emit("receive_message", {
+          messageError: "Fail to send message",
+        });
+      }
     });
 
     // Handle leaving a livestream
