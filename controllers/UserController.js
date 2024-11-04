@@ -29,12 +29,12 @@ const DeleteUserDto = require("../dtos/User/DeleteUserDto");
 class UserController {
   async getAllUsersController(req, res, next) {
     try {
-      const { page, size, name } = req.query;
+      const { page, size, search } = req.query;
 
       const result = await getAllUsersService(
         page || 1,
         size || 10,
-        name || ""
+        search || ""
       );
 
       return res.status(StatusCodeEnums.OK_200).json(result);

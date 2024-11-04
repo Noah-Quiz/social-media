@@ -3,7 +3,6 @@ const Message = require("../entities/MessageEntity");
 
 class MessageRepository {
   async createMessage(data, session) {
-    console.log(data);
     try {
       const message = await Message.create([data], { session });
       return message[0];

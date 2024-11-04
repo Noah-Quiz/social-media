@@ -13,31 +13,31 @@ const CoreException = require("../exceptions/CoreException");
 
 class AdvertisementController {
   async createAnAdvertisementController(req, res, next) {
+    const userId = req.userId;
+    const { videoId, packageId } = req.body;
     try {
-      const { userId, videoId, packageId } = req.body;
-
       if (
         !mongoose.Types.ObjectId.isValid(userId) ||
         !mongoose.Types.ObjectId.isValid(videoId)
       ) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Invalid userId or videoId"
-        );
+        return res
+          .status(StatusCodeEnums.BadRequest_400)
+          .json({ message: "VideoId or UserId is not ObjectId" });
       }
 
       const video = await getVideoService(videoId);
 
       const checkUserId = new mongoose.Types.ObjectId(userId);
       if (!video.userId.equals(checkUserId)) {
-        console.log(video.userId);
-        console.log(checkUserId);
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "User is not owner of this video"
-        );
+        return res
+          .status(StatusCodeEnums.BadRequest_400)
+          .json({ message: "This user does not own this video" });
       }
-
+      if (video.enumMode != "public" || video.enumMode != "member") {
+        return res.status(StatusCodeEnums.BadRequest_400).json({
+          message: "Type of video for advertisement must be public or member",
+        });
+      }
       const result = await createAnAdvertisementService(
         userId,
         videoId,

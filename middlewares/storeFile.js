@@ -206,7 +206,7 @@ const findClosetTsFile = async (directory) => {
         selectedFile.file
       }, Duration: ${selectedFile.duration.toFixed(2)} seconds`
     );
-    return selectedFile;
+    return { selectedFile: selectedFile, duration: totalDuration.toFixed(2) };
   } catch (error) {
     console.error("Error finding file closest to 10%:", error);
     throw error;
@@ -536,6 +536,7 @@ const storage = multer.diskStorage({
         dirPath = path.join(`assets/videos/${userIdFromToken}/${Date.now()}`);
       case "videoThumbnail":
         const { videoId } = req.params;
+        baseName = videoId;
         fileName = `${baseName}${ext}`;
         dirPath = path.join(
           `assets/videos/${videoId}/${

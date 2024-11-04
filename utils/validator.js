@@ -62,12 +62,16 @@ const validPhoneNumber = async (phoneNumber) => {
 };
 
 const contentModeration = (content) => {
-  const words = content.trim().replace(/\s+/g, " ");
-  const eachWord = words.split(" ");
-  for (const word of eachWord) {
-    if (banWords.includes(word)) {
-      throw new Error("This content violates community guidelines");
+  try {
+    const words = content.trim().replace(/\s+/g, " ");
+    const eachWord = words.split(" ");
+    for (const word of eachWord) {
+      if (banWords.includes(word)) {
+        throw new Error("This content violates community guidelines");
+      }
     }
+  } catch (error) {
+    throw new Error("This content violates community guidelines");
   }
 };
 module.exports = {

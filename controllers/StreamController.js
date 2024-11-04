@@ -108,10 +108,17 @@ class StreamController {
 
   async updateStreamController(req, res, next) {
     const { streamId } = req.params;
-    const { title, description, categoryIds } = req.body;
+    let { title, description, categoryIds } = req.body;
     let thumbnailFile = req.file ? req.file.path : null;
     const userId = req.userId;
-
+    //adjust incase single category
+    if (typeof categoryIds === "string") {
+      if (categoryIds.includes(",")) {
+        categoryIds = categoryIds.split(",").map((id) => id.trim());
+      } else {
+        categoryIds = [categoryIds.trim()];
+      }
+    }
     try {
       const updateStreamDto = new UpdateStreamDto(
         streamId,
