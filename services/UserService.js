@@ -6,13 +6,13 @@ const { validFullName, validEmail } = require("../utils/validator");
 const bcrypt = require("bcrypt");
 const { sendVerificationEmailService } = require("./AuthService");
 module.exports = {
-  getAllUsersService: async (page, size, name) => {
+  getAllUsersService: async (page, size, search) => {
     const connection = new DatabaseTransaction();
 
     const users = await connection.userRepository.getAllUsersRepository(
       page,
       size,
-      name
+      search
     );
 
     return users;

@@ -66,7 +66,7 @@ class AuthController {
         process.env.ACCESS_TOKEN_SECRET,
         process.env.ACCESS_TOKEN_EXPIRE
       );
-
+      console.log(accessToken);
       // res
       //   .status(StatusCodeEnums.OK_200)
       //   .json({ accessToken, message: "Login successfully" });

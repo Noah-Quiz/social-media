@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose");
 const Advertisement = require("../entities/Advertisement");
 const AdvertisementPackage = require("../entities/AdvertisementPackage");
 const cron = require("node-cron");
+const User = require("../entities/UserEntity");
 
 cron.schedule("* * * * *", async () => {
   const advertisements = await Advertisement.find({
@@ -55,7 +56,13 @@ class AdvertisementRepository {
       } else {
         expDate.setFullYear(expDate.getFullYear() + numberOfDateUnit);
       }
+      const user = await User.findById(userId);
+      if (user.wallet.coin < advertisementPackage.coin) {
+        throw new Error("Your coin is not enough");
+      }
 
+      user.wallet.coin -= advertisementPackage.coin;
+      await user.save();
       const advertisement = await Advertisement.create({
         userId,
         videoId,
