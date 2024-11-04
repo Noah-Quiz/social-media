@@ -82,6 +82,7 @@ const uploadBunnyStorageFileService = async ({
   videoFolderPath,
 }) => {
   try {
+    logger.info(`Uploading video to Bunny Storage: ${videoFolderPath}`);
     const files = fs.readdirSync(videoFolderPath);
     const filteredFiles = files.filter(file => file.includes(videoId));
     const totalFiles = filteredFiles.length; // Total number of files to upload
@@ -90,7 +91,6 @@ const uploadBunnyStorageFileService = async ({
       const filePath = `${videoFolderPath}/${file}`;
       console.log(filePath);
       const fileStream = fs.createReadStream(filePath);
-      const fileSize = fs.statSync(filePath).size;
       const fileName = await extractFilenameFromPath(filePath);
 
       const url = `https://${process.env.BUNNY_STORAGE_HOST_NAME}/${process.env.BUNNY_STORAGE_ZONE_NAME}/video/${videoId}/${fileName}`;

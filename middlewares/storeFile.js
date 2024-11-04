@@ -536,6 +536,7 @@ const storage = multer.diskStorage({
         dirPath = path.join(`assets/videos/${userIdFromToken}/${Date.now()}`);
       case "videoThumbnail":
         const { videoId } = req.params;
+        baseName = videoId;
         fileName = `${baseName}${ext}`;
         dirPath = path.join(
           `assets/videos/${videoId}/${
