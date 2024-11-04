@@ -50,35 +50,52 @@ class StreamRepository {
             localField: "categoryIds",
             foreignField: "_id",
             as: "categories",
-            pipeline: [
-              {
-                $project: {
-                  name: 1,
-                  imageUrl: 1,
-                  _id: 0,
-                },
-              },
-            ],
+          },
+        },
+        {
+          $addFields: {
+            likesCount: { $size: "$likedBy" },
+            currentViewCount: { $ifNull: ["$currentViewCount", 0] },
           },
         },
         {
           $project: {
-            merged: {
-              $mergeObjects: [
-                "$$ROOT",
-                {
-                  user: {
-                    fullName: "$user.fullName",
-                    nickName: "$user.nickName",
-                    avatar: "$user.avatar",
-                  },
+            _id: 1,
+            title: 1,
+            description: 1,
+            thumbnailUrl: 1,
+            streamServerUrl: 1,
+            streamOnlineUrl: 1,
+            currentViewCount: 1,
+            peakViewCount: 1,
+            likesCount: 1,
+            rtmps: 1,
+            rtmpsPlayback: 1,
+            srt: 1,
+            srtPlayback: 1,
+            webRtc: 1,
+            webRtcPlayback: 1,
+            status: 1,
+            dateCreated: 1,
+            user: {
+              _id: 1,
+              fullName: "$user.fullName",
+              nickName: "$user.nickName",
+              avatar: "$user.avatar",
+            },
+            categories: {
+              $map: {
+                input: "$categories",
+                as: "category",
+                in: {
+                  _id: "$$category._id",
+                  name: "$$category.name",
+                  imageUrl: "$$category.imageUrl",
                 },
-              ],
+              },
             },
           },
         },
-        { $replaceRoot: { newRoot: "$merged" } },
-        { $project: { categoryIds: 0 } },
       ]);
 
       return result[0] || null;
@@ -181,6 +198,8 @@ class StreamRepository {
         {
           $project: {
             _id: 1,
+            title: 1,
+            description: 1,
             thumbnailUrl: 1,
             streamServerUrl: 1,
             streamOnlineUrl: 1,
@@ -216,8 +235,8 @@ class StreamRepository {
       return {
         streams,
         total: totalStreams,
-        page: page,
-        totalPages: Math.ceil(totalStreams / size),
+        page: Number(page),
+        totalPages: Math.ceil(totalStreams / Number(size)),
       };
     } catch (error) {
       throw new Error(`Error getting streams: ${error.message}`);
@@ -366,6 +385,8 @@ class StreamRepository {
         {
           $project: {
             _id: 1,
+            title: 1,
+            description: 1,
             thumbnailUrl: 1,
             streamServerUrl: 1,
             streamOnlineUrl: 1,
@@ -439,6 +460,8 @@ class StreamRepository {
         {
           $project: {
             _id: 1,
+            title: 1,
+            description: 1,
             thumbnailUrl: 1,
             streamServerUrl: 1,
             streamOnlineUrl: 1,
