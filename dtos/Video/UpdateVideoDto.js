@@ -87,11 +87,13 @@ class UpdateVideoDto {
       );
     }
     if (this.categoryIds && this.categoryIds.length > 0) {
-      this.categoryIds.forEach(async (id) => {
-        if (id || id.length > 0) {
-          await validMongooseObjectId(id);
-        }
-      });
+      await Promise.all(
+        this.categoryIds.forEach(async (id) => {
+          if (id || id.length > 0) {
+            await validMongooseObjectId(id);
+          }
+        })
+      );
     }
     // if (!this.videoThumbnailFile) {
     //   throw new CoreException(
