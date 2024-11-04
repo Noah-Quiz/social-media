@@ -103,7 +103,7 @@ authRoutes.get(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/LoginGoogleDto'
- *     responses:
+ *     responses: 
  *      200:
  *       description: Login with Google successfully
  *      400:
