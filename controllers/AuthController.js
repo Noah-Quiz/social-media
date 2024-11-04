@@ -127,7 +127,7 @@ class AuthController {
         process.env.ACCESS_TOKEN_SECRET,
         process.env.ACCESS_TOKEN_EXPIRE
       );
-      res.status(200).json({
+      res.status(StatusCodeEnums.OK_200).json({
         accessToken,
         userId: user._id,
         message: "Login with Google successfully",

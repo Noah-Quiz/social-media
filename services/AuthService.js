@@ -141,10 +141,10 @@ const loginGoogleService = async (user, ipAddress) => {
         existingUser.verify = true;
       }
       if (existingUser.googleId === "") {
-        existingUser.googleId = user.id;
+        existingUser.googleId = user.sub||user.id;
       }
       if (existingUser.avatar === "") {
-        existingUser.avatar = user.photos[0].value;
+        existingUser.avatar =  user.picture||user.photo;
       }
       await handleLoginStreakService(existingUser, rate);
 
