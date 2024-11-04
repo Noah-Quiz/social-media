@@ -93,12 +93,12 @@ class UpdateVideoDto {
         }
       });
     }
-    if (!this.videoThumbnailFile) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Video thumbnail is required"
-      );
-    }
+    // if (!this.videoThumbnailFile) {
+    //   throw new CoreException(
+    //     StatusCodeEnums.BadRequest_400,
+    //     "Video thumbnail is required"
+    //   );
+    // }
   }
 }
 

@@ -77,27 +77,51 @@ class UserRepository {
     }
   }
 
-  async getAllUsersRepository(page, size, name) {
+  async getAllUsersRepository(page, size, search) {
     try {
       const query = { isDeleted: false };
 
-      if (name) {
+      if (search) {
         query.$or = [
-          { fullName: { $regex: name, $options: "i" } },
-          { nickName: { $regex: name, $options: "i" } },
+          { fullName: { $regex: search, $options: "i" } },
+          { nickName: { $regex: search, $options: "i" } },
         ];
       }
 
       const skip = (page - 1) * size;
-      const users = await User.find(query)
-        .select("email fullName nickName follow followBy avatar phoneNumber")
-        .skip(skip)
-        .limit(size);
+      const users = await User.aggregate([
+        { $match: query },
+        {
+          $addFields: {
+            followByCount: { $size: "$followBy" },
+          },
+        },
+        {
+          $sort: { followByCount: -1 },
+        },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: size,
+        },
+        {
+          $project: {
+            email: 1,
+            fullName: 1,
+            nickName: 1,
+            follow: 1,
+            followBy: 1,
+            avatar: 1,
+            phoneNumber: 1,
+          },
+        },
+      ]);
 
       const totalUsers = await User.countDocuments(query);
 
       return {
-        data: users,
+        users,
         message: "Get all users successfully",
         page: page,
         total: totalUsers,

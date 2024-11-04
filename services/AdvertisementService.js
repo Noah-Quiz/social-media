@@ -5,6 +5,7 @@ module.exports = {
   async createAnAdvertisementService(userId, videoId, packageId) {
     try {
       const connection = new DatabaseTransaction();
+
       const advertisement =
         await connection.advertisementRepository.createAnAdvertisementRepository(
           userId,
