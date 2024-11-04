@@ -73,7 +73,9 @@ const deleteMessageService = async (userId, messageId) => {
 const createAMessageService = async (userId, roomId, content) => {
   try {
     const connection = new DatabaseTransaction();
+    console.log("đã tới đây");
     contentModeration(content);
+    console.log("đã tới đây 1");
     const response = await connection.messageRepository.createMessage({
       userId,
       roomId,

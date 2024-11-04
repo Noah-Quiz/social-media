@@ -105,7 +105,6 @@ class MessageController {
     try {
       const userId = req.userId;
       const { roomId, content } = req.body;
-      // const userId = req.userId;
       const createMessageDto = new CreateMessageDto(userId, roomId, content);
       await createMessageDto.validate();
 
