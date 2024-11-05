@@ -13,7 +13,14 @@ class DeleteHistoryRecordDto {
         "History ID is required"
       );
     }
-    await validMongooseObjectId(this.historyId);
+    try {
+      await validMongooseObjectId(this.historyId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid History ID"
+      );
+    }
   }
 }
 

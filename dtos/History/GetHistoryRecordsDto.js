@@ -16,7 +16,14 @@ class GetHistoryRecordsDto {
         "User ID is required"
       );
     }
-    await validMongooseObjectId(this.userId);
+    try {
+      await validMongooseObjectId(this.userId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid User ID"
+      );
+    }
 
     if (this.page && this.page < 1) {
       throw new CoreException(

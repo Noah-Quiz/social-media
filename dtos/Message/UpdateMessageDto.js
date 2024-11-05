@@ -34,7 +34,14 @@ class UpdateMessageDto {
         StatusCodeEnums.BadRequest_400,
         "User ID is required"
       );
-    await validMongooseObjectId(this.userId);
+    try {
+      await validMongooseObjectId(this.userId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid User ID"
+      );
+    }
     if (!this.content)
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,

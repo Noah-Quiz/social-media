@@ -17,7 +17,10 @@ class UnlikeCommentDto {
     try {
       await validMongooseObjectId(this.id);
     } catch (error) {
-      throw error;
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid comment id"
+      );
     }
     if (!this.userId)
       throw new CoreException(
@@ -27,7 +30,10 @@ class UnlikeCommentDto {
     try {
       await validMongooseObjectId(this.userId);
     } catch (error) {
-      throw error;
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid user id"
+      );
     }
   }
 }

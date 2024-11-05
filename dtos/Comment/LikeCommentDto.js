@@ -14,7 +14,14 @@ class LikeCommentDto {
         StatusCodeEnums.BadRequest_400,
         "Comment id is required"
       );
-    await validMongooseObjectId(this.id);
+    try {
+      await validMongooseObjectId(this.id);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid comment id"
+      );
+    }
     if (!this.userId)
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
@@ -23,7 +30,10 @@ class LikeCommentDto {
     try {
       await validMongooseObjectId(this.userId);
     } catch (error) {
-      throw error;
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid user id"
+      );
     }
   }
 }

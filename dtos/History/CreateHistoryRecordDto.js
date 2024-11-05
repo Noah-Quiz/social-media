@@ -30,7 +30,10 @@ class CreateHistoryRecordDto {
     try {
       await validMongooseObjectId(this.userId);
     } catch (error) {
-      throw error;
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid User ID"
+      );
     }
 
     if (!this.videoId) {
@@ -42,7 +45,10 @@ class CreateHistoryRecordDto {
     try {
       await validMongooseObjectId(this.videoId);
     } catch (error) {
-      throw error;
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid Video ID"
+      );
     }
   }
 }
