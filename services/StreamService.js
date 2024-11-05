@@ -1,12 +1,8 @@
 const { default: axios } = require("axios");
 const Stream = require("../entities/StreamEntity.js");
-const User = require("../entities/UserEntity.js");
 const StatusCodeEnums = require("../enums/StatusCodeEnum.js");
 const CoreException = require("../exceptions/CoreException.js");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction.js");
-const {
-  deleteCloudFlareStreamLiveInput,
-} = require("./CloudFlareStreamService.js");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
@@ -17,15 +13,19 @@ const getStreamService = async (streamId, requester) => {
     const stream = await connection.streamRepository.getStreamRepository(
       streamId
     );
+
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
+
     let process = stream;
-    const isOwner = stream.userId.toString() === requester.toString();
+    const isOwner = stream?.userId?.toString() === requester?.toString();
+
     //if owner => nothing is change
     if (isOwner) {
       return process;
     }
+
     //if not owner => check private stream
     process = cleanStreamFromNonOwner(stream);
     if (stream.enumMode === "private") {
@@ -43,13 +43,16 @@ const getStreamService = async (streamId, requester) => {
       if (isMember) {
         return process;
       }
+
       const result = updateStreamForNonMembership(
         [process],
         [process._id],
         "member"
       );
+
       return result.length === 1 ? result[0] : result;
     }
+
     return process;
   } catch (error) {
     throw error;
@@ -67,10 +70,10 @@ const getStreamsService = async (query, requester) => {
       .filter(
         (stream) =>
           stream.enumMode !== "private" ||
-          stream.userId?.toString() === requester.toString()
+          stream.userId?.toString() === requester?.toString()
       )
       .map(async (stream) => {
-        const isOwner = stream.userId?.toString() === requester.toString();
+        const isOwner = stream.userId?.toString() === requester?.toString();
         if (isOwner) {
           return stream; // Return unmodified stream if requester is owner
         }
@@ -128,7 +131,7 @@ const updateStreamService = async (userId, streamId, updateData) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
 
-    if (stream.userId.toString() !== userId) {
+    if (stream.user._id?.toString() !== userId) {
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
         "You do not have permission to perform this action"
@@ -168,7 +171,7 @@ const deleteStreamService = async (userId, streamId) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
 
-    if (stream.userId.toString() !== userId) {
+    if (stream.userId?.toString() !== userId) {
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
         "You do not have permission to perform this action"
@@ -262,19 +265,6 @@ const getRelevantStreamsService = async (data) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const { streamerId } = data;
-
-    const streamer = await connection.userRepository.getAnUserByIdRepository(
-      streamerId
-    );
-
-    if (!streamer) {
-      throw new CoreException(
-        StatusCodeEnums.NotFound_404,
-        "Streamer not found"
-      );
-    }
-
     const result =
       await connection.streamRepository.getRelevantStreamsRepository(data);
 
@@ -331,7 +321,7 @@ const checkMemberShip = async (requester, userId) => {
     // Use 'some' to check if the requester is a member
     let isMember = false;
     memberGroup.members.map((member) => {
-      if (member.memberId.toString() === requester) {
+      if (member.memberId?.toString() === requester) {
         isMember = true;
       }
     });

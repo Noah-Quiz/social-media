@@ -160,7 +160,7 @@ const getVideosByUserIdService = async (userId, sortBy, requester) => {
     let processedVideos = videos.filter(
       (video) =>
         video.enumMode !== "private" ||
-        video.userId.toString() === requester.toString()
+        video.userId?.toString() === requester?.toString()
     );
 
     // Handle member-only videos
@@ -197,7 +197,7 @@ const getVideoService = async (videoId, requester) => {
       throw new Error(`Video with id ${videoId} does not exist`);
     }
     if (video.enumMode === "private") {
-      if (requester.toString() !== video.userId.toString()) {
+      if (requester?.toString() !== video.userId?.toString()) {
         const updatedVideos = updateVideosForNonMembership(
           [video],
           [video._id],
@@ -210,7 +210,7 @@ const getVideoService = async (videoId, requester) => {
       return video; // Requester is the owner, return the video
     } else if (video.enumMode === "member") {
       const isMember = await checkMemberShip(requester, video.userId);
-      if (!isMember && requester.toString() !== video.userId.toString()) {
+      if (!isMember && requester?.toString() !== video.userId?.toString()) {
         //not member & not owner
         const updatedVideos = updateVideosForNonMembership(
           [video],
@@ -273,7 +273,7 @@ const getVideosByPlaylistIdService = async (
     const resultVideos = [];
 
     for (let [userId, userVideos] of Object.entries(videosByOwner)) {
-      const isOwner = requester.toString() === userId.toString();
+      const isOwner = requester?.toString() === userId?.toString();
 
       // Step 3: Filter out private videos if the requester is not the owner
       let processedVideos = userVideos.filter(
@@ -331,7 +331,7 @@ const deleteVideoService = async (videoId, userId) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, `Video not found`);
     }
 
-    if (video.userId.toString() !== userId && notAdmin) {
+    if (video.userId?.toString() !== userId && notAdmin) {
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
         "You do not have permission to perform this action"
@@ -396,7 +396,7 @@ const checkMemberShip = async (requester, userId) => {
     // Use 'some' to check if the requester is a member
     let isMember = false;
     memberGroup.members.map((member) => {
-      if (member.memberId.toString() === requester) {
+      if (member.memberId?.toString() === requester) {
         isMember = true;
       }
     });

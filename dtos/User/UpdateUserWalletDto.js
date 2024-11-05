@@ -39,7 +39,11 @@ class UpdateUserWalletDto {
         "Missing field: userId"
       );
     }
-    await validMongooseObjectId(this.userId);
+    try {
+      await validMongooseObjectId(this.userId);
+    } catch (error) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid userId");
+    }
     if (!this.amount) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,

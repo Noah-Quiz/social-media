@@ -17,7 +17,10 @@ class DeleteCategoryDto {
       }
       await validMongooseObjectId(this.categoryId);
     } catch (error) {
-      throw error;
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid category ID"
+      );
     }
   }
 }

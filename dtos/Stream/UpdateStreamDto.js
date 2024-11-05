@@ -10,6 +10,8 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *       type: object
  *       required:
  *         - title
+ *         - description
+ *         - categoryIds
  *       properties:
  *         title:
  *           type: string
@@ -28,28 +30,27 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           description: The thumbnail file for the stream.
  */
 class UpdateStreamDto {
-  constructor(streamId, userId, title, description, categoryIds) {
+  constructor(streamId, title, description, categoryIds) {
     this.streamId = streamId;
-    this.userId = userId;
     this.title = title;
     this.description = description;
     this.categoryIds = categoryIds;
   }
   async validate() {
-    if (!this.userId) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "User ID is required"
-      );
-    }
-    await validMongooseObjectId(this.userId);
     if (!this.streamId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Stream ID is required"
       );
     }
-    await validMongooseObjectId(this.streamId);
+    try {
+      await validMongooseObjectId(this.streamId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid Stream ID"
+      );
+    }
     if (!this.title) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
@@ -63,11 +64,20 @@ class UpdateStreamDto {
       );
     }
     if (this.categoryIds && this.categoryIds.length > 0) {
-      this.categoryIds.forEach(async (id) => {
-        if (id || id.length > 0) {
-          await validMongooseObjectId(id);
-        }
-      });
+      await Promise.all(
+        this.categoryIds.map(async (id) => {
+          if (id || id.length > 0) {
+            try {
+              await validMongooseObjectId(id);
+            } catch (error) {
+              throw new CoreException(
+                StatusCodeEnums.BadRequest_400,
+                "Invalid Category ID"
+              );
+            }
+          }
+        })
+      );
     }
   }
 }

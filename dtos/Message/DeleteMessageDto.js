@@ -14,13 +14,27 @@ class DeleteMessageDto {
         StatusCodeEnums.BadRequest_400,
         "Message ID is required"
       );
-    await validMongooseObjectId(this.messageId);
+    try {
+      await validMongooseObjectId(this.messageId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid Message ID"
+      );
+    }
     if (!this.userId)
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "User ID is required"
       );
-    await validMongooseObjectId(this.userId);
+    try {
+      await validMongooseObjectId(this.userId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid User ID"
+      );
+    }
   }
 }
 

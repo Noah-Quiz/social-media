@@ -15,7 +15,14 @@ class GenerateVideoEmbedUrlTokenDto {
         "Video ID and date expire are required"
       );
     }
-    await validMongooseObjectId(this.videoId);
+    try {
+      await validMongooseObjectId(this.videoId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid video ID"
+      );
+    }
 
     if (isNaN(this.dateExpire) || this.dateExpire <= 0) {
       throw new CoreException(

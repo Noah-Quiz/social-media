@@ -167,7 +167,12 @@ class VideoController {
         thumbnailFile
       );
 
-      await updateVideoDto.validate();
+      try {
+        await updateVideoDto.validate();
+      } catch (validationError) {
+        // Pass validation errors to Express error-handling middleware
+        return next(validationError);
+      }
 
       const updateData = {
         title: data.title,
@@ -261,13 +266,9 @@ class VideoController {
       //   video.bunnyId
       // );
 
-      const result = {
-        video,
-      };
-
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ message: "Success", result });
+        .json({ message: "Success", video: video });
     } catch (error) {
       next(error);
     }
@@ -278,7 +279,6 @@ class VideoController {
       const query = {
         size: req.query.size,
         page: req.query.page,
-        status: req.query.status,
         sortBy: req.query.sortBy,
         order: req.query.order,
         title: req.query.title,
