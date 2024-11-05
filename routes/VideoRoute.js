@@ -219,7 +219,7 @@ videoRoutes.post(
  *         description: Internal server error
  */
 
-videoRoutes.get("/", AuthMiddleware, videoController.getVideosController);
+videoRoutes.get("/", videoController.getVideosController);
 
 /**
  * @swagger
@@ -580,7 +580,6 @@ videoRoutes.patch(
 
 videoRoutes.get(
   "/:videoId",
-  AuthMiddleware,
   videoController.getVideoController
 );
 

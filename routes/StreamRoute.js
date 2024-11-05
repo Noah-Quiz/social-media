@@ -311,7 +311,7 @@ streamRoutes.get(
  *       500:
  *         description: Internal server error
  */
-streamRoutes.get("/", AuthMiddleware, streamController.getStreamsController);
+streamRoutes.get("/", streamController.getStreamsController);
 
 /**
  * @swagger
@@ -541,7 +541,6 @@ streamRoutes.delete(
  */
 streamRoutes.get(
   "/:streamId",
-  AuthMiddleware,
   streamController.getStreamController
 );
 
