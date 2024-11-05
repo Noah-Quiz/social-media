@@ -32,14 +32,28 @@ class CreateMessageDto {
         "User ID is required"
       );
     }
-    await validMongooseObjectId(this.userId);
+    try {
+      await validMongooseObjectId(this.userId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid User ID"
+      );
+    }
     if (!this.roomId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Room ID is required"
       );
     }
-    await validMongooseObjectId(this.roomId);
+    try {
+      await validMongooseObjectId(this.roomId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid Room ID"
+      );
+    }
   }
 }
 

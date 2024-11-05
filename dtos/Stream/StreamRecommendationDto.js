@@ -18,13 +18,10 @@ const { validMongooseObjectId } = require("../../utils/validator");
 
 class StreamRecommendationDto {
   constructor(streamerId, categoryIds) {
-    this.streamerId = streamerId;
     this.categoryIds = categoryIds;
   }
 
   async validate() {
-    await validMongooseObjectId(this.streamerId);
-
     if (this.categoryIds && !Array.isArray(this.categoryIds)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
@@ -33,7 +30,14 @@ class StreamRecommendationDto {
     }
     if (this.categoryIds) {
       this.categoryIds.forEach(async (id) => {
-        await validMongooseObjectId(id);
+        try {
+          await validMongooseObjectId(id);
+        } catch (error) {
+          throw new CoreException(
+            StatusCodeEnums.BadRequest_400,
+            `Invalid category ID: ${id}`
+          );
+        }
       });
     }
   }

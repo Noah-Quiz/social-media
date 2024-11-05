@@ -48,6 +48,7 @@ class StreamController {
     const query = {
       size: req.query.size,
       page: req.query.page,
+      title: req.query.title,
       status: req.query.status,
       sortBy: req.query.sortBy,
       order: req.query.order,
@@ -108,14 +109,22 @@ class StreamController {
 
   async updateStreamController(req, res, next) {
     const { streamId } = req.params;
-    const { title, description, categoryIds } = req.body;
+    let { title, description, categoryIds } = req.body;
     let thumbnailFile = req.file ? req.file.path : null;
     const userId = req.userId;
+
+    // Adjust incase single category
+    if (typeof categoryIds === "string") {
+      if (categoryIds.includes(",")) {
+        categoryIds = categoryIds.split(",").map((id) => id.trim());
+      } else {
+        categoryIds = [categoryIds.trim()];
+      }
+    }
 
     try {
       const updateStreamDto = new UpdateStreamDto(
         streamId,
-        userId,
         title,
         description,
         categoryIds
@@ -173,7 +182,6 @@ class StreamController {
       const { title, description, categoryIds } = req.body;
       const userId = req.userId;
       const createStreamDto = new CreateStreamDto(
-        userId,
         title,
         description,
         categoryIds
@@ -264,19 +272,16 @@ class StreamController {
   }
 
   async getRelevantStreamsController(req, res, next) {
-    const { streamerId, categoryIds } = req.body;
-    const userId = req.userId;
-
+    const { categoryIds } = req.body;
+    console.log(categoryIds)
     try {
       const streamRecommendationDto = new StreamRecommendationDto(
-        streamerId,
         categoryIds
       );
       await streamRecommendationDto.validate();
 
       const data = {
-        streamerId,
-        categoryIds,
+        categoryIds
       };
 
       const streams = await getRelevantStreamsService(data);

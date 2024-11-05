@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
 const createCommentService = async (userId, videoId, content, responseTo) => {
@@ -96,23 +97,44 @@ const sendNotificationsForComment = async (
   }
 };
 
-const getCommentService = async (id) => {
+const getCommentService = async (id, requester) => {
   const connection = new DatabaseTransaction();
   try {
     const comment = await connection.commentRepository.getComment(id);
+
+    //count number of
+    if (comment) {
+      comment.likes = (comment.likeBy || []).length;
+      comment.isLiked = (comment.likeBy || []).some(
+        (userId) => userId?.toString() === requester?.toString()
+      );
+      delete comment.likeBy;
+    }
+
     return comment;
   } catch (error) {
     throw new Error(error.message);
   }
 };
-const getVideoCommentsService = async (videoId, sortBy) => {
+
+const getVideoCommentsService = async (videoId, sortBy, requester) => {
   const connection = new DatabaseTransaction();
   try {
-    const comment = await connection.commentRepository.getAllCommentVideoId(
+    let comments = await connection.commentRepository.getAllCommentVideoId(
       videoId,
       sortBy
     );
-    return comment;
+
+    //remove likeBy field, likes number, isLiked by a requester
+    comments = comments.map((comment) => {
+      comment.likes = (comment.likeBy || []).length;
+      comment.isLiked = (comment.likeBy || []).some(
+        (userId) => userId?.toString() === requester?.toString()
+      );
+      delete comment.likeBy;
+      return comment;
+    });
+    return comments;
   } catch (error) {
     throw new Error(error.message);
   }
@@ -124,7 +146,7 @@ const updateCommentService = async (userId, id, content) => {
   try {
     const originalComment = await connection.commentRepository.getComment(id);
     let notCommentOwner =
-      originalComment.userId.toString() !== userId.toString();
+      originalComment.userId?.toString() !== userId?.toString();
     if (notCommentOwner) {
       throw new Error("You can not update other people comment");
     }
@@ -164,10 +186,10 @@ const softDeleteCommentService = async (userId, id) => {
 
     let notAdmin = user.role !== 1;
 
-    let notVideoOwner = userId.toString() !== video.userId.toString();
+    let notVideoOwner = userId?.toString() !== video.userId?.toString();
 
     let notCommentOwner =
-      originalComment.userId.toString() !== userId.toString();
+      originalComment.userId?.toString() !== userId?.toString();
 
     if (notCommentOwner && notVideoOwner && notAdmin) {
       throw new Error("Not authorized to delete this comment");
@@ -225,7 +247,7 @@ const unlikeService = async (userId, commentId) => {
     throw new Error(error.message);
   }
 };
-const getChildrenCommentsService = async (commentId, limit) => {
+const getChildrenCommentsService = async (commentId, limit, requester) => {
   const connection = new DatabaseTransaction();
 
   try {
@@ -233,11 +255,31 @@ const getChildrenCommentsService = async (commentId, limit) => {
       commentId,
       limit
     );
+    const transformComment = (comment) => {
+      comment.likes = (comment.likeBy || []).length;
+      comment.isLiked = (comment.likeBy || []).some(
+        (userId) => userId?.toString() === requester?.toString()
+      );
+      delete comment.likeBy;
+
+      if (comment.children && Array.isArray(comment.children)) {
+        comment.children = comment.children.map(transformComment);
+      }
+
+      return comment;
+    };
+
+    // Apply transformation to each top-level comment and its nested children
+    const transformedComments = comments.map(transformComment);
+
     const maxLevel =
-      comments.length > 0
-        ? Math.max(...comments[0].children.map((comment) => comment.level))
+      transformedComments.length > 0
+        ? Math.max(
+            ...transformedComments[0].children.map((comment) => comment.level)
+          )
         : 0;
-    return { comments, maxLevel };
+
+    return { comments: transformedComments, maxLevel };
   } catch (error) {
     throw new Error(error.message);
   }
