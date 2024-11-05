@@ -160,7 +160,7 @@ class StreamRepository {
       else if (query.sortBy === "date") sortField = "dateCreated";
 
       sortOrder = query.order === "ascending" ? 1 : -1;
-
+      
       const totalStreams = await Stream.countDocuments({
         ...searchQuery,
         $or: [

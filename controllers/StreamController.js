@@ -48,6 +48,7 @@ class StreamController {
     const query = {
       size: req.query.size,
       page: req.query.page,
+      title: req.query.title,
       status: req.query.status,
       sortBy: req.query.sortBy,
       order: req.query.order,
