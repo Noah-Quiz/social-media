@@ -51,11 +51,6 @@ const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
     }
     if (thumbnailFile) {
       data.thumbnailUrl = `${process.env.APP_BASE_URL}/${thumbnailFile.path}`;
-      // await uploadBunnyStorageFileService({
-      //   userId: video.userId,
-      //   videoId: videoId,
-      //   videoFolderPath: thumbnailFolder,
-      // });
     }
 
     const updatedVideo =
@@ -82,7 +77,7 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
       throw new CoreException(StatusCodeEnum.NotFound_404, "Video not found");
     }
 
-    const videoOwnerId = video.userId;
+    const videoOwnerId = video.user?._id;
 
     const allowedActions = ["like", "unlike"];
     if (!allowedActions.includes(action)) {
@@ -130,7 +125,7 @@ const viewIncrementService = async (videoId) => {
       const rate =
         await connection.exchangeRateRepository.getCurrentRateRepository();
       await connection.userRepository.updateUserWalletRepository(
-        video.userId,
+        video.user?._id,
         "ReceiveCoin",
         rate.coinPer1000View
       );
@@ -141,14 +136,24 @@ const viewIncrementService = async (videoId) => {
   }
 };
 
-const getVideosByUserIdService = async (userId, sortBy, requester) => {
+const getVideosByUserIdService = async (userId, query, requester) => {
   try {
     const connection = new DatabaseTransaction();
 
+    const user = await connection.userRepository.getAnUserByIdRepository(userId);
+    if (!user) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, `User not found`);
+    }
+    
+    // Handle case when user try to access private, unlisted, draft video of another user
+    if (userId?.toString() !== requester?.toString() && (query.enumMode === "private" || query.enumMode === "unlisted" || query.enumMode === "draft" )) {
+      query.enumMode = "public";
+    }
+
     // Fetch all videos for the given userId
-    let videos = await connection.videoRepository.getVideosByUserIdRepository(
+    let { videos, total, page, totalPages } = await connection.videoRepository.getVideosByUserIdRepository(
       userId,
-      sortBy
+      query
     );
 
     // If requester is the owner, return all videos unmodified (owner has full access)
@@ -160,7 +165,7 @@ const getVideosByUserIdService = async (userId, sortBy, requester) => {
     let processedVideos = videos.filter(
       (video) =>
         video.enumMode !== "private" ||
-        video.userId?.toString() === requester?.toString()
+        video.user?._id?.toString() === requester?.toString()
     );
 
     // Handle member-only videos
@@ -180,7 +185,7 @@ const getVideosByUserIdService = async (userId, sortBy, requester) => {
     }
 
     // Return the processed videos
-    return processedVideos;
+    return { videos: processedVideos, total, page, totalPages };
   } catch (error) {
     throw new Error(
       `Error fetching videos for user ${userId}: ${error.message}`
@@ -197,7 +202,7 @@ const getVideoService = async (videoId, requester) => {
       throw new Error(`Video with id ${videoId} does not exist`);
     }
     if (video.enumMode === "private") {
-      if (requester?.toString() !== video.userId?.toString()) {
+      if (requester?.toString() !== video.user?._id?.toString()) {
         const updatedVideos = updateVideosForNonMembership(
           [video],
           [video._id],
@@ -209,8 +214,8 @@ const getVideoService = async (videoId, requester) => {
       }
       return video; // Requester is the owner, return the video
     } else if (video.enumMode === "member") {
-      const isMember = await checkMemberShip(requester, video.userId);
-      if (!isMember && requester?.toString() !== video.userId?.toString()) {
+      const isMember = await checkMemberShip(requester, video.user?._id);
+      if (!isMember && requester?.toString() !== video.user?._id?.toString()) {
         //not member & not owner
         const updatedVideos = updateVideosForNonMembership(
           [video],
@@ -245,9 +250,8 @@ const getVideosService = async (query) => {
 
 const getVideosByPlaylistIdService = async (
   playlistId,
-  page,
-  size,
-  requester
+  query,
+  requester,
 ) => {
   try {
     const connection = new DatabaseTransaction();
@@ -256,16 +260,15 @@ const getVideosByPlaylistIdService = async (
     const videos =
       await connection.videoRepository.getVideosByPlaylistIdRepository(
         playlistId,
-        page,
-        size
+        query
       );
 
     // Step 1: Group videos by userId
     const videosByOwner = videos.data.reduce((acc, video) => {
-      if (!acc[video.userId]) {
-        acc[video.userId] = [];
+      if (!acc[video.user?._id]) {
+        acc[video.user?._id] = [];
       }
-      acc[video.userId].push(video);
+      acc[video.user?._id].push(video);
       return acc;
     }, {});
 
@@ -312,7 +315,7 @@ const getVideosByPlaylistIdService = async (
   }
 };
 
-//add admin delete
+// Add admin delete
 const deleteVideoService = async (videoId, userId) => {
   const connection = new DatabaseTransaction();
 
@@ -331,7 +334,7 @@ const deleteVideoService = async (videoId, userId) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, `Video not found`);
     }
 
-    if (video.userId?.toString() !== userId && notAdmin) {
+    if (video.user?._id?.toString() !== userId && notAdmin) {
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
         "You do not have permission to perform this action"
@@ -360,14 +363,16 @@ const deleteVideoService = async (videoId, userId) => {
     throw error;
   }
 };
-const updateVideosForNonMembership = async (videos, videoIds, type) => {
+
+// Modified url with custom message to ensure privacy
+const updateVideosForNonMembership = (videos, videoIds, type) => {
   // Iterate through the array of videos and modify if the _id is found in videoIds
   return videos.map((video) => {
     let content;
     if (type === "member") {
       content = `This video requires membership`;
     } else {
-      content = "this is a private video";
+      content = "This video is private";
     }
     if (videoIds.includes(video._id)) {
       // If the video ID is in the list, update the specific fields
@@ -383,6 +388,7 @@ const updateVideosForNonMembership = async (videos, videoIds, type) => {
     return video;
   });
 };
+
 const checkMemberShip = async (requester, userId) => {
   try {
     const connection = new DatabaseTransaction();

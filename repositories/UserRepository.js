@@ -44,7 +44,8 @@ class UserRepository {
 
   async deleteAnUserByIdRepository(userId) {
     try {
-      const user = await User.findByIdAndUpdate(userId, { isDeleted: true });
+      await User.findByIdAndUpdate(userId, { isDeleted: true });
+
       return true;
     } catch (error) {
       throw new Error(`Error when delete an user by id: ${error.message}`);
@@ -53,10 +54,16 @@ class UserRepository {
 
   async updateAnUserByIdRepository(userId, data) {
     try {
+      data = {
+        ...data,
+        lastUpdated: Date.now() 
+      };
+
       const user = await User.findByIdAndUpdate(userId, data, {
         new: true,
-        select: "email fullName",
+        select: "email fullName nickName avatar phoneNumber dateCreated lastLogin",
       });
+      
       return user;
     } catch (error) {
       throw new Error(`Error when updating user by id: ${error.message}`);
@@ -66,8 +73,9 @@ class UserRepository {
   async getAnUserByIdRepository(userId) {
     try {
       const user = await User.findOne({ _id: userId, isDeleted: false }).select(
-        "email fullName nickName follow followBy avatar phoneNumber role"
+        "email fullName nickName follow followBy avatar phoneNumber dateCreated lastLogin"
       );
+
       if (user) {
         return user;
       }
@@ -77,20 +85,29 @@ class UserRepository {
     }
   }
 
-  async getAllUsersRepository(page, size, search) {
+  async getAllUsersRepository(query) {
     try {
-      const query = { isDeleted: false };
+      let { page, size, search, order, sortBy } = query;
+      size = parseInt(size);
+      page = parseInt(page);
+      const searchQuery = { isDeleted: false };
 
       if (search) {
-        query.$or = [
+        searchQuery.$or = [
           { fullName: { $regex: search, $options: "i" } },
           { nickName: { $regex: search, $options: "i" } },
         ];
       }
 
+      let sortField = "dateCreated"; // Default sort field
+      let sortOrder = order === "ascending" ? 1 : -1;
+
+      if (sortBy === "follower") sortField = "followers";
+      else if (sortBy === "date") sortField = "dateCreated";
+
       const skip = (page - 1) * size;
       const users = await User.aggregate([
-        { $match: query },
+        { $match: searchQuery },
         {
           $addFields: {
             followByCount: { $size: "$followBy" },
@@ -110,19 +127,21 @@ class UserRepository {
             email: 1,
             fullName: 1,
             nickName: 1,
-            follow: 1,
-            followBy: 1,
+            followers: { $size: "$followBy" },
+            following: { $size: "$follow" },
             avatar: 1,
             phoneNumber: 1,
+            dateCreated: 1,
+            lastLogin: 1,
           },
         },
+        { $sort: { [sortField]: sortOrder } },
       ]);
 
-      const totalUsers = await User.countDocuments(query);
+      const totalUsers = await User.countDocuments(searchQuery);
 
       return {
         users,
-        message: "Get all users successfully",
         page: page,
         total: totalUsers,
         totalPages: Math.ceil(totalUsers / size),

@@ -74,13 +74,23 @@ router.get("/", categoryController.getAllCategoryController);
  *     security:
  *       - bearerAuth: []
  *     summary: Create a category
- *     description: Creates a new category with a name.
+ *     description: Creates a new category with a name and an optional image file.
  *     tags: [Categories]
  *     requestBody:
+ *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/CreateCategoryDto'
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Name of the category
+ *                 example: "Electronics"
+ *               categoryUrl:
+ *                 type: string
+ *                 format: binary
+ *                 description: Optional image file for the category
  *     responses:
  *       201:
  *         description: Category created successfully.
@@ -106,9 +116,11 @@ router.get("/", categoryController.getAllCategoryController);
  *                       example: "https://example.com/image.png"
  *                     dateCreated:
  *                       type: string
+ *                       format: date-time
  *                       example: "2024-10-25T02:29:35.346+00:00"
  *                     lastUpdated:
  *                       type: string
+ *                       format: date-time
  *                       example: "2024-10-25T02:29:35.346+00:00"
  *       400:
  *         description: Bad request. Possible validation errors.
@@ -136,9 +148,11 @@ router.get("/", categoryController.getAllCategoryController);
  *                   type: string
  *                   example: "An unexpected error occurred while creating the category."
  */
+
 router.post(
   "/",
   requireRole(UserEnum.ADMIN),
+  uploadFile.single("categoryUrl"),
   categoryController.createCategoryController
 );
 
@@ -207,45 +221,49 @@ router.post(
  *                   example: "An unexpected error occurred while retrive the category."
  */
 router.get("/:categoryId", categoryController.getCategoryController);
-
 /**
  * @swagger
  * /api/categories/{categoryId}:
  *   put:
  *     security:
- *      - bearerAuth: []
+ *       - bearerAuth: []
  *     summary: Update category by ID
- *     description: Update cetegory by ID, including fullName, nickName, avatar. This request just for ADMIN.
+ *     description: Update a category by ID, including name and image. This request is restricted to ADMIN users.
  *     tags: [Categories]
  *     consumes:
- *      - multipart/form-data
+ *       - multipart/form-data
  *     parameters:
- *      - in: path
- *        name: categoryId
- *        schema:
- *         type: string
+ *       - in: path
+ *         name: categoryId
  *         required: true
- *      - in: formData
- *        name: categoryImg
- *        schema:
- *         type: file
- *         description: The category's image file
+ *         schema:
+ *           type: string
+ *         description: The ID of the category to update
  *     requestBody:
+ *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/UpdateCategoryDto'
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The new name for the category
+ *               categoryImg:
+ *                 type: string
+ *                 format: binary
+ *                 description: The category's image file
  *     responses:
- *      200:
- *       description: Update user profile successfully
- *       content:
+ *       200:
+ *         description: Successfully updated the category
+ *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Category created successfully."
+ *                   example: "Category updated successfully."
  *                 data:
  *                   type: object
  *                   properties:
@@ -264,9 +282,9 @@ router.get("/:categoryId", categoryController.getCategoryController);
  *                     lastUpdated:
  *                       type: string
  *                       example: "2024-10-25T02:29:35.346+00:00"
- *      400:
- *       description: Bad request
- *       content:
+ *       400:
+ *         description: Bad request due to invalid input data
+ *         content:
  *           application/json:
  *             schema:
  *               type: object
@@ -279,17 +297,18 @@ router.get("/:categoryId", categoryController.getCategoryController);
  *                   items:
  *                     type: string
  *                   example: ["'name' is required.", "'imageUrl' must be a valid URL."]
- *      500:
- *       description: Internal server error
- *       content:
+ *       500:
+ *         description: Internal server error
+ *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "An unexpected error occurred while update the category."
+ *                   example: "An unexpected error occurred while updating the category."
  */
+
 router.put(
   "/:categoryId",
   requireRole(UserEnum.ADMIN),

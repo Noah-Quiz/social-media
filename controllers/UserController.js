@@ -25,19 +25,25 @@ const UpdateUserEmailDto = require("../dtos/User/UpdateUserEmailDto");
 const GetUserWalletDto = require("../dtos/User/GetUserWalletDto");
 const UpdateUserWalletDto = require("../dtos/User/UpdateUserWalletDto");
 const DeleteUserDto = require("../dtos/User/DeleteUserDto");
+const GetUsersDto = require("../dtos/User/GetUsersDto");
 
 class UserController {
   async getAllUsersController(req, res, next) {
     try {
-      const { page, size, search } = req.query;
+      const query = {
+        page: req.query.page || 1,
+        size: req.query.size || 10,
+        search: req.query.search,
+        order: req.query.order,
+        sortBy: req.query.sortBy,
+      }
 
-      const result = await getAllUsersService(
-        page || 1,
-        size || 10,
-        search || ""
-      );
+      const getUsersDto = new GetUsersDto(query.page, query.size, query.order, query.sortBy);
+      await getUsersDto.validate(); 
 
-      return res.status(StatusCodeEnums.OK_200).json(result);
+      const { users, total, page, totalPages } = await getAllUsersService(query);
+
+      return res.status(StatusCodeEnums.OK_200).json({ message: "Success", users, total, page, totalPages });
     } catch (error) {
       next(error);
     }
@@ -49,7 +55,7 @@ class UserController {
       const deleteUserDto = new DeleteUserDto(userId);
       await deleteUserDto.validate();
 
-      const result = await deleteUserByIdService(userId);
+      await deleteUserByIdService(userId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
@@ -59,6 +65,7 @@ class UserController {
 
   async getUserByIdController(req, res, next) {
     const { userId } = req.params;
+    const requester = req.userId;
 
     try {
       if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
@@ -67,10 +74,12 @@ class UserController {
           "Invalid user ID"
         );
       }
-      const result = await getUserByIdService(userId);
+
+      const user = await getUserByIdService(userId, requester);
+
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ user: result, message: "Get user successfully" });
+        .json({ user, message: "Success" });
     } catch (error) {
       next(error);
     }
