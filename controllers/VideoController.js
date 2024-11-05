@@ -260,13 +260,9 @@ class VideoController {
       //   video.bunnyId
       // );
 
-      const result = {
-        video,
-      };
-
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ message: "Success", result });
+        .json({ message: "Success", video: video });
     } catch (error) {
       next(error);
     }
