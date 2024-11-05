@@ -110,7 +110,7 @@ class MessageController {
 
       const message = await createAMessageService(userId, roomId, content);
       res
-        .status(StatusCodeEnums.OK_200)
+        .status(StatusCodeEnums.Created_201)
         .json({ data: message, message: "Success" });
     } catch (error) {
       next(error);

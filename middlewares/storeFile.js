@@ -233,12 +233,18 @@ const createThumbnailFromTsFile = async (tsFilePath, outputDir) => {
     // Generate a thumbnail using ffmpeg from 5 seconds
     await new Promise((resolve, reject) => {
       const ffmpeg = spawn("ffmpeg", [
+        "-analyzeduration",
+        "100M", // Increase probe duration
+        "-probesize",
+        "100M", // Increase probe size
         "-i",
         tsFilePath,
         "-vf",
         "thumbnail",
         "-frames:v",
         "1", // Get only one frame
+        "-update",
+        "1", // Update the output file
         outputPath,
       ]);
 

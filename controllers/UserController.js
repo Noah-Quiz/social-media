@@ -36,14 +36,23 @@ class UserController {
         search: req.query.search,
         order: req.query.order,
         sortBy: req.query.sortBy,
-      }
+      };
 
-      const getUsersDto = new GetUsersDto(query.page, query.size, query.order, query.sortBy);
-      await getUsersDto.validate(); 
+      const getUsersDto = new GetUsersDto(
+        query.page,
+        query.size,
+        query.order,
+        query.sortBy
+      );
+      await getUsersDto.validate();
 
-      const { users, total, page, totalPages } = await getAllUsersService(query);
+      const { users, total, page, totalPages } = await getAllUsersService(
+        query
+      );
 
-      return res.status(StatusCodeEnums.OK_200).json({ message: "Success", users, total, page, totalPages });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Success", users, total, page, totalPages });
     } catch (error) {
       next(error);
     }
@@ -181,7 +190,7 @@ class UserController {
   async toggleFollowController(req, res, next) {
     try {
       const { userId, followId, action } = req.body;
-      
+
       const toggleFollowDto = new ToggleFollowDto(userId, followId, action);
       await toggleFollowDto.validate();
 
