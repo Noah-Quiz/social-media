@@ -325,11 +325,7 @@ class VideoController {
 
       return res
         .status(StatusCodeEnums.OK_200)
-<<<<<<< HEAD
         .json({ message: "Success", video });
-=======
-        .json({ message: "Success", video: video });
->>>>>>> ac44b1c112fa0c5507978000645845b828191e46
     } catch (error) {
       next(error);
     }
