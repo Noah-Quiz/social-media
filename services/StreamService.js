@@ -19,7 +19,7 @@ const getStreamService = async (streamId, requester) => {
     }
 
     let process = stream;
-    const isOwner = stream?.userId?.toString() === requester?.toString();
+    const isOwner = stream.user?._id?.toString() === requester?.toString();
 
     //if owner => nothing is change
     if (isOwner) {
@@ -58,6 +58,7 @@ const getStreamService = async (streamId, requester) => {
     throw error;
   }
 };
+
 const getStreamsService = async (query, requester) => {
   const connection = new DatabaseTransaction();
   try {
@@ -131,7 +132,7 @@ const updateStreamService = async (userId, streamId, updateData) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
 
-    if (stream.user._id?.toString() !== userId) {
+    if (stream.user?._id?.toString() !== userId) {
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
         "You do not have permission to perform this action"

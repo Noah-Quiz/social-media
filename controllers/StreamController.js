@@ -17,13 +17,14 @@ const DeleteStreamDto = require("../dtos/Stream/DeleteStreamDto");
 const UpdateStreamDto = require("../dtos/Stream/UpdateStreamDto");
 const StreamRecommendationDto = require("../dtos/Stream/StreamRecommendationDto");
 const { default: axios } = require("axios");
+const GetStreamsDto = require("../dtos/Stream/GetStreamsDto");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
 class StreamController {
   async getStreamController(req, res, next) {
     const { streamId } = req.params;
-    const requester = req.userId;
+    const { ownerId } = req.body;
 
     try {
       if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
@@ -31,8 +32,13 @@ class StreamController {
           message: "Valid stream ID is required",
         });
       }
+      if (ownerId && !mongoose.Types.ObjectId.isValid(ownerId)) {
+        throw new CoreException(StatusCodeEnums.BadRequest_400).json({
+          message: "Valid owner ID is required",
+        });
+      }
 
-      const stream = await getStreamService(streamId, requester);
+      const stream = await getStreamService(streamId, ownerId);
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -43,60 +49,24 @@ class StreamController {
   }
 
   async getStreamsController(req, res, next) {
-    const requester = req.userId;
-
-    const query = {
-      size: req.query.size,
-      page: req.query.page,
-      title: req.query.title,
-      status: req.query.status,
-      sortBy: req.query.sortBy,
-      order: req.query.order,
-    };
-
-    if (!query.page) query.page = 1;
-    if (!query.size) query.size = 10;
-
-    // Validate `sortBy` and `order`
-    const validSortByOptions = ["like", "view", "date"];
-    const validOrderOptions = ["ascending", "descending"];
-
-    if (query.sortBy && !validSortByOptions.includes(query.sortBy)) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Invalid query sortBy, must be in ['like', 'view', 'date']"
-      );
-    }
-
-    if (query.order && !validOrderOptions.includes(query.order)) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Invalid query order, must be in ['ascending', 'descending']"
-      );
-    }
-
-    // Additional validation checks for `page` and `size`
-    if (query.page < 1) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Page cannot be less than 1"
-      );
-    }
-    if (query.size < 1) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Size cannot be less than 1"
-      );
-    }
-
-    if (query.title) {
-      query.title = { $regex: query.title, $options: "i" };
-    }
-
     try {
+      const { ownerId } = req.body;
+
+      const query = {
+        size: req.query.size || 10,
+        page: req.query.page || 1,
+        title: req.query.title,
+        status: req.query.status,
+        sortBy: req.query.sortBy,
+        order: req.query.order,
+      };
+
+      const getStreamsDto = new GetStreamsDto(query.size, query.page, query.status, query.sortBy, query.order);
+      await getStreamsDto.validate();
+
       const { streams, total, page, totalPages } = await getStreamsService(
         query,
-        requester
+        ownerId,
       );
 
       return res
