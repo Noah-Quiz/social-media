@@ -239,6 +239,8 @@ const createThumbnailFromTsFile = async (tsFilePath, outputDir) => {
         "thumbnail",
         "-frames:v",
         "1", // Get only one frame
+        "-update",
+        "1", // Update the output file
         outputPath,
       ]);
 
