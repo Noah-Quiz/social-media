@@ -8,6 +8,7 @@ const createCategoryService = async (categoryData) => {
 
     const session = await connection.startTransaction();
 
+    categoryData.imageUrl = `${process.env.APP_BASE_URL}/${categoryData.imageUrl}`;
     const category =
       await connection.categoryRepository.createCategoryRepository(
         categoryData,

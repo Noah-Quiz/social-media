@@ -475,6 +475,9 @@ const storage = multer.diskStorage({
         }
         dir = path.join(`assets/images/categories/${categoryId}`);
         break;
+      case "categoryUrl":
+        dir = path.join(`assets/images/categories/create`);
+        break;
       case "video":
         const userIdFromToken = req.userId;
         dir = path.join(`assets/videos/${userIdFromToken}/${Date.now()}`);
@@ -520,7 +523,10 @@ const storage = multer.diskStorage({
         fileName = `${baseName}${ext}`;
         dirPath = path.join(`assets/images/users/${userId}`);
         break;
-
+      case "categoryUrl":
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/categories/create`);
+        break;
       case "categoryImg":
         const { categoryId } = req.params;
         if (!mongoose.Types.ObjectId.isValid(categoryId)) {
