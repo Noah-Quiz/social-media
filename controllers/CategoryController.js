@@ -73,9 +73,7 @@ class CategoryController {
     try {
       const { categoryId } = req.params;
       const { name } = req.body;
-      const imageUrl = req.file
-        ? req.file.path
-        : null;
+      const imageUrl = req.file ? req.file.path : null;
       const categoryData = { name, imageUrl };
 
       const updateCategoryDto = new UpdateCategoryDto(categoryId, name);
