@@ -6,30 +6,35 @@ const { validFullName, validEmail } = require("../utils/validator");
 const bcrypt = require("bcrypt");
 const { sendVerificationEmailService } = require("./AuthService");
 module.exports = {
-  getAllUsersService: async (page, size, search) => {
+  getAllUsersService: async (query) => {
     const connection = new DatabaseTransaction();
 
-    const users = await connection.userRepository.getAllUsersRepository(
-      page,
-      size,
-      search
-    );
+    const data = await connection.userRepository.getAllUsersRepository(query);
 
-    return users;
+    return data;
   },
 
-  getUserByIdService: async (userId) => {
+  getUserByIdService: async (userId, requester) => {
     try {
       const connection = new DatabaseTransaction();
 
-      const user = await connection.userRepository.getAnUserByIdRepository(
-        userId
-      );
+      let user = null;
+      if (userId?.toString() !== requester.toString()) {
+        // Get user but exclude details
+        user = await connection.userRepository.getAnUserByIdRepository(
+          userId
+        );
+      } else {
+        // Get user all details
+        user = await connection.userRepository.findUserById(
+          userId
+        );
+      }
 
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
       }
-
+      
       return user;
     } catch (error) {
       throw error;
@@ -74,6 +79,7 @@ module.exports = {
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
       }
+      
       const result = await connection.userRepository.updateAnUserByIdRepository(
         userId,
         data
