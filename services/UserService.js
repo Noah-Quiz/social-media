@@ -5,6 +5,7 @@ const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const { validFullName, validEmail } = require("../utils/validator");
 const bcrypt = require("bcrypt");
 const { sendVerificationEmailService } = require("./AuthService");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 module.exports = {
   getAllUsersService: async (query) => {
     const connection = new DatabaseTransaction();
@@ -19,6 +20,7 @@ module.exports = {
       const connection = new DatabaseTransaction();
 
       let user = null;
+
       if (userId?.toString() !== requester.toString()) {
         // Get user but exclude details
         user = await connection.userRepository.getAnUserByIdRepository(
@@ -26,7 +28,7 @@ module.exports = {
         );
       } else {
         // Get user all details
-        user = await connection.userRepository.findUserById(
+        user = await connection.userRepository.getAnUserByIdRepository(
           userId
         );
       }
@@ -54,7 +56,7 @@ module.exports = {
       if (user.role === UserEnum.ADMIN) {
         throw new CoreException(
           StatusCodeEnum.Forbidden_403,
-          "You are not allowed to delete admin account"
+          "You do not have permission to perform this action"
         );
       }
 
@@ -76,6 +78,7 @@ module.exports = {
       const connection = new DatabaseTransaction();
 
       const user = await connection.userRepository.findUserById(userId);
+
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
       }
@@ -284,24 +287,38 @@ module.exports = {
     } catch (error) {}
   },
 
-  async getFollowerService(userId) {
+  async getFollowerService(userId, requester) {
     try {
       const connection = new DatabaseTransaction();
+
+      const requesterRole = await connection.userRepository.findUserById(requester)
+    
+      if (requester.toString() !== userId.toString() && requesterRole.role === 0) {
+        throw new CoreException(StatusCodeEnums.Forbidden_403, "You do not have permission to perform this action");
+      }
+
       const follower = await connection.userRepository.getFollowerRepository(
         userId
       );
+      
       return follower;
     } catch (error) {
       throw error;
     }
   },
 
-  async getFollowingService(userId) {
+  async getFollowingService(userId, requester) {
     try {
       const connection = new DatabaseTransaction();
+
+      if (requester.toString() !== userId.toString()) {
+        throw new CoreException(StatusCodeEnums.Forbidden_403, "You do not have permission to perform this action");
+      }
+
       const following = await connection.userRepository.getFollowingRepository(
         userId
       );
+
       return following;
     } catch (error) {
       throw error;

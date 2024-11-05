@@ -613,10 +613,24 @@ route.put("/watch-time", userController.updateTotalWatchTimeController);
  *          default: 10
  *        description: Number of items per page
  *      - in: query
- *        name: name
+ *        name: search
  *        schema:
  *          type: string
- *        description: Search by name
+ *        description: Search by full name or nickname
+ *      - in: query
+ *        name: order
+ *        required: false
+ *        schema:
+ *          type: string
+ *          enum: [ascending, descending]
+ *        description: Filter for sort order (default descending)
+ *      - in: query
+ *        name: sortBy
+ *        required: false
+ *        schema:
+ *          type: string
+ *          enum: [date, follower]
+ *        description: Filter for sort criteria (default date)
  *     responses:
  *       200:
  *         description: Get all users successfully

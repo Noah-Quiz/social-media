@@ -16,6 +16,7 @@ class UserRepository {
   async findUserById(userId) {
     try {
       const user = await User.findById(userId);
+      
       return user;
     } catch (error) {
       throw new Error(`Error when finding user by id: ${error.message}`);
@@ -73,7 +74,7 @@ class UserRepository {
   async getAnUserByIdRepository(userId) {
     try {
       const user = await User.findOne({ _id: userId, isDeleted: false }).select(
-        "email fullName nickName follow followBy avatar phoneNumber dateCreated lastLogin"
+        "email fullName nickName avatar phoneNumber dateCreated lastLogin"
       );
 
       if (user) {
@@ -127,8 +128,8 @@ class UserRepository {
             email: 1,
             fullName: 1,
             nickName: 1,
-            followers: { $size: "$followBy" },
-            following: { $size: "$follow" },
+            followCount: { $size: "$followBy" },
+            followByCount: { $size: "$follow" },
             avatar: 1,
             phoneNumber: 1,
             dateCreated: 1,
@@ -524,7 +525,6 @@ class UserRepository {
         },
       ]);
 
-      console.log(user);
       return user.length > 0 ? user[0].followers : [];
     } catch (error) {
       throw new Error(`Error getting follower: ${error.message}`);
@@ -563,7 +563,7 @@ class UserRepository {
           },
         },
       ]);
-      console.log(user);
+      
       return user.length > 0 ? user[0].following : [];
     } catch (error) {
       throw new Error(`Error getting following: ${error.message}`);
