@@ -577,7 +577,10 @@ const fileFilter = (req, file, cb) => {
   if (mimeType && extName) {
     return cb(null, true);
   }
-  logger.error("Error: Images Only!");
+  if (file.fieldname === "video") logger.error("Error: Videos Only!");
+  else {
+    logger.error("Error: Images Only!");
+  }
 };
 
 const videoFilter = (req, file, cb) => {
