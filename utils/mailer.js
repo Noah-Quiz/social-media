@@ -2,7 +2,7 @@ const nodemailer = require("nodemailer");
 const getLogger = require("./logger");
 const logger = getLogger("MAIL");
 require("dotenv").config();
-const sendMail = (to, subject, text, html) => {
+const sendMail = async (to, subject, text, html) => {
   const transport = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
@@ -19,14 +19,13 @@ const sendMail = (to, subject, text, html) => {
     text: text,
     html: html,
   };
-  return transport
-    .sendMail(options)
-    .then((info) => {
-      logger.info(`Email sent: ${info.response}`);
-    })
-    .catch((error) => {
-      logger.error(`Error sending email: ${error}`);
-    });
+  try {
+    const info = await transport
+      .sendMail(options);
+    logger.info(`Email sent: ${info.response}`);
+  } catch (error) {
+    logger.error(`Error sending email: ${error}`);
+  }
 };
 
 module.exports = { sendMail };
