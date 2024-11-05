@@ -80,16 +80,6 @@ class VideoRepository {
             localField: "userId",
             foreignField: "_id",
             as: "user",
-            pipeline: [
-              {
-                $project: {
-                  fullName: 1,
-                  nickName: 1,
-                  avatar: 1,
-                  _id: 0,
-                },
-              },
-            ],
           },
         },
         { $unwind: "$user" },
@@ -99,35 +89,41 @@ class VideoRepository {
             localField: "categoryIds",
             foreignField: "_id",
             as: "categories",
-            pipeline: [
-              {
-                $project: {
-                  name: 1,
-                  imageUrl: 1,
-                  _id: 1,
-                },
-              },
-            ],
           },
         },
         {
           $project: {
-            merged: {
-              $mergeObjects: [
-                "$$ROOT",
-                {
-                  user: {
-                    fullName: "$user.fullName",
-                    nickName: "$user.nickName",
-                    avatar: "$user.avatar",
-                  },
+            _id: 1,
+            title: 1,
+            description: 1,
+            videoUrl: 1,
+            videoEmbedUrl: 1,
+            videoServerUrl: 1,
+            thumbnailUrl: 1,
+            enumMode: 1,
+            dateCreated: 1,
+            lastUpdated: 1,
+            likesCount: { $size: "$likedBy" },
+            user: {
+              _id: 1,
+              fullName: "$user.fullName",
+              nickName: "$user.nickName",
+              avatar: "$user.avatar",
+            },
+            categories: {
+              $map: {
+                input: "$categories",
+                as: "category",
+                in: {
+                  _id: "$$category._id",
+                  name: "$$category.name",
+                  imageUrl: "$$category.imageUrl",
                 },
-              ],
+              },
             },
           },
         },
-        { $replaceRoot: { newRoot: "$merged" } },
-        { $project: { categoryIds: 0, isDeleted: 0, __v: 0, lastUpdated: 0 } }, // Optionally hide categoryIds
+        { $project: { categoryIds: 0, isDeleted: 0, __v: 0 } }, // Optionally hide categoryIds
       ]);
       return result[0] || null;
     } catch (error) {
@@ -148,170 +144,103 @@ class VideoRepository {
     }
   }
 
-  async getVideosByUserIdRepository(userId, sortBy) {
+  async getVideosByUserIdRepository(userId, query) {
     try {
-      let videos;
-      if (sortBy && sortBy === "like") {
-        videos = await Video.aggregate([
-          {
-            $match: {
-              userId: new mongoose.Types.ObjectId(userId),
-              isDeleted: false,
-            },
-          },
-          {
-            $addFields: {
-              length: {
-                $size: "$likedBy",
-              },
-            },
-          },
-          {
-            $sort: {
-              length: -1,
-              dateCreated: -1,
-            },
-          },
-          {
-            $lookup: {
-              from: "users",
-              localField: "userId",
-              foreignField: "_id",
-              as: "user",
-              pipeline: [
-                {
-                  $project: {
-                    fullName: 1,
-                    _id: 0,
-                    nickName: 1,
-                    avatar: 1,
-                  },
-                },
-              ],
-            },
-          },
-          { $unwind: "$user" },
-          {
-            $lookup: {
-              from: "categories",
-              localField: "categoryIds",
-              foreignField: "_id",
-              as: "categories",
-              pipeline: [
-                {
-                  $project: {
-                    name: 1,
-                    imageUrl: 1,
-                    _id: 1,
-                  },
-                },
-              ],
-            },
-          },
-          {
-            $project: {
-              merged: {
-                $mergeObjects: [
-                  "$$ROOT",
-                  {
-                    user: {
-                      fullName: "$user.fullName",
-                      nickName: "$user.nickName",
-                      avatar: "$user.avatar",
-                    },
-                    category: {
-                      $map: {
-                        input: "$categories",
-                        as: "category",
-                        in: "$$category.name", // Extract category names
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-          { $replaceRoot: { newRoot: "$merged" } },
-          {
-            $project: { categoryIds: 0, isDeleted: 0, __v: 0, lastUpdated: 0 },
-          }, // Optionally hide categoryIds
-        ]);
-      } else {
-        videos = await Video.aggregate([
-          {
-            $match: {
-              userId: new mongoose.Types.ObjectId(userId),
-              isDeleted: false,
-            },
-          },
-          {
-            $sort: {
-              dateCreated: -1,
-            },
-          },
-          {
-            $lookup: {
-              from: "users",
-              localField: "userId",
-              foreignField: "_id",
-              as: "user",
-              pipeline: [
-                {
-                  $project: {
-                    fullName: 1,
-                    _id: 0,
-                    nickName: 1,
-                    avatar: 1,
-                  },
-                },
-              ],
-            },
-          },
-          { $unwind: "$user" },
-          {
-            $lookup: {
-              from: "categories",
-              localField: "categoryIds",
-              foreignField: "_id",
-              as: "categories",
-              pipeline: [
-                {
-                  $project: {
-                    name: 1,
-                    imageUrl: 1,
-                    _id: 1,
-                  },
-                },
-              ],
-            },
-          },
-          {
-            $project: {
-              merged: {
-                $mergeObjects: [
-                  "$$ROOT",
-                  {
-                    user: {
-                      fullName: "$user.fullName",
-                      nickName: "$user.nickName",
-                      avatar: "$user.avatar",
-                    },
-                  },
-                ],
-              },
-            },
-          },
-          { $replaceRoot: { newRoot: "$merged" } },
-          {
-            $project: { categoryIds: 0, isDeleted: 0, __v: 0, lastUpdated: 0 },
-          }, // Optionally hide categoryIds
-        ]);
-      }
+      const page = query.page || 1;
+      const size = parseInt(query.size, 10) || 10;
+      const skip = (page - 1) * size;
 
-      return videos;
+      // Create search query
+      const searchQuery = {
+        isDeleted: false,
+        userId: new mongoose.Types.ObjectId(userId),
+        enumMode: query.enumMode,
+      };
+      if (query.title) searchQuery.title = query.title;
+
+      let sortField = "dateCreated"; // Default sort field
+      let sortOrder = query.order === "ascending" ? 1 : -1;
+
+      if (query.sortBy === "like") sortField = "likesCount";
+      else if (query.sortBy === "view") sortField = "currentViewCount";
+      else if (query.sortBy === "date") sortField = "dateCreated";
+
+      const totalVideos = await Video.countDocuments(searchQuery);
+
+      const videos = await Video.aggregate([
+        {
+          $match: searchQuery
+        },
+        {
+          $addFields: {
+            length: {
+              $size: "$likedBy",
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryIds",
+            foreignField: "_id",
+            as: "categories",
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            title: 1,
+            description: 1,
+            videoUrl: 1,
+            videoEmbedUrl: 1,
+            videoServerUrl: 1,
+            thumbnailUrl: 1,
+            enumMode: 1,
+            dateCreated: 1,
+            lastUpdated: 1,
+            likesCount: { $size: "$likedBy" },
+            user: {
+              _id: 1,
+              fullName: "$user.fullName",
+              nickName: "$user.nickName",
+              avatar: "$user.avatar",
+            },
+            categories: {
+              $map: {
+                input: "$categories",
+                as: "category",
+                in: {
+                  _id: "$$category._id",
+                  name: "$$category.name",
+                  imageUrl: "$$category.imageUrl",
+                },
+              },
+            },
+          },
+        },
+        { $sort: { [sortField]: sortOrder } },
+        { $skip: skip },
+        { $limit: Number(size) },
+      ]);
+
+      return {
+        videos,
+        total: totalVideos,
+        page: Number(page),
+        totalPages: Math.ceil(totalVideos / Number(size)),
+      };
     } catch (error) {
       throw new Error(
-        `Error when fetch all videos by userId: ${error.message}`
+        `Error when fetch all videos by user ID: ${error.message}`
       );
     }
   }
@@ -326,9 +255,10 @@ class VideoRepository {
     }
   }
 
-  async getVideosByPlaylistIdRepository(playlistId, page, size) {
+  async getVideosByPlaylistIdRepository(playlistId, query) {
     try {
-      console.log("Page number:", page);
+      const { page, size } = query;
+
       const playlist = await MyPlaylist.findById(playlistId);
       if (!playlist) {
         throw new Error("Playlist not found");
@@ -409,6 +339,7 @@ class VideoRepository {
             thumbnailUrl: 1,
             enumMode: 1,
             dateCreated: 1,
+            lastUpdated: 1,
             likesCount: { $size: "$likedBy" },
             user: {
               _id: 1,

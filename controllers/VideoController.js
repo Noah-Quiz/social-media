@@ -28,6 +28,7 @@ const {
   convertMp4ToHls,
   findClosetTsFile,
   createThumbnailFromTsFile,
+  deleteFolder,
 } = require("../middlewares/storeFile");
 const DeleteVideoDto = require("../dtos/Video/DeleteVideoDto");
 const { sendMessageToQueue } = require("../utils/rabbitMq");
@@ -61,17 +62,22 @@ class VideoController {
       const newFilePath = await changeFileName(videoFile.path, video._id);
       const m3u8 = await convertMp4ToHls(newFilePath);
       const folderPath = await removeFileName(newFilePath);
-      await replaceTsSegmentLinksInM3u8(m3u8, video._id);
-      const closestTsFile = await findClosetTsFile(folderPath);
-      await createThumbnailFromTsFile(
-        path.join(folderPath, closestTsFile.selectedFile.file),
-        folderPath
-      );
-      await deleteFile(newFilePath);
+      try {
+        await replaceTsSegmentLinksInM3u8(m3u8, video._id);
+        const closestTsFile = await findClosetTsFile(folderPath);
+        const thumbnail = await createThumbnailFromTsFile(
+          path.join(folderPath, closestTsFile.selectedFile.file),
+          folderPath
+        );
+        await deleteFile(newFilePath);
 
-      await updateAVideoByIdService(video._id, {
-        duration: closestTsFile.duration,
-      });
+        await updateAVideoByIdService(video._id, {
+          duration: closestTsFile.duration,
+        });
+      } catch (error) {
+        await deleteFolder(folderPath);
+        throw error;
+      }
 
       const queueMessage = {
         userId: userId,
@@ -223,8 +229,65 @@ class VideoController {
   async getVideosByUserIdController(req, res, next) {
     try {
       const { userId } = req.params;
-      const { sortBy } = req.query;
       const requester = req.userId;
+      const query = {
+        size: req.query.size,
+        page: req.query.page,
+        title: req.query.title,
+        sortBy: req.query.sortBy,
+        order: req.query.order,
+        enumMode: req.query.enumMode
+      };
+  
+      if (!query.page) query.page = 1;
+      if (!query.size) query.size = 10;
+      if (!query.enumMode) query.enumMode = "public";
+
+      // Validate enumMode
+      const validEnumModeOptions = ["draft", "public", "private", "unlisted", "member"];
+      if (query.enumMode && !validEnumModeOptions.includes(query.enumMode)) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid query enumMode, must be in ['draft, 'public', 'private', 'unlisted', 'member']"
+        );
+      }
+
+      // Validate `sortBy` and `order`
+      const validSortByOptions = ["like", "view", "date"];
+      const validOrderOptions = ["ascending", "descending"];
+  
+      if (query.sortBy && !validSortByOptions.includes(query.sortBy)) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid query sortBy, must be in ['like', 'view', 'date']"
+        );
+      }
+  
+      if (query.order && !validOrderOptions.includes(query.order)) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid query order, must be in ['ascending', 'descending']"
+        );
+      }
+  
+      // Additional validation checks for `page` and `size`
+      if (query.page < 1) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Page cannot be less than 1"
+        );
+      }
+      if (query.size < 1) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Size cannot be less than 1"
+        );
+      }
+  
+      if (query.title) {
+        query.title = { $regex: query.title, $options: "i" };
+      }
+
       if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
         throw new CoreException(
           StatusCodeEnums.BadRequest_400,
@@ -232,11 +295,11 @@ class VideoController {
         );
       }
 
-      const videos = await getVideosByUserIdService(userId, sortBy, requester);
+      const { videos, total, page, totalPages } = await getVideosByUserIdService(userId, query, requester);
 
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ message: "Success", videos });
+        .json({ message: "Success", videos, total, page, totalPages });
     } catch (error) {
       next(error);
     }
@@ -262,7 +325,7 @@ class VideoController {
 
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ message: "Success", video: video });
+        .json({ message: "Success", video });
     } catch (error) {
       next(error);
     }
@@ -326,23 +389,40 @@ class VideoController {
       const { playlistId } = req.params;
       const { page, size } = req.query;
       const requester = req.userId;
+      const query = {
+        size: req.query.size,
+        page: req.query.page,
+        title: req.query.title,
+        status: req.query.status,
+        sortBy: req.query.sortBy,
+        order: req.query.order,
+      };
+  
+      if (!query.page) query.page = 1;
+      if (!query.size) query.size = 10;
+  
+      if (query.title) {
+        query.title = { $regex: query.title, $options: "i" };
+      }
+
       const getVideosByPlaylistId = new GetVideosByPlaylistIdDto(
         playlistId,
         page,
         size,
-        requester
+        order,
+        sortBy
       );
       await getVideosByPlaylistId.validate();
 
       const videos = await getVideosByPlaylistIdService(
         playlistId,
-        page || 1,
-        size || 10,
-        requester
+        query,
+        requester,
       );
+
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ videos, message: "Get videos by playlistId successfully" });
+        .json({ videos, message: "Success" });
     } catch (error) {
       next(error);
     }
