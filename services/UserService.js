@@ -19,24 +19,35 @@ module.exports = {
     try {
       const connection = new DatabaseTransaction();
 
-      let user = null;
-
-      if (userId?.toString() !== requester.toString()) {
-        // Get user but exclude details
-        user = await connection.userRepository.getAnUserByIdRepository(
-          userId
-        );
+      let user = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
+      const caller = await connection.userRepository.getAnUserByIdRepository(
+        requester
+      );
+      console.log("My own: ", userId?.toString() === requester?.toString());
+      if (userId?.toString() === requester?.toString()) {
+        if (caller.role != 1) {
+        }
       } else {
-        // Get user all details
-        user = await connection.userRepository.getAnUserByIdRepository(
-          userId
-        );
+        user = { ...user };
+
+        console.log("isAdmin:", caller.role === 1);
+
+        //not admin
+        if (caller.role !== 1) {
+          user.followCount = user?.follow ? user.follow.length : 0;
+          user.followerCount = user?.followBy ? user.followBy.length : 0;
+          delete user.follow;
+          delete user.followBy;
+          delete user.role;
+        }
       }
 
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
       }
-      
+
       return user;
     } catch (error) {
       throw error;
@@ -82,7 +93,7 @@ module.exports = {
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
       }
-      
+
       const result = await connection.userRepository.updateAnUserByIdRepository(
         userId,
         data
@@ -291,16 +302,24 @@ module.exports = {
     try {
       const connection = new DatabaseTransaction();
 
-      const requesterRole = await connection.userRepository.findUserById(requester)
-    
-      if (requester.toString() !== userId.toString() && requesterRole.role === 0) {
-        throw new CoreException(StatusCodeEnums.Forbidden_403, "You do not have permission to perform this action");
+      const requesterRole = await connection.userRepository.findUserById(
+        requester
+      );
+
+      if (
+        requester.toString() !== userId.toString() &&
+        requesterRole.role === 0
+      ) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "You do not have permission to perform this action"
+        );
       }
 
       const follower = await connection.userRepository.getFollowerRepository(
         userId
       );
-      
+
       return follower;
     } catch (error) {
       throw error;
@@ -312,7 +331,10 @@ module.exports = {
       const connection = new DatabaseTransaction();
 
       if (requester.toString() !== userId.toString()) {
-        throw new CoreException(StatusCodeEnums.Forbidden_403, "You do not have permission to perform this action");
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "You do not have permission to perform this action"
+        );
       }
 
       const following = await connection.userRepository.getFollowingRepository(
