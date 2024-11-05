@@ -18,8 +18,8 @@ class PaymentController {
   async payWithPayPalController(req, res, next) {
     try {
       const userId = req.userId;
-      const { name, price } = req.body;
-      const payWithPaypalDto = new PayWithPaypalDto(userId, name, price);
+      const { price } = req.body;
+      const payWithPaypalDto = new PayWithPaypalDto(price);
       await payWithPaypalDto.validate();
 
       req.session.userId = userId;
@@ -38,7 +38,7 @@ class PaymentController {
             item_list: {
               items: [
                 {
-                  name: name || "Hat",
+                  name: "Social Media",
                   sku: "001",
                   price: price || "25.00",
                   currency: "USD",

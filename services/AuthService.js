@@ -410,7 +410,7 @@ const createResetPasswordTokenService = async (email) => {
   </tr>
   <tr>
     <td>
-      <a href="${process.env.APP_BASE_URL}/api/auth/reset-password/${token}">Click here to reset your password</a>
+      <a href="http://localhost:3001/reset-password/${token}">Click here to reset your password</a>
     </td>
   </tr> 
   <tr>
