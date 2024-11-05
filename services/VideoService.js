@@ -360,7 +360,7 @@ const deleteVideoService = async (videoId, userId) => {
     throw error;
   }
 };
-const updateVideosForNonMembership = (videos, videoIds, type) => {
+const updateVideosForNonMembership = async (videos, videoIds, type) => {
   // Iterate through the array of videos and modify if the _id is found in videoIds
   return videos.map((video) => {
     let content;
