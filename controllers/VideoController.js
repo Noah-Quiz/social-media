@@ -310,7 +310,7 @@ class VideoController {
       const { videoId } = req.params;
       const requester = req.userId;
 
-      if (!videoId || !mongoose.Types.ObjectId.isValid(videoId, requester)) {
+      if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
         throw new CoreException(
           StatusCodes.BadRequest_400,
           "Valid video ID is required"
