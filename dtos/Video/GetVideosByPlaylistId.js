@@ -14,7 +14,14 @@ class GetVideosByPlaylistIdDto {
         StatusCodeEnums.BadRequest_400,
         "PlaylistId is required"
       );
-    await validMongooseObjectId(this.playlistId);
+    try {
+      await validMongooseObjectId(this.playlistId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid PlaylistId"
+      );
+    }
 
     if (this.page && this.page < 1)
       throw new CoreException(

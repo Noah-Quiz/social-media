@@ -14,14 +14,28 @@ class DeleteStreamDto {
         "Valid stream ID is required"
       );
     }
-    await validMongooseObjectId(this.streamId);
+    try {
+      await validMongooseObjectId(this.streamId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid stream ID"
+      );
+    }
     if (!this.userId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Valid user ID is required"
       );
     }
-    await validMongooseObjectId(this.userId);
+    try {
+      await validMongooseObjectId(this.userId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid user ID"
+      );
+    }
   }
 }
 

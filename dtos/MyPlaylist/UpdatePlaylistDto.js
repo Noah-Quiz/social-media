@@ -18,7 +18,7 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           type: array
  *           items:
  *            type: string
- *           description: The removed video ids. 
+ *           description: The removed video ids.
  *         playlistName:
  *            type: string
  *            description: The playlist's name.
@@ -38,7 +38,14 @@ class UpdatePlaylistDto {
           "Playlist ID is required"
         );
       }
-      await validMongooseObjectId(this.playListId);
+      try {
+        await validMongooseObjectId(this.playListId);
+      } catch (error) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid Playlist ID"
+        );
+      }
 
       if (this.addedVideoIds && !Array.isArray(this.addedVideoIds)) {
         throw new CoreException(
@@ -54,12 +61,26 @@ class UpdatePlaylistDto {
       }
       if (this.addedVideoIds && this.addedVideoIds.length !== 0) {
         this.addedVideoIds.forEach(async (id) => {
-          await validMongooseObjectId(id);
+          try {
+            await validMongooseObjectId(id);
+          } catch (error) {
+            throw new CoreException(
+              StatusCodeEnums.BadRequest_400,
+              "Invalid added video ID"
+            );
+          }
         });
       }
       if (this.removedVideoIds && this.removedVideoIds.length !== 0) {
         this.removedVideoIds.forEach(async (id) => {
-          await validMongooseObjectId(id);
+          try {
+            await validMongooseObjectId(id);
+          } catch (error) {
+            throw new CoreException(
+              StatusCodeEnums.BadRequest_400,
+              "Invalid removed video ID"
+            );
+          }
         });
       }
     } catch (error) {
