@@ -243,11 +243,11 @@ const createThumbnailFromTsFile = async (tsFilePath, outputDir) => {
       ]);
 
       ffmpeg.stderr.on("data", (data) => {
-        console.error(`FFmpeg stderr: ${data.toString()}`);
+        console.error(`FFmpeg stderr: ${data?.toString()}`);
       });
 
       ffmpeg.stdout.on("data", (data) => {
-        console.log(`FFmpeg stdout: ${data.toString()}`);
+        console.log(`FFmpeg stdout: ${data?.toString()}`);
       });
 
       ffmpeg.on("close", (code) => {

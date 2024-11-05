@@ -56,7 +56,14 @@ class UpdateVideoDto {
         "Video ID is required"
       );
     }
-    await validMongooseObjectId(this.videoId);
+    try {
+      await validMongooseObjectId(this.videoId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid Video ID"
+      );
+    }
     if (!this.title) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
@@ -87,11 +94,20 @@ class UpdateVideoDto {
       );
     }
     if (this.categoryIds && this.categoryIds.length > 0) {
-      this.categoryIds.forEach(async (id) => {
-        if (id || id.length > 0) {
-          await validMongooseObjectId(id);
-        }
-      });
+      await Promise.all(
+        this.categoryIds.map(async (id) => {
+          if (id || id.length > 0) {
+            try {
+              await validMongooseObjectId(id);
+            } catch (error) {
+              throw new CoreException(
+                StatusCodeEnums.BadRequest_400,
+                "Invalid Category ID"
+              );
+            }
+          }
+        })
+      );
     }
     // if (!this.videoThumbnailFile) {
     //   throw new CoreException(

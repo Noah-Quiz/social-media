@@ -17,7 +17,7 @@ class GiftHistoryRepository {
         // Update existing  history with new gifts or new quantity
         gifts.forEach((newGift) => {
           const existingGiftIndex = history.gifts.findIndex(
-            (g) => g.giftId.toString() === newGift.giftId.toString()
+            (g) => g.giftId?.toString() === newGift.giftId?.toString()
           );
 
           if (existingGiftIndex >= 0) {

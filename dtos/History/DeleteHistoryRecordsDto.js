@@ -13,7 +13,14 @@ class DeleteHistoryRecordsDto {
         "User ID is required"
       );
     }
-    await validMongooseObjectId(this.userId);
+    try {
+      await validMongooseObjectId(this.userId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid User ID"
+      );
+    }
   }
 }
 

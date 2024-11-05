@@ -333,7 +333,7 @@ class VideoRepository {
       if (!playlist) {
         throw new Error("Playlist not found");
       }
-      const videoIds = playlist.videoIds.map((video) => video.toString());
+      const videoIds = playlist.videoIds.map((video) => video?.toString());
 
       const skip = (page - 1) * size;
 
@@ -365,20 +365,20 @@ class VideoRepository {
       const page = query.page || 1;
       const size = parseInt(query.size, 10) || 10;
       const skip = (page - 1) * size;
-  
+
       // Create search query
       const searchQuery = { isDeleted: false, enumMode: "public" };
       if (query.title) searchQuery.title = query.title;
-  
+
       let sortField = "dateCreated"; // Default sort field
       let sortOrder = query.order === "ascending" ? 1 : -1;
-      
+
       if (query.sortBy === "like") sortField = "likesCount";
       else if (query.sortBy === "view") sortField = "currentViewCount";
       else if (query.sortBy === "date") sortField = "dateCreated";
-  
+
       const totalVideos = await Video.countDocuments(searchQuery);
-  
+
       const videos = await Video.aggregate([
         { $match: searchQuery },
         {
@@ -431,9 +431,9 @@ class VideoRepository {
         },
         { $sort: { [sortField]: sortOrder } },
         { $skip: skip },
-        { $limit: Number(size) }
+        { $limit: Number(size) },
       ]);
-  
+
       // Return paginated results
       return {
         videos,
@@ -445,7 +445,6 @@ class VideoRepository {
       throw new Error(`Error when fetching all videos: ${error.message}`);
     }
   }
-  
 
   async countTotalVideosRepository() {
     return await Video.countDocuments({ isDeleted: false });

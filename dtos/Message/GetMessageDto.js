@@ -14,7 +14,14 @@ class GetMessageDto {
         "Message ID is required"
       );
     }
-    await validMongooseObjectId(this.messageId);
+    try {
+      await validMongooseObjectId(this.messageId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid Message ID"
+      );
+    }
   }
 }
 

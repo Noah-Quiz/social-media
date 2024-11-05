@@ -64,21 +64,21 @@ async function consumeMessageFromQueue(queue, callback) {
               streamOnlineUrl,
               streamServerUrl,
               thumbnailUrl,
-            } = JSON.parse(msg.content.toString());
+            } = JSON.parse(msg.content?.toString());
 
             switch (queue) {
               case process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE:
                 const { userId, videoId, videoFolderPath } = JSON.parse(
-                  msg.content.toString()
+                  msg.content?.toString()
                 );
                 logger.info(`Path: ${videoFolderPath}`);
                 logger.info(
-                  `Message received from queue ${queue}: ${msg.content.toString()}`
+                  `Message received from queue ${queue}: ${msg.content?.toString()}`
                 );
                 await callback({
                   userId: userId,
                   videoId: videoId,
-                  videoFolderPath:videoFolderPath,
+                  videoFolderPath: videoFolderPath,
                 });
                 logger.info(`Message processed successfully`);
                 break;

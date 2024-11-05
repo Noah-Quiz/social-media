@@ -15,7 +15,11 @@ class GetChildrenCommentsDto {
         "Missing required commentId field"
       );
     }
-    await validMongooseObjectId(this.commentId);
+    try {
+      await validMongooseObjectId(this.commentId);
+    } catch (error) {
+      throw error;
+    }
     if (this.limit && isNaN(this.limit)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
