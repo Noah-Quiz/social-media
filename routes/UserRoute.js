@@ -703,7 +703,11 @@ route.put("/watch-time", userController.updateTotalWatchTimeController);
  *       500:
  *         description: Internal server error
  */
-route.get("/", userController.getAllUsersController);
+route.get(
+  "/",
+  requireRole(UserEnum.ADMIN),
+  userController.getAllUsersController
+);
 
 /**
  * @swagger
