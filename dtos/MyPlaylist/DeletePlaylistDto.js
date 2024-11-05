@@ -13,7 +13,14 @@ class DeletePlaylistDto {
         "playlistId is required"
       );
     }
-    await validMongooseObjectId(this.playlistId);
+    try {
+      await validMongooseObjectId(this.playlistId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid playlistId"
+      );
+    }
   }
 }
 module.exports = DeletePlaylistDto;

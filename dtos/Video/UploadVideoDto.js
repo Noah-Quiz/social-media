@@ -17,14 +17,28 @@ class UploadVideoDto {
         "User ID is required"
       );
     }
-    await validMongooseObjectId(this.userId);
+    try {
+      await validMongooseObjectId(this.userId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid User ID"
+      );
+    }
     if (!this.videoId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Video ID is required"
       );
     }
-    await validMongooseObjectId(this.videoId);
+    try {
+      await validMongooseObjectId(this.videoId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid Video ID"
+      );
+    }
     if (!this.videoFile) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
