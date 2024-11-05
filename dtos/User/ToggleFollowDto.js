@@ -33,9 +33,20 @@ class ToggleFollowDto {
     if (!["follow", "unfollow"].includes(this.action)) {
       throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid action");
     }
-    await validMongooseObjectId(this.userId);
+    try {
+      await validMongooseObjectId(this.userId);
+    } catch (error) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid userId");
+    }
 
-    await validMongooseObjectId(this.followId);
+    try {
+      await validMongooseObjectId(this.followId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid followId"
+      );
+    }
 
     if (this.userId === this.followId) {
       throw new CoreException(

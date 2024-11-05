@@ -33,14 +33,28 @@ class DeleteVideoDto {
         "Video ID is required"
       );
     }
-    await validMongooseObjectId(this.videoId);
+    try {
+      await validMongooseObjectId(this.videoId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid video ID"
+      );
+    }
     if (!this.userId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "User ID is required"
       );
     }
-    await validMongooseObjectId(this.userId);
+    try {
+      await validMongooseObjectId(this.userId);
+    } catch (error) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid user ID"
+      );
+    }
   }
 }
 
