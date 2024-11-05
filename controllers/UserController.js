@@ -84,6 +84,7 @@ class UserController {
       next(error);
     }
   }
+
   async updateUserProfileByIdController(req, res, next) {
     try {
       const { userId } = req.params;
@@ -180,8 +181,7 @@ class UserController {
   async toggleFollowController(req, res, next) {
     try {
       const { userId, followId, action } = req.body;
-      console.log("user: ", userId);
-      console.log("follow: ", followId);
+      
       const toggleFollowDto = new ToggleFollowDto(userId, followId, action);
       await toggleFollowDto.validate();
 
@@ -284,6 +284,7 @@ class UserController {
   async getFollowerController(req, res, next) {
     try {
       const { userId } = req.params;
+      const requester = req.userId;
 
       if (!userId) {
         throw new CoreException(
@@ -291,16 +292,12 @@ class UserController {
           "User ID is required"
         );
       }
-      const result = await getFollowerService(userId);
-      if (!result || result.length === 0) {
-        throw new CoreException(
-          StatusCodeEnums.NotFound_404,
-          "No follower found"
-        );
-      }
+
+      const follower = await getFollowerService(userId, requester);
+
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ follower: result, message: "Success" });
+        .json({ follower, message: "Success" });
     } catch (error) {
       next(error);
     }
@@ -308,6 +305,7 @@ class UserController {
   async getFollowingController(req, res, next) {
     try {
       const { userId } = req.params;
+      const requester = req.userId;
 
       if (!userId) {
         throw new CoreException(
@@ -315,16 +313,12 @@ class UserController {
           "User ID is required"
         );
       }
-      const result = await getFollowingService(userId);
-      if (!result || result.length === 0) {
-        throw new CoreException(
-          StatusCodeEnums.NotFound_404,
-          "No following found"
-        );
-      }
+
+      const following = await getFollowingService(userId, requester);
+
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ following: result, message: "success" });
+        .json({ following, message: "success" });
     } catch (error) {
       next(error);
     }
