@@ -132,7 +132,7 @@ class MemberGroupRepository {
 
       // Check if the user is already in the members array
       const existingMember = memberGroup.members.find(
-        (member) => member.memberId.toString() === userId.toString()
+        (member) => member.memberId?.toString() === userId?.toString()
       );
 
       if (existingMember) {
@@ -182,13 +182,13 @@ class MemberGroupRepository {
 
       // Check if the member exists in the members array
       const existingMember = memberGroup.members.find(
-        (member) => member.memberId.toString() === memberId.toString()
+        (member) => member.memberId?.toString() === memberId?.toString()
       );
 
       if (existingMember) {
         // Remove the member from the members array
         memberGroup.members = memberGroup.members.filter(
-          (member) => member.memberId.toString() !== memberId.toString()
+          (member) => member.memberId?.toString() !== memberId?.toString()
         );
 
         // Save the updated member group

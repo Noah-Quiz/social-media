@@ -14,7 +14,11 @@ class GetVideoCommentsDto {
         "VideoId is required"
       );
     }
-    await validMongooseObjectId(this.videoId);
+    try {
+      await validMongooseObjectId(this.videoId);
+    } catch (error) {
+      throw error;
+    }
   }
 }
 

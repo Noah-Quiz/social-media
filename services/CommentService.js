@@ -106,7 +106,7 @@ const getCommentService = async (id, requester) => {
     if (comment) {
       comment.likes = (comment.likeBy || []).length;
       comment.isLiked = (comment.likeBy || []).some(
-        (userId) => userId.toString() === requester.toString()
+        (userId) => userId?.toString() === requester?.toString()
       );
       delete comment.likeBy;
     }
@@ -129,7 +129,7 @@ const getVideoCommentsService = async (videoId, sortBy, requester) => {
     comments = comments.map((comment) => {
       comment.likes = (comment.likeBy || []).length;
       comment.isLiked = (comment.likeBy || []).some(
-        (userId) => userId.toString() === requester.toString()
+        (userId) => userId?.toString() === requester?.toString()
       );
       delete comment.likeBy;
       return comment;
@@ -146,7 +146,7 @@ const updateCommentService = async (userId, id, content) => {
   try {
     const originalComment = await connection.commentRepository.getComment(id);
     let notCommentOwner =
-      originalComment.userId.toString() !== userId.toString();
+      originalComment.userId?.toString() !== userId?.toString();
     if (notCommentOwner) {
       throw new Error("You can not update other people comment");
     }
@@ -186,10 +186,10 @@ const softDeleteCommentService = async (userId, id) => {
 
     let notAdmin = user.role !== 1;
 
-    let notVideoOwner = userId.toString() !== video.userId.toString();
+    let notVideoOwner = userId?.toString() !== video.userId?.toString();
 
     let notCommentOwner =
-      originalComment.userId.toString() !== userId.toString();
+      originalComment.userId?.toString() !== userId?.toString();
 
     if (notCommentOwner && notVideoOwner && notAdmin) {
       throw new Error("Not authorized to delete this comment");
@@ -258,7 +258,7 @@ const getChildrenCommentsService = async (commentId, limit, requester) => {
     const transformComment = (comment) => {
       comment.likes = (comment.likeBy || []).length;
       comment.isLiked = (comment.likeBy || []).some(
-        (userId) => userId.toString() === requester.toString()
+        (userId) => userId?.toString() === requester?.toString()
       );
       delete comment.likeBy;
 
