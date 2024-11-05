@@ -30,7 +30,14 @@ class StreamRecommendationDto {
     }
     if (this.categoryIds) {
       this.categoryIds.forEach(async (id) => {
-        await validMongooseObjectId(id);
+        try {
+          await validMongooseObjectId(id);
+        } catch (error) {
+          throw new CoreException(
+            StatusCodeEnums.BadRequest_400,
+            `Invalid category ID: ${id}`
+          );
+        }
       });
     }
   }
