@@ -28,6 +28,7 @@ const {
   convertMp4ToHls,
   findClosetTsFile,
   createThumbnailFromTsFile,
+  deleteFolder,
 } = require("../middlewares/storeFile");
 const DeleteVideoDto = require("../dtos/Video/DeleteVideoDto");
 const { sendMessageToQueue } = require("../utils/rabbitMq");
@@ -61,17 +62,22 @@ class VideoController {
       const newFilePath = await changeFileName(videoFile.path, video._id);
       const m3u8 = await convertMp4ToHls(newFilePath);
       const folderPath = await removeFileName(newFilePath);
-      await replaceTsSegmentLinksInM3u8(m3u8, video._id);
-      const closestTsFile = await findClosetTsFile(folderPath);
-      await createThumbnailFromTsFile(
-        path.join(folderPath, closestTsFile.selectedFile.file),
-        folderPath
-      );
-      await deleteFile(newFilePath);
+      try {
+        await replaceTsSegmentLinksInM3u8(m3u8, video._id);
+        const closestTsFile = await findClosetTsFile(folderPath);
+        const thumbnail = await createThumbnailFromTsFile(
+          path.join(folderPath, closestTsFile.selectedFile.file),
+          folderPath
+        );
+        await deleteFile(newFilePath);
 
-      await updateAVideoByIdService(video._id, {
-        duration: closestTsFile.duration,
-      });
+        await updateAVideoByIdService(video._id, {
+          duration: closestTsFile.duration,
+        });
+      } catch (error) {
+        await deleteFolder(folderPath);
+        throw error;
+      }
 
       const queueMessage = {
         userId: userId,
