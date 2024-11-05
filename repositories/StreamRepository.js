@@ -77,6 +77,7 @@ class StreamRepository {
             webRtcPlayback: 1,
             status: 1,
             dateCreated: 1,
+            lastUpdated: 1,
             user: {
               _id: 1,
               fullName: "$user.fullName",
@@ -208,6 +209,7 @@ class StreamRepository {
             likesCount: 1,
             status: 1,
             dateCreated: 1,
+            lastUpdated: 1,
             user: {
               _id: 1,
               fullName: "$user.fullName",
@@ -394,6 +396,7 @@ class StreamRepository {
             peakViewCount: 1,
             status: 1,
             dateCreated: 1,
+            lastUpdated: 1,
             likesCount: { $size: "$likedBy" },
             user: {
               _id: 1,
@@ -469,6 +472,7 @@ class StreamRepository {
             peakViewCount: 1,
             status: 1,
             dateCreated: 1,
+            lastUpdated: 1,
             likesCount: { $size: "$likedBy" },
             user: {
               _id: 1,

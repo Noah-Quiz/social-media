@@ -84,7 +84,7 @@ const streamSchema = new Schema({
   },
   enumMode: {
     type: String,
-    enum: ["public", "private", "unlisted", "member"],
+    enum: ["public", "member"],
     default: "public",
   },
   peakViewCount: {
