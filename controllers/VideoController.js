@@ -161,7 +161,12 @@ class VideoController {
         thumbnailFile
       );
 
-      await updateVideoDto.validate();
+      try {
+        await updateVideoDto.validate();
+      } catch (validationError) {
+        // Pass validation errors to Express error-handling middleware
+        return next(validationError);
+      }
 
       const updateData = {
         title: data.title,
@@ -272,7 +277,6 @@ class VideoController {
       const query = {
         size: req.query.size,
         page: req.query.page,
-        status: req.query.status,
         sortBy: req.query.sortBy,
         order: req.query.order,
         title: req.query.title,

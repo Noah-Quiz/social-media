@@ -37,7 +37,7 @@ const updateMessageService = async (userId, messageId, updateData) => {
     const originalMessage = await connection.messageRepository.getMessageById(
       messageId
     );
-    if (originalMessage.userId.toString() !== userId.toString()) {
+    if (originalMessage.userId?.toString() !== userId?.toString()) {
       throw new Error("You are not the owner of this message");
     }
     const message = await connection.messageRepository.updateMessage(
@@ -57,7 +57,7 @@ const deleteMessageService = async (userId, messageId) => {
     const originalMessage = await connection.messageRepository.getMessageById(
       messageId
     );
-    if (originalMessage.userId.toString() !== userId.toString()) {
+    if (originalMessage.userId?.toString() !== userId?.toString()) {
       throw new Error("You are not the owner of this message");
     }
     if (!mongoose.Types.ObjectId.isValid(messageId)) {

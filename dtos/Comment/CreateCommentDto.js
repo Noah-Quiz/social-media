@@ -41,7 +41,10 @@ class CreateCommentDto {
     try {
       await validMongooseObjectId(this.userId); // Validate as ObjectId
     } catch (error) {
-      throw error;
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid user ID"
+      );
     }
 
     // Validate videoId
@@ -54,7 +57,10 @@ class CreateCommentDto {
     try {
       await validMongooseObjectId(this.videoId); // Validate as ObjectId
     } catch (error) {
-      throw error;
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid video ID"
+      );
     }
 
     // Validate content (no need to validate as ObjectId, just check if it exists)
@@ -71,7 +77,10 @@ class CreateCommentDto {
       try {
         await validMongooseObjectId(this.responseTo); // Only validate if provided
       } catch (error) {
-        throw error;
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid user ID"
+        );
       }
     }
   }

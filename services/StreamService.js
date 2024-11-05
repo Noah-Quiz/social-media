@@ -19,7 +19,7 @@ const getStreamService = async (streamId, requester) => {
     }
 
     let process = stream;
-    const isOwner = stream.user?._id?.toString() === requester?.toString();
+    const isOwner = stream?.userId?.toString() === requester?.toString();
 
     //if owner => nothing is change
     if (isOwner) {
@@ -38,7 +38,7 @@ const getStreamService = async (streamId, requester) => {
       return result.length === 1 ? result[0] : result;
     } else if (stream.enumMode === "member") {
       //handle not owner member
-      const isMember = await checkMemberShip(requester, stream.user?._id);
+      const isMember = await checkMemberShip(requester, stream.userId);
 
       if (isMember) {
         return process;
@@ -70,10 +70,10 @@ const getStreamsService = async (query, requester) => {
       .filter(
         (stream) =>
           stream.enumMode !== "private" ||
-          stream.user?._id?.toString() === requester.toString()
+          stream.userId?.toString() === requester?.toString()
       )
       .map(async (stream) => {
-        const isOwner = stream.user?._id?.toString() === requester.toString();
+        const isOwner = stream.userId?.toString() === requester?.toString();
         if (isOwner) {
           return stream; // Return unmodified stream if requester is owner
         }
@@ -83,7 +83,7 @@ const getStreamsService = async (query, requester) => {
 
         // Check if stream is member-only
         if (stream.enumMode === "member") {
-          const isMember = await checkMemberShip(requester, stream.user?._id);
+          const isMember = await checkMemberShip(requester, stream.userId);
           if (isMember) {
             return cleanedStream; // Return cleaned stream for members
           }
@@ -131,7 +131,7 @@ const updateStreamService = async (userId, streamId, updateData) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
 
-    if (stream.user?._id?.toString() !== userId) {
+    if (stream.user._id?.toString() !== userId) {
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
         "You do not have permission to perform this action"
@@ -170,8 +170,8 @@ const deleteStreamService = async (userId, streamId) => {
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
-    
-    if (stream.user._id?.toString() !== userId) {
+
+    if (stream.userId?.toString() !== userId) {
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
         "You do not have permission to perform this action"
@@ -321,7 +321,7 @@ const checkMemberShip = async (requester, userId) => {
     // Use 'some' to check if the requester is a member
     let isMember = false;
     memberGroup.members.map((member) => {
-      if (member.memberId.toString() === requester) {
+      if (member.memberId?.toString() === requester) {
         isMember = true;
       }
     });

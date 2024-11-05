@@ -39,7 +39,10 @@ class UpdateGiftDto {
     try {
       await validMongooseObjectId(this.id);
     } catch (error) {
-      throw error;
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid gift ID"
+      );
     }
     if (!isFloat(this.valuePerUnit?.toString())) {
       throw new CoreException(

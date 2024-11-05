@@ -15,7 +15,7 @@ const responseQueue = "response_queue"; // Queue to receive responses after proc
 
 // Utility function to generate a unique correlation ID for messages
 function generateUniqueId() {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  return Math.random()?.toString(36).substring(2) + Date.now()?.toString(36);
 }
 
 // Function to create a connection and channel for RabbitMQ
@@ -93,7 +93,7 @@ exports.consumePaymentQueue = async () => {
       queue,
       async (msg) => {
         if (msg !== null) {
-          const paymentData = JSON.parse(msg.content.toString());
+          const paymentData = JSON.parse(msg.content?.toString());
           const { userId, amount, params } = paymentData;
 
           try {
@@ -196,7 +196,7 @@ exports.consumeResponseQueue = async () => {
       (msg) => {
         if (msg !== null) {
           // Parse the response message and log it
-          const response = JSON.parse(msg.content.toString());
+          const response = JSON.parse(msg.content?.toString());
           console.log("Received response from queue:", response);
 
           // Acknowledge the response message after processing

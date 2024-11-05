@@ -49,7 +49,7 @@ class CreateGiftDto {
         "Value per unit is required and must be a number"
       );
     }
-    if (!isFloat(this.valuePerUnit.toString(), { min: 0 })) {
+    if (!isFloat(this.valuePerUnit?.toString(), { min: 0 })) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid price format"
