@@ -82,23 +82,12 @@ class AuthController {
       const ipAddress =
         req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
-      // const loginGoogleDto = new LoginGoogleDto(
-      //   googleUser.id,
-      //   googleUser.email,
-      //   googleUser.displayName,
-      //   googleUser.avatar
-      // );
-      // await loginGoogleDto.validate();
-
       const user = await loginGoogleService(googleUser, ipAddress);
       const accessToken = createAccessToken(
         { _id: user._id, ip: ipAddress },
         process.env.ACCESS_TOKEN_SECRET,
         process.env.ACCESS_TOKEN_EXPIRE
       );
-      // res
-      //   .status(200)
-      //   .json({ accessToken, message: "Login with Google successfully" });
       res.redirect(
         `http://localhost:3001?accessToken=${accessToken}&userId=${user._id}`
       );
@@ -113,14 +102,6 @@ class AuthController {
       const ipAddress =
         req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
-      // const loginGoogleDto = new LoginGoogleDto(
-      //   googleUser.id,
-      //   googleUser.email,
-      //   googleUser.displayName,
-      //   googleUser.avatar
-      // );
-      // await loginGoogleDto.validate();
-
       const user = await loginGoogleService(googleUser, ipAddress);
       const accessToken = createAccessToken(
         { _id: user._id, ip: ipAddress },
@@ -132,9 +113,6 @@ class AuthController {
         userId: user._id,
         message: "Login with Google successfully",
       });
-      // res.redirect(
-      //   `http://localhost:3001?accessToken=${accessToken}&userId=${user._id}`
-      // );
     } catch (error) {
       next(error);
     }
