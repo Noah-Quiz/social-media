@@ -69,6 +69,7 @@ class StreamRepository {
             currentViewCount: 1,
             peakViewCount: 1,
             likesCount: 1,
+            uid: 1,
             rtmps: 1,
             rtmpsPlayback: 1,
             srt: 1,
@@ -76,6 +77,7 @@ class StreamRepository {
             webRtc: 1,
             webRtcPlayback: 1,
             status: 1,
+            enumMode: 1,
             dateCreated: 1,
             lastUpdated: 1,
             user: {
@@ -140,7 +142,7 @@ class StreamRepository {
   }
 
   // Get all streams
-  async getStreamsRepository(query, requester) {
+  async getStreamsRepository(query) {
     try {
       const page = query.page || 1;
       const size = query.size || 10;
@@ -149,7 +151,9 @@ class StreamRepository {
       const searchQuery = { isDeleted: false };
 
       // Prepare query
-      if (query.title) searchQuery.title = query.title;
+      if (query.title) {
+        searchQuery.title = { $regex: new RegExp(query.title, "i") };
+      }      
       if (query.uid) searchQuery.uid = query.uid;
       if (query.status) searchQuery.status = query.status;
 
@@ -162,13 +166,7 @@ class StreamRepository {
 
       sortOrder = query.order === "ascending" ? 1 : -1;
       
-      const totalStreams = await Stream.countDocuments({
-        ...searchQuery,
-        $or: [
-          { enumMode: { $ne: "private" } },
-          { userId: new mongoose.Types.ObjectId(requester) },
-        ],
-      });
+      const totalStreams = await Stream.countDocuments(searchQuery);
 
       // Get streams with sorting on computed fields
       const streams = await Stream.aggregate([
@@ -208,6 +206,7 @@ class StreamRepository {
             peakViewCount: 1,
             likesCount: 1,
             status: 1,
+            enumMode: 1,
             dateCreated: 1,
             lastUpdated: 1,
             user: {
@@ -395,6 +394,7 @@ class StreamRepository {
             currentViewCount: 1,
             peakViewCount: 1,
             status: 1,
+            enumMode: 1,
             dateCreated: 1,
             lastUpdated: 1,
             likesCount: { $size: "$likedBy" },
@@ -471,6 +471,7 @@ class StreamRepository {
             currentViewCount: 1,
             peakViewCount: 1,
             status: 1,
+            enumMode: 1,
             dateCreated: 1,
             lastUpdated: 1,
             likesCount: { $size: "$likedBy" },

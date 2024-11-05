@@ -36,6 +36,7 @@ const CreateVideoDto = require("../dtos/Video/CreateVideoDto");
 require("dotenv").config();
 const getLogger = require("../utils/logger");
 const UpdateVideoDto = require("../dtos/Video/UpdateVideoDto");
+const GetVideosDto = require("../dtos/Video/GetVideosDto");
 const logger = getLogger("VIDEO_CONTROLLER");
 class VideoController {
   async createVideoController(req, res, next) {
@@ -229,7 +230,8 @@ class VideoController {
   async getVideosByUserIdController(req, res, next) {
     try {
       const { userId } = req.params;
-      const requester = req.userId;
+      const { requesterId } = req.query;
+
       const query = {
         size: req.query.size,
         page: req.query.page,
@@ -238,64 +240,11 @@ class VideoController {
         order: req.query.order,
         enumMode: req.query.enumMode
       };
-  
-      if (!query.page) query.page = 1;
-      if (!query.size) query.size = 10;
-      if (!query.enumMode) query.enumMode = "public";
+      
+      const getVideosDto = new GetVideosDto(query.size, query.page, query.enumMode, query.sortBy, query.order);
+      const validatedQuery =  await getVideosDto.validate();
 
-      // Validate enumMode
-      const validEnumModeOptions = ["draft", "public", "private", "unlisted", "member"];
-      if (query.enumMode && !validEnumModeOptions.includes(query.enumMode)) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Invalid query enumMode, must be in ['draft, 'public', 'private', 'unlisted', 'member']"
-        );
-      }
-
-      // Validate `sortBy` and `order`
-      const validSortByOptions = ["like", "view", "date"];
-      const validOrderOptions = ["ascending", "descending"];
-  
-      if (query.sortBy && !validSortByOptions.includes(query.sortBy)) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Invalid query sortBy, must be in ['like', 'view', 'date']"
-        );
-      }
-  
-      if (query.order && !validOrderOptions.includes(query.order)) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Invalid query order, must be in ['ascending', 'descending']"
-        );
-      }
-  
-      // Additional validation checks for `page` and `size`
-      if (query.page < 1) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Page cannot be less than 1"
-        );
-      }
-      if (query.size < 1) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Size cannot be less than 1"
-        );
-      }
-  
-      if (query.title) {
-        query.title = { $regex: query.title, $options: "i" };
-      }
-
-      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Valid user ID is required"
-        );
-      }
-
-      const { videos, total, page, totalPages } = await getVideosByUserIdService(userId, query, requester);
+      const { videos, total, page, totalPages } = await getVideosByUserIdService(userId, validatedQuery, requesterId);
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -308,16 +257,9 @@ class VideoController {
   async getVideoController(req, res, next) {
     try {
       const { videoId } = req.params;
-      const requester = req.userId;
+      const { requesterId } = req.query;
 
-      if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
-        throw new CoreException(
-          StatusCodes.BadRequest_400,
-          "Valid video ID is required"
-        );
-      }
-
-      const video = await getVideoService(videoId, requester);
+      const video = await getVideoService(videoId, requesterId);
       // const bunnyVideo = await getBunnyStreamVideoService(
       //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
       //   video.bunnyId
@@ -339,42 +281,14 @@ class VideoController {
         sortBy: req.query.sortBy,
         order: req.query.order,
         title: req.query.title,
+        enumMode: req.query.enumMode,
       };
+      const { requesterId } = req.query;
 
-      if (!query.page) query.page = 1;
-      if (!query.size) query.size = 10;
-      const validSortByOptions = ["like", "view", "date"];
-      const validOrderOptions = ["ascending", "descending"];
-      if (query.sortBy && !validSortByOptions.includes(query.sortBy)) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Invalid query sortBy, must be in ['like', 'view', 'date']"
-        );
-      }
+      const getVideosDto = new GetVideosDto(query.size, query.page, query.enumMode, query.sortBy, query.order);
+      const validatedQuery =  await getVideosDto.validate();
 
-      if (query.order && !validOrderOptions.includes(query.order)) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Invalid query order, must be in ['ascending', 'descending']"
-        );
-      }
-      if (query.page < 1) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Invalid page number"
-        );
-      }
-      if (query.size < 1) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Size cannot be less than 1"
-        );
-      }
-      if (query.title) {
-        query.title = { $regex: query.title, $options: "i" };
-      }
-
-      const { videos, total, page, totalPages } = await getVideosService(query);
+      const { videos, total, page, totalPages } = await getVideosService(validatedQuery, requesterId);
 
       return res
         .status(StatusCodeEnums.OK_200)
