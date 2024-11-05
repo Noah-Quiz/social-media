@@ -24,21 +24,10 @@ const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 class StreamController {
   async getStreamController(req, res, next) {
     const { streamId } = req.params;
-    const { ownerId } = req.body;
+    const { requesterId } = req.query;
 
     try {
-      if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
-        throw new CoreException(StatusCodeEnums.BadRequest_400).json({
-          message: "Valid stream ID is required",
-        });
-      }
-      if (ownerId && !mongoose.Types.ObjectId.isValid(ownerId)) {
-        throw new CoreException(StatusCodeEnums.BadRequest_400).json({
-          message: "Valid owner ID is required",
-        });
-      }
-
-      const stream = await getStreamService(streamId, ownerId);
+      const stream = await getStreamService(streamId, requesterId);
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -50,7 +39,7 @@ class StreamController {
 
   async getStreamsController(req, res, next) {
     try {
-      const { ownerId } = req.body;
+      const { requesterId } = req.query;
 
       const query = {
         size: req.query.size || 10,
@@ -66,7 +55,7 @@ class StreamController {
 
       const { streams, total, page, totalPages } = await getStreamsService(
         query,
-        ownerId,
+        requesterId,
       );
 
       return res
@@ -172,9 +161,7 @@ class StreamController {
           }
         );
       } catch (error) {
-        throw new CoreException(StatusCodeEnums.InternalServerError_500).json({
-          message: "Failed to create live stream",
-        });
+        throw new CoreException(StatusCodeEnums.InternalServerError_500, "Failed to create live stream");
       }
 
       const cloudflareStream = response.data?.liveInput;
@@ -243,7 +230,7 @@ class StreamController {
 
   async getRelevantStreamsController(req, res, next) {
     const { categoryIds } = req.body;
-    console.log(categoryIds)
+    
     try {
       const streamRecommendationDto = new StreamRecommendationDto(
         categoryIds

@@ -132,6 +132,19 @@ videoRoutes.post(
  *         schema:
  *           type: string
  *         description: Search videos by title (case-insensitive)
+ *       - in: query
+ *         name: enumMode
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [private, public, unlisted, draft, member]
+ *         description: Type of video. Only videos of type public or member are shown. Only admin can access all videos of all types
+ *       - in: query
+ *         name: requesterId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: User ID of requester. If requester is owner, show video in more detail. If the video is of type member, hides critical information.
  *     responses:
  *       200:
  *         description: Get all videos successfully
@@ -234,6 +247,19 @@ videoRoutes.get("/", videoController.getVideosController);
  *         schema:
  *           type: string
  *         description: User ID
+ *       - in: query
+ *         name: enumMode
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [private, public, unlisted, draft, member]
+ *         description: Type of video. Only videos of type public or member are shown. Only admin can access all videos of all types
+ *       - in: query
+ *         name: requesterId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: User ID of requester. If requester is owner, show video in more detail. If the video is of type member, hides critical information.
  *     responses:
  *       200:
  *         description: Get videos by user ID successfully
@@ -310,7 +336,6 @@ videoRoutes.get("/", videoController.getVideosController);
  */
 videoRoutes.get(
   "/user/:userId",
-  AuthMiddleware,
   videoController.getVideosByUserIdController
 );
 
@@ -543,6 +568,12 @@ videoRoutes.patch(
  *        schema:
  *          type: string
  *        description: Video ID
+ *      - in: query
+ *        name: requesterId
+ *        required: false
+ *        schema:
+ *          type: string
+ *        description: User ID of requester. If requester is owner, show video in more detail. If the video is of type member, hides critical information.
  *   responses:
  *    200:
  *      description: Get video by id successfully
