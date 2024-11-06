@@ -16,26 +16,10 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           description: The video's id.
  */
 class CreateHistoryRecordDto {
-  constructor(userId, videoId) {
-    this.userId = userId;
+  constructor( videoId) {
     this.videoId = videoId;
   }
   async validate() {
-    if (!this.userId) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "User ID is required"
-      );
-    }
-    try {
-      await validMongooseObjectId(this.userId);
-    } catch (error) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Invalid User ID"
-      );
-    }
-
     if (!this.videoId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
