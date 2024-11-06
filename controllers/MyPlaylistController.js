@@ -11,6 +11,7 @@ const {
   getAllMyPlaylistsService,
   updatePlaylistService,
   addToPlaylistService,
+  removeFromPlaylist,
 } = require("../services/MyPlaylistService");
 
 class MyPlaylistController {
@@ -143,6 +144,23 @@ class MyPlaylistController {
       next(error);
     }
   }
+  async removeFromPlaylist(req, res, next) {
+    try {
+      const { playlistId } = req.params;
+      const { videoId } = req.body;
+      const userId = req.userId;
+      //both have the same field => same validator
+      const addToPlaylist = new addToPlaylistDto(playlistId, videoId, userId);
+      await addToPlaylist.validate();
+      const response = await removeFromPlaylist(playlistId, videoId, userId);
+      if (response) {
+        res
+          .status(StatusCodeEnums.OK_200)
+          .json({ message: "Video removed from playlist successfully" });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
 }
-
 module.exports = MyPlaylistController;

@@ -220,6 +220,15 @@ class MyPlaylistRepository {
         _id: new mongoose.Types.ObjectId(videoId),
         isDeleted: false,
       });
+      if (!video) {
+        throw new Error("Video not found");
+      }
+      if (!playlist.videoIds.includes(videoId)) {
+        throw new Error("Video not found in playlist");
+      }
+      playlist.videoIds.pull(videoId);
+      await playlist.save();
+      return playlist;
     } catch (error) {
       throw new Error(`Error removing video to playlist: ${error.message}`);
     }
