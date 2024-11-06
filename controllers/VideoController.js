@@ -344,11 +344,27 @@ class VideoController {
 
   async getVideoLikeHistoryController(req, res, next) {
     const userId = req.userId;
+    
     try {
       const videos = await getVideoLikeHistoryService(userId);
+      
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ videos, message: "Get videos like history successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getVideoLikesCountController(req, res, next) {
+    const { videoId } = req.params;
+
+    try {
+      const videos = await getVideoLikeHistoryService(videoId);
+
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ videos, message: "Get videos like count successfully" });
     } catch (error) {
       next(error);
     }
