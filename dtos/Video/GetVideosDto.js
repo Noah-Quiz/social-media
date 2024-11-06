@@ -3,12 +3,13 @@ const CoreException = require("../../exceptions/CoreException");
 const { validMongooseObjectId } = require("../../utils/validator");
 
 class GetVideosDto {
-    constructor(size, page, enumMode, sortBy, order) {
+    constructor(size, page, enumMode, sortBy, order, title) {
         this.size = size;
         this.page = page;
         this.enumMode = enumMode;
         this.sortBy = sortBy;
         this.order = order;
+        this.title = title;
     }
 
     async validate() {
@@ -69,7 +70,7 @@ class GetVideosDto {
             );
         }
 
-        const query = { size: this.size, page: this.page, enumMode: this.enumMode, sortBy: this.sortBy, order: this.order}
+        const query = { size: this.size, page: this.page, enumMode: this.enumMode, sortBy: this.sortBy, order: this.order, title: this.title}
         return query;
     }
 }
