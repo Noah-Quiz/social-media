@@ -1,5 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const MyPlaylist = require("../entities/MyPlaylistEntity");
+const Video = require("../entities/VideoEntity");
 
 class MyPlaylistRepository {
   // Create a new playlist
@@ -72,37 +73,32 @@ class MyPlaylistRepository {
   }
 
   // Update a playlist
-  async updatePlaylistRepository(playlistId, updateData) {
+  async updatePlaylistRepository(
+    playlistId,
+    playlistName,
+    description,
+    thumbnail
+  ) {
     try {
       const playlist = await MyPlaylist.findById(playlistId);
 
-      if (!playlist) {
+      if (!playlist || playlist.isDeleted === true) {
         throw new Error("Playlist not found");
       }
 
-      if (updateData.addedVideoIds && updateData.addedVideoIds.length > 0) {
-        await MyPlaylist.updateOne(
-          { _id: playlistId },
-          { $addToSet: { videoIds: { $each: updateData.addedVideoIds } } },
-          { runValidators: true }
-        );
+      if (playlistName && playlistName !== playlist.playlistName) {
+        playlist.playlistName = playlistName;
       }
-
-      if (updateData.removedVideoIds && updateData.removedVideoIds.length > 0) {
-        await MyPlaylist.updateOne(
-          { _id: playlistId },
-          { $pull: { videoIds: { $in: updateData.removedVideoIds } } },
-          { runValidators: true }
-        );
+      if (description && description !== playlist.description) {
+        playlist.description = description;
       }
+      if (thumbnail && thumbnail !== playlist.thumbnail) {
+        playlist.thumbnail = thumbnail;
+      }
+      playlist.lastUpdated = Date.now();
+      await playlist.save();
 
-      const updatedPlaylist = await MyPlaylist.findByIdAndUpdate(
-        playlistId,
-        { playlistName: updateData.playlistName },
-        { new: true, runValidators: true }
-      );
-
-      return updatedPlaylist;
+      return playlist;
     } catch (error) {
       throw new Error(`Error updating playlist: ${error.message}`);
     }
@@ -179,6 +175,54 @@ class MyPlaylistRepository {
       throw new Error(`Error fetching streams: ${error.message}`);
     }
   }
-}
+  async addToPlaylistRepository(playlistId, videoId) {
+    try {
+      const playlist = await MyPlaylist.findOne({
+        _id: new mongoose.Types.ObjectId(playlistId),
+        isDeleted: false,
+      });
 
+      if (!playlist) {
+        throw new Error("Playlist not found");
+      }
+
+      const video = await Video.findOne({
+        _id: new mongoose.Types.ObjectId(videoId),
+        isDeleted: false,
+      });
+
+      if (!video) {
+        throw new Error("Video not found");
+      }
+
+      // Use $addToSet to add videoId to videoIds array if it doesn't already exist
+      const updatedPlaylist = await MyPlaylist.findByIdAndUpdate(
+        playlistId,
+        { $addToSet: { videoIds: videoId } },
+        { new: true } // Option to return the updated document
+      );
+
+      return updatedPlaylist; // Return the updated playlist if needed
+    } catch (error) {
+      throw new Error(`Error adding video to playlist: ${error.message}`);
+    }
+  }
+  async removeFromPlaylist(playlistId, videoId) {
+    try {
+      const playlist = await MyPlaylist.findOne({
+        _id: new mongoose.Types.ObjectId(playlistId),
+        isDeleted: false,
+      });
+      if (!playlist) {
+        throw new Error("Playlist not found");
+      }
+      const video = await Video.findOne({
+        _id: new mongoose.Types.ObjectId(videoId),
+        isDeleted: false,
+      });
+    } catch (error) {
+      throw new Error(`Error removing video to playlist: ${error.message}`);
+    }
+  }
+}
 module.exports = MyPlaylistRepository;

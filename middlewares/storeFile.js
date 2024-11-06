@@ -502,6 +502,13 @@ const storage = multer.diskStorage({
         const { streamId } = req.params;
         dir = path.join(`assets/images/streams/${streamId}`);
         break;
+      case "playlistCreate":
+        dir = path.join(`assets/images/playlist/create`);
+        break;
+      case "playlistUpdate":
+        const { playlistId } = req.params;
+        dir = path.join(`assets/images/playlist/${playlistId}`);
+        break;
       default:
         logger.error(`Unknown field name: ${file.fieldname}`);
         return cb(`Error: Unknown field name '${file.fieldname}'`);
@@ -562,6 +569,19 @@ const storage = multer.diskStorage({
         const { streamId } = req.params;
         fileName = `${baseName}${ext}`;
         dirPath = path.join(`assets/images/streams/${streamId}`);
+        break;
+      case "playlistCreate":
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/playlist/create`);
+        break;
+      case "playlistUpdate":
+        const { playlistId } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(playlistId)) {
+          logger.error(`Invalid playlist ID: ${playlistId}`);
+          return cb("Error: Invalid playlist ID");
+        }
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/playlist/${playlistId}`);
         break;
       default:
         logger.error(`Unknown field name: ${file.fieldname}`);
