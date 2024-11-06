@@ -14,6 +14,7 @@ const {
   extractFilenameFromPath,
   removeFileName,
 } = require("../middlewares/storeFile");
+const UserEnum = require("../enums/UserEnum");
 const createVideoService = async (
   userId,
   { title, videoUrl, videoEmbedUrl, thumbnailUrl }
@@ -329,7 +330,7 @@ const deleteVideoService = async (videoId, userId) => {
     const user = await connection.userRepository.getAnUserByIdRepository(
       userId
     );
-    const notAdmin = user.role !== 1;
+    const notAdmin = user.role !== UserEnum.ADMIN;
     if (!video || video.isDeleted === true) {
       throw new CoreException(StatusCodeEnums.NotFound_404, `Video not found`);
     }
