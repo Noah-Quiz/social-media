@@ -2,6 +2,7 @@ const Video = require("../entities/VideoEntity");
 const MyPlaylist = require("../entities/MyPlaylistEntity");
 const mongoose = require("mongoose");
 const User = require("../entities/UserEntity");
+const VideoLikeHistory = require("../entities/VideoLikeHistoryEntity");
 
 class VideoRepository {
   async createVideoRepository(videoData, session) {
@@ -31,21 +32,18 @@ class VideoRepository {
     }
   }
 
-  async toggleLikeVideoRepository(videoId, userId, action = "like") {
+  async toggleLikeVideoRepository(videoId, userId) {
     try {
-      const updateAction =
-        action === "like"
-          ? { $addToSet: { likedBy: userId } }
-          : { $pull: { likedBy: userId } };
+      const videoLike = await VideoLikeHistory.findOneAndDelete({
+        user: new mongoose.Types.ObjectId(userId),
+        video: new mongoose.Types.ObjectId(videoId),
+      });
 
-      const updatedVideo = await Video.findByIdAndUpdate(
-        videoId,
-        updateAction,
-        { new: true }
-      );
-
-      if (!updatedVideo) {
-        throw new Error("Video not found");
+      if (!videoLike) {
+        await VideoLikeHistory.create({
+          user: new mongoose.Types.ObjectId(userId),
+          video: new mongoose.Types.ObjectId(videoId),
+        });
       }
 
       return true;
@@ -366,7 +364,7 @@ class VideoRepository {
       const size = query.size || 10;
       const skip = (page - 1) * size;
       const searchQuery = { isDeleted: false };
-      
+
       if (query.title) searchQuery.title = query.title;
       if (query.uid) searchQuery.uid = query.uid;
 
@@ -521,6 +519,24 @@ class VideoRepository {
       { $sort: { "_id.year": 1, "_id.month": 1 } },
     ]);
     return videosMonthly;
+  }
+
+  async getVideoLikeHistoryRepository(userId) {
+    try {
+      const videos = await VideoLikeHistory.find({
+        user: new mongoose.Types.ObjectId(userId),
+      })
+        .select("video -_id")
+        .populate("video")
+        .sort({ dateCreated: -1 });
+
+      const videosList = videos.map((item) => item.video);
+      return videosList;
+    } catch (error) {
+      throw new Error(
+        `Error when fetching all video like history: ${error.message}`
+      );
+    }
   }
 }
 
