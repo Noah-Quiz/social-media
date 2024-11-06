@@ -113,11 +113,13 @@ videoRoutes.post(
  *         name: size
  *         schema:
  *           type: integer
+ *           default: 10
  *         description: The number of videos to return per page (minimum is 1)
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
+ *           default: 1
  *         description: The page number to retrieve (minimum is 1)
  *       - in: query
  *         name: sortBy
@@ -244,7 +246,7 @@ videoRoutes.get("/", videoController.getVideosController);
  * @swagger
  * /api/videos/user/{userId}:
  *   get:
- *     summary: Get videos by user ID
+ *     summary: Get videos by User ID
  *     tags: [Videos]
  *     parameters:
  *       - in: path
@@ -253,6 +255,37 @@ videoRoutes.get("/", videoController.getVideosController);
  *         schema:
  *           type: string
  *         description: User ID
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: The number of videos to return per page (minimum is 1)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: The page number to retrieve (minimum is 1)
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [like, view, date]
+ *           default: date
+ *         description: Sort the videos by number of likes, views, or date created
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [ascending, descending]
+ *           default: descending
+ *         description: Specify the order of sorting (either ascending or descending)
+ *       - in: query
+ *         name: title
+ *         schema:
+ *           type: string
+ *         description: Search videos by title (case-insensitive)
  *       - in: query
  *         name: enumMode
  *         required: false
