@@ -1,6 +1,7 @@
 const CreatePlaylistDto = require("../dtos/MyPlaylist/CreatePlaylistDto");
 const DeletePlaylistDto = require("../dtos/MyPlaylist/DeletePlaylistDto");
 const UpdatePlaylistDto = require("../dtos/MyPlaylist/UpdatePlaylistDto");
+const addToPlaylistDto = require("../dtos/MyPlaylist/AddToPlaylistDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const {
@@ -9,6 +10,7 @@ const {
   deletePlaylistService,
   getAllMyPlaylistsService,
   updatePlaylistService,
+  addToPlaylistService,
 } = require("../services/MyPlaylistService");
 
 class MyPlaylistController {
@@ -46,27 +48,27 @@ class MyPlaylistController {
   //update playlist
   async updatePlaylistController(req, res, next) {
     try {
-      const { addedVideoIds, removedVideoIds, playlistName } = req.body;
+      const { playlistName, description } = req.body;
       const { playlistId } = req.params;
       const userId = req.userId;
+
+      const thumbnail = req.file ? req.file.path : null;
+
       const updatePlaylistDto = new UpdatePlaylistDto(
-        addedVideoIds,
-        removedVideoIds,
+        userId,
+        playlistId,
         playlistName,
-        playlistId
+        description,
+        thumbnail
       );
       await updatePlaylistDto.validate();
-
-      const data = {
-        addedVideoIds,
-        removedVideoIds,
-        playlistName,
-      };
 
       const updatedPlaylist = await updatePlaylistService(
         userId,
         playlistId,
-        data
+        playlistName,
+        description,
+        thumbnail
       );
 
       res
@@ -98,14 +100,45 @@ class MyPlaylistController {
 
   async createAPlaylist(req, res, next) {
     try {
-      const { playlistName } = req.body;
+      const { playlistName, description } = req.body;
       const userId = req.userId;
-      const createPlaylistDto = new CreatePlaylistDto(userId, playlistName);
+
+      // Check if a thumbnail file is provided
+      const thumbnail = req.file ? req.file.path : null;
+
+      const createPlaylistDto = new CreatePlaylistDto(
+        userId,
+        playlistName,
+        description,
+        thumbnail
+      );
       await createPlaylistDto.validate();
 
-      const playlist = await createAPlaylistService(userId, playlistName);
+      const playlist = await createAPlaylistService(
+        userId,
+        playlistName,
+        description,
+        thumbnail
+      );
 
       res.status(StatusCodeEnums.OK_200).json({ playlist, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async addToPlaylistController(req, res, next) {
+    try {
+      const { playlistId } = req.params;
+      const { videoId } = req.body;
+      const userId = req.userId;
+      const addToPlaylist = new addToPlaylistDto(playlistId, videoId, userId);
+      await addToPlaylist.validate();
+      const response = await addToPlaylistService(playlistId, videoId, userId);
+      if (response) {
+        res
+          .status(StatusCodeEnums.OK_200)
+          .json({ message: "Video added to playlist successfully" });
+      }
     } catch (error) {
       next(error);
     }
