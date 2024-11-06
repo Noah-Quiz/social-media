@@ -17,6 +17,7 @@ const {
   deleteVideoService,
   getVideoService,
   getVideosService,
+  getVideoLikeHistoryService,
 } = require("../services/VideoService");
 const { default: mongoose } = require("mongoose");
 const {
@@ -102,7 +103,6 @@ class VideoController {
   async toggleLikeVideoController(req, res, next) {
     try {
       const { videoId } = req.params;
-      const { action } = req.query;
       const userId = req.userId;
 
       if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
@@ -112,7 +112,7 @@ class VideoController {
         );
       }
 
-      await toggleLikeVideoService(videoId, userId, action);
+      await toggleLikeVideoService(videoId, userId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
@@ -126,7 +126,7 @@ class VideoController {
 
       if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
         throw new CoreException(
-          StatusCodes.BadRequest_400,
+          StatusCodeEnums.BadRequest_400,
           "Valid video ID is required"
         );
       }
@@ -337,6 +337,34 @@ class VideoController {
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ videos, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getVideoLikeHistoryController(req, res, next) {
+    const userId = req.userId;
+    
+    try {
+      const videos = await getVideoLikeHistoryService(userId);
+      
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ videos, message: "Get videos like history successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getVideoLikesCountController(req, res, next) {
+    const { videoId } = req.params;
+
+    try {
+      const videos = await getVideoLikeHistoryService(videoId);
+
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ videos, message: "Get videos like count successfully" });
     } catch (error) {
       next(error);
     }

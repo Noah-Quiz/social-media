@@ -2,6 +2,7 @@ const Video = require("../entities/VideoEntity");
 const MyPlaylist = require("../entities/MyPlaylistEntity");
 const mongoose = require("mongoose");
 const User = require("../entities/UserEntity");
+const VideoLikeHistory = require("../entities/VideoLikeHistoryEntity");
 
 class VideoRepository {
   async createVideoRepository(videoData, session) {
@@ -31,21 +32,18 @@ class VideoRepository {
     }
   }
 
-  async toggleLikeVideoRepository(videoId, userId, action = "like") {
+  async toggleLikeVideoRepository(videoId, userId) {
     try {
-      const updateAction =
-        action === "like"
-          ? { $addToSet: { likedBy: userId } }
-          : { $pull: { likedBy: userId } };
+      const videoLike = await VideoLikeHistory.findOneAndDelete({
+        user: new mongoose.Types.ObjectId(userId),
+        video: new mongoose.Types.ObjectId(videoId),
+      });
 
-      const updatedVideo = await Video.findByIdAndUpdate(
-        videoId,
-        updateAction,
-        { new: true }
-      );
-
-      if (!updatedVideo) {
-        throw new Error("Video not found");
+      if (!videoLike) {
+        await VideoLikeHistory.create({
+          user: new mongoose.Types.ObjectId(userId),
+          video: new mongoose.Types.ObjectId(videoId),
+        });
       }
 
       return true;
@@ -157,7 +155,7 @@ class VideoRepository {
       };
       if (query.title) {
         searchQuery.title = { $regex: new RegExp(query.title, "i") };
-      }      
+      }
       if (query.enumMode) {
         searchQuery.enumMode = query.enumMode;
       }
@@ -205,8 +203,6 @@ class VideoRepository {
             title: 1,
             description: 1,
             videoUrl: 1,
-            videoEmbedUrl: 1,
-            videoServerUrl: 1,
             thumbnailUrl: 1,
             enumMode: 1,
             dateCreated: 1,
@@ -301,8 +297,8 @@ class VideoRepository {
       const skip = (page - 1) * size;
 
       // Create search query
-      const searchQuery = { 
-        isDeleted: false, 
+      const searchQuery = {
+        isDeleted: false,
       };
       if (query.title) {
         searchQuery.title = { $regex: new RegExp(query.title, "i") };
@@ -310,7 +306,7 @@ class VideoRepository {
       if (query.enumMode) {
         searchQuery.enumMode = query.enumMode;
       }
-    
+
       let sortField = "dateCreated"; // Default sort field
       let sortOrder = query.order === "ascending" ? 1 : -1;
 
@@ -340,18 +336,34 @@ class VideoRepository {
           },
         },
         {
+          $lookup: {
+            from: "videolikehistories",
+            let: { videoId: "$_id" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+              { $count: "likesCount" },
+            ],
+            as: "likesInfo",
+          },
+        },
+        {
+          $addFields: {
+            "likesCount": {
+              $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0],
+            },
+          },
+        },
+        {
           $project: {
             _id: 1,
             title: 1,
             description: 1,
             videoUrl: 1,
-            videoEmbedUrl: 1,
-            videoServerUrl: 1,
             thumbnailUrl: 1,
             enumMode: 1,
             dateCreated: 1,
             lastUpdated: 1,
-            likesCount: { $size: "$likedBy" },
+            likesCount: 1,
             user: {
               _id: 1,
               fullName: "$user.fullName",
@@ -375,7 +387,7 @@ class VideoRepository {
         { $skip: skip },
         { $limit: Number(size) },
       ]);
-      
+
       return {
         videos,
         total: totalVideos,
@@ -447,6 +459,121 @@ class VideoRepository {
       { $sort: { "_id.year": 1, "_id.month": 1 } },
     ]);
     return videosMonthly;
+  }
+
+  async getVideoLikeHistoryRepository(userId) {
+    try {
+      const videosList = await VideoLikeHistory.aggregate([
+        {
+          $match: {
+            user: new mongoose.Types.ObjectId(userId),
+          },
+        },
+        {
+          $project: {
+            video: 1,
+          },
+        },
+        {
+          $lookup: {
+            from: "videos",
+            localField: "video",
+            foreignField: "_id",
+            as: "videoDetails",
+          },
+        },
+        { $unwind: "$videoDetails" },
+
+        {
+          $lookup: {
+            from: "users",
+            localField: "videoDetails.userId",
+            foreignField: "_id",
+            as: "videoDetails.user",
+          },
+        },
+        { $unwind: { path: "$videoDetails.user", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "videoDetails.categoryIds",
+            foreignField: "_id",
+            as: "videoDetails.categories",
+          },
+        },
+        {
+          $lookup: {
+            from: "videolikehistories",
+            let: { videoId: "$videoDetails._id" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+              { $count: "likesCount" },
+            ],
+            as: "likesInfo",
+          },
+        },
+        {
+          $addFields: {
+            "videoDetails.likesCount": {
+              $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0],
+            },
+          },
+        },
+        {
+          $project: {
+            "videoDetails._id": 1,
+            "videoDetails.title": 1,
+            "videoDetails.description": 1,
+            "videoDetails.videoUrl": 1,
+            "videoDetails.thumbnailUrl": 1,
+            "videoDetails.enumMode": 1,
+            "videoDetails.dateCreated": 1,
+            "videoDetails.lastUpdated": 1,
+            "videoDetails.likesCount": 1, // Project likesCount here
+            "videoDetails.user": {
+              _id: 1,
+              fullName: "$videoDetails.user.fullName",
+              nickName: "$videoDetails.user.nickName",
+              avatar: "$videoDetails.user.avatar",
+            },
+            "videoDetails.categories": {
+              $map: {
+                input: "$videoDetails.categories",
+                as: "category",
+                in: {
+                  _id: "$$category._id",
+                  name: "$$category.name",
+                  imageUrl: "$$category.imageUrl",
+                },
+              },
+            },
+          },
+        },
+        { $sort: { "videoDetails.dateCreated": -1 } },
+      ]);
+
+      return videosList.map((item) => item.videoDetails);
+    } catch (error) {
+      throw new Error(`Error fetching video like history: ${error.message}`);
+    }
+  }
+
+  async getVideoLikesCountRepository(userId) {
+    try {
+      const videos = await VideoLikeHistory.find({
+        user: new mongoose.Types.ObjectId(userId),
+      })
+        .select("video -_id")
+        .populate("video")
+        .sort({ dateCreated: -1 });
+
+      const videosList = videos.map((item) => item.video);
+      return videosList;
+    } catch (error) {
+      throw new Error(
+        `Error when fetching all video likes count: ${error.message}`
+      );
+    }
   }
 }
 

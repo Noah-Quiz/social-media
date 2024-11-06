@@ -303,18 +303,10 @@ module.exports = {
     try {
       const connection = new DatabaseTransaction();
 
-      const requesterRole = await connection.userRepository.findUserById(
-        requester
-      );
-
-      if (
-        requester.toString() !== userId.toString() &&
-        requesterRole.role === 0
-      ) {
-        throw new CoreException(
-          StatusCodeEnums.Forbidden_403,
-          "You do not have permission to perform this action"
-        );
+      const requesterRole = await connection.userRepository.findUserById(requester)
+    
+      if (requester.toString() !== userId.toString() && requesterRole.role === UserEnum.USER) {
+        throw new CoreException(StatusCodeEnums.Forbidden_403, "You do not have permission to perform this action");
       }
 
       const follower = await connection.userRepository.getFollowerRepository(
