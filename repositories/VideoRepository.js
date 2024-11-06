@@ -152,9 +152,13 @@ class VideoRepository {
       const searchQuery = {
         isDeleted: false,
         userId: new mongoose.Types.ObjectId(userId),
-        enumMode: query.enumMode,
       };
-      if (query.title) searchQuery.title = query.title;
+      if (query.title) {
+        searchQuery.title = { $regex: new RegExp(query.title, "i") };
+      }      
+      if (query.enumMode) {
+        searchQuery.enumMode = query.enumMode;
+      }
 
       let sortField = "dateCreated"; // Default sort field
       let sortOrder = query.order === "ascending" ? 1 : -1;
@@ -295,9 +299,16 @@ class VideoRepository {
       const skip = (page - 1) * size;
 
       // Create search query
-      const searchQuery = { isDeleted: false, enumMode: "public" };
-      if (query.title) searchQuery.title = query.title;
-
+      const searchQuery = { 
+        isDeleted: false, 
+      };
+      if (query.title) {
+        searchQuery.title = { $regex: new RegExp(query.title, "i") };
+      }
+      if (query.enumMode) {
+        searchQuery.enumMode = query.enumMode;
+      }
+    
       let sortField = "dateCreated"; // Default sort field
       let sortOrder = query.order === "ascending" ? 1 : -1;
 
@@ -362,8 +373,7 @@ class VideoRepository {
         { $skip: skip },
         { $limit: Number(size) },
       ]);
-
-      // Return paginated results
+      
       return {
         videos,
         total: totalVideos,

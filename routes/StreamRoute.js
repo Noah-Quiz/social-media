@@ -103,7 +103,7 @@ const streamRoutes = express.Router();
  *       500:
  *         description: Internal server error
  */
-streamRoutes.get(
+streamRoutes.post(
   "/relevant",
   AuthMiddleware,
   streamController.getRelevantStreamsController
@@ -206,12 +206,12 @@ streamRoutes.get(
  *         name: page
  *         required: false
  *         schema:
- *           type: number
+ *           type: integer
  *       - in: query
  *         name: size
  *         required: false
  *         schema:
- *           type: number
+ *           type: integer
  *       - in: query
  *         name: title
  *         required: false
@@ -231,6 +231,7 @@ streamRoutes.get(
  *         schema:
  *           type: string
  *           enum: [ascending, descending]
+ *           default: descending
  *         description: Filter for sort order (default descending)
  *       - in: query
  *         name: sortBy
@@ -238,7 +239,14 @@ streamRoutes.get(
  *         schema:
  *           type: string
  *           enum: [date, view, like]
+ *           default: date
  *         description: Filter for sort criteria (default date)
+ *       - in: query
+ *         name: requesterId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: User ID of requester. If requester is owner, show stream in more detail. If the stream is of type member, hides critical information.
  *     responses:
  *       200:
  *         description: Get streams successfully
@@ -297,17 +305,19 @@ streamRoutes.get(
  *                           avatar:
  *                             type: string
  *                       categories:
- *                         type: object
- *                         properties:
- *                           name:
- *                             type: string
- *                           imageUrl:
- *                             type: string
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             name:
+ *                               type: string
+ *                             imageUrl:
+ *                               type: string
  *                 message:
  *                   type: string
  *                   example: "Success"
  *       400:
- *         description: Bad request
+ *         description: Bad request due to invalid parameters
  *       500:
  *         description: Internal server error
  */
@@ -465,79 +475,86 @@ streamRoutes.delete(
  *     parameters:
  *      - in: path
  *        name: streamId
+ *        required: true
  *        schema:
  *         type: string
- *         required: true
+ *      - in: query
+ *        name: requesterId
+ *        required: false
+ *        schema:
+ *         type: string
+ *        description: User ID of requester. If requester is the owner, show detailed stream info. If the stream is of type member, hides critical information.
  *     responses:
  *      200:
  *       description: Get stream successfully
  *       content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 stream:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                     title:
- *                       type: string
- *                     description:
- *                       type: string
- *                     userId:
- *                       type: string
- *                     streamOnlineUrl:
- *                       type: string
- *                     streamServerUrl:
- *                       type: string
- *                     meta:
- *                       type: object
- *                       properties:
- *                         name:
- *                           type: string
- *                     status:
- *                       type: string
- *                     thumbnailUrl:
- *                       type: string
- *                     likedBy:
- *                       type: array
- *                       items:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               stream:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                   title:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *                   userId:
+ *                     type: string
+ *                   streamOnlineUrl:
+ *                     type: string
+ *                   streamServerUrl:
+ *                     type: string
+ *                   meta:
+ *                     type: object
+ *                     properties:
+ *                       name:
  *                         type: string
- *                     lastUpdated:
+ *                   status:
+ *                     type: string
+ *                   thumbnailUrl:
+ *                     type: string
+ *                   likedBy:
+ *                     type: array
+ *                     items:
  *                       type: string
- *                       format: date-time
- *                     isDeleted:
- *                       type: boolean
- *                     dateCreated:
- *                       type: string
- *                       format: date-time
- *                     enumMode:
- *                       type: string
- *                     user:
- *                       type: object
- *                       properties:
- *                         fullName:
- *                           type: string
- *                         nickName:
- *                           type: string
- *                         avatar:
- *                           type: string
- *                     categories:
+ *                   lastUpdated:
+ *                     type: string
+ *                     format: date-time
+ *                   isDeleted:
+ *                     type: boolean
+ *                   dateCreated:
+ *                     type: string
+ *                     format: date-time
+ *                   enumMode:
+ *                     type: string
+ *                   user:
+ *                     type: object
+ *                     properties:
+ *                       fullName:
+ *                         type: string
+ *                       nickName:
+ *                         type: string
+ *                       avatar:
+ *                         type: string
+ *                   categories:
+ *                     type: array
+ *                     items:
  *                       type: object
  *                       properties:
  *                         name:
  *                           type: string
  *                         imageUrl:
  *                           type: string
- *                 message:
- *                   type: string
- *                   example: "Success"
+ *               message:
+ *                 type: string
+ *                 example: "Success"
  *      400:
- *       description: Bad request
+ *       description: Bad request due to invalid streamId or requesterId
  *      500:
  *       description: Internal server error
- *
  */
 streamRoutes.get(
   "/:streamId",
@@ -655,14 +672,14 @@ streamRoutes.patch(
  *         required: true
  *         schema:
  *           type: string
- *           description: The ID of the stream to like or unlike
+ *         description: The ID of the stream to like or unlike
  *       - in: query
  *         name: action
  *         required: true
  *         schema:
  *           type: string
  *           enum: [like, unlike]
- *           description: Action to perform on the stream (like or unlike)
+ *         description: Action to perform on the stream (like or unlike)
  *     responses:
  *       200:
  *         description: Stream like status toggled successfully

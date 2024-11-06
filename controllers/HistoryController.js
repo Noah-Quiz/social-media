@@ -18,7 +18,6 @@ class HistoryController {
       const userId = req.userId;
 
       const createHistoryRecordDto = new CreateHistoryRecordDto(
-        userId,
         videoId
       );
       await createHistoryRecordDto.validate();
@@ -76,6 +75,11 @@ class HistoryController {
 
       if (!query.page) query.page = 1;
       if (!query.size) query.size = 10;
+      
+    if (query.title) {
+      query.title = { $regex: query.title, $options: "i" };
+    }
+    
       const { historyRecords, total, page, totalPages } =
         await getAllHistoryRecordsService(userId, query);
 
