@@ -5,15 +5,26 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const UserEnum = require("../enums/UserEnum");
 const { promises } = require("nodemailer/lib/xoauth2");
 
-const createAPlaylistService = async (userId, playlistName) => {
+const createAPlaylistService = async (
+  userId,
+  playlistName,
+  description,
+  thumbnail
+) => {
   try {
     const connection = new DatabaseTransaction();
-
+    const videoIds = [];
     const data = {
       userId,
       playlistName,
+      description,
+      thumbnail,
+      videoIds,
     };
 
+    if (data.thumbnail !== null) {
+      data.thumbnail = `${process.env.APP_BASE_URL}/${data.thumbnail}`;
+    }
     const playlist =
       await connection.myPlaylistRepository.createAPlaylistRepository(
         data,
@@ -73,16 +84,22 @@ const getAllMyPlaylistsService = async (data) => {
   }
 };
 
-const updatePlaylistService = async (userId, playlistId, updateData) => {
+const updatePlaylistService = async (
+  userId,
+  playlistId,
+  playlistName,
+  description,
+  thumbnail
+) => {
   try {
-    const { addedVideoIds, removedVideoIds } = updateData;
-
     const connection = new DatabaseTransaction();
 
     const user = await connection.userRepository.findUserById(userId);
     if (!user) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
+
+    //not sure but okay
     if (user.role !== UserEnum.ADMIN && user.role !== UserEnum.USER) {
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
@@ -118,7 +135,11 @@ const updatePlaylistService = async (userId, playlistId, updateData) => {
     const updatedPlaylist =
       await connection.myPlaylistRepository.updatePlaylistRepository(
         playlistId,
-        updateData
+        playlistName,
+        description,
+        thumbnail !== null
+          ? `${process.env.APP_BASE_URL}/${thumbnail}`
+          : thumbnail
       );
 
     if (!updatedPlaylist) {
@@ -189,6 +210,33 @@ const deletePlaylistService = async (userId, playlistId) => {
     throw error;
   }
 };
+const addToPlaylistService = async (playlistId, videoId, userId) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const playlist =
+      await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
+    if (!playlist) {
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Playlist not found"
+      );
+    }
+    if (playlist.userId?.toString() !== userId) {
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "You are not the owner of this playlist"
+      );
+    }
+    const addedPlaylist =
+      await connection.myPlaylistRepository.addToPlaylistRepository(
+        playlistId,
+        videoId
+      );
+    return addedPlaylist;
+  } catch (error) {
+    throw error;
+  }
+};
 
 module.exports = {
   createAPlaylistService,
@@ -196,4 +244,5 @@ module.exports = {
   deletePlaylistService,
   getAllMyPlaylistsService,
   updatePlaylistService,
+  addToPlaylistService,
 };
