@@ -3,12 +3,34 @@ const Stream = require("../entities/StreamEntity.js");
 const StatusCodeEnums = require("../enums/StatusCodeEnum.js");
 const CoreException = require("../exceptions/CoreException.js");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction.js");
+const { default: mongoose } = require("mongoose");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
-const getStreamService = async (streamId, requester) => {
+const getStreamService = async (streamId, requesterId) => {
   try {
     const connection = new DatabaseTransaction();
+
+    if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid stream ID is required");
+    }
+
+    if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid requester ID is required");
+    }
+    // If requester is admin, return stream
+    if (requesterId) {
+      const requester =  await connection.userRepository.findUserById(requesterId);
+      if (!requester) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, `Requester not found`);
+      }
+      if (requester.role === 1) {
+        const stream = await connection.streamRepository.getStreamRepository(
+          streamId
+        );
+        return stream;
+      }
+    }
 
     const stream = await connection.streamRepository.getStreamRepository(
       streamId
@@ -19,7 +41,7 @@ const getStreamService = async (streamId, requester) => {
     }
 
     let process = stream;
-    const isOwner = stream?.userId?.toString() === requester?.toString();
+    const isOwner = stream.user?._id?.toString() === requesterId?.toString();
 
     //if owner => nothing is change
     if (isOwner) {
@@ -28,17 +50,9 @@ const getStreamService = async (streamId, requester) => {
 
     //if not owner => check private stream
     process = cleanStreamFromNonOwner(stream);
-    if (stream.enumMode === "private") {
-      //handle not owner private
-      const result = updateStreamForNonMembership(
-        [process],
-        [process._id],
-        "private"
-      );
-      return result.length === 1 ? result[0] : result;
-    } else if (stream.enumMode === "member") {
-      //handle not owner member
-      const isMember = await checkMemberShip(requester, stream.userId);
+    if (stream.enumMode === "member") {
+      // Handle not owner member
+      const isMember = await checkMemberShip(requesterId, stream.user?._id);
 
       if (isMember) {
         return process;
@@ -58,37 +72,44 @@ const getStreamService = async (streamId, requester) => {
     throw error;
   }
 };
-const getStreamsService = async (query, requester) => {
-  const connection = new DatabaseTransaction();
+
+const getStreamsService = async (query, requesterId) => {
   try {
-    const data = await connection.streamRepository.getStreamsRepository(
-      query,
-      requester
-    );
+    const connection = new DatabaseTransaction();
+
+    if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid requester ID is required");
+    }
+
+    // If requester is admin, return all streams
+    if (requesterId) {
+      const requester =  await connection.userRepository.findUserById(requesterId);
+      if (!requester) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, `Requester not found`);
+      }
+      if (requester.role === 1) {
+        const streams = await connection.streamRepository.getStreamsRepository(query);
+        return streams;
+      }
+    }
+
+    const data = await connection.streamRepository.getStreamsRepository(query);
 
     let streams = data.streams
-      .filter(
-        (stream) =>
-          stream.enumMode !== "private" ||
-          stream.userId?.toString() === requester?.toString()
-      )
       .map(async (stream) => {
-        const isOwner = stream.userId?.toString() === requester?.toString();
+        const isOwner = stream.user?._id?.toString() === requesterId?.toString();
         if (isOwner) {
-          return stream; // Return unmodified stream if requester is owner
+          return stream; 
         }
 
-        // Clean stream for non-owner
         let cleanedStream = cleanStreamFromNonOwner(stream);
 
-        // Check if stream is member-only
         if (stream.enumMode === "member") {
-          const isMember = await checkMemberShip(requester, stream.userId);
+          const isMember = await checkMemberShip(requesterId, stream.user?._id);
           if (isMember) {
-            return cleanedStream; // Return cleaned stream for members
+            return cleanedStream;
           }
 
-          // Handle non-member users, update the stream for non-members
           return updateStreamForNonMembership(
             [cleanedStream],
             [cleanedStream._id],
@@ -96,10 +117,9 @@ const getStreamsService = async (query, requester) => {
           )[0];
         }
 
-        return cleanedStream; // Return cleaned stream for non-private non-members
+        return cleanedStream; 
       });
 
-    // Since we have asynchronous map, we need to resolve all promises before returning
     const processedStreams = await Promise.all(streams);
 
     return { ...data, streams: processedStreams };
@@ -131,7 +151,7 @@ const updateStreamService = async (userId, streamId, updateData) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
 
-    if (stream.user._id?.toString() !== userId) {
+    if (stream.user?._id?.toString() !== userId) {
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
         "You do not have permission to perform this action"
@@ -171,7 +191,7 @@ const deleteStreamService = async (userId, streamId) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
 
-    if (stream.userId?.toString() !== userId) {
+    if (stream.user?._id?.toString() !== userId) {
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
         "You do not have permission to perform this action"

@@ -37,7 +37,7 @@ class CreateStreamDto {
         "Title is required"
       );
     }
-    if (this.categoryIds && !Array.isArray(this.categoryIds)) {
+    if (this.categoryIds !== null && !Array.isArray(this.categoryIds)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Category IDs must be an array"
