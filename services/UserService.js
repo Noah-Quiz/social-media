@@ -293,7 +293,7 @@ module.exports = {
 
       const requesterRole = await connection.userRepository.findUserById(requester)
     
-      if (requester.toString() !== userId.toString() && requesterRole.role === 0) {
+      if (requester.toString() !== userId.toString() && requesterRole.role === UserEnum.USER) {
         throw new CoreException(StatusCodeEnums.Forbidden_403, "You do not have permission to perform this action");
       }
 
