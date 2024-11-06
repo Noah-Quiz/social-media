@@ -237,6 +237,37 @@ const addToPlaylistService = async (playlistId, videoId, userId) => {
     throw error;
   }
 };
+const removeFromPlaylist = async (playlistId, videoId, userId) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const playlist =
+      await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
+    if (!playlist) {
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Playlist not found"
+      );
+    }
+    const user = await connection.userRepository.getAnUserByIdRepository(
+      userId
+    );
+    const notPlaylistOwner = playlist.userId?.toString() !== userId?.toString();
+    const notAdmin = user.role === UserEnum.ADMIN;
+    if (notPlaylistOwner && notAdmin) {
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "You don't have access to perform this action on this playlist"
+      );
+    }
+    const newPlaylist = connection.myPlaylistRepository.removeFromPlaylist(
+      playlistId,
+      videoId
+    );
+    return newPlaylist;
+  } catch (error) {
+    throw error;
+  }
+};
 
 module.exports = {
   createAPlaylistService,
@@ -245,4 +276,5 @@ module.exports = {
   getAllMyPlaylistsService,
   updatePlaylistService,
   addToPlaylistService,
+  removeFromPlaylist,
 };
