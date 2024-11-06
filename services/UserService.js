@@ -197,6 +197,7 @@ module.exports = {
           "Follow unsuccessfully"
         );
       }
+      console.log(result);
 
       const notification = {
         avatar: user.avatar,

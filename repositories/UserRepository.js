@@ -137,6 +137,7 @@ class UserRepository {
             phoneNumber: 1,
             dateCreated: 1,
             lastLogin: 1,
+            point: 1,
           },
         },
         { $sort: { [sortField]: sortOrder } },

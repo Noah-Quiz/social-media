@@ -24,67 +24,35 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *            description: The playlist's name.
  */
 class UpdatePlaylistDto {
-  constructor(addedVideoIds, removedVideoIds, playlistName, playListId) {
-    this.addedVideoIds = addedVideoIds;
-    this.removedVideoIds = removedVideoIds;
+  constructor(userId, playlistId, playlistName, description, thumbnail) {
+    this.userId = userId;
     this.playlistName = playlistName;
-    this.playListId = playListId;
+    this.description = description;
+    this.thumbnail = thumbnail;
+    this.playlistId = playlistId;
   }
-  async validate() {
-    try {
-      if (!this.playListId) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Playlist ID is required"
-        );
-      }
-      try {
-        await validMongooseObjectId(this.playListId);
-      } catch (error) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Invalid Playlist ID"
-        );
-      }
 
-      if (this.addedVideoIds && !Array.isArray(this.addedVideoIds)) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "addedVideoIds must be an array"
-        );
-      }
-      if (this.removedVideoIds && !Array.isArray(this.removedVideoIds)) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "removedVideoIds must be an array"
-        );
-      }
-      if (this.addedVideoIds && this.addedVideoIds.length !== 0) {
-        this.addedVideoIds.forEach(async (id) => {
-          try {
-            await validMongooseObjectId(id);
-          } catch (error) {
-            throw new CoreException(
-              StatusCodeEnums.BadRequest_400,
-              "Invalid added video ID"
-            );
-          }
-        });
-      }
-      if (this.removedVideoIds && this.removedVideoIds.length !== 0) {
-        this.removedVideoIds.forEach(async (id) => {
-          try {
-            await validMongooseObjectId(id);
-          } catch (error) {
-            throw new CoreException(
-              StatusCodeEnums.BadRequest_400,
-              "Invalid removed video ID"
-            );
-          }
-        });
-      }
+  async validate() {
+    if (!this.playlistId) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Playlist ID is required"
+      );
+    }
+    try {
+      await validMongooseObjectId(this.playlistId);
     } catch (error) {
-      throw error;
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid Playlist ID"
+      );
+    }
+
+    if (!this.playlistName) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Playlist name is required"
+      );
     }
   }
 }
