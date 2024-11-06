@@ -170,6 +170,9 @@ async function consumeMessageFromQueue(queue, callback) {
                   { thumbnailUrl }
                 );
                 break;
+              default:
+                logger.info("No matching queue found");
+                break;
             }
 
             channel.ack(msg);
