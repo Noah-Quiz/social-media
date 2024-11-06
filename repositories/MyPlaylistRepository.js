@@ -168,6 +168,9 @@ class MyPlaylistRepository {
             "user.avatar": 1,
           },
         },
+        {
+          $sort: { lastUpdated: -1 },
+        },
       ]);
 
       return playlists;
@@ -198,7 +201,7 @@ class MyPlaylistRepository {
       // Use $addToSet to add videoId to videoIds array if it doesn't already exist
       const updatedPlaylist = await MyPlaylist.findByIdAndUpdate(
         playlistId,
-        { $addToSet: { videoIds: videoId } },
+        { $addToSet: { videoIds: videoId }, lastUpdated: Date.now() },
         { new: true } // Option to return the updated document
       );
 
@@ -227,6 +230,7 @@ class MyPlaylistRepository {
         throw new Error("Video not found in playlist");
       }
       playlist.videoIds.pull(videoId);
+      playlist.lastUpdated = Date.now();
       await playlist.save();
       return playlist;
     } catch (error) {
