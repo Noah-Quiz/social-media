@@ -1,6 +1,5 @@
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
-const { validMongooseObjectId } = require("../../utils/validator");
 
 class GetVideosDto {
     constructor(size, page, enumMode, sortBy, order, title) {
@@ -13,16 +12,17 @@ class GetVideosDto {
     }
 
     async validate() {
-
-        // Validate enumMode
+        // Validate `enumMode`
         const validEnumModeOptions = ["draft", "public", "private", "unlisted", "member"];
         if (this.enumMode && !validEnumModeOptions.includes(this.enumMode)) {
             throw new CoreException(
-            StatusCodeEnums.BadRequest_400,
-            "Invalid query enumMode, must be in ['draft, 'public', 'private', 'unlisted', 'member']"
+                StatusCodeEnums.BadRequest_400,
+                "Invalid query enumMode, must be one of ['draft', 'public', 'private', 'unlisted', 'member']"
             );
         }
-        if (!this.enumMode) this.enumMode = { $in: ['public', 'member'] }
+        if (!this.enumMode) {
+            this.enumMode = { $in: ['public', 'member'] };
+        }
 
         // Validate `sortBy` and `order`
         const validSortByOptions = ["like", "view", "date"];
@@ -31,46 +31,51 @@ class GetVideosDto {
         if (this.sortBy && !validSortByOptions.includes(this.sortBy)) {
             throw new CoreException(
                 StatusCodeEnums.BadRequest_400,
-                "Invalid query sortBy, must be in ['like', 'view', 'date']"
+                "Invalid query sortBy, must be one of ['like', 'view', 'date']"
             );
         }
 
         if (this.order && !validOrderOptions.includes(this.order)) {
             throw new CoreException(
                 StatusCodeEnums.BadRequest_400,
-                "Invalid query order, must be in ['ascending', 'descending']"
+                "Invalid query order, must be one of ['ascending', 'descending']"
             );
         }
 
-        // Validation checks for `page` and `size`
-        if (this.page) this.page = Number(this.page);
-        if (this.size) this.size = Number(this.size);
-        if (!Number.isInteger(this.page)) {
-            throw new CoreException(
-                StatusCodeEnums.BadRequest_400,
-                "Invalid query page"
-            );
-        }
-        if (this.page < 1) {
-            throw new CoreException(
-                StatusCodeEnums.BadRequest_400,
-                "Page cannot be less than 1"
-            );
-        }
-        if (!Number.isInteger(this.size)) {
-            throw new CoreException(
-                StatusCodeEnums.BadRequest_400,
-                "Invalid query size"
-            );
-        }
-        if (this.size < 1) {
-            throw new CoreException(
-                StatusCodeEnums.BadRequest_400,
-                "Size cannot be less than 1"
-            );
+        // Validate `page` and `size`
+        if (this.page != null) {
+            this.page = Number(this.page);
+            if (Number.isNaN(this.page) || !Number.isInteger(this.page) || this.page < 1) {
+                throw new CoreException(
+                    StatusCodeEnums.BadRequest_400,
+                    "Invalid query page, must be a positive integer"
+                );
+            }
+        } else {
+            this.page = 1; // Default page if not provided
         }
 
-        const query = { size: this.size, page: this.page, enumMode: this.enumMode, sortBy: this.sortBy, order: this.order, title: this.title}
+        if (this.size != null) {
+            this.size = Number(this.size);
+            if (Number.isNaN(this.size) || !Number.isInteger(this.size) || this.size < 1) {
+                throw new CoreException(
+                    StatusCodeEnums.BadRequest_400,
+                    "Invalid query size, must be a positive integer"
+                );
+            }
+        } else {
+            this.size = 10; // Default size if not provided
+        }
+
+        const query = {
+            size: this.size,
+            page: this.page,
+            enumMode: this.enumMode,
+            sortBy: this.sortBy,
+            order: this.order,
+            title: this.title,
+        };
+        
         return query;
     }
 }

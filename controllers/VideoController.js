@@ -112,9 +112,9 @@ class VideoController {
         );
       }
 
-      await toggleLikeVideoService(videoId, userId);
+      const action = await toggleLikeVideoService(videoId, userId);
 
-      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
+      return res.status(StatusCodeEnums.OK_200).json({ message: `${action?.charAt(0)?.toUpperCase() + action?.slice(1)} video successfully` });
     } catch (error) {
       next(error);
     }
@@ -236,12 +236,12 @@ class VideoController {
         size: req.query.size,
         page: req.query.page,
         title: req.query.title,
-        sortBy: req.query.sortBy,
-        order: req.query.order,
-        enumMode: req.query.enumMode
+        sortBy: req.query.sortBy?.toLowerCase(),
+        order: req.query.order?.toLowerCase(),
+        enumMode: req.query.enumMode?.toLowerCase(),
       };
       
-      const getVideosDto = new GetVideosDto(query.size, query.page, query.enumMode, query.sortBy, query.order);
+      const getVideosDto = new GetVideosDto(query.size, query.page, query.enumMode, query.sortBy, query.order, query.title);
       const validatedQuery =  await getVideosDto.validate();
 
       const { videos, total, page, totalPages } = await getVideosByUserIdService(userId, validatedQuery, requesterId);
@@ -278,10 +278,10 @@ class VideoController {
       const query = {
         size: req.query.size,
         page: req.query.page,
-        sortBy: req.query.sortBy,
-        order: req.query.order,
         title: req.query.title,
-        enumMode: req.query.enumMode,
+        sortBy: req.query.sortBy?.toLowerCase(),
+        order: req.query.order?.toLowerCase(),
+        enumMode: req.query.enumMode?.toLowerCase(),
       };
       const { requesterId } = req.query;
 
@@ -301,37 +301,23 @@ class VideoController {
   async getVideosByPlaylistIdController(req, res, next) {
     try {
       const { playlistId } = req.params;
-      const { page, size } = req.query;
-      const requester = req.userId;
       const query = {
         size: req.query.size,
         page: req.query.page,
         title: req.query.title,
-        status: req.query.status,
-        sortBy: req.query.sortBy,
-        order: req.query.order,
+        sortBy: req.query.sortBy?.toLowerCase(),
+        order: req.query.order?.toLowerCase(),
+        enumMode: req.query.enumMode?.toLowerCase(),
       };
-  
-      if (!query.page) query.page = 1;
-      if (!query.size) query.size = 10;
-  
-      if (query.title) {
-        query.title = { $regex: query.title, $options: "i" };
-      }
+      const { requesterId } = req.query;
 
-      const getVideosByPlaylistId = new GetVideosByPlaylistIdDto(
-        playlistId,
-        page,
-        size,
-        order,
-        sortBy
-      );
-      await getVideosByPlaylistId.validate();
+      const getVideosDto = new GetVideosDto(query.size, query.page, query.enumMode, query.sortBy, query.order, query.title);
+      const validatedQuery =  await getVideosDto.validate();
 
       const videos = await getVideosByPlaylistIdService(
         playlistId,
-        query,
-        requester,
+        validatedQuery,
+        requesterId,
       );
 
       return res
@@ -351,20 +337,6 @@ class VideoController {
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ videos, message: "Get videos like history successfully" });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async getVideoLikesCountController(req, res, next) {
-    const { videoId } = req.params;
-
-    try {
-      const videos = await getVideoLikeHistoryService(videoId);
-
-      return res
-        .status(StatusCodeEnums.OK_200)
-        .json({ videos, message: "Get videos like count successfully" });
     } catch (error) {
       next(error);
     }

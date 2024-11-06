@@ -45,9 +45,9 @@ class StreamController {
         size: req.query.size || 10,
         page: req.query.page || 1,
         title: req.query.title,
-        status: req.query.status,
-        sortBy: req.query.sortBy,
-        order: req.query.order,
+        status: req.query.status?.toLowerCase(),
+        sortBy: req.query.sortBy?.toLowerCase(),
+        order: req.query.order?.toLowerCase(),
       };
 
       const getStreamsDto = new GetStreamsDto(query.size, query.page, query.status, query.sortBy, query.order);

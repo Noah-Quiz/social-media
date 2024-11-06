@@ -382,7 +382,7 @@ videoRoutes.get(
  * @swagger
  * /api/videos/my-playlist/{playlistId}:
  *   get:
- *     summary: Get videos by playlist id
+ *     summary: Get videos by playlist ID
  *     tags: [Videos]
  *     parameters:
  *       - in: path
@@ -391,6 +391,50 @@ videoRoutes.get(
  *         schema:
  *           type: string
  *           description: Playlist ID
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: The number of videos to return per page (minimum is 1)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: The page number to retrieve (minimum is 1)
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [like, view, date]
+ *           default: date
+ *         description: Sort the videos by number of likes, views, or date created
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [ascending, descending]
+ *           default: descending
+ *         description: Specify the order of sorting (either ascending or descending)
+ *       - in: query
+ *         name: title
+ *         schema:
+ *           type: string
+ *         description: Search videos by title (case-insensitive)
+ *       - in: query
+ *         name: enumMode
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [private, public, unlisted, draft, member]
+ *         description: Type of video. Only videos of type public or member are shown. Only admin can access all videos of all types
+ *       - in: query
+ *         name: requesterId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: User ID of requester. If requester is owner, show video in more detail. If the video is of type member, hides critical information.
  *     responses:
  *       200:
  *         description: Get videos by playlist id successfully
@@ -466,7 +510,6 @@ videoRoutes.get(
 
 videoRoutes.get(
   "/my-playlist/:playlistId",
-  AuthMiddleware,
   videoController.getVideosByPlaylistIdController
 );
 
@@ -686,7 +729,6 @@ videoRoutes.get(
  *    500:
  *      description: Internal server error
  */
-
 videoRoutes.post(
   "/:videoId/like",
   AuthMiddleware,
