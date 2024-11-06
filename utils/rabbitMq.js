@@ -171,7 +171,7 @@ async function consumeMessageFromQueue(queue, callback) {
                 );
                 break;
               default:
-                logger.info("No matching queue found");
+                logger.warn("No matching queue found");
                 break;
             }
 
