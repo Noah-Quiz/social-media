@@ -1,5 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const UserEnum = require("../enums/UserEnum");
 
 const createCommentService = async (userId, videoId, content, responseTo) => {
   const connection = new DatabaseTransaction();
@@ -184,8 +185,8 @@ const softDeleteCommentService = async (userId, id) => {
       throw new Error("User not found");
     }
 
-    let notAdmin = user.role !== 1;
-
+    let notAdmin = user.role !== UserEnum.ADMIN;
+    
     let notVideoOwner = userId?.toString() !== video.userId?.toString();
 
     let notCommentOwner =
