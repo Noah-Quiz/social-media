@@ -26,7 +26,8 @@ class HistoryRepository {
       const skip = (query.page - 1) * query.size;
 
       const searchQuery = { userId: new mongoose.Types.ObjectId(userId) };
-      
+      let sortField = "lastUpdated"; // Default sort field
+      let sortOrder = query.order === "ascending" ? 1 : -1;
       const totalRecords = await WatchHistory.aggregate([
         {
           $match: searchQuery,
@@ -86,7 +87,7 @@ class HistoryRepository {
             ]
           : []),
         {
-          $sort: { lastUpdated: -1 },
+          $sort: {[sortField]: sortOrder},
         },
         {
           $skip: skip,

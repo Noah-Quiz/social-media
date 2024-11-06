@@ -378,6 +378,18 @@ route.post("/follow", userController.toggleFollowController);
  *           type: number
  *           default: 10
  *           description: Number of items per page
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [ascending, descending]
+ *           default: descending
+ *         description: Specify the order of sorting (either ascending or descending)
+ *       - in: query
+ *         name: title
+ *         schema:
+ *           type: string
+ *         description: Search videos by title (case-insensitive)
  *     responses:
  *       200:
  *         description: Get all history records successfully
@@ -428,7 +440,6 @@ route.post("/follow", userController.toggleFollowController);
  *       500:
  *         description: Internal server error
  */
-
 route.get("/history", historyController.getAllHistoryRecordsController);
 
 /**
