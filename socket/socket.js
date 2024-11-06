@@ -20,11 +20,15 @@ module.exports = (io) => {
     logger.info(`User connected: ${socket.id}`);
 
     // Handle joining a livestream chat
-    socket.on("join_livestream_chat", (streamId) => {
-      socket.join(streamId);
-      userStreams.add(streamId);
-      updateViewersCount(streamId);
-      logger.info(`${socket.id} joined livestream room: ${streamId}`);
+    socket.on("join_livestream_chat", async (streamId) => {
+      try {
+        socket.join(streamId);
+        userStreams.add(streamId);
+        await updateViewersCount(streamId);
+        logger.info(`${socket.id} joined livestream room: ${streamId}`);
+      } catch (error) {
+        logger.error(`Fail to join live stream`);
+      }
     });
 
     // Handle sending messages in rooms
@@ -46,15 +50,18 @@ module.exports = (io) => {
     });
 
     // Handle leaving a livestream
-    socket.on("leave_livestream", (streamId) => {
-      userStreams.delete(streamId);
-      handleLeaveLiveStream(socket, streamId);
-      logger.info(`${socket.id} left livestream room: ${streamId}`);
+    socket.on("leave_livestream", async (streamId) => {
+      try {
+        userStreams.delete(streamId);
+        await handleLeaveLiveStream(socket, streamId);
+        logger.info(`${socket.id} left livestream room: ${streamId}`);
+      } catch (error) {
+        logger.error(`Error when do this action`);
+      }
     });
 
     // Handle disconnect event
     socket.on("disconnect", () => {
-      // updateViewersCountForAllRooms();
       logger.info(`User disconnected: ${socket.id}`);
     });
 
@@ -78,13 +85,4 @@ module.exports = (io) => {
     socket.leave(streamId);
     await updateViewersCount(streamId);
   }
-
-  // Update viewers count for all rooms
-  // async function updateViewersCountForAllRooms() {
-  //   const rooms = io.sockets.adapter.rooms;
-  //   rooms.forEach((room, roomId) => {
-  //     const viewersCount = room.size || 0;
-  //     io.to(roomId).emit("viewers_count", viewersCount);
-  //   });
-  // }
 };

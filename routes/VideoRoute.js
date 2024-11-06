@@ -5,6 +5,12 @@ const { uploadFile } = require("../middlewares/storeFile");
 const videoRoutes = express.Router();
 const videoController = new VideoController();
 
+videoRoutes.get(
+  "/like-history",
+  AuthMiddleware,
+  videoController.getVideoLikeHistoryController
+);
+
 /**
  * @swagger
  * /api/videos/:
@@ -720,4 +726,5 @@ videoRoutes.delete(
   AuthMiddleware,
   videoController.deleteVideoController
 );
+
 module.exports = videoRoutes;
