@@ -406,9 +406,128 @@ myPlaylistRoutes.get(
   myPlaylistController.getAllMyPlaylistsController
 );
 
+/**
+ * @swagger
+ * /api/my-playlists/{playlistId}/add-video:
+ *   put:
+ *     summary: Add a video to a playlist.
+ *     tags: [MyPlaylists]
+ *     parameters:
+ *       - in: path
+ *         name: playlistId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the playlist to add the video to.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               videoId:
+ *                 type: string
+ *                 example: "60c72b2f9f1b2c0017f9d2e5"
+ *                 description: The ID of the video to be added to the playlist.
+ *     responses:
+ *       200:
+ *         description: Video added to playlist successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Video added to playlist successfully"
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid videoId or playlistId"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Error adding video to playlist"
+ */
+
 myPlaylistRoutes.put(
   "/:playlistId/add-video",
   AuthMiddleware,
   myPlaylistController.addToPlaylistController
+);
+/**
+ * @swagger
+ * /api/my-playlists/{playlistId}/remove-video:
+ *   put:
+ *     summary: Remove a video from a playlist.
+ *     tags: [MyPlaylists]
+ *     parameters:
+ *       - in: path
+ *         name: playlistId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the playlist from which the video will be removed.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               videoId:
+ *                 type: string
+ *                 example: "60c72b2f9f1b2c0017f9d2e5"
+ *                 description: The ID of the video to be removed from the playlist.
+ *     responses:
+ *       200:
+ *         description: Video removed from playlist successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Video removed from playlist successfully"
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid videoId or playlistId"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Error removing video from playlist"
+ */
+
+myPlaylistRoutes.put(
+  "/:playlistId/remove-video",
+  AuthMiddleware,
+  myPlaylistController.removeFromPlaylist
 );
 module.exports = myPlaylistRoutes;
