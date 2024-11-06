@@ -7,13 +7,6 @@ const videoSchema = new mongoose.Schema({
   videoUrl: { type: String, default: "" },
   numOfViews: { type: Number, default: 0 },
   duration: { type: Number, default: 0 },
-  likedBy: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: [],
-    },
-  ],
   enumMode: {
     type: String,
     enum: ["public", "private", "unlisted", "member", "draft"],
