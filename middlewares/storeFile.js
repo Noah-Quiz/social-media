@@ -237,6 +237,8 @@ const createThumbnailFromTsFile = async (tsFilePath, outputDir) => {
         "100M", // Increase probe duration
         "-probesize",
         "100M", // Increase probe size
+        "-ss",
+        "00:00:05", // Seek to 5 seconds
         "-i",
         tsFilePath,
         "-vf",
