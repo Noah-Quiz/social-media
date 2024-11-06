@@ -33,24 +33,30 @@ class VideoRepository {
   }
 
   async toggleLikeVideoRepository(videoId, userId) {
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const videoObjectId = new mongoose.Types.ObjectId(videoId);
+    let action = "unlike";
+  
     try {
       const videoLike = await VideoLikeHistory.findOneAndDelete({
-        user: new mongoose.Types.ObjectId(userId),
-        video: new mongoose.Types.ObjectId(videoId),
+        user: userObjectId,
+        video: videoObjectId,
       });
-
+  
       if (!videoLike) {
+        action = "like";
         await VideoLikeHistory.create({
-          user: new mongoose.Types.ObjectId(userId),
-          video: new mongoose.Types.ObjectId(videoId),
+          user: userObjectId,
+          video: videoObjectId,
         });
       }
-
-      return true;
+  
+      return action;
     } catch (error) {
-      throw new Error(`Error in toggling like/unlike: ${error.message}`);
+      throw new Error(`Failed to ${action} video: ${error.message}`);
     }
   }
+  
 
   async updateAVideoByIdRepository(videoId, data) {
     try {
@@ -62,7 +68,6 @@ class VideoRepository {
     }
   }
 
-  //userId => user, categoryIds => categories
   async getVideoRepository(videoId) {
     try {
       const result = await Video.aggregate([
@@ -90,6 +95,22 @@ class VideoRepository {
           },
         },
         {
+          $lookup: {
+            from: "videolikehistories",
+            let: { videoId: "$_id" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+              { $count: "likesCount" }
+            ],
+            as: "likesInfo",
+          },
+        },
+        {
+          $addFields: {
+            likesCount: { $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0] },
+          },
+        },
+        {
           $project: {
             _id: 1,
             title: 1,
@@ -101,7 +122,7 @@ class VideoRepository {
             enumMode: 1,
             dateCreated: 1,
             lastUpdated: 1,
-            likesCount: { $size: "$likedBy" },
+            likesCount: 1,
             user: {
               _id: 1,
               fullName: "$user.fullName",
@@ -198,6 +219,24 @@ class VideoRepository {
           },
         },
         {
+          $lookup: {
+            from: "videolikehistories",
+            let: { videoId: "$_id" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+              { $count: "likesCount" },
+            ],
+            as: "likesInfo",
+          },
+        },
+        {
+          $addFields: {
+            "likesCount": {
+              $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0],
+            },
+          },
+        },
+        {
           $project: {
             _id: 1,
             title: 1,
@@ -207,7 +246,7 @@ class VideoRepository {
             enumMode: 1,
             dateCreated: 1,
             lastUpdated: 1,
-            likesCount: { $size: "$likedBy" },
+            likesCount: 1,
             user: {
               _id: 1,
               fullName: "$user.fullName",
@@ -257,35 +296,148 @@ class VideoRepository {
 
   async getVideosByPlaylistIdRepository(playlistId, query) {
     try {
-      const { page, size } = query;
-
-      const playlist = await MyPlaylist.findById(playlistId);
+      // Retrieve playlist
+      const playlist = await MyPlaylist.findById(playlistId).select("videoIds");
       if (!playlist) {
-        throw new Error("Playlist not found");
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Playlist not found"
+        );
       }
-      const videoIds = playlist.videoIds.map((video) => video?.toString());
-
+  
+      // Extract videoIds from playlist
+      const videoIds = playlist.videoIds;
+      console.log(videoIds)
+      if (!videoIds || videoIds.length === 0) {
+        return {
+          videos: [],
+          total: 0,
+          page: query.page || 1,
+          totalPages: 1,
+        };
+      }
+  
+      // Pagination setup
+      const page = query.page || 1;
+      const size = parseInt(query.size, 10) || 10;
       const skip = (page - 1) * size;
-
-      // Fetch video details using getVideoRepository
-      const videoPromises = videoIds.map((id) => this.getVideoRepository(id));
-      const videos = await Promise.all(videoPromises);
-
-      // Filter out any null results (videos that may not have been found)
-      const validVideos = videos.filter((video) => video);
-
-      // Apply pagination
-      const paginatedVideos = validVideos.slice(skip, skip + size);
-
+  
+      // Create search query for videos
+      const searchQuery = {
+        _id: { $in: videoIds },
+        isDeleted: false,
+      };
+  
+      // Filter by title if provided
+      if (query.title) {
+        searchQuery.title = { $regex: new RegExp(query.title, "i") };
+      }
+  
+      // Filter by enumMode if provided
+      if (query.enumMode) {
+        searchQuery.enumMode = query.enumMode;
+      }
+  
+      // Sorting logic
+      let sortField = "dateCreated"; // Default sort field
+      let sortOrder = query.order === "ascending" ? 1 : -1;
+  
+      if (query.sortBy === "like") sortField = "likesCount";
+      else if (query.sortBy === "view") sortField = "currentViewCount";
+      else if (query.sortBy === "date") sortField = "dateCreated";
+  
+      // Total video count
+      const totalVideos = await Video.countDocuments(searchQuery);
+  
+      // Fetch videos with aggregation for additional info
+      const videos = await Video.aggregate([
+        {
+          $match: searchQuery,
+        },
+        {
+          $addFields: {
+            length: { $size: "$likedBy" },
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryIds",
+            foreignField: "_id",
+            as: "categories",
+          },
+        },
+        {
+          $lookup: {
+            from: "videolikehistories",
+            let: { videoId: "$_id" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+              { $count: "likesCount" },
+            ],
+            as: "likesInfo",
+          },
+        },
+        {
+          $addFields: {
+            "likesCount": {
+              $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0],
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            title: 1,
+            description: 1,
+            videoUrl: 1,
+            thumbnailUrl: 1,
+            enumMode: 1,
+            dateCreated: 1,
+            lastUpdated: 1,
+            likesCount: 1,
+            user: {
+              _id: 1,
+              fullName: "$user.fullName",
+              nickName: "$user.nickName",
+              avatar: "$user.avatar",
+            },
+            categories: {
+              $map: {
+                input: "$categories",
+                as: "category",
+                in: {
+                  _id: "$$category._id",
+                  name: "$$category.name",
+                  imageUrl: "$$category.imageUrl",
+                },
+              },
+            },
+          },
+        },
+        { $sort: { [sortField]: sortOrder } },
+        { $skip: skip },
+        { $limit: size },
+      ]);
+  
       return {
-        data: paginatedVideos,
-        page: page,
-        total: validVideos.length,
-        totalPages: Math.ceil(validVideos.length / size),
+        videos,
+        total: totalVideos,
+        page: Number(page),
+        totalPages: Math.ceil(totalVideos / size),
       };
     } catch (error) {
       throw new Error(
-        `Error when fetching all videos by playlistId: ${error.message}`
+        `Error when fetching videos by playlist ID: ${error.message}`
       );
     }
   }

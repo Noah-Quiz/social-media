@@ -57,13 +57,11 @@ const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
   }
 };
 
-const toggleLikeVideoService = async (videoId, userId, action) => {
+const toggleLikeVideoService = async (videoId, userId) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const video = await connection.videoRepository.getVideoByIdRepository(
-      videoId
-    );
+    const video = await connection.videoRepository.getVideoByIdRepository(videoId);
 
     if (!video) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
@@ -71,12 +69,7 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
 
     const videoOwnerId = video.user?._id;
 
-    // const allowedActions = ["like", "unlike"];
-    // if (!allowedActions.includes(action)) {
-    //   throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid action");
-    // }
-
-    const result = await connection.videoRepository.toggleLikeVideoRepository(
+    const action = await connection.videoRepository.toggleLikeVideoRepository(
       videoId,
       userId
     );
@@ -96,7 +89,7 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
       notification
     );
 
-    return result;
+    return action;
   } catch (error) {
     throw error;
   }
@@ -365,63 +358,79 @@ const getVideosService = async (query, requesterId) => {
 const getVideosByPlaylistIdService = async (
   playlistId,
   query,
-  requester,
+  requesterId,
 ) => {
   try {
     const connection = new DatabaseTransaction();
 
-    // Fetch videos by playlist from the repository
-    const videos =
-      await connection.videoRepository.getVideosByPlaylistIdRepository(
-        playlistId,
-        query
+    if (!playlistId || !mongoose.Types.ObjectId.isValid(playlistId)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Valid playlist ID is required"
       );
-
-    // Step 1: Group videos by userId
-    const videosByOwner = videos.data.reduce((acc, video) => {
-      if (!acc[video.user?._id]) {
-        acc[video.user?._id] = [];
-      }
-      acc[video.user?._id].push(video);
-      return acc;
-    }, {});
-
-    // Step 2: Iterate over each unique user (owner)
-    const resultVideos = [];
-
-    for (let [userId, userVideos] of Object.entries(videosByOwner)) {
-      const isOwner = requester?.toString() === userId?.toString();
-
-      // Step 3: Filter out private videos if the requester is not the owner
-      let processedVideos = userVideos.filter(
-        (video) => video.enumMode !== "private" || isOwner
-      );
-
-      // Step 4: Handle member-only videos
-      const memberVideoIds = processedVideos
-        .filter((video) => video.enumMode === "member")
-        .map((video) => video._id);
-
-      // Step 5: If the requester is not the owner and not a member, modify member-only videos
-      if (!isOwner && memberVideoIds.length > 0) {
-        const isMember = await checkMemberShip(requester, userId);
-
-        // If the requester is not a member, process member-only videos
-        if (!isMember) {
-          processedVideos = updateVideosForNonMembership(
-            processedVideos,
-            memberVideoIds,
-            "member" // Mark member videos with a "This video requires membership" message
-          );
-        }
-      }
-
-      // Step 6: Add the processed (or unprocessed for owners) videos to the result
-      resultVideos.push(...processedVideos);
     }
 
-    // Step 7: Return the final processed videos
-    return resultVideos;
+    const playlist = await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
+    if (!playlist) {
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Playlist not found"
+      );
+    }
+
+    if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Valid requester ID is required"
+      );
+    }
+
+    if (requesterId) {
+      const requester = await connection.userRepository.getAnUserByIdRepository(requesterId);
+      if (!requester) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, `Requester not found`);
+      }
+      if (requester.role === UserEnum.ADMIN) {
+        let { videos, total, page, totalPages } = await connection.videoRepository.getVideosByPlaylistIdRepository(playlistId, query);
+        return { videos, total, page, totalPages };
+      }
+    }
+
+    // Handle case when user try to access private, unlisted, draft video of another user
+    if (query.enumMode === "private" || query.enumMode === "unlisted" || query.enumMode === "draft") {
+      query.enumMode = {
+        $in: ['public', 'member']
+      };
+    }
+
+    const { videos, total, page, totalPages } = await connection.videoRepository.getVideosByPlaylistIdRepository(playlistId, query);
+
+    let filteredVideos = videos
+      .map(async (video) => {
+        const isOwner = video.user?._id?.toString() === requesterId?.toString();
+        if (isOwner) {
+          return video;
+        }
+
+        if (video.enumMode === "member") {
+          const isMember = await checkMemberShip(requesterId, video.user?._id);
+          if (isMember) {
+            return video;
+          }
+
+          return updateVideosForNonMembership(
+            [video],
+            [video._id],
+            "member"
+          )[0];
+        }
+
+        return video;
+      });
+
+    const result = await Promise.all(filteredVideos);
+    
+    return { videos: result, page, total, totalPages }
   } catch (error) {
     throw new Error(
       `Error fetching videos for playlist ${playlistId}: ${error.message}`
@@ -557,26 +566,6 @@ const getVideoLikeHistoryService = async (userId) => {
     const result = await Promise.all(filteredVideos);
 
     return result;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const getVideoLikesCountService = async (videoId) => {
-  try {
-    const connection = new DatabaseTransaction();
-
-    if (videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Valid video ID is required"
-      );
-    }
-
-    const videos =
-      await connection.videoRepository.getVideoLikeHistoryRepository(videoId);
-
-    return videos;
   } catch (error) {
     throw error;
   }

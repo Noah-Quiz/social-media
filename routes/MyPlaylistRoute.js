@@ -468,6 +468,7 @@ myPlaylistRoutes.put(
   AuthMiddleware,
   myPlaylistController.addToPlaylistController
 );
+
 /**
  * @swagger
  * /api/my-playlists/{playlistId}/remove-video:
