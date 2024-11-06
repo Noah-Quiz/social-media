@@ -1,19 +1,10 @@
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const axios = require("axios");
-const { uploadThumbnail, uploadFiles } = require("../middlewares/LoadFile");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
-const crypto = require("crypto");
 const {
   deleteBunnyStorageFileService,
-  uploadBunnyStorageFileService,
 } = require("./BunnyStreamService");
-const {
-  extractFilenameFromPath,
-  removeFileName,
-} = require("../middlewares/storeFile");
 const UserEnum = require("../enums/UserEnum");
 const createVideoService = async (
   userId,
@@ -159,7 +150,23 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
       if (!requester) {
         throw new CoreException(StatusCodeEnums.NotFound_404, `Requester not found`);
       }
-      if (requester.role === 1) {
+
+      // Requester is ADMIN
+      if (requester.role === UserEnum.ADMIN) {
+        let { videos, total, page, totalPages } = await connection.videoRepository.getVideosByUserIdRepository(
+          userId,
+          query
+        );
+        return { videos, total, page, totalPages };
+      }
+
+      // Requester is video owner
+      const isOwner = userId?.toString() === requesterId?.toString();
+      if (isOwner) {
+        if (typeof query.enumMode !== 'string') {
+          query.enumMode = null;
+        }
+        
         let { videos, total, page, totalPages } = await connection.videoRepository.getVideosByUserIdRepository(
           userId,
           query
@@ -171,7 +178,7 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
     const user = await connection.userRepository.getAnUserByIdRepository(userId);
     if (!user) {
       throw new CoreException(StatusCodeEnums.NotFound_404, `User not found`);
-    }
+    }    
 
     // Handle case when user try to access private, unlisted, draft video of another user
     if (query.enumMode === "private" || query.enumMode === "unlisted" || query.enumMode === "draft") {
@@ -243,7 +250,7 @@ const getVideoService = async (videoId, requesterId) => {
       if (!requester) {
         throw new CoreException(StatusCodeEnums.NotFound_404, `Requester not found`);
       }
-      if (requester.role === 1) {
+      if (requester.role === UserEnum.ADMIN) {
         const video = await connection.videoRepository.getVideoRepository(videoId);
         return video;
       }
@@ -309,7 +316,7 @@ const getVideosService = async (query, requesterId) => {
       if (!requester) {
         throw new CoreException(StatusCodeEnums.NotFound_404, `Requester not found`);
       }
-      if (requester.role === 1) {
+      if (requester.role === UserEnum.ADMIN) {
         let { videos, total, page, totalPages } = await connection.videoRepository.getAllVideosRepository(query);
         return { videos, total, page, totalPages };
       }

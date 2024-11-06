@@ -285,7 +285,7 @@ class VideoController {
       };
       const { requesterId } = req.query;
 
-      const getVideosDto = new GetVideosDto(query.size, query.page, query.enumMode, query.sortBy, query.order);
+      const getVideosDto = new GetVideosDto(query.size, query.page, query.enumMode, query.sortBy, query.order, query.title);
       const validatedQuery =  await getVideosDto.validate();
 
       const { videos, total, page, totalPages } = await getVideosService(validatedQuery, requesterId);
