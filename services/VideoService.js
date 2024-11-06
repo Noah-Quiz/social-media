@@ -75,20 +75,19 @@ const toggleLikeVideoService = async (videoId, userId, action) => {
     );
 
     if (!video) {
-      throw new CoreException(StatusCodeEnum.NotFound_404, "Video not found");
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
 
     const videoOwnerId = video.user?._id;
 
-    const allowedActions = ["like", "unlike"];
-    if (!allowedActions.includes(action)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid action");
-    }
+    // const allowedActions = ["like", "unlike"];
+    // if (!allowedActions.includes(action)) {
+    //   throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid action");
+    // }
 
     const result = await connection.videoRepository.toggleLikeVideoRepository(
       videoId,
-      userId,
-      action
+      userId
     );
 
     const user = await connection.userRepository.findUserById(userId);
@@ -414,6 +413,17 @@ const checkMemberShip = async (requester, userId) => {
   }
 };
 
+const getVideoLikeHistoryService = async (userId) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const videos =
+      await connection.videoRepository.getVideoLikeHistoryRepository(userId);
+    return videos;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   createVideoService,
   updateAVideoByIdService,
@@ -426,4 +436,5 @@ module.exports = {
   deleteVideoService,
   getVideoService,
   getVideosService,
+  getVideoLikeHistoryService,
 };
