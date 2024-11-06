@@ -163,7 +163,7 @@ class VideoController {
         videoId,
         data.title,
         data.description,
-        data.enumMode,
+        data.enumMode?.toLowerCase(),
         data.categoryIds,
         thumbnailFile
       );
@@ -178,7 +178,7 @@ class VideoController {
       const updateData = {
         title: data.title,
         description: data.description,
-        enumMode: data.enumMode,
+        enumMode: data.enumMode?.toLowerCase(),
         categoryIds: data.categoryIds,
       };
       if (updateData.categoryIds && updateData.categoryIds.length > 0) {
