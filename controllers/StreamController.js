@@ -68,7 +68,7 @@ class StreamController {
 
   async updateStreamController(req, res, next) {
     const { streamId } = req.params;
-    let { title, description, categoryIds } = req.body;
+    let { title, description, categoryIds, enumMode } = req.body;
     let thumbnailFile = req.file ? req.file.path : null;
     const userId = req.userId;
 
@@ -86,7 +86,8 @@ class StreamController {
         streamId,
         title,
         description,
-        categoryIds
+        categoryIds,
+        enumMode,
       );
       await updateStreamDto.validate();
 
@@ -95,6 +96,7 @@ class StreamController {
         description,
         categoryIds: categoryIds,
         thumbnailUrl: thumbnailFile,
+        enumMode,
       };
 
       if (updateData.categoryIds && updateData.categoryIds.length > 0) {
