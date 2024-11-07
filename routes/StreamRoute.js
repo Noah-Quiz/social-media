@@ -673,16 +673,9 @@ streamRoutes.patch(
  *         schema:
  *           type: string
  *         description: The ID of the stream to like or unlike
- *       - in: query
- *         name: action
- *         required: true
- *         schema:
- *           type: string
- *           enum: [like, unlike]
- *         description: Action to perform on the stream (like or unlike)
  *     responses:
  *       200:
- *         description: Stream like status toggled successfully
+ *         description: Like/Unlike stream successfully
  *         content:
  *           application/json:
  *             schema:

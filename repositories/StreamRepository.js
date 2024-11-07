@@ -244,28 +244,29 @@ class StreamRepository {
     }
   }
 
-  async toggleLikeStreamRepository(streamId, userId, action = "like") {
+  async toggleLikeStreamRepository(streamId, userId) {
+    let hasLiked = false;
     try {
-      const updateAction =
-        action === "like"
-          ? { $addToSet: { likedBy: userId } }
-          : { $pull: { likedBy: userId } };
-
-      const updatedVideo = await Stream.findByIdAndUpdate(
-        streamId,
-        updateAction,
-        { new: true }
-      );
-
-      if (!updatedVideo) {
+      const stream = await Stream.findById(streamId);
+  
+      if (!stream) {
         throw new Error("Stream not found");
       }
-
-      return true;
+  
+      hasLiked = stream.likedBy.includes(userId);
+  
+      const updateAction = hasLiked
+        ? { $pull: { likedBy: userId } }
+        : { $addToSet: { likedBy: userId } };
+  
+      await Stream.findByIdAndUpdate(streamId, updateAction, { new: true });
+  
+      return hasLiked ? "unlike" : "like";
     } catch (error) {
-      throw new Error(`Error in toggling like/unlike: ${error.message}`);
+      const action = hasLiked ? "unlike" : "like";
+      throw new Error(`Failed to ${action} the stream: ${error.message}`);
     }
-  }
+  }  
 
   async countTotalStreamsRepository() {
     return await Stream.countDocuments({ isDeleted: false });

@@ -195,7 +195,6 @@ class StreamController {
 
   async toggleLikeStreamController(req, res, next) {
     const { streamId } = req.params;
-    const { action } = req.query;
     const userId = req.userId;
 
     try {
@@ -205,9 +204,9 @@ class StreamController {
         });
       }
 
-      await toggleLikeStreamService(streamId, userId, action);
+      const action = await toggleLikeStreamService(streamId, userId);
 
-      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
+      return res.status(StatusCodeEnums.OK_200).json({ message: `${action?.charAt(0)?.toUpperCase() + action?.slice(1)} stream successfully` });
     } catch (error) {
       next(error);
     }
