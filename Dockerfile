@@ -10,10 +10,11 @@ COPY package*.json ./
 # Cài đặt các gói phụ thuộc
 RUN npm install
 
-RUN apt-get update && apt-get 
+# Cập nhật và cài đặt gói cần thiết (bạn có thể thêm gói bạn cần vào đây)
+RUN apt-get update && apt-get install -y curl git
 
 # Sao chép toàn bộ mã nguồn vào container
 COPY . .
-#dauma
+
 # Chạy ứng dụng
 CMD ["npm", "start"]
