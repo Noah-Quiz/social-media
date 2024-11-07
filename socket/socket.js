@@ -2,7 +2,10 @@ const {
   updateStreamViewsService,
   getStreamService,
 } = require("../services/StreamService");
-const { createAMessageService } = require("../services/MessageService");
+const {
+  createAMessageService,
+  updateMessageService,
+} = require("../services/MessageService"); // Add updateMessageService
 const { getUserByIdService } = require("../services/UserService");
 const getLogger = require("../utils/logger.js");
 const { getRoomService } = require("../services/RoomService.js");
@@ -34,9 +37,11 @@ module.exports = (io) => {
     // Handle sending messages in rooms
     socket.on("send_message", async ({ roomId, userId, message }) => {
       try {
-        await createAMessageService(userId, roomId, message);
+        const newMessage = await createAMessageService(userId, roomId, message);
         const user = await getUserByIdService(userId);
         io.to(roomId).emit("receive_message", {
+          id: newMessage._id,
+          userId,
           sender: user.nickName,
           message,
           avatar: user.avatar,
@@ -49,6 +54,37 @@ module.exports = (io) => {
       }
     });
 
+    // Handle updating a message
+    socket.on(
+      "update_message",
+      async ({ userId, messageId, roomId, newMessage }) => {
+        console.log(roomId);
+        try {
+          // Update the message in the database
+          const updatedMessage = await updateMessageService(
+            userId,
+            messageId,
+            newMessage
+          );
+
+          if (updatedMessage) {
+            io.to(roomId).emit("message_updated", {
+              id: messageId,
+              message: newMessage,
+            });
+            logger.info(`Message ${messageId} updated in stream ${roomId}`);
+          } else {
+            socket.emit("update_message_error", { error: "Message not found" });
+          }
+        } catch (error) {
+          socket.emit("update_message_error", {
+            error: "Failed to update message",
+          });
+          logger.error("Error updating message", error);
+        }
+      }
+    );
+
     // Handle leaving a livestream
     socket.on("leave_livestream", async (streamId) => {
       try {
@@ -56,7 +92,7 @@ module.exports = (io) => {
         await handleLeaveLiveStream(socket, streamId);
         logger.info(`${socket.id} left livestream room: ${streamId}`);
       } catch (error) {
-        logger.error(`Error when do this action`);
+        logger.error(`Error when performing action`);
       }
     });
 

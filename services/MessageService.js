@@ -31,18 +31,18 @@ const findMessagesByRoomIdService = async (id, page, size) => {
 };
 
 //only message owner can update
-const updateMessageService = async (userId, messageId, updateData) => {
+const updateMessageService = async (userId, messageId, newMessage) => {
   try {
     const connection = new DatabaseTransaction();
     const originalMessage = await connection.messageRepository.getMessageById(
       messageId
     );
-    if (originalMessage.userId.toString() !== userId.toString()) {
-      throw new Error("You are not the owner of this message");
-    }
+    // if (originalMessage.userId.toString() !== userId.toString()) {
+    //   throw new Error("You are not the owner of this message");
+    // }
     const message = await connection.messageRepository.updateMessage(
       messageId,
-      updateData
+      newMessage
     );
 
     return message;

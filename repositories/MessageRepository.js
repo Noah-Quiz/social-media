@@ -27,14 +27,17 @@ class MessageRepository {
     }
   }
 
-  async updateMessage(messageId, updateData, session) {
-    updateData.lastUpdated = new Date();
+  async updateMessage(messageId, newMessage, session) {
     try {
-      const message = await Message.findByIdAndUpdate(messageId, updateData, {
-        new: true,
-        runValidators: true,
-        session,
-      });
+      const message = await Message.findByIdAndUpdate(
+        messageId,
+        { content: newMessage, lastUpdated: Date.now() },
+        {
+          new: true,
+          runValidators: true,
+          session,
+        }
+      );
 
       if (!message) {
         throw new Error("Message not found");
