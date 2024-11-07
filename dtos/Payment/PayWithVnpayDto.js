@@ -2,20 +2,7 @@ const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
 const { validMongooseObjectId } = require("../../utils/validator");
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     PayWithPaypalDto:
- *       type: object
- *       required:
- *         - price
- *       properties:
- *         price:
- *            type: number
- *            description: The price of product.
- */
-class PayWithPaypalDto {
+class PayWithVnpayDto {
   constructor(price) {
     this.price = price;
   }
@@ -27,13 +14,16 @@ class PayWithPaypalDto {
         "Price is required"
       );
     }
-    if (this.price && (isNaN(this.price) || this.price <= 0)) {
+    if (
+      this.price &&
+      (isNaN(this.price) || !(this.price >= 5000 && this.price <= 1000000000))
+    ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Price must be a positive number"
+        "Price must be greater than 5.000vnd and less than 1.000.000.000vnd"
       );
     }
   }
 }
 
-module.exports = PayWithPaypalDto;
+module.exports = PayWithVnpayDto;
