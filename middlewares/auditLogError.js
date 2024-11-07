@@ -2,6 +2,7 @@ const path = require("path");
 const getLogger = require("../utils/logger");
 const logger = getLogger("AUDIT_LOG_ERROR");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const auditLogError = async (err, req, res, next) => {
   // Get the stack trace
   const stack = err.stack || "";
@@ -39,7 +40,8 @@ const auditLogError = async (err, req, res, next) => {
   } catch (error) {
     logger.error(`Error saving error to database: ${error.message}`);
   }
-  return res.status(err.code || 500).json({ message: err.message });
+  
+  return res.status(err.code || StatusCodeEnums.InternalServerError_500).json({ message: err.message });
 };
 
 module.exports = auditLogError;

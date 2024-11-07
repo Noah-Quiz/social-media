@@ -136,7 +136,6 @@ router.get("/", categoryController.getAllCategoryController);
  *                   type: array
  *                   items:
  *                     type: string
- *                   example: ["'name' is required.", "'imageUrl' must be a valid URL."]
  *       500:
  *         description: Internal server error.
  *         content:
@@ -221,6 +220,7 @@ router.post(
  *                   example: "An unexpected error occurred while retrive the category."
  */
 router.get("/:categoryId", categoryController.getCategoryController);
+
 /**
  * @swagger
  * /api/categories/{categoryId}:
@@ -296,7 +296,7 @@ router.get("/:categoryId", categoryController.getCategoryController);
  *                   type: array
  *                   items:
  *                     type: string
- *                   example: ["'name' is required.", "'imageUrl' must be a valid URL."]
+ *                   example: ["'name' is required."]
  *       500:
  *         description: Internal server error
  *         content:
