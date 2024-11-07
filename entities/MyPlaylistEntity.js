@@ -4,12 +4,12 @@ const baseEntitySchema = require("./BaseEntity.js");
 const myPlaylistSchema = new mongoose.Schema({
   playlistName: { type: String, required: true },
   description: { type: String, required: false },
-  enumMode: [{
+  enumMode: {
     type: String,
     required: true,
     enum: ["public", "private"],
     default: "private"
-  }],
+  },
   thumbnail: { type: String, required: false },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   videoIds: [

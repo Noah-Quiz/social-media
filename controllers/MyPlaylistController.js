@@ -13,14 +13,20 @@ const {
   addToPlaylistService,
   removeFromPlaylist,
 } = require("../services/MyPlaylistService");
+const GetPlaylistByUserIdDto = require("../dtos/MyPlaylist/GetPlaylistByUserIdDto");
+const GetPlaylistByIdDto = require("../dtos/MyPlaylist/GetPlaylistByIdDto");
 
 class MyPlaylistController {
   // get a playlist
   async getAPlaylistController(req, res, next) {
     const { playlistId } = req.params;
+    const { requesterId } = req.query;
 
     try {
-      const playlist = await getAPlaylistService(playlistId);
+      const getPlaylistByIdDto = new GetPlaylistByIdDto(playlistId, requesterId);
+      await getPlaylistByIdDto.validate();
+
+      const playlist = await getAPlaylistService(playlistId, requesterId);
 
       res.status(StatusCodeEnums.OK_200).json({ playlist, message: "Success" });
     } catch (error) {
@@ -31,12 +37,15 @@ class MyPlaylistController {
   // get all playlists
   async getAllMyPlaylistsController(req, res, next) {
     try {
-      const query = {};
-      const userId = req.userId;
+      const { userId } = req.params;
+      const { requesterId, enumMode } = req.query;
 
-      const data = { query, userId };
+      const query = { enumMode };
 
-      const playlists = await getAllMyPlaylistsService(data);
+      const getPlaylistByUserIdDto = new GetPlaylistByUserIdDto(requesterId, enumMode);
+      await getPlaylistByUserIdDto.validate();
+
+      const playlists = await getAllMyPlaylistsService(userId, requesterId, query);
 
       res
         .status(StatusCodeEnums.OK_200)
@@ -65,13 +74,16 @@ class MyPlaylistController {
       );
       await updatePlaylistDto.validate();
 
-      const updatedPlaylist = await updatePlaylistService(
+      const data = {
         userId,
         playlistId,
         playlistName,
         description,
-        thumbnail
-      );
+        thumbnail,
+        enumMode
+      }
+
+      const updatedPlaylist = await updatePlaylistService(data);
 
       res
         .status(StatusCodeEnums.OK_200)

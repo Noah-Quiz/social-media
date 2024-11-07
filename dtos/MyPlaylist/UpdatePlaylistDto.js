@@ -49,13 +49,13 @@ class UpdatePlaylistDto {
       );
     }
     if (this.enumMode != null &&
-      !["public", "private", "unlisted", "member", "draft"].includes(
+      !["public", "private"].includes(
         this.enumMode
       )
     ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid enum mode, must be in ['public', 'private', 'unlisted', 'member', 'draft']"
+        "Invalid enum mode, must be in ['public', 'private']"
       );
     }
     if (!this.playlistName) {
