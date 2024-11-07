@@ -550,6 +550,7 @@ videoRoutes.get(
  *               enumMode:
  *                 type: string
  *                 enum: [public, private, unlisted, member, draft]
+ *                 default: public
  *                 description: Video accessibility
  *               videoThumbnail:
  *                 type: file
