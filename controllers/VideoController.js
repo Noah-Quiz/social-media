@@ -167,6 +167,7 @@ class VideoController {
         data.categoryIds,
         thumbnailFile
       );
+      
 
       try {
         await updateVideoDto.validate();
