@@ -23,9 +23,15 @@ const myPlaylistRoutes = express.Router();
  *               playlistName:
  *                 type: string
  *                 example: "No4"
+ *                 description: Name of playlist
  *               description:
  *                 type: string
  *                 example: "created no4"
+ *                 description: Description of playlist
+ *               enumMode:
+ *                 type: string
+ *                 enum: [public, private]
+ *                 description: Enum mode of playlist ([public, private])
  *               playlistCreate:
  *                 type: string
  *                 format: binary
@@ -329,11 +335,10 @@ myPlaylistRoutes.delete(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "An unexpected error occurred while retrive the playlist."
+ *                   example: "An unexpected error occurred while retrieve the playlist."
  */
 myPlaylistRoutes.get(
   "/:playlistId",
-  AuthMiddleware,
   myPlaylistController.getAPlaylistController
 );
 
