@@ -66,7 +66,7 @@ class UpdateStreamDto {
     if (this.categoryIds && this.categoryIds.length > 0) {
       await Promise.all(
         this.categoryIds.map(async (id) => {
-          if (id || id.length > 0) {
+          if (id || id.length > 0 || id === "") {
             try {
               await validMongooseObjectId(id);
             } catch (error) {

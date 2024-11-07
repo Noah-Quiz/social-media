@@ -161,7 +161,7 @@ class StreamController {
           }
         );
       } catch (error) {
-        throw new CoreException(StatusCodeEnums.InternalServerError_500, "Failed to create live stream");
+        throw new CoreException(StatusCodeEnums.InternalServerError_500, "Failed to create live stream, stream server doesn't return any responses");
       }
 
       const cloudflareStream = response.data?.liveInput;

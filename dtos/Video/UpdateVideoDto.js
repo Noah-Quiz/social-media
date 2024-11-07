@@ -84,7 +84,7 @@ class UpdateVideoDto {
     ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid video accessibility"
+        "Invalid enum mode, must be in ['public', 'private', 'unlisted', 'member', 'draft']"
       );
     }
     if (this.categoryIds !== null && !Array.isArray(this.categoryIds)) {
@@ -96,7 +96,7 @@ class UpdateVideoDto {
     if (this.categoryIds && this.categoryIds.length > 0) {
       await Promise.all(
         this.categoryIds.map(async (id) => {
-          if (id || id.length > 0) {
+          if (id || id.length > 0 || id === "") {
             try {
               await validMongooseObjectId(id);
             } catch (error) {
