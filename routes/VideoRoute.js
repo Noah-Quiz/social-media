@@ -709,12 +709,6 @@ videoRoutes.get(
  *        schema:
  *          type: string
  *        description: Video ID
- *      - in: query
- *        name: action
- *        required: true
- *        schema:
- *          type: string
- *        description: Action to perform ("like" or "unlike")
  *   security:
  *      - bearerAuth: []
  *   responses:

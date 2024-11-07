@@ -23,7 +23,7 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           type: array
  *           items:
  *             type: string
- *           description: The added category IDs.
+ *           description: The array of category ID. If devs don't want to update, the same categoryIds array still need to include their existing categories. If array is empty, the stream categories will be empty.
  *         streamThumbnail:
  *           type: string
  *           format: binary

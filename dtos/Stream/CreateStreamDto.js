@@ -21,7 +21,8 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           type: array
  *           items:
  *            type: string
- *           description: The category ids.
+ *            example: 671a01672a386fca99c73c02
+ *           description: The array of category ID (optional)
  */
 class CreateStreamDto {
   constructor(title, description, categoryIds) {
