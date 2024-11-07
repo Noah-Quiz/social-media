@@ -225,15 +225,10 @@ class UserController {
   async getUserWalletController(req, res, next) {
     try {
       const { userId } = req.params;
-      if (userId !== req.userId) {
-        throw new CoreException(
-          StatusCodeEnums.Forbidden_403,
-          "Forbidden access"
-        );
-      }
+      const requester = req.userId;
       const getUserWalletDto = new GetUserWalletDto(userId);
       await getUserWalletDto.validate();
-      const wallet = await getUserWalletService(userId);
+      const wallet = await getUserWalletService(userId, requester);
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ wallet: wallet, message: "Success" });
