@@ -37,7 +37,7 @@ class CreateStreamDto {
         "Title is required"
       );
     }
-    if (this.categoryIds !== null && !Array.isArray(this.categoryIds)) {
+    if (this.categoryIds && !Array.isArray(this.categoryIds)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Category IDs must be an array"
@@ -46,7 +46,7 @@ class CreateStreamDto {
     if (this.categoryIds && this.categoryIds.length > 0) {
       await Promise.all(
         this.categoryIds.map(async (id) => {
-          if (id || id.length > 0) {
+          if (id || id.length > 0 || id === "") {
             try {
               await validMongooseObjectId(id);
             } catch (error) {
