@@ -6,6 +6,8 @@ const fs = require("fs");
 const getLogger = require("../utils/logger");
 const logger = getLogger("FILE_UPLOAD");
 const { spawn } = require("child_process");
+const CoreException = require("../exceptions/CoreException");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 require("dotenv").config();
 const removeFileName = async (filePath) => {
   // Get the directory name by removing the file name
@@ -523,7 +525,7 @@ const storage = multer.diskStorage({
     });
   },
   filename: async (req, file, cb) => {
-    let baseName = req.headers["content-length"] + "_" + Date.now(); // the file is nane by the size of the file
+    let baseName = req.headers["content-length"] + "_" + Date.now(); // the file is named by the size of the file
     const ext = path.extname(file.originalname);
     let fileName = "";
     let dirPath = "";
@@ -593,22 +595,29 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  let allowedTypes = /jpeg|jpg|png|gif/;
-  if (file.fieldname === "video") {
-    allowedTypes = /mp4|avi|flv|wmv/;
-  }
-  const mimeType = allowedTypes.test(file.mimetype);
-  const extName = allowedTypes.test(
-    path.extname(file.originalname).toLowerCase()
-  );
+  const allowedImageTypes = /jpeg|jpg|png|gif/;
+  const allowedVideoTypes = /mp4|avi|flv|wmv/;
 
-  if (mimeType && extName) {
+  let allowedTypes, formatMessage;
+
+  if (file.fieldname === "video") {
+    allowedTypes = allowedVideoTypes;
+    formatMessage = "Allowed formats: mp4, avi, flv, wmv";
+  } else {
+    allowedTypes = allowedImageTypes;
+    formatMessage = "Allowed formats: jpeg, jpg, png, gif";
+  }
+
+  const isMimeTypeValid = allowedTypes.test(file.mimetype);
+  const isExtensionValid = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+
+  if (isMimeTypeValid && isExtensionValid) {
     return cb(null, true);
   }
-  if (file.fieldname === "video") logger.error("Error: Videos Only!");
-  else {
-    logger.error("Error: Images Only!");
-  }
+
+  const errorMessage = `Invalid format. ${formatMessage}`;
+  
+  cb(new CoreException(StatusCodeEnums.BadRequest_400, errorMessage), false);
 };
 
 const videoFilter = (req, file, cb) => {

@@ -68,7 +68,8 @@ const updateCategoryService = async (categoryId, categoryData) => {
       );
     }
 
-    categoryData.imageUrl = `${process.env.APP_BASE_URL}/${categoryData.imageUrl}`;
+    if (categoryData.imageUrl)
+      categoryData.imageUrl = `${process.env.APP_BASE_URL}/${categoryData.imageUrl}`;
 
     const updatedCategory =
       await connection.categoryRepository.updateCategoryRepository(
