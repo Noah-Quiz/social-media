@@ -30,11 +30,12 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           description: The thumbnail file for the stream.
  */
 class UpdateStreamDto {
-  constructor(streamId, title, description, categoryIds) {
+  constructor(streamId, title, description, categoryIds, enumMode) {
     this.streamId = streamId;
     this.title = title;
     this.description = description;
     this.categoryIds = categoryIds;
+    this.enumMode = enumMode;
   }
   async validate() {
     if (!this.streamId) {
@@ -55,6 +56,16 @@ class UpdateStreamDto {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Title is required"
+      );
+    }
+    if (this.enumMode != null &&
+      !["public", "private", "unlisted", "member", "draft"].includes(
+        this.enumMode
+      )
+    ) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid enum mode, must be in ['public', 'private', 'unlisted', 'member', 'draft']"
       );
     }
     if (this.categoryIds !== null && !Array.isArray(this.categoryIds)) {

@@ -127,8 +127,8 @@ const updatePlaylistService = async (
       );
       if (!checkPlaylist) {
         throw new CoreException(
-          StatusCodeEnums.Conflict_409,
-          "Playlist not belong to you"
+          StatusCodeEnums.Forbidden_403,
+          "You do not have permission to perform this action"
         );
       }
     }

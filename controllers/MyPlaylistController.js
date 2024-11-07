@@ -49,7 +49,7 @@ class MyPlaylistController {
   //update playlist
   async updatePlaylistController(req, res, next) {
     try {
-      const { playlistName, description } = req.body;
+      const { playlistName, description, enumMode } = req.body;
       const { playlistId } = req.params;
       const userId = req.userId;
 
@@ -60,7 +60,8 @@ class MyPlaylistController {
         playlistId,
         playlistName,
         description,
-        thumbnail
+        thumbnail,
+        enumMode
       );
       await updatePlaylistDto.validate();
 
@@ -127,6 +128,7 @@ class MyPlaylistController {
       next(error);
     }
   }
+
   async addToPlaylistController(req, res, next) {
     try {
       const { playlistId } = req.params;
@@ -144,6 +146,7 @@ class MyPlaylistController {
       next(error);
     }
   }
+
   async removeFromPlaylist(req, res, next) {
     try {
       const { playlistId } = req.params;
