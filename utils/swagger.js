@@ -30,6 +30,10 @@ const options = {
         url: "https://social-media-z5a2.onrender.com",
         description: "Production server",
       },
+      {
+        url: `${process.env.APP_BASE_URL}`,
+        description: "Production online server",
+      },
     ],
     tags: [
       {
