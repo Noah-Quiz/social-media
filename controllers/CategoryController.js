@@ -74,7 +74,9 @@ class CategoryController {
       const { categoryId } = req.params;
       const { name } = req.body;
       const imageUrl = req.file ? req.file.path : null;
-      const categoryData = { name, imageUrl };
+
+      let categoryData = { name, imageUrl };
+      if (imageUrl === null||imageUrl===undefined) categoryData = { name };
 
       const updateCategoryDto = new UpdateCategoryDto(categoryId, name);
       await updateCategoryDto.validate();
