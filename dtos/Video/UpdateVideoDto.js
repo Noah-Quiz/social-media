@@ -70,14 +70,8 @@ class UpdateVideoDto {
         "Title is required"
       );
     }
-    if (!this.enumMode) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Enum mode is required"
-      );
-    }
     if (
-      this.enumMode &&
+      this.enumMode != null &&
       !["public", "private", "unlisted", "member", "draft"].includes(
         this.enumMode
       )

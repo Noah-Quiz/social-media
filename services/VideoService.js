@@ -33,7 +33,7 @@ const createVideoService = async (
   }
 };
 
-const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
+const updateAVideoByIdService = async (videoId, userId, data, thumbnailFile) => {
   try {
     const connection = new DatabaseTransaction();
 
@@ -41,6 +41,11 @@ const updateAVideoByIdService = async (videoId, data, thumbnailFile) => {
     if (!video) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
+    
+    if (userId?.toString() !== video?.user?._id?.toString()) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "You do not have permission to perform this action");
+    }
+
     if (thumbnailFile) {
       data.thumbnailUrl = `${process.env.APP_BASE_URL}/${thumbnailFile.path}`;
     }
