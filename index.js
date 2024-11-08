@@ -32,13 +32,22 @@ process.env.TZ = "Asia/Ho_Chi_Minh";
 
 const app = express();
 const server = require("http").createServer(app);
-const io = require("socket.io")(server, {
+const uploadIo = require("socket.io")(server, {
+  path:"/socket/upload",
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
 });
-socket(io);
+const chatIo = require("socket.io")(server, {
+  path:"/socket/chat",
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+socket(uploadIo);
+socket(chatIo);
 
 const {
   uploadBunnyStreamVideoService,
