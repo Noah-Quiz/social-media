@@ -11,7 +11,11 @@ route.use(AuthMiddleware);
 
 route.post("/follow", userController.toggleFollowController);
 
+route.post("/saveFCMToken", userController.saveFCMTokenController);
+
 route.get("/", userController.getAllUsersController);
+
+route.get("/getUserHaveFCMToken", userController.getUsersHaveFCMTokenController);
 
 route.get("/:userId", userController.getUserByIdController);
 

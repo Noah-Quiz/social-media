@@ -8,7 +8,10 @@ const {
   updateUserProfileByIdService,
   updateUserEmailByIdService,
   deleteUserByIdService,
+  saveTokenService,
+  getUsersHaveFCMTokenService,
 } = require("../services/UserService");
+
 const mongoose = require("mongoose");
 
 class UserController {
@@ -27,6 +30,24 @@ class UserController {
       }
     }
   }
+
+  async getUsersHaveFCMTokenController(req, res) {
+    try {
+      const { page, size, name } = req.query;
+  
+      // Gọi service để lấy kết quả
+      const result = await getUsersHaveFCMTokenService(Number(page) || 1, Number(size) || 10, name || '');
+  
+      return res.status(StatusCodeEnums.OK_200).json(result);
+    } catch (error) {
+      if (error instanceof CoreException) {
+        return res.status(error.code).json({ message: error.message });
+      } else {
+        return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+      }
+    }
+  }
+  
 
   async deleteUserByIdController(req, res) {
     const { userId } = req.params;
@@ -135,42 +156,62 @@ class UserController {
   }
 
   async toggleFollowController(req, res) {
-    const { userId, followId, action } = req.body;
+    const { followId, action } = req.body;
+    const userId = req.userId;
 
     if (!["follow", "unfollow"].includes(action)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Invalid action" });
+        return res.status(StatusCodeEnums.BadRequest_400).json({ message: "Invalid action" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(followId)) {
+        return res.status(StatusCodeEnums.BadRequest_400).json({ message: "Invalid userId or followId" });
+    }
+
+    try {
+        let result;
+        if (action === "follow") {
+            result = await followUserService(userId, followId);
+        } else if (action === "unfollow") {
+            result = await unfollowUserService(userId, followId);
+        }
+
+        return res.status(StatusCodeEnums.OK_200).json({
+            message: `${action.charAt(0).toUpperCase() + action.slice(1)} success`,
+        });
+    } catch (error) {
+        if (error instanceof CoreException) {
+            return res.status(error.code).json({ message: error.message });
+        } else {
+            return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
+        }
+    }
+  }
+
+
+  async saveFCMTokenController(req, res) {
+    const { fcmToken } = req.body;
+    const userId = req.userId;
+
+    if (!userId || !fcmToken) {
+        return res.status(StatusCodeEnums.BadRequest_400).json({ message: "userId and fcmToken are required" });
     }
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Invalid userId" });
-    }
-    if (!mongoose.Types.ObjectId.isValid(followId)) {
-      return res
-        .status(StatusCodeEnums.BadRequest_400)
-        .json({ message: "Invalid followId" });
+        return res.status(StatusCodeEnums.BadRequest_400).json({ message: "Invalid userId" });
     }
 
-    let result;
     try {
-      if (action === "follow") {
-        result = await followUserService(userId, followId);
-      } else if (action === "unfollow") {
-        result = await unfollowUserService(userId, followId);
-      }
-
-      return res.status(StatusCodeEnums.OK_200).json({
-        message: `${action.charAt(0).toUpperCase() + action.slice(1)} success`,
-      });
+        // Gọi service để lưu token
+        const result = await saveTokenService(userId, fcmToken);
+        
+        // Kiểm tra kết quả trả về từ service
+        if (result && result.message) {
+            return res.status(StatusCodeEnums.OK_200).json({ message: result.message });
+        } else {
+            return res.status(StatusCodeEnums.InternalServerError_500).json({ message: "Unknown error occurred" });
+        }
     } catch (error) {
-      if (error instanceof CoreException) {
-        return res.status(error.code).json({ message: error.message });
-      } else {
         return res.status(StatusCodeEnums.InternalServerError_500).json({ message: error.message });
-      }
     }
   }
 }

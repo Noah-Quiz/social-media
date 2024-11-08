@@ -105,7 +105,41 @@ class UserRepository {
       throw new Error(`Error when getting all users: ${error.message}`);
     }
   }
+
+  async getUsersHaveFCMTokenRepository(page, size, name) {
+    try {
+      const query = {
+        isDeleted: false,
+        fcmToken: { $ne: null } // Chỉ lấy những người dùng có fcmToken
+      };
   
+      // Kiểm tra điều kiện `name`, nếu có thì thêm điều kiện lọc
+      if (name) {
+        query.$or = [
+          { fullName: { $regex: name, $options: "i" } },
+          { nickName: { $regex: name, $options: "i" } },
+        ];
+      }
+  
+      const skip = (page - 1) * size;
+      const users = await User.find(query)
+        .select("email fullName nickName follow followBy avatar phoneNumber user._id")
+        .skip(skip)
+        .limit(size);
+  
+      const totalUsers = await User.countDocuments(query);
+  
+      return {
+        data: users,
+        message: "Get all users successfully",
+        page: page,
+        total: totalUsers,
+        totalPages: Math.ceil(totalUsers / size),
+      };
+    } catch (error) {
+      throw new Error(`Error when getting all users: ${error.message}`);
+    }
+  }
 
   async followAnUserRepository(userId, followId) {
     const user = await User.findOne({ _id: userId });
@@ -220,10 +254,10 @@ class UserRepository {
     }
   }
 
-  async notifiCommentRepository(userId, notification) {
+  async notifiCommentRepository(followId, notification) {
     try {
-      console.log("UserId:", userId);
-      const user = await User.findById(userId);
+      console.log("UserId:", followId);
+      const user = await User.findById(followId);
       if (!user) throw new Error("User not found");
   
       user.notifications.push(notification);
@@ -235,7 +269,30 @@ class UserRepository {
       throw new Error(error.message);
     }
   }
+
+  async saveTokenRepository(userId, fcmToken) {
+    try {
+      console.log("UserId:", userId);
   
+      // Tìm người dùng theo ID
+      const user = await User.findById(userId);
+      if (!user) throw new Error("User not found");
+  
+      // Nếu người dùng chưa có fcmToken thì cập nhật
+      if (!user.fcmToken) {
+        user.fcmToken = fcmToken;
+        await user.save();
+        return { message: "FCM token saved successfully" };
+      } else {
+        // Nếu người dùng đã có fcmToken, không cần cập nhật
+        console.log("FCM token already exists, not updated.");
+        return { message: "FCM token already exists, not updated." };
+      }
+    } catch (error) {
+      console.error("Error in saveTokenRepository:", error);
+      throw new Error(error.message);
+    }
+  }
 }
 
 module.exports = UserRepository;

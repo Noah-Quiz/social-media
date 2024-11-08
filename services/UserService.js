@@ -1,14 +1,22 @@
-const StatusCodeEnum = require("../enums/StatusCodeEnum");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const UserEnum = require("../enums/UserEnum");
 const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const { validFullName, validEmail } = require("../utils/validator");
-
+const { pushNotification } = require("../middlewares/pushNotification");
 module.exports = {
   getAllUsersService: async (page, size, name) => {
     const connection = new DatabaseTransaction();
 
     const users = await connection.userRepository.getAllUsersRepository(page, size, name);
+
+    return users;
+  },
+
+  getUsersHaveFCMTokenService: async (page, size, name) => {
+    const connection = new DatabaseTransaction();
+
+    const users = await connection.userRepository.getUsersHaveFCMTokenRepository(page, size, name);
 
     return users;
   },
@@ -106,52 +114,43 @@ module.exports = {
 
   followUserService: async (userId, followId) => {
     try {
-      const connection = new DatabaseTransaction();
+        const connection = new DatabaseTransaction();
 
-      const user = await connection.userRepository.findUserById(userId);
-      if (!user) {
-        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
-      }
+        const user = await connection.userRepository.findUserById(userId);
+        if (!user) {
+            throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+        }
 
-      const follow = await connection.userRepository.findUserById(followId);
-      if (!follow) {
-        throw new CoreException(
-          StatusCodeEnum.NotFound_404,
-          "User to follow not found"
-        );
-      }
+        const follow = await connection.userRepository.findUserById(followId);
+        if (!follow) {
+            throw new CoreException(StatusCodeEnums.NotFound_404, "User to follow not found");
+        }
 
-      if (userId === followId) {
-        throw new CoreException(
-          StatusCodeEnum.BadRequest_400,
-          "You can't follow yourself"
-        );
-      }
+        if (userId === followId) {
+            throw new CoreException(StatusCodeEnums.BadRequest_400, "You can't follow yourself");
+        }
 
-      const result = await connection.userRepository.followAnUserRepository(
-        userId,
-        followId
-      );
-      if (!result) {
-        throw new CoreException(
-          StatusCodeEnum.Conflict_409,
-          "Follow unsuccessfully"
-        );
-      }
+        const result = await connection.userRepository.followAnUserRepository(userId, followId);
+        if (!result) {
+            throw new CoreException(StatusCodeEnums.Conflict_409, "Follow unsuccessfully");
+        }
 
-      const notification = {
-        avatar: user.avatar,
-        content: `${user.fullName} đang follow bạn`,
-        check: user,
-        seen: false,
-        createdAt: new Date(),
-      }
+        const notification = {
+            avatar: user.avatar,
+            content: `${user.fullName} đang follow bạn`,
+            check: user,
+            seen: false,
+            createdAt: new Date(),
+        };
 
-       await connection.userRepository.notifiCommentRepository(userId, followId);
+        await connection.userRepository.notifiFollowRepository(followId, notification);
 
-      return result;
+        // Gửi thông báo đẩy đến người dùng được theo dõi
+        await pushNotification(follow, user.fullName);
+
+        return result;
     } catch (error) {
-      throw error;
+        throw error;
     }
   },
 
@@ -161,7 +160,7 @@ module.exports = {
 
       const user = await connection.userRepository.findUserById(userId);
       if (!user) {
-        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+        throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
       }
       const follow = await connection.userRepository.findUserById(followId);
       if (!follow) {
@@ -192,6 +191,26 @@ module.exports = {
       return result;
     } catch (error) {
       throw error;
+    }
+  },
+
+  saveTokenService: async (userId, fcmToken) => {
+    try {
+        const connection = new DatabaseTransaction();
+
+        // Tìm người dùng dựa trên userId
+        const user = await connection.userRepository.findUserById(userId);
+        if (!user) {
+            throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+        }
+
+        // Lưu FCM token vào cơ sở dữ liệu
+        const result = await connection.userRepository.saveTokenRepository(userId, fcmToken);
+        
+        return result;
+    } catch (error) {
+        console.error("Error in saveTokenService:", error); // Thêm log lỗi
+        throw error;
     }
   },
 };

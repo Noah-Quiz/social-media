@@ -90,6 +90,11 @@ const userEntitySchema = new mongoose.Schema({
       ref: "User",
     },
   ],
+  fcmToken: {
+    type: String,
+    default: "",
+    trim: true,
+  },
   ...baseEntitySchema.obj,
 });
 
