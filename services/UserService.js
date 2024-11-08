@@ -7,6 +7,8 @@ const bcrypt = require("bcrypt");
 const { sendVerificationEmailService } = require("./AuthService");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const { default: mongoose } = require("mongoose");
+require("dotenv").config();
+
 module.exports = {
   getAllUsersService: async (query) => {
     const connection = new DatabaseTransaction();
@@ -93,6 +95,10 @@ module.exports = {
 
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
+
+      if (data.avatar) {
+        data.avatar = `${process.env.APP_BASE_URL}/${data.avatar}`;
       }
 
       const result = await connection.userRepository.updateAnUserByIdRepository(
