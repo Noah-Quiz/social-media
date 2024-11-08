@@ -16,6 +16,7 @@ videoRoutes.get(
  * /api/videos/:
  *   post:
  *     summary: Create a video by uploading a video file
+ *     description: Socket connect http://API_BASE_URL/socket/upload?userId=     Event Listener upload_video_progress   Emit upload_video_progress 
  *     tags: [Videos]
  *     consumes:
  *       - multipart/form-data
