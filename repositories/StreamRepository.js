@@ -247,7 +247,7 @@ class StreamRepository {
   async toggleLikeStreamRepository(streamId, userId) {
     let hasLiked = false;
     try {
-      const stream = await Stream.findById(streamId);
+      const stream = await Stream.findOne({ _id: streamId, isDeleted: false });
   
       if (!stream) {
         throw new Error("Stream not found");
