@@ -158,8 +158,8 @@ class CommentController {
         limit || 10
       );
       return res.status(StatusCodeEnums.OK_200).json({
-        comments: comments,
-        size: comments.length + comments[0].children.length,
+        comment: comments,
+        size: comments.length + comments.children.length,
         maxLevel: maxLevel,
         message: "Success",
       });

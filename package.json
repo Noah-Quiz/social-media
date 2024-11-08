@@ -38,6 +38,7 @@
     "passport": "^0.7.0",
     "passport-apple": "^2.0.2",
     "passport-google-oauth20": "^2.0.0",
+    "path-to-regexp": "^8.2.0",
     "paypal-rest-sdk": "^1.8.1",
     "social-media": "file:",
     "socket.io": "^4.8.0",
