@@ -29,14 +29,9 @@ route.use(AuthMiddleware);
  *        schema:
  *         type: string
  *         required: true
- *      - in: formData
- *        name: avatar
- *        schema:
- *         type: file
- *        description: The user's avatar image file
  *     requestBody:
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             $ref: '#/components/schemas/UpdateUserProfileDto'
  *     responses:
