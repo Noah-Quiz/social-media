@@ -38,6 +38,8 @@ require("dotenv").config();
 const getLogger = require("../utils/logger");
 const UpdateVideoDto = require("../dtos/Video/UpdateVideoDto");
 const GetVideosDto = require("../dtos/Video/GetVideosDto");
+const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const UserEnum = require("../enums/UserEnum");
 const logger = getLogger("VIDEO_CONTROLLER");
 class VideoController {
   async createVideoController(req, res, next) {
@@ -114,7 +116,11 @@ class VideoController {
 
       const action = await toggleLikeVideoService(videoId, userId);
 
-      return res.status(StatusCodeEnums.OK_200).json({ message: `${action?.charAt(0)?.toUpperCase() + action?.slice(1)} video successfully` });
+      return res.status(StatusCodeEnums.OK_200).json({
+        message: `${
+          action?.charAt(0)?.toUpperCase() + action?.slice(1)
+        } video successfully`,
+      });
     } catch (error) {
       next(error);
     }
@@ -143,9 +149,31 @@ class VideoController {
 
   async updateAVideoByIdController(req, res, next) {
     try {
-      const { videoId } = req.params;
       const userId = req.userId;
+      console.log("userId", userId);
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
+      if (!user) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+      }
+      const { videoId } = req.params;
+      const existVideo =
+        await connection.videoRepository.getVideoByIdRepository(videoId);
+      if (!existVideo) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Video not found"
+        );
+      }
 
+      if (user.role !== UserEnum.ADMIN && existVideo.userId !== userId) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "You don't have access to perform this action on this video"
+        );
+      }
       let thumbnailFile = null;
       if (req.files && req.files.videoThumbnail) {
         thumbnailFile = req.files.videoThumbnail[0];
@@ -179,7 +207,7 @@ class VideoController {
       const updateData = {
         title: data.title,
         description: data.description,
-        enumMode: data.enumMode?.toLowerCase(),
+        enumMode: data.enumMode?.toLowerCase() || "public",
         categoryIds: data.categoryIds,
       };
       if (updateData.categoryIds && updateData.categoryIds.length > 0) {
@@ -242,11 +270,19 @@ class VideoController {
         order: req.query.order?.toLowerCase(),
         enumMode: req.query.enumMode?.toLowerCase(),
       };
-      
-      const getVideosDto = new GetVideosDto(query.size, query.page, query.enumMode, query.sortBy, query.order, query.title);
-      const validatedQuery =  await getVideosDto.validate();
 
-      const { videos, total, page, totalPages } = await getVideosByUserIdService(userId, validatedQuery, requesterId);
+      const getVideosDto = new GetVideosDto(
+        query.size,
+        query.page,
+        query.enumMode,
+        query.sortBy,
+        query.order,
+        query.title
+      );
+      const validatedQuery = await getVideosDto.validate();
+
+      const { videos, total, page, totalPages } =
+        await getVideosByUserIdService(userId, validatedQuery, requesterId);
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -287,10 +323,20 @@ class VideoController {
       };
       const { requesterId } = req.query;
 
-      const getVideosDto = new GetVideosDto(query.size, query.page, query.enumMode, query.sortBy, query.order, query.title);
-      const validatedQuery =  await getVideosDto.validate();
+      const getVideosDto = new GetVideosDto(
+        query.size,
+        query.page,
+        query.enumMode,
+        query.sortBy,
+        query.order,
+        query.title
+      );
+      const validatedQuery = await getVideosDto.validate();
 
-      const { videos, total, page, totalPages } = await getVideosService(validatedQuery, requesterId);
+      const { videos, total, page, totalPages } = await getVideosService(
+        validatedQuery,
+        requesterId
+      );
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -313,13 +359,20 @@ class VideoController {
       };
       const { requesterId } = req.query;
 
-      const getVideosDto = new GetVideosDto(query.size, query.page, query.enumMode, query.sortBy, query.order, query.title);
-      const validatedQuery =  await getVideosDto.validate();
+      const getVideosDto = new GetVideosDto(
+        query.size,
+        query.page,
+        query.enumMode,
+        query.sortBy,
+        query.order,
+        query.title
+      );
+      const validatedQuery = await getVideosDto.validate();
 
       const videos = await getVideosByPlaylistIdService(
         playlistId,
         validatedQuery,
-        requesterId,
+        requesterId
       );
 
       return res
@@ -332,10 +385,10 @@ class VideoController {
 
   async getVideoLikeHistoryController(req, res, next) {
     const userId = req.userId;
-    
+
     try {
       const videos = await getVideoLikeHistoryService(userId);
-      
+
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ videos, message: "Get videos like history successfully" });

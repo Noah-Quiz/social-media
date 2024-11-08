@@ -26,6 +26,7 @@ const GetUserWalletDto = require("../dtos/User/GetUserWalletDto");
 const UpdateUserWalletDto = require("../dtos/User/UpdateUserWalletDto");
 const DeleteUserDto = require("../dtos/User/DeleteUserDto");
 const GetUsersDto = require("../dtos/User/GetUsersDto");
+const UpdateUserPointDto = require("../dtos/User/UpdateUserPointDto");
 
 class UserController {
   async getAllUsersController(req, res, next) {
@@ -331,16 +332,10 @@ class UserController {
     try {
       const { amount, type } = req.body;
       const userId = req.userId;
-      if (!amount || !type || !userId) {
-        throw new CoreException(StatusCodes.BadRequest_400, "Missing fields");
-      }
-      if (isNaN(amount) || amount < 0) {
-        throw new CoreException(StatusCodes.BadRequest_400, "Invalid amount");
-      }
-      if (!["add", "remove", "exchange"].includes(type)) {
-        throw new CoreException(StatusCodes.BadRequest_400, "Invalid type");
-      }
-      const result = await updatePointService(userId, amount, type);
+      const updateUserPointDto = new UpdateUserPointDto(amount, type);
+      await updateUserPointDto.validate();
+
+      const result = await updatePointService(userId, parseInt(amount), type);
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ data: result, message: "Success" });
