@@ -184,9 +184,13 @@ class CommentRepository {
 
   async like(userId, commentId) {
     try {
+      const checkComment = await Comment.findById(commentId);
+      if (!checkComment || checkComment.isDeleted) {
+        throw new Error("Comment not found");
+      }
       const comment = await Comment.findByIdAndUpdate(
         commentId,
-        { $addToSet: { likeBy: userId } }, // $addToSet prevents duplicates
+        { $addToSet: { likeBy: userId } },
         { new: true }
       );
       return comment;
@@ -197,6 +201,10 @@ class CommentRepository {
 
   async dislike(userId, commentId) {
     try {
+      const checkComment = await Comment.findById(commentId);
+      if (!checkComment || checkComment.isDeleted) {
+        throw new Error("Comment not found");
+      }
       const comment = await Comment.findByIdAndUpdate(
         commentId,
         { $pull: { likeBy: userId } },
@@ -345,11 +353,19 @@ class CommentRepository {
         },
       },
     ]);
-
-    return comment;
+    console.log(comment[0]);
+    return comment[0];
   }
   async softDeleteCommentRepository(id) {
     try {
+      const deleteComment = await this.getCommentThread(id, 1000000);
+      const childrenComments = deleteComment.children;
+      console.log(childrenComments);
+      childrenComments.forEach(async (comment) => {
+        const childComment = await Comment.findByIdAndUpdate(comment._id, {
+          isDeleted: true,
+        });
+      });
       const comment = await Comment.findById(id);
       if (!comment) {
         throw new Error("No comment found");

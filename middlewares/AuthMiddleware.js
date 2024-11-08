@@ -3,8 +3,21 @@ const { default: mongoose } = require("mongoose");
 const getLogger = require("../utils/logger");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const logger = getLogger("AUTH_MIDDLEWARE");
+const { match } = require("path-to-regexp");
+const publicRoutes = require("../routes/PublicRoute");
+
+const isUnprotectedRoute = (path, method) => {
+  return publicRoutes.some((route) => {
+    const matchPath = match(route.path, { decode: decodeURIComponent });
+    return matchPath(path) && route.method === method;
+  });
+};
 
 const AuthMiddleware = async (req, res, next) => {
+  if (isUnprotectedRoute(req.originalUrl, req.method)) {
+    return next();
+  }
+
   const { authorization } = req.headers;
   logger.info("Authorization Header: " + authorization);
 
@@ -21,7 +34,7 @@ const AuthMiddleware = async (req, res, next) => {
   try {
     const { _id, ip } = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     logger.info(`User ID from token: ${_id}`);
-    logger.info(`IP Address from token: ${ip}`);  
+    logger.info(`IP Address from token: ${ip}`);
 
     // if (ip && ip !== ipAddress) {
     //   return res.status(StatusCodeEnums.Unauthorized_401).json({

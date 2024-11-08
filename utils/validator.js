@@ -61,17 +61,17 @@ const validPhoneNumber = async (phoneNumber) => {
     );
 };
 
-const contentModeration = (content) => {
+const contentModeration = (content, type) => {
   try {
-    const words = content.trim().replace(/\s+/g, " ");
+    const words = content.trim().replace(/\s+/g, " ").toLowerCase();
     const eachWord = words.split(" ");
     for (const word of eachWord) {
       if (banWords.includes(word)) {
-        throw new Error("This content violates community guidelines");
+        throw new Error(`This ${type} violates community guidelines`);
       }
     }
   } catch (error) {
-    throw new Error("This content violates community guidelines");
+    throw new Error(error.message);
   }
 };
 module.exports = {

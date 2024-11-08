@@ -1,4 +1,5 @@
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const banWords = require("../enums/BanWords");
 
 const createCommentService = async (userId, videoId, content, responseTo) => {
   const connection = new DatabaseTransaction();
@@ -27,7 +28,6 @@ const createCommentService = async (userId, videoId, content, responseTo) => {
     };
     const comment = await connection.commentRepository.createComment(data);
 
-    // Gửi thông báo
     await sendNotificationsForComment(videoId, userId, responseTo);
     return comment;
   } catch (error) {
@@ -233,6 +233,9 @@ const getChildrenCommentsService = async (commentId, limit) => {
       commentId,
       limit
     );
+    if (!comments) {
+      throw new Error("Comment not found");
+    }
     const maxLevel =
       comments.length > 0
         ? Math.max(...comments[0].children.map((comment) => comment.level))
