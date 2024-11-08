@@ -28,6 +28,10 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           type: string
  *           format: binary
  *           description: The thumbnail file for the stream.
+ *         enumMode:
+ *           type: string
+ *           enum: [public, private]
+ *           description: Stream accessibility
  */
 class UpdateStreamDto {
   constructor(streamId, title, description, categoryIds, enumMode) {

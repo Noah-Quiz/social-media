@@ -282,6 +282,12 @@ myPlaylistRoutes.delete(
  *        schema:
  *         type: string
  *         required: true
+ *      - in: query
+ *        name: requesterId
+ *        required: false
+ *        schema:
+ *          type: string
+ *        description: User ID of requester. If requester is owner, show private playlist.
  *     responses:
  *       200:
  *         description: Get playlist successfully
@@ -354,6 +360,19 @@ myPlaylistRoutes.get(
  *        schema:
  *         type: string
  *         required: true
+ *      - in: query
+ *        name: requesterId
+ *        required: false
+ *        schema:
+ *          type: string
+ *        description: User ID of requester. If requester is owner, show private playlist.
+ *      - in: query
+ *        name: enumMode
+ *        required: false
+ *        schema:
+ *          type: string
+ *          enum: [private, public]
+ *        description: Type of playlist
  *     responses:
  *       200:
  *         description: Get all playlists successfully
@@ -407,7 +426,6 @@ myPlaylistRoutes.get(
  */
 myPlaylistRoutes.get(
   "/user/:userId",
-  AuthMiddleware,
   myPlaylistController.getAllMyPlaylistsController
 );
 
