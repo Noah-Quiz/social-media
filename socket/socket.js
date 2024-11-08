@@ -14,6 +14,7 @@ const eventEmitter = require("./events.js");
 require("dotenv").config();
 
 module.exports = (io) => {
+  // console.log("Socket created: ", io);
   io.on("connection", (socket) => {
     const logger = getLogger("SOCKET");
     const userStreams = new Set();
@@ -66,10 +67,13 @@ module.exports = (io) => {
     });
 
     eventEmitter.on("upload_video_progress", ({ userId, progress }) => {
-      io.to(socket.id).emit(
-        "upload_video_progress",
-        `User ${userId} uploaded video: ${progress}%`
-      );
+      const queryUserId = socket.handshake.query.userId;
+      if (queryUserId) {
+        io.to(socket.id).emit(
+          "upload_video_progress",
+          `User ${queryUserId} uploaded video: ${progress}%`
+        );
+      }
     });
   });
 
