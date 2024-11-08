@@ -75,7 +75,7 @@ class VideoController {
         );
         await deleteFile(newFilePath);
 
-        await updateAVideoByIdService(video._id, {
+        await updateAVideoByIdService(video._id, userId, {
           duration: closestTsFile.duration,
         });
       } catch (error) {
