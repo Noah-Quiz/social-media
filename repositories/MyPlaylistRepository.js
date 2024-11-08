@@ -38,7 +38,7 @@ class MyPlaylistRepository {
           $project: {
             _id: 1,
             playlistName: 1,
-            userId: 1,  
+            userId: 1,
             dateCreated: 1,
             lastUpdated: 1,
             thumbnail: 1,
@@ -66,7 +66,7 @@ class MyPlaylistRepository {
       const playlist = await MyPlaylist.findByIdAndUpdate(
         playlistId,
         { ...data, lastUpdated: Date.now() },
-        { new: true, runValidators: true, session } 
+        { new: true, runValidators: true, session }
       );
 
       return playlist;
@@ -98,16 +98,16 @@ class MyPlaylistRepository {
   async getAllMyPlaylistsRepository(userId, query) {
     try {
       const { enumMode } = query;
-      
+
       const searchQuery = {
         isDeleted: false,
         userId: new mongoose.Types.ObjectId(userId),
-      }
+      };
       if (enumMode) searchQuery.enumMode = enumMode;
-      
+
       const playlists = await MyPlaylist.aggregate([
         {
-          $match: searchQuery
+          $match: searchQuery,
         },
         {
           $lookup: {
@@ -152,7 +152,7 @@ class MyPlaylistRepository {
           $sort: { lastUpdated: -1 },
         },
       ]);
-
+      console.log(playlists);
       return playlists;
     } catch (error) {
       throw new Error(`Error fetching streams: ${error.message}`);

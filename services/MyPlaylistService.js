@@ -9,7 +9,8 @@ const createAPlaylistService = async (
   userId,
   playlistName,
   description,
-  thumbnail
+  thumbnail,
+  enumMode
 ) => {
   try {
     const connection = new DatabaseTransaction();
@@ -20,6 +21,7 @@ const createAPlaylistService = async (
       description,
       thumbnail,
       videoIds,
+      enumMode,
     };
 
     if (data.thumbnail !== null) {
@@ -42,7 +44,9 @@ const getAPlaylistService = async (playlistId, requesterId) => {
     const connection = new DatabaseTransaction();
 
     if (requesterId) {
-      const requester = await connection.userRepository.getAnUserByIdRepository(requesterId);
+      const requester = await connection.userRepository.getAnUserByIdRepository(
+        requesterId
+      );
       if (!requester) {
         throw new CoreException(
           StatusCodeEnums.NotFound_404,
@@ -51,10 +55,14 @@ const getAPlaylistService = async (playlistId, requesterId) => {
       }
     }
 
-    const playlist = await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
-    console.log(requesterId)
-    console.log(playlist)
-    if (playlist.enumMode === "private" && requesterId?.toString() !== playlist?.user?._id?.toString()) {
+    const playlist =
+      await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
+    console.log(requesterId);
+    console.log(playlist);
+    if (
+      playlist.enumMode === "private" &&
+      requesterId?.toString() !== playlist?.user?._id?.toString()
+    ) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
         "Playlist not found"
@@ -72,7 +80,9 @@ const getAllMyPlaylistsService = async (userId, requesterId, query) => {
     const connection = new DatabaseTransaction();
 
     if (requesterId) {
-      const requester = await connection.userRepository.getAnUserByIdRepository(requesterId);
+      const requester = await connection.userRepository.getAnUserByIdRepository(
+        requesterId
+      );
       if (!requester) {
         throw new CoreException(
           StatusCodeEnums.NotFound_404,
@@ -80,8 +90,17 @@ const getAllMyPlaylistsService = async (userId, requesterId, query) => {
         );
       }
     }
+    const user = await connection.userRepository.getAnUserByIdRepository(
+      userId
+    );
+    if (!user) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
 
-    if (query.enumMode === "private" && userId?.toString() !== requesterId?.toString()) {
+    if (
+      query.enumMode === "private" &&
+      userId?.toString() !== requesterId?.toString()
+    ) {
       query.enumMode = "public";
     }
     if (!query.enumMode && userId?.toString() !== requesterId?.toString()) {
@@ -89,8 +108,11 @@ const getAllMyPlaylistsService = async (userId, requesterId, query) => {
     }
 
     const playlists =
-      await connection.myPlaylistRepository.getAllMyPlaylistsRepository(userId, query);
-    
+      await connection.myPlaylistRepository.getAllMyPlaylistsRepository(
+        userId,
+        query
+      );
+
     return playlists;
   } catch (error) {
     throw new Error(error);
@@ -111,24 +133,33 @@ const updatePlaylistService = async (data) => {
       playlistName,
       description,
       thumbnail,
-      enumMode
+      enumMode,
     } = data;
 
     // Check if user exists
-    const user = await connection.userRepository.getAnUserByIdRepository(userId);
+    const user = await connection.userRepository.getAnUserByIdRepository(
+      userId
+    );
     if (!user) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
 
     // Check if playlist exists
-    const playlist = await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
+    const playlist =
+      await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
     if (!playlist) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Playlist not found");
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Playlist not found"
+      );
     }
 
     // Check permissions if the user is not an admin
     if (user.role === UserEnum.USER) {
-      const userPlaylists = await connection.myPlaylistRepository.getAllMyPlaylistsRepository({ userId });
+      const userPlaylists =
+        await connection.myPlaylistRepository.getAllMyPlaylistsRepository({
+          userId,
+        });
       const checkPlaylist = userPlaylists.find((p) => p._id == playlistId);
       if (!checkPlaylist) {
         throw new CoreException(
@@ -144,15 +175,16 @@ const updatePlaylistService = async (data) => {
       ...(description && { description }),
       ...(thumbnail && { thumbnail }),
       ...(enumMode && { enumMode }),
-      lastUpdated: Date.now()
+      lastUpdated: Date.now(),
     };
 
     // Update the playlist
-    const updatedPlaylist = await connection.myPlaylistRepository.updatePlaylistRepository(
-      playlistId,
-      updatedData,
-      session
-    );
+    const updatedPlaylist =
+      await connection.myPlaylistRepository.updatePlaylistRepository(
+        playlistId,
+        updatedData,
+        session
+      );
 
     if (!updatedPlaylist) {
       throw new CoreException(

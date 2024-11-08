@@ -23,7 +23,10 @@ class MyPlaylistController {
     const { requesterId } = req.query;
 
     try {
-      const getPlaylistByIdDto = new GetPlaylistByIdDto(playlistId, requesterId);
+      const getPlaylistByIdDto = new GetPlaylistByIdDto(
+        playlistId,
+        requesterId
+      );
       await getPlaylistByIdDto.validate();
 
       const playlist = await getAPlaylistService(playlistId, requesterId);
@@ -42,10 +45,17 @@ class MyPlaylistController {
 
       const query = { enumMode };
 
-      const getPlaylistByUserIdDto = new GetPlaylistByUserIdDto(requesterId, enumMode);
+      const getPlaylistByUserIdDto = new GetPlaylistByUserIdDto(
+        requesterId,
+        enumMode
+      );
       await getPlaylistByUserIdDto.validate();
 
-      const playlists = await getAllMyPlaylistsService(userId, requesterId, query);
+      const playlists = await getAllMyPlaylistsService(
+        userId,
+        requesterId,
+        query
+      );
 
       res
         .status(StatusCodeEnums.OK_200)
@@ -80,8 +90,8 @@ class MyPlaylistController {
         playlistName,
         description,
         thumbnail,
-        enumMode
-      }
+        enumMode,
+      };
 
       const updatedPlaylist = await updatePlaylistService(data);
 
@@ -114,15 +124,16 @@ class MyPlaylistController {
 
   async createAPlaylist(req, res, next) {
     try {
-      const { playlistName, description } = req.body;
+      const { playlistName, description, enumMode } = req.body;
       const userId = req.userId;
-
+      console.log(enumMode);
       // Check if a thumbnail file is provided
       const thumbnail = req.file ? req.file.path : null;
 
       const createPlaylistDto = new CreatePlaylistDto(
         userId,
         playlistName,
+        enumMode,
         description,
         thumbnail
       );
@@ -132,7 +143,8 @@ class MyPlaylistController {
         userId,
         playlistName,
         description,
-        thumbnail
+        thumbnail,
+        enumMode
       );
 
       res.status(StatusCodeEnums.OK_200).json({ playlist, message: "Success" });
