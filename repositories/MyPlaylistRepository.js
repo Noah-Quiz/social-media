@@ -20,7 +20,6 @@ class MyPlaylistRepository {
         {
           $match: {
             _id: new mongoose.Types.ObjectId(playlistId),
-
             isDeleted: false,
           },
         },
@@ -30,73 +29,45 @@ class MyPlaylistRepository {
             localField: "userId",
             foreignField: "_id",
             as: "user",
-            pipeline: [
-              {
-                $project: {
-                  _id: 0,
-                  fullName: 1,
-                  nickName: 1,
-                  avatar: 1,
-                },
-              },
-            ],
           },
         },
         {
-          $unwind: "$user", // Ensure that we get only one user for the playlist creator
+          $unwind: "$user",
         },
         {
           $project: {
             _id: 1,
             playlistName: 1,
-            userId: 1,
-            isDeleted: 1,
+            userId: 1,  
             dateCreated: 1,
             lastUpdated: 1,
-            "user.fullName": 1,
-            "user.nickName": 1,
-            "user.avatar": 1,
+            thumbnail: 1,
+            enumMode: 1,
+            videosCount: { $size: "$videoIds" },
+            user: {
+              _id: 1,
+              fullName: "$user.fullName",
+              nickName: "$user.nickName",
+              avatar: "$user.avatar",
+            },
           },
         },
       ]);
 
-      if (!playlist[0]) {
-        throw new Error("Playlist not found");
-      }
-
-      if (playlist[0]) {
-        return { ...playlist[0] };
-      }
+      return playlist[0] || null;
     } catch (error) {
       throw new Error(`Error finding playlist: ${error.message}`);
     }
   }
 
   // Update a playlist
-  async updatePlaylistRepository(
-    playlistId,
-    playlistName,
-    description,
-    thumbnail
-  ) {
+  async updatePlaylistRepository(playlistId, data, session) {
     try {
-      const playlist = await MyPlaylist.findById(playlistId);
-
-      if (!playlist || playlist.isDeleted === true) {
-        throw new Error("Playlist not found");
-      }
-
-      if (playlistName && playlistName !== playlist.playlistName) {
-        playlist.playlistName = playlistName;
-      }
-      if (description && description !== playlist.description) {
-        playlist.description = description;
-      }
-      if (thumbnail && thumbnail !== playlist.thumbnail) {
-        playlist.thumbnail = thumbnail;
-      }
-      playlist.lastUpdated = Date.now();
-      await playlist.save();
+      const playlist = await MyPlaylist.findByIdAndUpdate(
+        playlistId,
+        { ...data, lastUpdated: Date.now() },
+        { new: true, runValidators: true, session } 
+      );
 
       return playlist;
     } catch (error) {
@@ -124,15 +95,19 @@ class MyPlaylistRepository {
   }
 
   // Get all user's own playlists
-  async getAllMyPlaylistsRepository(data) {
+  async getAllMyPlaylistsRepository(userId, query) {
     try {
+      const { enumMode } = query;
+      
+      const searchQuery = {
+        isDeleted: false,
+        userId: new mongoose.Types.ObjectId(userId),
+      }
+      if (enumMode) searchQuery.enumMode = enumMode;
+      
       const playlists = await MyPlaylist.aggregate([
         {
-          $match: {
-            userId: new mongoose.Types.ObjectId(data.userId),
-
-            isDeleted: false,
-          },
+          $match: searchQuery
         },
         {
           $lookup: {
@@ -143,7 +118,7 @@ class MyPlaylistRepository {
             pipeline: [
               {
                 $project: {
-                  _id: 0,
+                  _id: 1,
                   fullName: 1,
                   nickName: 1,
                   avatar: 1,
@@ -153,19 +128,24 @@ class MyPlaylistRepository {
           },
         },
         {
-          $unwind: "$user", // Ensure that we get only one user for the playlist creator
+          $unwind: "$user",
         },
         {
           $project: {
             _id: 1,
             playlistName: 1,
-            userId: 1,
-            isDeleted: 1,
+            description: 1,
+            thumbnail: 1,
+            enumMode: 1,
             dateCreated: 1,
             lastUpdated: 1,
-            "user.fullName": 1,
-            "user.nickName": 1,
-            "user.avatar": 1,
+            videosCount: { $size: "$videoIds" },
+            user: {
+              _id: 1,
+              fullName: "$user.fullName",
+              nickName: "$user.nickName",
+              avatar: "$user.avatar",
+            },
           },
         },
         {

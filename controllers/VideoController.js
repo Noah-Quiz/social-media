@@ -144,6 +144,7 @@ class VideoController {
   async updateAVideoByIdController(req, res, next) {
     try {
       const { videoId } = req.params;
+      const userId = req.userId;
 
       let thumbnailFile = null;
       if (req.files && req.files.videoThumbnail) {
@@ -193,6 +194,7 @@ class VideoController {
       }
       const video = await updateAVideoByIdService(
         videoId,
+        userId,
         updateData,
         thumbnailFile
       );
