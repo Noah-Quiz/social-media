@@ -448,7 +448,14 @@ const resetPasswordService = async (token, newPassword) => {
     if (!user || user.passwordResetToken !== token) {
       throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid token");
     }
-
+    const isPasswordMath = await bcrypt.compare(newPassword, user.password);
+    console.log(`Same password case: ${isPasswordMath}`);
+    if (isPasswordMath) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Password is same as previous one"
+      );
+    }
     const salt = 10;
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
