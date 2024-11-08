@@ -197,7 +197,7 @@ class VideoRepository {
         {
           $addFields: {
             length: {
-              $size: "$likedBy",
+              $size: { $ifNull: ["$likedBy", []] },
             },
           },
         },
@@ -356,7 +356,9 @@ class VideoRepository {
         },
         {
           $addFields: {
-            length: { $size: "$likedBy" },
+            length: {
+              $size: { $ifNull: ["$likedBy", []] },
+            },
           },
         },
         {
@@ -470,6 +472,13 @@ class VideoRepository {
 
       const videos = await Video.aggregate([
         { $match: searchQuery },
+        {
+          $addFields: {
+            length: {
+              $size: { $ifNull: ["$likedBy", []] },
+            },
+          },
+        },
         {
           $lookup: {
             from: "users",

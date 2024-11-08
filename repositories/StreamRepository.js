@@ -249,10 +249,6 @@ class StreamRepository {
     try {
       const stream = await Stream.findById(streamId);
   
-      if (!stream) {
-        throw new Error("Stream not found");
-      }
-  
       hasLiked = stream.likedBy.includes(userId);
   
       const updateAction = hasLiked
