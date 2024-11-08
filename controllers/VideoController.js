@@ -174,7 +174,6 @@ class VideoController {
           "You don't have access to perform this action on this video"
         );
       }
-
       let thumbnailFile = null;
       if (req.files && req.files.videoThumbnail) {
         thumbnailFile = req.files.videoThumbnail[0];
@@ -223,6 +222,7 @@ class VideoController {
       }
       const video = await updateAVideoByIdService(
         videoId,
+        userId,
         updateData,
         thumbnailFile
       );

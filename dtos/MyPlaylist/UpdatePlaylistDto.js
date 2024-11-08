@@ -24,12 +24,13 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *            description: The playlist's name.
  */
 class UpdatePlaylistDto {
-  constructor(userId, playlistId, playlistName, description, thumbnail) {
+  constructor(userId, playlistId, playlistName, description, thumbnail, enumMode) {
     this.userId = userId;
     this.playlistName = playlistName;
     this.description = description;
     this.thumbnail = thumbnail;
     this.playlistId = playlistId;
+    this.enumMode = enumMode;
   }
 
   async validate() {
@@ -47,7 +48,16 @@ class UpdatePlaylistDto {
         "Invalid Playlist ID"
       );
     }
-
+    if (this.enumMode != null &&
+      !["public", "private"].includes(
+        this.enumMode
+      )
+    ) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid enum mode, must be in ['public', 'private']"
+      );
+    }
     if (!this.playlistName) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,

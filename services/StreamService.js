@@ -157,7 +157,7 @@ const updateStreamService = async (userId, streamId, updateData) => {
         "You do not have permission to perform this action"
       );
     }
-    console.log(updateData.thumbnailUrl);
+    
     updateData.thumbnailUrl = `${process.env.APP_BASE_URL}/${updateData.thumbnailUrl}`;
 
     const updatedData =

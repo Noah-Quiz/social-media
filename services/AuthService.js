@@ -141,10 +141,10 @@ const loginGoogleService = async (user, ipAddress) => {
         existingUser.verify = true;
       }
       if (existingUser.googleId === "") {
-        existingUser.googleId = user.sub||user.id;
+        existingUser.googleId = user.sub || user.id;
       }
       if (existingUser.avatar === "") {
-        existingUser.avatar =  user.picture||user.photo;
+        existingUser.avatar = user.picture || user.photo;
       }
       await handleLoginStreakService(existingUser, rate);
 
@@ -156,8 +156,8 @@ const loginGoogleService = async (user, ipAddress) => {
     const newUser = await connection.userRepository.createUser({
       fullName: user.name,
       email: user.email,
-      googleId: user.sub||user.id,
-      avatar: user.picture||user.photo,
+      googleId: user.sub || user.id,
+      avatar: user.picture || user.photo,
       verify: true,
       lastLogin: Date.now(),
       streak: 1,
@@ -243,7 +243,10 @@ const sendVerificationEmailService = async (email) => {
 
     const user = await connection.userRepository.findUserByEmail(email);
     if (!user)
-      throw new CoreException(StatusCodeEnums.NotFound_404, "User with email not found");
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "User with email not found"
+      );
     if (user.verify === true)
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
