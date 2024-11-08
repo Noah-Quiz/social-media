@@ -46,8 +46,16 @@ const chatIo = require("socket.io")(server, {
     methods: ["GET", "POST"],
   },
 });
+const streamIo = require("socket.io")(server, {
+  path:"/socket/stream",
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
 socket(uploadIo);
 socket(chatIo);
+socket(streamIo);
 
 const {
   uploadBunnyStreamVideoService,
