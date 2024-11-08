@@ -74,7 +74,10 @@ class UserRepository {
 
   async getAnUserByIdRepository(userId) {
     try {
-      const user = await User.findOne({ _id: userId, isDeleted: false })
+      const user = await User.findOne({
+        _id: new mongoose.Types.ObjectId(userId),
+        isDeleted: false,
+      })
         .select(
           "email fullName nickName avatar phoneNumber dateCreated lastLogin follow followBy role"
         )
