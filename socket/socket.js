@@ -11,12 +11,14 @@ const {
   getBunnyStreamVideoService,
 } = require("../services/BunnyStreamService.js");
 const eventEmitter = require("./events.js");
+
 require("dotenv").config();
+const logger = getLogger("SOCKET");
 
 module.exports = (io) => {
-  // console.log("Socket created: ", io);
+  const socketPath = io.opts.path;
+  logger.info(`Socket server started: ${socketPath}`);
   io.on("connection", (socket) => {
-    const logger = getLogger("SOCKET");
     const userStreams = new Set();
     logger.info(`User connected: ${socket.id}`);
 
@@ -32,24 +34,26 @@ module.exports = (io) => {
       }
     });
 
-    // Handle sending messages in rooms
-    socket.on("send_message", async ({ roomId, userId, message }) => {
-      try {
-        await createAMessageService(userId, roomId, message);
-        const user = await getUserByIdService(userId);
-        io.to(roomId).emit("receive_message", {
-          sender: user.nickName,
-          message,
-          avatar: user.avatar,
-        });
-        logger.info(`Message sent to room ${roomId}`);
-      } catch (error) {
-        io.to(roomId).emit("receive_message", {
-          messageError: "Fail to send message",
-        });
-      }
-    });
-
+    if (socketPath == "/socket/chat") {
+      // Handle sending messages in rooms
+      socket.on("send_message", async ({ roomId, userId, message }) => {
+        try {
+          await createAMessageService(userId, roomId, message);
+          const user = await getUserByIdService(userId);
+          io.to(roomId).emit("receive_message", {
+            sender: user.nickName,
+            message,
+            avatar: user.avatar,
+          });
+          logger.info(`Message sent to room ${roomId}`);
+        } catch (error) {
+          io.to(roomId).emit("receive_message", {
+            messageError: "Fail to send message",
+          });
+        }
+      });
+    }
+    
     // Handle leaving a livestream
     socket.on("leave_livestream", async (streamId) => {
       try {
@@ -66,15 +70,17 @@ module.exports = (io) => {
       logger.info(`User disconnected: ${socket.id}`);
     });
 
-    eventEmitter.on("upload_video_progress", ({ userId, progress }) => {
-      const queryUserId = socket.handshake.query.userId;
-      if (queryUserId) {
-        io.to(socket.id).emit(
-          "upload_video_progress",
-          `User ${queryUserId} uploaded video: ${progress}%`
-        );
-      }
-    });
+    if (socketPath == "/socket/upload") {
+      eventEmitter.on("upload_video_progress", ({ userId, progress }) => {
+        const queryUserId = socket.handshake.query.userId;
+        if (queryUserId) {
+          io.to(socket.id).emit(
+            "upload_video_progress",
+            `User ${queryUserId} uploaded video: ${progress}%`
+          );
+        }
+      });
+    }
   });
 
   // Update viewers count for a specific stream
