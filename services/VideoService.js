@@ -191,7 +191,8 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
     const user = await connection.userRepository.getAnUserByIdRepository(
       userId
     );
-    if (!user) {
+    console.log("User from service", user);
+    if (user === null) {
       throw new CoreException(StatusCodeEnums.NotFound_404, `User not found`);
     }
 
@@ -236,7 +237,7 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
     // Return the processed videos
     return { videos: result, total, page, totalPages };
   } catch (error) {
-    throw new Error(`User not found`);
+    throw error;
   }
 };
 
