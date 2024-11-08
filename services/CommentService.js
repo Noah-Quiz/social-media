@@ -1,11 +1,19 @@
+const { default: mongoose } = require("mongoose");
+const Comment = require("../entities/CommentEntity");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
-const banWords = require("../enums/BanWords");
 
 const createCommentService = async (userId, videoId, content, responseTo) => {
   const connection = new DatabaseTransaction();
   try {
     let newContent = content;
     if (responseTo) {
+      const checkComment = await Comment.findOne({
+        _id: new mongoose.Types.ObjectId(responseTo),
+        isDeleted: false,
+      });
+      if (!checkComment) {
+        throw new Error("Comment not found");
+      }
       const parentComment = await connection.commentRepository.getComment(
         responseTo
       ); // Fetch parent comment first
@@ -123,6 +131,9 @@ const updateCommentService = async (userId, id, content) => {
   const connection = new DatabaseTransaction();
   try {
     const originalComment = await connection.commentRepository.getComment(id);
+    if (!originalComment) {
+      throw new Error("Comment not found");
+    }
     let notCommentOwner =
       originalComment.userId.toString() !== userId.toString();
     if (notCommentOwner) {
