@@ -24,6 +24,7 @@ const CreateResetPasswordTokenDto = require("../dtos/Auth/CreateResetPasswordTok
 const LoginGoogleDto = require("../dtos/Auth/LoginGoogleDto");
 const LoginAppleDto = require("../dtos/Auth/LoginAppleDto");
 const VerifyEmailDto = require("../dtos/Auth/VerifyEmailDto");
+const ResetPasswordDto = require("../dtos/Auth/ResetPasswordDto");
 require("dotenv").config();
 
 class AuthController {
@@ -237,7 +238,12 @@ class AuthController {
     try {
       const { token } = req.params;
       const { newPassword } = req.body;
-
+      const resetPasswordDto = new ResetPasswordDto(newPassword);
+      try {
+        await resetPasswordDto.validate();
+      } catch (error) {
+        throw new Error(error.message);
+      }
       const user = await resetPasswordService(token, newPassword);
       if (user) {
         res

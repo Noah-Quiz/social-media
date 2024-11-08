@@ -6,6 +6,7 @@ const { validFullName, validEmail } = require("../utils/validator");
 const bcrypt = require("bcrypt");
 const { sendVerificationEmailService } = require("./AuthService");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const { default: mongoose } = require("mongoose");
 module.exports = {
   getAllUsersService: async (query) => {
     const connection = new DatabaseTransaction();
@@ -184,7 +185,16 @@ module.exports = {
           "User to follow not found"
         );
       }
-
+      if (
+        action === "unfollow" &&
+        !follow.followBy.some((f) => f.followById.equals(userId)) &&
+        !user.follow.some((f) => f.followId.equals(followId))
+      ) {
+        throw new CoreException(
+          StatusCodeEnum.BadRequest_400,
+          "You are not following this user"
+        );
+      }
       const result =
         await connection.userRepository.toggleFollowAnUserRepository(
           userId,
@@ -227,9 +237,21 @@ module.exports = {
       throw error;
     }
   },
-  getUserWalletService: async (userId) => {
+  getUserWalletService: async (userId, requester) => {
     try {
       const connection = new DatabaseTransaction();
+      const caller = await connection.userRepository.getAnUserByIdRepository(
+        requester
+      );
+      if (
+        (caller === false || !caller || caller.role !== UserEnum.ADMIN) && //not admin
+        requester?.toString() !== userId?.toString() //not owner
+      ) {
+        throw new CoreException(
+          StatusCodeEnum.Forbidden_403,
+          "Forbidden access"
+        );
+      }
       const user = await connection.userRepository.getUserWallet(userId);
       return user;
     } catch (error) {
@@ -290,23 +312,47 @@ module.exports = {
   getStatsByDateService: async (userId, fromDate, toDate) => {
     try {
       const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
+
+      if (user === false || !user) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
       const stats = await connection.userRepository.getStatsByDateRepository(
         userId,
         fromDate,
         toDate
       );
       return stats;
-    } catch (error) {}
+    } catch (error) {
+      throw error;
+    }
   },
 
   async getFollowerService(userId, requester) {
     try {
       const connection = new DatabaseTransaction();
 
-      const requesterRole = await connection.userRepository.findUserById(requester)
-    
-      if (requester.toString() !== userId.toString() && requesterRole.role === UserEnum.USER) {
-        throw new CoreException(StatusCodeEnums.Forbidden_403, "You do not have permission to perform this action");
+      const user = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
+
+      if (!user || user === false) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
+      const requesterRole = await connection.userRepository.findUserById(
+        requester
+      );
+
+      if (
+        requester.toString() !== userId.toString() &&
+        requesterRole.role === UserEnum.USER
+      ) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "You do not have permission to perform this action"
+        );
       }
 
       const follower = await connection.userRepository.getFollowerRepository(
@@ -323,7 +369,20 @@ module.exports = {
     try {
       const connection = new DatabaseTransaction();
 
-      if (requester.toString() !== userId.toString()) {
+      const user = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
+
+      if (!user || user === false) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
+      const requesterRole = await connection.userRepository.findUserById(
+        requester
+      );
+      if (
+        requester.toString() !== userId.toString() &&
+        requesterRole.role === UserEnum.USER
+      ) {
         throw new CoreException(
           StatusCodeEnums.Forbidden_403,
           "You do not have permission to perform this action"
