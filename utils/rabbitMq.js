@@ -111,6 +111,7 @@ async function consumeMessageFromQueue(queue, callback) {
                     );
                   if (result) {
                     eventEmitter.emit("live_stream_connected", {
+                      streamId: result._id,
                       streamServerUrl: result.streamServerUrl,
                     });
                   }
