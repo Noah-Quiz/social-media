@@ -66,10 +66,12 @@ module.exports = (io) => {
     });
 
     eventEmitter.on("upload_video_progress", ({ userId, progress }) => {
-      io.to(socket.id).emit(
-        "upload_video_progress",
-        `User ${userId} uploaded video: ${progress}%`
-      );
+      socket.on(userId, () => {
+        io.to(socket.id).emit(
+          "upload_video_progress",
+          `User ${userId} uploaded video: ${progress}%`
+        );
+      });
     });
   });
 
