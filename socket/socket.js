@@ -17,7 +17,9 @@ const logger = getLogger("SOCKET");
 
 module.exports = (io) => {
   const socketPath = io.opts.path;
-  logger.info(`Socket server started: ${process.env.APP_BASE_URL}${socketPath}`);
+  logger.info(
+    `Socket server started: ${process.env.APP_BASE_URL}${socketPath}`
+  );
   io.on("connection", (socket) => {
     const userStreams = new Set();
     logger.info(`User connected: ${socket.id}`);
@@ -73,22 +75,22 @@ module.exports = (io) => {
     if (socketPath == "/socket/upload") {
       eventEmitter.on("upload_video_progress", ({ userId, progress }) => {
         const queryUserId = socket.handshake.query.userId;
-        if (queryUserId===userId) {
-          io.to(socket.id).emit(
-            "upload_video_progress",
-            progress,
-          );
+        if (queryUserId === userId) {
+          io.to(socket.id).emit("upload_video_progress", progress);
         }
       });
     }
 
     if (socketPath == "/socket/stream") {
-      eventEmitter.on("live_stream_connected", ({ streamServerUrl }) => {
-        const streamId = socket.handshake.query.streamId;
-        if (streamId) {
-          io.to(socket.id).emit("live_stream_connected", streamServerUrl);
+      eventEmitter.on(
+        "live_stream_connected",
+        ({ streamId, streamServerUrl }) => {
+          const queryStreamId = socket.handshake.query.streamId;
+          if (queryStreamId === streamId) {
+            io.to(socket.id).emit("live_stream_connected", streamServerUrl);
+          }
         }
-      });
+      );
     }
   });
 
