@@ -23,9 +23,15 @@ const myPlaylistRoutes = express.Router();
  *               playlistName:
  *                 type: string
  *                 example: "No4"
+ *                 description: Name of playlist
  *               description:
  *                 type: string
  *                 example: "created no4"
+ *                 description: Description of playlist
+ *               enumMode:
+ *                 type: string
+ *                 enum: [public, private]
+ *                 description: Enum mode of playlist ([public, private])
  *               playlistCreate:
  *                 type: string
  *                 format: binary
@@ -276,6 +282,12 @@ myPlaylistRoutes.delete(
  *        schema:
  *         type: string
  *         required: true
+ *      - in: query
+ *        name: requesterId
+ *        required: false
+ *        schema:
+ *          type: string
+ *        description: User ID of requester. If requester is owner, show private playlist.
  *     responses:
  *       200:
  *         description: Get playlist successfully
@@ -329,11 +341,10 @@ myPlaylistRoutes.delete(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "An unexpected error occurred while retrive the playlist."
+ *                   example: "An unexpected error occurred while retrieve the playlist."
  */
 myPlaylistRoutes.get(
   "/:playlistId",
-  AuthMiddleware,
   myPlaylistController.getAPlaylistController
 );
 
@@ -349,6 +360,19 @@ myPlaylistRoutes.get(
  *        schema:
  *         type: string
  *         required: true
+ *      - in: query
+ *        name: requesterId
+ *        required: false
+ *        schema:
+ *          type: string
+ *        description: User ID of requester. If requester is owner, show private playlist.
+ *      - in: query
+ *        name: enumMode
+ *        required: false
+ *        schema:
+ *          type: string
+ *          enum: [private, public]
+ *        description: Type of playlist
  *     responses:
  *       200:
  *         description: Get all playlists successfully
@@ -402,7 +426,6 @@ myPlaylistRoutes.get(
  */
 myPlaylistRoutes.get(
   "/user/:userId",
-  AuthMiddleware,
   myPlaylistController.getAllMyPlaylistsController
 );
 

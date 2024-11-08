@@ -71,7 +71,7 @@ class UpdateVideoDto {
       );
     }
     if (
-      this.enumMode &&
+      this.enumMode != null &&
       !["public", "private", "unlisted", "member", "draft"].includes(
         this.enumMode
       )
