@@ -65,20 +65,18 @@ class HistoryController {
   async getAllHistoryRecordsController(req, res, next) {
     try {
       const userId = req.userId;
-      const query = req.query;
+      const query = {
+        page: req.query.page,
+        size: req.query.size,
+        title: req.query.title,
+      }
+
       const getHistoryRecordsDto = new GetHistoryRecordsDto(
         userId,
         query.page,
         query.size
       );
       await getHistoryRecordsDto.validate();
-
-      if (!query.page) query.page = 1;
-      if (!query.size) query.size = 10;
-      
-    if (query.title) {
-      query.title = { $regex: query.title, $options: "i" };
-    }
     
       const { historyRecords, total, page, totalPages } =
         await getAllHistoryRecordsService(userId, query);

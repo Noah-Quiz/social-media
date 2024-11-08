@@ -23,36 +23,20 @@ class HistoryRepository {
   // Get all history records
   async getAllHistoryRecordsRepository(userId, query) {
     try {
-      const skip = (query.page - 1) * query.size;
+      const page = parseInt(query.page) || 1;
+      const size = parseInt(query.size, 10) || 10;
+      const skip = (page - 1) * size;
 
       const searchQuery = { userId: new mongoose.Types.ObjectId(userId) };
       let sortField = "lastUpdated"; // Default sort field
       let sortOrder = query.order === "ascending" ? 1 : -1;
+      
       const totalRecords = await WatchHistory.aggregate([
         {
           $match: searchQuery,
         },
-        {
-          $lookup: {
-            from: "videos",
-            localField: "videoId",
-            foreignField: "_id",
-            as: "videoDetails",
-          },
-        },
-        {
-          $unwind: "$videoDetails",
-        },
-        ...(query.title
-          ? [
-              {
-                $match: {
-                  "videoDetails.title": query.title,
-                },
-              },
-            ]
-          : []),
       ]);
+
       const historyRecords = await WatchHistory.aggregate([
         {
           $match: searchQuery,
@@ -62,30 +46,51 @@ class HistoryRepository {
             from: "videos",
             localField: "videoId",
             foreignField: "_id",
-            as: "videoDetails",
+            as: "video",
           },
         },
         {
-          $unwind: "$videoDetails",
+          $unwind: "$video",
+        },
+        query.title && {
+          $match: {
+            "video.title": { $regex: query.title, $options: "i" },
+          },
+        },
+        {
+          $lookup: {
+            from: "videolikehistories",
+            let: { videoId: "$_id" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+              { $count: "likesCount" },
+            ],
+            as: "likesInfo",
+          },
+        },
+        {
+          $addFields: {
+            "likesCount": {
+              $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0],
+            },
+          },
         },
         {
           $project: {
             _id: 1,
             userId: 1,
-            videoId: 1,
+            dateCreated: 1,
             lastUpdated: 1,
-            "videoDetails.title": 1, // Project only necessary fields
-          },
+            video: {
+              _id: 1,
+              title: 1,
+              description: 1,
+              thumbnailUrl: 1,
+              numOfViews: 1,
+              likesCount: 1,
+            }
+          }
         },
-        ...(query.title
-          ? [
-              {
-                $match: {
-                  "videoDetails.title": query.title,
-                },
-              },
-            ]
-          : []),
         {
           $sort: {[sortField]: sortOrder},
         },
@@ -93,15 +98,15 @@ class HistoryRepository {
           $skip: skip,
         },
         {
-          $limit: Number(query.size),
+          $limit: Number(size),
         },
       ]);
 
       return {
         historyRecords,
         total: totalRecords.length,
-        page: Number(query.page),
-        totalPages: Math.ceil(totalRecords.length / query.size),
+        page: Number(page),
+        totalPages: Math.ceil(totalRecords.length / Number(size)),
       };
     } catch (error) {
       throw new Error(`Error getting history records: ${error.message}`);

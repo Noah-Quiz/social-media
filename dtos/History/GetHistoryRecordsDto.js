@@ -24,18 +24,30 @@ class GetHistoryRecordsDto {
         "Invalid User ID"
       );
     }
-
-    if (this.page && this.page < 1) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Page is invalid"
-      );
+    // Validate `page`
+    if (this.page != null) {
+      this.page = Number(this.page);
+      if (Number.isNaN(this.page) || !Number.isInteger(this.page) || this.page < 1) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid query page, must be a positive integer"
+        );
+      }
+    } else {
+      this.page = 1; // Default page if not provided
     }
-    if (this.size && this.size < 1) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Size is invalid"
-      );
+
+    // Validate `size`
+    if (this.size != null) {
+      this.size = Number(this.size);
+      if (Number.isNaN(this.size) || !Number.isInteger(this.size) || this.size < 1) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid query size, must be a positive integer"
+        );
+      }
+    } else {
+      this.size = 10; // Default size if not provided
     }
   }
 }
