@@ -53,7 +53,7 @@ module.exports = (io) => {
         }
       });
     }
-    
+
     // Handle leaving a livestream
     socket.on("leave_livestream", async (streamId) => {
       try {
@@ -76,8 +76,17 @@ module.exports = (io) => {
         if (queryUserId) {
           io.to(socket.id).emit(
             "upload_video_progress",
-            `User ${queryUserId} uploaded video: ${progress}%`
+            progress,
           );
+        }
+      });
+    }
+
+    if (socketPath == "/socket/stream") {
+      eventEmitter.on("live_stream_connected", ({ streamServerUrl }) => {
+        const streamId = socket.handshake.query.streamId;
+        if (streamId) {
+          io.to(socket.id).emit("live_stream_connected", streamServerUrl);
         }
       });
     }
