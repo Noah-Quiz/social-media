@@ -1,5 +1,7 @@
-require("dotenv").config();
+// controllers/PaymentController.js
+
 const paypal = require("paypal-rest-sdk");
+const paypalConfig = require("../configs/paypal.config");
 const { convertMoney } = require("../services/PaymentService");
 const {
   processPaymentQueue,
@@ -9,11 +11,13 @@ const {
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const PayWithPaypalDto = require("../dtos/Payment/PayWithPaypalDto");
 const CoreException = require("../exceptions/CoreException");
+
 paypal.configure({
-  mode: "sandbox",
-  client_id: process.env.PAYPAL_CLIENT_ID,
-  client_secret: process.env.PAYPAL_SECRET_KEY,
+  mode: paypalConfig.mode,
+  client_id: paypalConfig.client_id,
+  client_secret: paypalConfig.client_secret,
 });
+
 class PaymentController {
   async payWithPayPalController(req, res, next) {
     try {
@@ -29,10 +33,7 @@ class PaymentController {
         payer: {
           payment_method: "paypal",
         },
-        redirect_urls: {
-          return_url: process.env.PAYPAL_SUCCESS_URL,
-          cancel_url: process.env.PAYPAL_CANCEL_URL,
-        },
+        redirect_urls: paypalConfig.redirect_urls, // Use dynamic URLs from config
         transactions: [
           {
             item_list: {
@@ -54,6 +55,7 @@ class PaymentController {
           },
         ],
       };
+
       paypal.payment.create(create_payment_json, function (error, payment) {
         if (error) {
           throw error;
