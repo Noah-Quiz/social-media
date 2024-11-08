@@ -122,6 +122,7 @@ class VideoRepository {
             enumMode: 1,
             dateCreated: 1,
             lastUpdated: 1,
+            numOfViews: 1,
             likesCount: 1,
             user: {
               _id: 1,
@@ -246,6 +247,7 @@ class VideoRepository {
             enumMode: 1,
             dateCreated: 1,
             lastUpdated: 1,
+            numOfViews: 1,
             likesCount: 1,
             user: {
               _id: 1,
@@ -406,6 +408,7 @@ class VideoRepository {
             enumMode: 1,
             dateCreated: 1,
             lastUpdated: 1,
+            numOfViews: 1,
             likesCount: 1,
             user: {
               _id: 1,
@@ -524,6 +527,7 @@ class VideoRepository {
             enumMode: 1,
             dateCreated: 1,
             lastUpdated: 1,
+            numOfViews: 1,
             likesCount: 1,
             user: {
               _id: 1,
