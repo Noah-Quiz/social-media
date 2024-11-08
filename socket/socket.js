@@ -17,7 +17,7 @@ const logger = getLogger("SOCKET");
 
 module.exports = (io) => {
   const socketPath = io.opts.path;
-  logger.info(`Socket server started: ${socketPath}`);
+  logger.info(`Socket server started: ${process.env.APP_BASE_URL}${socketPath}`);
   io.on("connection", (socket) => {
     const userStreams = new Set();
     logger.info(`User connected: ${socket.id}`);
@@ -73,7 +73,7 @@ module.exports = (io) => {
     if (socketPath == "/socket/upload") {
       eventEmitter.on("upload_video_progress", ({ userId, progress }) => {
         const queryUserId = socket.handshake.query.userId;
-        if (queryUserId) {
+        if (queryUserId===userId) {
           io.to(socket.id).emit(
             "upload_video_progress",
             progress,
