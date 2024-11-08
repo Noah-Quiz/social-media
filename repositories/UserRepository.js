@@ -193,11 +193,22 @@ class UserRepository {
         );
         return true;
       } else if (action === "unfollow") {
-        await User.updateOne({ _id: userId }, { $pull: { follow: followId } });
+        await User.updateOne(
+          { _id: userId },
+          {
+            $pull: {
+              follow: { followId: new mongoose.Types.ObjectId(followId) },
+            },
+          }
+        );
 
         await User.updateOne(
           { _id: followId },
-          { $pull: { followBy: userId } }
+          {
+            $pull: {
+              followBy: { followById: new mongoose.Types.ObjectId(userId) },
+            },
+          }
         );
         return true;
       }

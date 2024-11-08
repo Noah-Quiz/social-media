@@ -6,6 +6,7 @@ const { validFullName, validEmail } = require("../utils/validator");
 const bcrypt = require("bcrypt");
 const { sendVerificationEmailService } = require("./AuthService");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const { default: mongoose } = require("mongoose");
 module.exports = {
   getAllUsersService: async (query) => {
     const connection = new DatabaseTransaction();
@@ -184,7 +185,16 @@ module.exports = {
           "User to follow not found"
         );
       }
-
+      if (
+        action === "unfollow" &&
+        !follow.followBy.some((f) => f.followById.equals(userId)) &&
+        !user.follow.some((f) => f.followId.equals(followId))
+      ) {
+        throw new CoreException(
+          StatusCodeEnum.BadRequest_400,
+          "You are not following this user"
+        );
+      }
       const result =
         await connection.userRepository.toggleFollowAnUserRepository(
           userId,
