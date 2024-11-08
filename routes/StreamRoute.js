@@ -330,6 +330,7 @@ streamRoutes.get("/", streamController.getStreamsController);
  *     security:
  *       - bearerAuth: []
  *     summary: Create a stream
+ *     description: Socket connect http://API_BASE_URL/socket/stream?streamId=     Event Listener live_stream_connected   Emit live_stream_connected 
  *     tags: [Streams]
  *     requestBody:
  *       content:
