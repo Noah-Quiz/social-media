@@ -16,6 +16,9 @@ const {
  *         nickName:
  *           type: string
  *           description: The user's nick name.
+ *         avatar:
+ *           type: file
+ *           description: User' avatar file 
  */
 class UpdateUserProfileDto {
   constructor(userId, fullName, nickName) {
