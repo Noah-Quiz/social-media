@@ -113,11 +113,12 @@ class UserController {
         );
       }
 
-      const result = await updateUserProfileByIdService(userId, {
-        fullName,
-        nickName,
-        avatar,
-      });
+      let updateData = { fullName, nickName };
+      if (avatar) {
+        updateData.avatar = avatar;
+      }
+
+      const result = await updateUserProfileByIdService(userId, updateData);
       if (req.file) {
         await checkFileSuccess(avatar);
       }
