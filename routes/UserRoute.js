@@ -14,6 +14,61 @@ route.use(AuthMiddleware);
 
 /**
  * @swagger
+ * /api/users/{userId}/profile:
+ *   put:
+ *     security:
+ *      - bearerAuth: []
+ *     summary: Update user profile by ID
+ *     description: Update user profile by ID, including fullName, nickName, avatar.
+ *     tags: [Users]
+ *     consumes:
+ *      - multipart/form-data
+ *     parameters:
+ *      - in: path
+ *        name: userId
+ *        schema:
+ *         type: string
+ *         required: true
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUserProfileDto'
+ *     responses:
+ *      200:
+ *         description: Update user profile successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                 message:
+ *                   type: string
+ *                   example: "Update user profile successfully"
+ *      400:
+ *       description: Bad request
+ *      500:
+ *       description: Internal server error
+ *
+ */
+route.put(
+  "/:userId/profile",
+  uploadFile.single("avatar"),
+  userController.updateUserProfileByIdController
+);
+
+/**
+ * @swagger
  * /api/users/point:
  *   put:
  *     security:
@@ -787,65 +842,6 @@ route.get(
  */
 route.get("/:userId", userController.getUserByIdController);
 
-/**
- * @swagger
- * /api/users/{userId}/profile:
- *   put:
- *     security:
- *      - bearerAuth: []
- *     summary: Update user profile by ID
- *     description: Update user profile by ID, including fullName, nickName, avatar.
- *     tags: [Users]
- *     consumes:
- *      - multipart/form-data
- *     parameters:
- *      - in: path
- *        name: userId
- *        schema:
- *         type: string
- *         required: true
- *      - in: formData
- *        name: avatar
- *        schema:
- *         type: file
- *        description: The user's avatar image file
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UpdateUserProfileDto'
- *     responses:
- *      200:
- *         description: Update user profile successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 user:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                     fullName:
- *                       type: string
- *                     email:
- *                       type: string
- *                       format: email
- *                 message:
- *                   type: string
- *                   example: "Update user profile successfully"
- *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
- *
- */
-route.put(
-  "/:userId/profile",
-  uploadFile.single("avatar"),
-  userController.updateUserProfileByIdController
-);
 
 /**
  * @swagger
