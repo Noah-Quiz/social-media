@@ -6,25 +6,33 @@ const client = require("twilio")(
 );
 
 const sendVerificationCode = async (phoneNumber) => {
-  const data = await client.verify.v2
-    .services(process.env.TWILIO_VERIFY_SERVICE_SID)
-    .verifications.create({
-      to: phoneNumber,
-      channel: "sms",
-    });
-  return data.status;
+  try {
+    const data = await client.verify.v2
+      .services(process.env.TWILIO_VERIFY_SERVICE_SID)
+      .verifications.create({
+        to: phoneNumber,
+        channel: "sms",
+      });
+    return data.status;
+  } catch (error) {
+    console.error("Error sending verification code:", error);
+    throw error;
+  }
 };
 
 const checkVerification = async (phoneNumber, code) => {
-  return client.verify.v2
-    .services(process.env.TWILIO_VERIFY_SERVICE_SID)
-    .verificationChecks.create({
-      to: phoneNumber,
-      code: code,
-    })
-    .then((data) => {
-      return data.status;
-    });
+  try {
+    const data = await client.verify.v2
+      .services(process.env.TWILIO_VERIFY_SERVICE_SID)
+      .verificationChecks.create({
+        to: phoneNumber,
+        code: code,
+      });
+    return data.status;
+  } catch (error) {
+    console.error("Error checking verification code:", error);
+    throw error;
+  }
 };
 
 module.exports = { sendVerificationCode, checkVerification };

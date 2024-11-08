@@ -30,7 +30,9 @@ const signUpService = async (
         "Email is already registered"
       );
 
-    const formattedPhoneNumber = phoneNumber.replace(/^0/, "+84");
+    const formattedPhoneNumber = phoneNumber
+      .replace(/^0/, "+84")
+      .replace(/^84/, "+84");
     const existingPhone = await connection.userRepository.findUserByPhoneNumber(
       formattedPhoneNumber
     );
@@ -328,8 +330,12 @@ const sendVerificationPhoneService = async (phoneNumber) => {
   try {
     const connection = new DatabaseTransaction();
 
+    const formattedPhoneNumber = phoneNumber
+      .replace(/^0/, "+84")
+      .replace(/^84/, "+84");
+
     const user = await connection.userRepository.findUserByPhoneNumber(
-      phoneNumber
+      formattedPhoneNumber
     );
     if (!user)
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
@@ -339,7 +345,7 @@ const sendVerificationPhoneService = async (phoneNumber) => {
         "User is already verified"
       );
 
-    const status = await sendVerificationCode(phoneNumber);
+    const status = await sendVerificationCode(formattedPhoneNumber);
     if (status !== "pending") {
       throw new CoreException(StatusCodeEnums.BadRequest_400, "SMS failed");
     }

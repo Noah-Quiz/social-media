@@ -62,7 +62,7 @@ consumeMessageFromQueue("bunny_livestream_thumbnail");
 app.use(helmet());
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
-app.use(limiter(15, 100));
+app.use(limiter(15, 100000));
 
 // Middleware
 app.use(
