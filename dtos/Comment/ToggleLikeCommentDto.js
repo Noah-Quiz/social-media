@@ -2,40 +2,43 @@ const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
 const { validMongooseObjectId } = require("../../utils/validator");
 
-class LikeCommentDto {
-  constructor(id, userId) {
-    this.id = id;
+class ToggleLikeCommentDto {
+  constructor(commentId, userId) {
+    this.commentId = commentId;
     this.userId = userId;
   }
 
   async validate() {
-    if (!this.id)
+    if (!this.commentId)
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Comment id is required"
+        "Comment ID is required"
       );
+
     try {
-      await validMongooseObjectId(this.id);
+      await validMongooseObjectId(this.commentId);
     } catch (error) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid comment id"
+        "Invalid comment ID"
       );
     }
+
     if (!this.userId)
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "User id is required"
+        "User ID is required"
       );
+      
     try {
       await validMongooseObjectId(this.userId);
     } catch (error) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid user id"
+        "Invalid user ID"
       );
     }
   }
 }
 
-module.exports = LikeCommentDto;
+module.exports = ToggleLikeCommentDto;

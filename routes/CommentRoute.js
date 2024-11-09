@@ -4,7 +4,6 @@ const AuthMiddleware = require("../middlewares/AuthMiddleware");
 
 const router = express.Router();
 const commentController = new CommentController();
-router.use(AuthMiddleware);
 
 /**
  * @swagger
@@ -89,7 +88,7 @@ router.use(AuthMiddleware);
  *                   example: "An unexpected error occurred while creating the comment."
  *
  */
-router.post("/", commentController.createCommentController);
+router.post("/", AuthMiddleware, commentController.createCommentController);
 
 /**
  * @swagger
@@ -109,6 +108,12 @@ router.post("/", commentController.createCommentController);
  *        name: limit
  *        schema:
  *         type: string
+ *      - in: query
+ *        name: requesterId
+ *        required: false
+ *        schema:
+ *          type: string
+ *        description: User ID of requester. If requester is owner and comment is in private video, show comment, otherwise return video not found
  *     responses:
  *      200:
  *       description: Get children comments successfully
@@ -191,7 +196,23 @@ router.get(
  *      - in: query
  *        name: sortBy
  *        schema:
- *         type: string
+ *          type: string
+ *          enum: [like, date]
+ *          default: date
+ *        description: Sort the comments by number of likes, or date created
+ *      - in: query
+ *        name: order
+ *        schema:
+ *          type: string
+ *          enum: [ascending, descending]
+ *          default: descending
+ *        description: Specify the order of sorting (either ascending or descending)
+ *      - in: query
+ *        name: requesterId
+ *        required: false
+ *        schema:
+ *          type: string
+ *        description: User ID of requester. If requester is owner and comment is in private video, show comment, otherwise return video not found
  *     responses:
  *      200:
  *       description: Get comments of a video successfully
@@ -261,78 +282,27 @@ router.get("/video/:videoId", commentController.getVideoCommentsController);
  *   put:
  *     security:
  *      - bearerAuth: []
- *     summary: Like a video
+ *     summary: Toggle like/unlike a comment
  *     tags: [Comments]
  *     parameters:
  *      - in: path
  *        name: commentId
  *        schema:
  *         type: string
- *         required: true
+ *        required: true
+ *        description: ID of the comment to like or unlike
  *     responses:
  *      200:
- *       description: Like video successfully
+ *       description: Successfully toggled like status of the comment
  *       content:
  *         application/json:
- *           example:
- *             comments:
- *               _id: "string"
- *               videoId: "string"
- *               userId: "string"
- *               content: "string"
- *               likeBy: ["string"]
- *               level: 0
- *               isDeleted: false
- *               dateCreated: "2024-10-18T06:22:49.307Z"
- *               lastUpdated: "2024-10-18T06:22:49.307Z"
- *               __v: 0
- *             message: "Success"
- *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
- *
- */
-router.put("/:commentId/like", commentController.likeCommentController);
-
-/**
- * @swagger
- * /api/comments/{commentId}/unlike:
- *   put:
- *     security:
- *      - bearerAuth: []
- *     summary: Unlike a video
- *     tags: [Comments]
- *     parameters:
- *      - in: path
- *        name: commentId
- *        schema:
- *         type: string
- *         required: true
- *     responses:
- *      200:
- *       description: Unlike video successfully
- *       content:
- *         application/json:
- *           example:
- *             comments:
- *               _id: "string"
- *               videoId: "string"
- *               userId: "string"
- *               content: "aaaa"
- *               likeBy: []
- *               level: 0
- *               isDeleted: false
- *               dateCreated: "2024-10-18T06:22:49.307Z"
- *               lastUpdated: "2024-10-18T06:22:49.307Z"
- *               __v: 0
- *             message: "Success"
+ *           example: message "Like comment successfully" or "Unlike comment successfully" based on action
  *      400:
  *       description: Bad request
  *      500:
  *       description: Internal server error
  */
-router.put("/:commentId/unlike", commentController.unlikeCommentController);
+router.put("/:commentId/like", AuthMiddleware, commentController.toggleLikeCommentController);
 
 /**
  * @swagger
@@ -348,6 +318,12 @@ router.put("/:commentId/unlike", commentController.unlikeCommentController);
  *        schema:
  *         type: string
  *         required: true
+ *      - in: query
+ *        name: requesterId
+ *        required: false
+ *        schema:
+ *          type: string
+ *        description: User ID of requester. If requester is owner and comment is in private video, show comment, otherwise return video not found
  *     responses:
  *      200:
  *       description: Get comment successfully
@@ -424,7 +400,7 @@ router.get("/:commentId", commentController.getCommentController);
  *      500:
  *       description: Internal server error
  */
-router.put("/:commentId", commentController.updateCommentController);
+router.put("/:commentId", AuthMiddleware, commentController.updateCommentController);
 
 /**
  * @swagger
@@ -463,6 +439,6 @@ router.put("/:commentId", commentController.updateCommentController);
  *      500:
  *       description: Internal server error
  */
-router.delete("/:commentId", commentController.deleteCommentController);
+router.delete("/:commentId", AuthMiddleware, commentController.deleteCommentController);
 
 module.exports = router;

@@ -16,6 +16,7 @@ const updateVipService = async (userId, ownerId, packId) => {
     throw new Error(error.message);
   }
 };
+
 const getMemberGroupService = async (ownerId) => {
   try {
     const connection = new DatabaseTransaction();

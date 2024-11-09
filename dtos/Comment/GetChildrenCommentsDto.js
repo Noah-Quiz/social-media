@@ -3,23 +3,39 @@ const CoreException = require("../../exceptions/CoreException");
 const { validMongooseObjectId } = require("../../utils/validator");
 
 class GetChildrenCommentsDto {
-  constructor(commentId, limit) {
+  constructor(commentId, limit, requesterId) {
     this.commentId = commentId;
     this.limit = limit;
+    this.requesterId = requesterId;
   }
 
   async validate() {
     if (!this.commentId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Missing required commentId field"
+        "Comment ID is required"
       );
     }
     try {
       await validMongooseObjectId(this.commentId);
     } catch (error) {
-      throw error;
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid comment ID"
+      );
     }
+    
+    if (this.requesterId) {
+      try {
+        await validMongooseObjectId(this.commentId);
+      } catch (error) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Invalid comment ID"
+        );
+      }
+    }
+    
     if (this.limit && isNaN(this.limit)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
