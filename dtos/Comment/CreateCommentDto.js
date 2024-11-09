@@ -1,7 +1,7 @@
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
 const { validMongooseObjectId } = require("../../utils/validator");
-
+const { contentModeration } = require("../../utils/validator");
 /**
  * @swagger
  * components:
@@ -83,6 +83,8 @@ class CreateCommentDto {
         );
       }
     }
+
+    contentModeration(this.content, "comment");
   }
 }
 
