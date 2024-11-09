@@ -2,6 +2,8 @@ const { default: mongoose } = require("mongoose");
 const Comment = require("../entities/CommentEntity");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const UserEnum = require("../enums/UserEnum");
+const CoreException = require("../exceptions/CoreException");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 
 const createCommentService = async (userId, videoId, content, responseTo) => {
   const connection = new DatabaseTransaction();
@@ -12,9 +14,11 @@ const createCommentService = async (userId, videoId, content, responseTo) => {
         _id: new mongoose.Types.ObjectId(responseTo),
         isDeleted: false,
       });
+
       if (!checkComment) {
-        throw new Error("Comment not found");
+        throw new CoreException(StatusCodeEnums.NotFound_404, "Comment not found");
       }
+
       const parentComment = await connection.commentRepository.getComment(
         responseTo
       ); // Fetch parent comment first
@@ -40,7 +44,7 @@ const createCommentService = async (userId, videoId, content, responseTo) => {
     await sendNotificationsForComment(videoId, userId, responseTo);
     return comment;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -55,7 +59,10 @@ const sendNotificationsForComment = async (
   const video = await connection.videoRepository.getVideoByIdRepository(
     videoId
   );
-  if (!video) throw new Error("Video not found");
+  
+  if (!video) {
+    throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
+  }
 
   const videoOwnerId = video.userId;
 
@@ -105,46 +112,74 @@ const sendNotificationsForComment = async (
   }
 };
 
-const getCommentService = async (id, requester) => {
+const getCommentService = async (commentId, requesterId) => {
   const connection = new DatabaseTransaction();
   try {
-    const comment = await connection.commentRepository.getComment(id);
+    if (requesterId) {
+      const requester = await connection.userRepository.getAnUserByIdRepository(requesterId);
+      if (!requester) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "Requester not found")  
+      }
+    }
+
+    const comment = await connection.commentRepository.getComment(commentId);
+    if (!comment) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Comment not found");
+    }
+
+    const video = await connection.videoRepository.getVideoByIdRepository(comment.videoId);
+    if (!video) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
+    }
+
+    if (video.enumMode === "private" && requesterId?.toString() !== video.userId?.toString()) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
+    }
 
     //count number of
     if (comment) {
       comment.likes = (comment.likeBy || []).length;
       comment.isLiked = (comment.likeBy || []).some(
-        (userId) => userId?.toString() === requester?.toString()
+        (userId) => userId?.toString() === requesterId?.toString()
       );
       delete comment.likeBy;
     }
 
     return comment;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
-const getVideoCommentsService = async (videoId, sortBy, requester) => {
+const getVideoCommentsService = async (videoId, query, requesterId) => {
   const connection = new DatabaseTransaction();
   try {
+
+    if (requesterId) {
+      const requester = await connection.userRepository.getAnUserByIdRepository(requesterId);
+      if (!requester) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "Requester not found")  
+      }
+    }
+
+    const video = await connection.videoRepository.getVideoByIdRepository(videoId);
+    if (!video) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found")  
+    }
+
+    if (video.enumMode === "private" && requesterId?.toString() !== video.userId?.toString()) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found")  
+    }
+
     let comments = await connection.commentRepository.getAllCommentVideoId(
       videoId,
-      sortBy
+      query,
+      requesterId
     );
 
-    //remove likeBy field, likes number, isLiked by a requester
-    comments = comments.map((comment) => {
-      comment.likes = (comment.likeBy || []).length;
-      comment.isLiked = (comment.likeBy || []).some(
-        (userId) => userId?.toString() === requester?.toString()
-      );
-      delete comment.likeBy;
-      return comment;
-    });
     return comments;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -154,12 +189,13 @@ const updateCommentService = async (userId, id, content) => {
   try {
     const originalComment = await connection.commentRepository.getComment(id);
     if (!originalComment) {
-      throw new Error("Comment not found");
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Comment not found");
     }
+
     let notCommentOwner =
       originalComment.userId?.toString() !== userId?.toString();
     if (notCommentOwner) {
-      throw new Error("You can not update other people comment");
+      throw new CoreException(StatusCodeEnums.Forbidden_403, "You do not have permission to perform this action");
     }
 
     const comment = await connection.commentRepository.updateComment(
@@ -178,21 +214,21 @@ const softDeleteCommentService = async (userId, id) => {
   try {
     const originalComment = await connection.commentRepository.getComment(id);
     if (!originalComment || originalComment.length === 0) {
-      throw new Error("Comment not found");
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Comment not found");
     }
 
     const video = await connection.videoRepository.getVideoRepository(
       originalComment.videoId
     );
     if (!video) {
-      throw new Error("Video not found for the comment");
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found for the comment");
     }
 
     const user = await connection.userRepository.getAnUserByIdRepository(
       userId
     );
     if (!user) {
-      throw new Error("User not found");
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
 
     let notAdmin = user.role !== UserEnum.ADMIN;
@@ -203,7 +239,7 @@ const softDeleteCommentService = async (userId, id) => {
       originalComment.userId?.toString() !== userId?.toString();
 
     if (notCommentOwner && notVideoOwner && notAdmin) {
-      throw new Error("Not authorized to delete this comment");
+      throw new CoreException(StatusCodeEnums.Forbidden_403, "You do not have permission to perform this action");
     }
 
     const comment =
@@ -214,97 +250,108 @@ const softDeleteCommentService = async (userId, id) => {
   }
 };
 
-const likeService = async (userId, commentId) => {
+const toggleLikeCommentService = async (userId, commentId) => {
   const connection = new DatabaseTransaction();
 
   try {
-    const comment = await connection.commentRepository.like(userId, commentId);
+    const { action, updatedComment: comment } = await connection.commentRepository.toggleLikeCommentRepository(userId, commentId);
 
     if (!comment) {
-      throw new Error("Comment not found");
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Comment not found");
     }
 
-    const commentOwnerId = comment.userId;
+    if (action === "like") {
+      const commentOwnerId = comment.userId;
+      const user = await connection.userRepository.findUserById(userId);
 
-    const user = await connection.userRepository.findUserById(userId);
+      const notification = {
+        avatar: user.avatar,
+        content: `${user.fullName} đã like bình luận của bạn`,
+        seen: false,
+        createdAt: new Date(),
+      };
 
-    const notification = {
-      avatar: user.avatar,
-      content: `${user.fullName} đã like bình luận của bạn`,
-      seen: false,
-      createdAt: new Date(),
-    };
+      await connection.userRepository.notifiLikeCommentRepository(commentOwnerId, notification);
+    }
 
-    await connection.userRepository.notifiLikeCommentRepository(
-      commentOwnerId,
-      notification
-    );
-
-    return comment;
+    return action;
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
-const unlikeService = async (userId, commentId) => {
-  const connection = new DatabaseTransaction();
-  try {
-    const comment = await connection.commentRepository.dislike(
-      userId,
-      commentId
-    );
-    return comment;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-const getChildrenCommentsService = async (commentId, limit, requester) => {
+
+const getChildrenCommentsService = async (commentId, limit, requesterId) => {
   const connection = new DatabaseTransaction();
 
   try {
-    const comments = await connection.commentRepository.getCommentThread(
-      commentId,
-      limit
-    );
-    if (!comments) {
-      throw new Error("Comment not found");
+    if (requesterId) {
+      const requester = await connection.userRepository.getAnUserByIdRepository(requesterId);
+      if (!requester) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "Requester not found")  
+      }
     }
+
+    const comment = await connection.commentRepository.getCommentThread(commentId, limit);
+    if (!comment) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Comment not found");
+    }
+
+    const video = await connection.videoRepository.getVideoByIdRepository(comment.videoId);
+    if (!video) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
+    }
+
+    if (video.enumMode === "private" && requesterId?.toString() !== video.userId?.toString()) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
+    }
+
+    // Function to transform each comment (including its children)
     const transformComment = (comment) => {
-      comment.likes = (comment.likeBy || []).length;
+      comment.likesCount = (comment.likeBy || []).length; // Count the number of likes
       comment.isLiked = (comment.likeBy || []).some(
-        (userId) => userId?.toString() === requester?.toString()
+        (userId) => userId?.toString() === requesterId?.toString() // Check if the requester liked the comment
       );
-      delete comment.likeBy;
+      delete comment.likeBy; // Remove the raw likeBy field to clean up the response
 
-      if (comment.children && Array.isArray(comment.children)) {
+      if (Array.isArray(comment.children) && comment.children.length > 0) {
+        // Recursively transform children comments if they exist
         comment.children = comment.children.map(transformComment);
       }
 
       return comment;
     };
 
-    // Apply transformation to each top-level comment and its nested children
-    const transformedComments = comments.map(transformComment);
+    // Apply transformation to the top-level comment
+    const transformedComment = transformComment(comment);
 
-    const maxLevel =
-      transformedComments.length > 0
-        ? Math.max(
-            ...transformedComments[0].children.map((comment) => comment.level)
-          )
-        : 0;
+    // Calculate the max level by looking through all the children recursively
+    const getMaxLevel = (comment) => {
+      let maxChildLevel = comment.level || 0; // Start with the current level
+      if (Array.isArray(comment.children)) {
+        comment.children.forEach(child => {
+          const childMaxLevel = getMaxLevel(child); // Recursively get the max level for children
+          maxChildLevel = Math.max(maxChildLevel, childMaxLevel);
+        });
+      }
+      return maxChildLevel;
+    };
 
-    return { comments: transformedComments, maxLevel };
+    const maxLevel = getMaxLevel(transformedComment); // Get the maximum level of the entire comment tree
+
+    return { comments: transformedComment, maxLevel };
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
+
+
 module.exports = {
   createCommentService,
   getCommentService,
   getVideoCommentsService,
   updateCommentService,
   softDeleteCommentService,
-  likeService,
-  unlikeService,
+  toggleLikeCommentService,
   getChildrenCommentsService,
 };

@@ -49,7 +49,7 @@ class CommentRepository {
             pipeline: [
               {
                 $project: {
-                  _id: 0,
+                  _id: 1,
                   fullName: 1,
                   nickName: 1,
                   avatar: 1,
@@ -71,6 +71,7 @@ class CommentRepository {
             dateCreated: 1,
             userId: 1, // Retain the original userId field
             user: {
+              _id: "$user._id",
               fullName: "$user.fullName",
               nickName: "$user.nickName",
               avatar: "$user.avatar",
@@ -89,22 +90,25 @@ class CommentRepository {
     }
   }
 
-  async getAllCommentVideoId(videoId, sortBy) {
+  async getAllCommentVideoId(videoId, query, requesterId) {
     try {
-      // Validate the videoId as a valid ObjectId
-      if (!mongoose.Types.ObjectId.isValid(videoId)) {
-        throw new Error("Invalid video ID");
-      }
-
-      let comments;
-
+      // Create search query
+      const searchQuery = {
+        isDeleted: false,
+        level: 0,
+        videoId: new mongoose.Types.ObjectId(videoId),
+      };
+  
+      // Determine sorting field and order
+      let sortField = "dateCreated"; // Default sort field
+      let sortOrder = query.order === "ascending" ? 1 : -1;
+  
+      if (query.sortBy === "like") sortField = "likesCount";
+      else if (query.sortBy === "date") sortField = "dateCreated";
+  
+      // Base aggregation pipeline
       const basePipeline = [
-        {
-          $match: {
-            videoId: new mongoose.Types.ObjectId(videoId),
-            isDeleted: false,
-          },
-        },
+        { $match: searchQuery },
         {
           $lookup: {
             from: "users",
@@ -114,7 +118,7 @@ class CommentRepository {
             pipeline: [
               {
                 $project: {
-                  _id: 0,
+                  _id: 1,
                   fullName: 1,
                   nickName: 1,
                   avatar: 1,
@@ -135,6 +139,7 @@ class CommentRepository {
             content: 1,
             dateCreated: 1,
             user: {
+              _id: "$user._id",
               fullName: "$user.fullName",
               nickName: "$user.nickName",
               avatar: "$user.avatar",
@@ -142,237 +147,206 @@ class CommentRepository {
             responseTo: 1,
             level: 1,
             videoId: 1,
-            likeBy: 1,
+            likesCount: { $size: "$likeBy" },
+            isLiked: { $in: [new mongoose.Types.ObjectId(requesterId), "$likeBy"] },
           },
         },
+        {
+          $sort: { [sortField]: sortOrder }, // Dynamic sorting stage
+        },
       ];
-
-      if (sortBy && sortBy === "like") {
-        comments = await Comment.aggregate([
-          ...basePipeline,
-          {
-            $addFields: {
-              length: { $size: "$likeBy" }, // Calculate the number of likes
-            },
-          },
-          {
-            $sort: {
-              length: -1, // Sort by number of likes (descending)
-              dateCreated: -1, // Sort by creation date (most recent first)
-            },
-          },
-          {
-            $project: {
-              length: 0, // Exclude the computed length field from the final result
-            },
-          },
-        ]);
-      } else {
-        comments = await Comment.aggregate([
-          ...basePipeline,
-          {
-            $sort: {
-              dateCreated: -1, // Sort by creation date (most recent first)
-            },
-          },
-        ]);
-      }
-
+  
+      // Run the aggregation pipeline
+      const comments = await Comment.aggregate(basePipeline);
+  
       return comments;
     } catch (error) {
       throw new Error(error.message);
     }
-  }
+  }  
 
-  async like(userId, commentId) {
+  async toggleLikeCommentRepository(userId, commentId) {
+    let hasLiked = false;
     try {
       const checkComment = await Comment.findById(commentId);
       if (!checkComment || checkComment.isDeleted) {
-        throw new Error("Comment not found");
+        throw new CoreException(StatusCodeEnums.NotFound_404, "Comment not found");
       }
-      const comment = await Comment.findByIdAndUpdate(
+  
+      hasLiked = checkComment.likeBy.includes(userId);
+      const action = hasLiked ? 'unlike' : 'like';
+      const updateOperation = hasLiked
+        ? { $pull: { likeBy: userId } } 
+        : { $addToSet: { likeBy: userId } };
+  
+      const updatedComment = await Comment.findByIdAndUpdate(
         commentId,
-        { $addToSet: { likeBy: userId } },
+        updateOperation,
         { new: true }
       );
-      return comment;
+  
+      return { action, updatedComment };
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(`Failed to ${action ? "like" : "unlike"} comment`);
     }
-  }
-
-  async dislike(userId, commentId) {
-    try {
-      const checkComment = await Comment.findById(commentId);
-      if (!checkComment || checkComment.isDeleted) {
-        throw new Error("Comment not found");
-      }
-      const comment = await Comment.findByIdAndUpdate(
-        commentId,
-        { $pull: { likeBy: userId } },
-        { new: true }
-      );
-      return comment;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  }
+  }  
 
   async getCommentThread(commentId, limit) {
     const numericLimit = parseInt(limit, 10); // Ensure limit is a number
-
-    const comment = await Comment.aggregate([
-      // Match the parent comment and ensure it is not deleted
-      {
-        $match: {
-          _id: new mongoose.Types.ObjectId(commentId),
-          isDeleted: false,
+  
+    try {
+      const comment = await Comment.aggregate([
+        // Match the parent comment and ensure it is not deleted
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(commentId),
+            isDeleted: false,
+          },
         },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "userId",
-          foreignField: "_id",
-          as: "user",
-          pipeline: [
-            {
-              $project: {
-                _id: 0, // Remove _id from parent comment's user details
-                fullName: 1,
-                nickName: 1,
-                avatar: 1,
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+            pipeline: [
+              {
+                $project: {
+                  _id: 1,
+                  fullName: 1,
+                  nickName: 1,
+                  avatar: 1,
+                },
               },
-            },
-          ],
+            ],
+          },
         },
-      },
-      {
-        $unwind: {
-          path: "$user",
-          preserveNullAndEmptyArrays: true,
+        {
+          $unwind: {
+            path: "$user",
+            preserveNullAndEmptyArrays: true,
+          },
         },
-      },
-      {
-        $graphLookup: {
-          from: "comments",
-          startWith: "$_id",
-          connectFromField: "_id",
-          connectToField: "responseTo",
-          as: "children",
-          maxDepth: 10, // Set max depth to control how deep replies go
-          depthField: "graphLevel", // Depth for hierarchical sorting
+        {
+          $graphLookup: {
+            from: "comments",
+            startWith: "$_id",
+            connectFromField: "_id",
+            connectToField: "responseTo",
+            as: "children",
+            maxDepth: 10, // You can make this dynamic
+            depthField: "graphLevel",
+          },
         },
-      },
-
-      // Filter out deleted comments in the replies (children)
-      {
-        $addFields: {
-          children: {
-            $filter: {
-              input: "$children",
-              as: "child",
-              cond: { $eq: ["$$child.isDeleted", false] }, // Filter where isDeleted is false
+        // Filter out deleted comments in the replies (children)
+        {
+          $addFields: {
+            children: {
+              $filter: {
+                input: "$children",
+                as: "child",
+                cond: { $eq: ["$$child.isDeleted", false] },
+              },
             },
           },
         },
-      },
-
-      // Lookup user details for each child comment inside the children array
-      {
-        $lookup: {
-          from: "users",
-          localField: "children.userId", // Reference the userId of each child comment
-          foreignField: "_id",
-          as: "childUsers",
-          pipeline: [
-            {
-              $project: {
-                avatar: 1,
-                fullName: 1,
-                nickName: 1,
+        {
+          $lookup: {
+            from: "users",
+            localField: "children.userId",
+            foreignField: "_id",
+            as: "childUsers",
+            pipeline: [
+              {
+                $project: {
+                  _id: 1,
+                  avatar: 1,
+                  fullName: 1,
+                  nickName: 1,
+                },
               },
-            },
-          ],
+            ],
+          },
         },
-      },
-
-      // Map user details into each child comment
-      {
-        $addFields: {
-          children: {
-            $map: {
-              input: "$children",
-              as: "child",
-              in: {
-                $mergeObjects: [
-                  "$$child",
-                  {
-                    user: {
-                      $arrayElemAt: [
-                        {
-                          $filter: {
-                            input: "$childUsers", // Filter the user details for the correct child
-                            as: "userDetail",
-                            cond: {
-                              $eq: ["$$userDetail._id", "$$child.userId"],
+        {
+          $addFields: {
+            children: {
+              $map: {
+                input: "$children",
+                as: "child",
+                in: {
+                  $mergeObjects: [
+                    "$$child",
+                    {
+                      user: {
+                        $arrayElemAt: [
+                          {
+                            $filter: {
+                              input: "$childUsers",
+                              as: "userDetail",
+                              cond: {
+                                $eq: ["$$userDetail._id", "$$child.userId"],
+                              },
                             },
                           },
-                        },
-                        0,
-                      ],
+                          0,
+                        ],
+                      },
                     },
-                  },
-                ],
+                  ],
+                },
               },
             },
           },
         },
-      },
-      // Sort by graphLevel (depth)
-      {
-        $addFields: {
-          children: {
-            $sortArray: { input: "$children", sortBy: { graphLevel: 1 } }, // Sort replies in ascending order of depth
+        {
+          $addFields: {
+            children: {
+              $sortArray: { input: "$children", sortBy: { graphLevel: 1 } },
+            },
           },
         },
-      },
-
-      // Limit the total number of replies returned
-      { $addFields: { children: { $slice: ["$children", numericLimit] } } }, // Use numericLimit here
-      // Project to remove unnecessary fields like 'isDeleted', '__v', 'graphLevel'
-      {
-        $project: {
-          "children.isDeleted": 0,
-          "children.__v": 0,
-          "children.graphLevel": 0,
-          "children.lastUpdated": 0,
-          isDeleted: 0,
-          __v: 0,
-          graphLevel: 0,
-          lastUpdated: 0,
-          childUsers: 0, // Remove childUsers from final output
+        { $addFields: { children: { $slice: ["$children", numericLimit] } } },
+        {
+          $project: {
+            "children.isDeleted": 0,
+            "children.__v": 0,
+            "children.graphLevel": 0,
+            "children.lastUpdated": 0,
+            isDeleted: 0,
+            __v: 0,
+            graphLevel: 0,
+            lastUpdated: 0,
+            childUsers: 0,
+          },
         },
-      },
-    ]);
-    console.log(comment[0]);
-    return comment[0];
-  }
+      ]);
+  
+      return comment[0] || null;
+    } catch (err) {
+      throw new Error("Unable to fetch comment thread");
+    }
+  }  
+
   async softDeleteCommentRepository(id) {
     try {
       const deleteComment = await this.getCommentThread(id, 1000000);
+
       const childrenComments = deleteComment.children;
-      console.log(childrenComments);
+
       childrenComments.forEach(async (comment) => {
         const childComment = await Comment.findByIdAndUpdate(comment._id, {
           isDeleted: true,
         });
       });
+
       const comment = await Comment.findById(id);
       if (!comment) {
-        throw new Error("No comment found");
+        throw new CoreException(StatusCodeEnums.NotFound_404, "Comment not found");
       }
+
       comment.isDeleted = true;
+
       await comment.save();
       return comment;
     } catch (error) {
