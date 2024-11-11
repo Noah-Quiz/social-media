@@ -43,7 +43,7 @@ const auditLogError = async (err, req, res, next) => {
     if (typeof err.code === "string")
       return res
         .status(StatusCodeEnums.InternalServerError_500)
-        .json({ message: "Internal server error" });
+        .json({ message: err.message });
     return res
       .status(err.code || StatusCodeEnums.InternalServerError_500)
       .json({ message: err.message });
