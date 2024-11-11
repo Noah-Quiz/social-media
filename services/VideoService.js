@@ -45,12 +45,12 @@ const updateAVideoByIdService = async (
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
 
-    if (userId?.toString() !== video?.user?._id?.toString()) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "You do not have permission to perform this action"
-      );
-    }
+    // if (userId?.toString() !== video?.user?._id?.toString()) {
+    //   throw new CoreException(
+    //     StatusCodeEnums.BadRequest_400,
+    //     "You do not have permission to perform this action"
+    //   );
+    // }
 
     if (thumbnailFile) {
       data.thumbnailUrl = `${process.env.APP_BASE_URL}/${thumbnailFile.path}`;
