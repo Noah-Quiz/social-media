@@ -6,8 +6,17 @@ class CommentRepository {
   async createComment(commentData) {
     try {
       let level = 0; // Default for top-level comments
-
-      if (commentData.responseTo) {
+      console.log(
+        "Repolayer: ",
+        commentData.responseTo !== undefined &&
+          commentData.responseTo !== null &&
+          commentData.responseTo !== ""
+      );
+      if (
+        commentData.responseTo !== undefined &&
+        commentData.responseTo !== null &&
+        commentData.responseTo !== ""
+      ) {
         const parentComment = await Comment.findById(commentData.responseTo);
         if (parentComment) {
           level = parentComment.level + 1; // Set level based on parent comment
@@ -98,14 +107,14 @@ class CommentRepository {
         level: 0,
         videoId: new mongoose.Types.ObjectId(videoId),
       };
-  
+
       // Determine sorting field and order
       let sortField = "dateCreated"; // Default sort field
       let sortOrder = query.order === "ascending" ? 1 : -1;
-  
+
       if (query.sortBy === "like") sortField = "likesCount";
       else if (query.sortBy === "date") sortField = "dateCreated";
-  
+
       // Base aggregation pipeline
       const basePipeline = [
         { $match: searchQuery },
@@ -148,52 +157,57 @@ class CommentRepository {
             level: 1,
             videoId: 1,
             likesCount: { $size: "$likeBy" },
-            isLiked: { $in: [new mongoose.Types.ObjectId(requesterId), "$likeBy"] },
+            isLiked: {
+              $in: [new mongoose.Types.ObjectId(requesterId), "$likeBy"],
+            },
           },
         },
         {
           $sort: { [sortField]: sortOrder }, // Dynamic sorting stage
         },
       ];
-  
+
       // Run the aggregation pipeline
       const comments = await Comment.aggregate(basePipeline);
-  
+
       return comments;
     } catch (error) {
       throw new Error(error.message);
     }
-  }  
+  }
 
   async toggleLikeCommentRepository(userId, commentId) {
     let hasLiked = false;
     try {
       const checkComment = await Comment.findById(commentId);
       if (!checkComment || checkComment.isDeleted) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, "Comment not found");
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Comment not found"
+        );
       }
-  
+
       hasLiked = checkComment.likeBy.includes(userId);
-      const action = hasLiked ? 'unlike' : 'like';
+      const action = hasLiked ? "unlike" : "like";
       const updateOperation = hasLiked
-        ? { $pull: { likeBy: userId } } 
+        ? { $pull: { likeBy: userId } }
         : { $addToSet: { likeBy: userId } };
-  
+
       const updatedComment = await Comment.findByIdAndUpdate(
         commentId,
         updateOperation,
         { new: true }
       );
-  
+
       return { action, updatedComment };
     } catch (error) {
       throw new Error(`Failed to ${action ? "like" : "unlike"} comment`);
     }
-  }  
+  }
 
   async getCommentThread(commentId, limit) {
     const numericLimit = parseInt(limit, 10); // Ensure limit is a number
-  
+
     try {
       const comment = await Comment.aggregate([
         // Match the parent comment and ensure it is not deleted
@@ -321,12 +335,12 @@ class CommentRepository {
           },
         },
       ]);
-  
+
       return comment[0] || null;
     } catch (err) {
       throw new Error("Unable to fetch comment thread");
     }
-  }  
+  }
 
   async softDeleteCommentRepository(id) {
     try {
@@ -342,7 +356,10 @@ class CommentRepository {
 
       const comment = await Comment.findById(id);
       if (!comment) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, "Comment not found");
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Comment not found"
+        );
       }
 
       comment.isDeleted = true;

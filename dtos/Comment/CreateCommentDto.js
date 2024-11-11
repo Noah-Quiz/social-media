@@ -73,13 +73,17 @@ class CreateCommentDto {
     // No ObjectId validation for content
 
     // Validate responseTo if provided (it's optional)
-    if (this.responseTo) {
+    if (
+      this.responseTo !== undefined &&
+      this.responseTo !== null &&
+      this.responseTo !== ""
+    ) {
       try {
         await validMongooseObjectId(this.responseTo); // Only validate if provided
       } catch (error) {
         throw new CoreException(
           StatusCodeEnums.BadRequest_400,
-          "Invalid user ID"
+          "Invalid responseTo user ID"
         );
       }
     }
