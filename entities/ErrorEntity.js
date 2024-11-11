@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const baseEntitySchema = require("./BaseEntity");
 
 const errorSchema = mongoose.Schema({
-  code: { type: Number, required: true },
+  code: { type: String, required: true },
   message: { type: String, required: true },
   file: { type: String, required: true },
   function: { type: String, required: true },
