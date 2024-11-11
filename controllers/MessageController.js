@@ -72,8 +72,8 @@ class MessageController {
       const { messageId } = req.params;
       const { content } = req.body;
       const userId = req.userId;
-      const updateData = { content };
-
+      const updateData = content;
+      console.log("Content: ", content, typeof content);
       const updateMessageDto = new UpdateMessageDto(messageId, content, userId);
       await updateMessageDto.validate();
 
