@@ -28,7 +28,7 @@ class CommentController {
         userId,
         videoId,
         content,
-        responseTo
+        responseTo?.trim()
       );
 
       await createCommentDto.validate();
@@ -37,7 +37,7 @@ class CommentController {
         userId,
         videoId,
         content,
-        responseTo
+        responseTo ? responseTo : null
       );
 
       return res
@@ -70,10 +70,14 @@ class CommentController {
 
       const query = {
         sortBy: req.query.sortBy,
-        order: req.query.order
-      }
+        order: req.query.order,
+      };
 
-      const getVideoCommentsDto = new GetVideoCommentsDto(videoId, query.sortBy, query.order);
+      const getVideoCommentsDto = new GetVideoCommentsDto(
+        videoId,
+        query.sortBy,
+        query.order
+      );
       await getVideoCommentsDto.validate();
 
       const comments = await getVideoCommentsService(
@@ -130,38 +134,46 @@ class CommentController {
     try {
       const { commentId } = req.params;
       const userId = req.userId;
-  
+
       const toggleLikeCommentDto = new ToggleLikeCommentDto(commentId, userId);
       await toggleLikeCommentDto.validate();
-  
+
       const action = await toggleLikeCommentService(userId, commentId);
-  
-      return res.status(StatusCodeEnums.OK_200).json({ message: `${action?.charAt(0)?.toUpperCase() + action?.slice(1)} comment successfully` });
+
+      return res.status(StatusCodeEnums.OK_200).json({
+        message: `${
+          action?.charAt(0)?.toUpperCase() + action?.slice(1)
+        } comment successfully`,
+      });
     } catch (error) {
       next(error);
     }
-  }  
-  
+  }
+
   async getChildrenCommentsController(req, res, next) {
     try {
       const { commentId } = req.params;
       const { limit, requesterId } = req.query;
-  
-      const getChildrenCommentsDto = new GetChildrenCommentsDto(commentId, limit, requesterId);
+
+      const getChildrenCommentsDto = new GetChildrenCommentsDto(
+        commentId,
+        limit,
+        requesterId
+      );
       await getChildrenCommentsDto.validate();
-  
+
       const { comments, maxLevel } = await getChildrenCommentsService(
         commentId,
         limit || 10,
         requesterId
       );
-  
+
       if (Array.isArray(comments)) {
         // Calculate the total number of comments and their children
         const size = comments.reduce((total, comment) => {
           return total + 1 + (comment.children ? comment.children.length : 0);
         }, 0);
-  
+
         return res.status(StatusCodeEnums.OK_200).json({
           comments,
           size,
@@ -171,7 +183,7 @@ class CommentController {
       } else {
         // If comments is a single comment, handle it accordingly
         const size = 1 + (comments.children ? comments.children.length : 0);
-  
+
         return res.status(StatusCodeEnums.OK_200).json({
           comments,
           size,
@@ -182,7 +194,6 @@ class CommentController {
     } catch (error) {
       next(error);
     }
-  }  
-  
+  }
 }
 module.exports = CommentController;
