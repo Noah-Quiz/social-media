@@ -12,6 +12,12 @@ const getReceiptService = async (id) => {
 const getAllUserReceiptService = async (userId) => {
   const connection = new DatabaseTransaction();
   try {
+    const user = await connection.userRepository.getAnUserByIdRepository(
+      userId
+    );
+    if (!user || user === false) {
+      throw new Error("User not found");
+    }
     const receipts = await connection.receiptRepository.findByUserIdRepository(
       userId
     );
