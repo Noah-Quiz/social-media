@@ -245,6 +245,28 @@ class VideoController {
       const deleteVideoDto = new DeleteVideoDto(videoId, userId);
       await deleteVideoDto.validate();
 
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
+      if (!user) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+      }
+      const existVideo =
+        await connection.videoRepository.getVideoByIdRepository(videoId);
+      if (!existVideo) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Video not found"
+        );
+      }
+
+      if (user.role !== UserEnum.ADMIN && existVideo.userId !== userId) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "You don't have access to perform this action on this video"
+        );
+      }
       const video = await deleteVideoService(videoId, userId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
