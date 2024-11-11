@@ -38,7 +38,12 @@ exports.createPaymentUrl = (req, res) => {
       message: "Please fill in the required fields: amount",
     });
   }
-
+  if (isNaN(amount) || amount < 5000 || amount > 1000000000) {
+    return res.status(400).json({
+      message:
+        "Số tiền giao dịch không hợp lệ. Số tiền hợp lệ từ 5,000 đến dưới 1 tỷ đồng",
+    });
+  }
   const ipAddr = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
   const ReturnInfo = `${userId},${amount}`;
   let vnp_Params = {
