@@ -50,6 +50,12 @@ const deleteMemberGroupService = async (requester, ownerId) => {
     if (notAdmin && notOwner) {
       throw new Error("You don't have authorization to delete this group");
     }
+    const checkuser = await connection.userRepository.getAnUserByIdRepository(
+      ownerId
+    );
+    if (!checkuser || checkuser === false) {
+      throw new Error("User not found");
+    }
     const room =
       await connection.memberGroupRepository.getMemberGroupRepository(ownerId);
     if (!room) {
