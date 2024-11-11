@@ -50,10 +50,6 @@ class VideoController {
 
       const video = await createVideoService(userId, {
         title,
-        // bunnyId: bunnyVideo.guid,
-        // videoUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/playlist.m3u8`,
-        // videoEmbedUrl: `https://iframe.mediadelivery.net/embed/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/${bunnyVideo.guid}`,
-        // thumbnailUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/thumbnail.jpg`,
       });
 
       if (!video) {
