@@ -27,6 +27,8 @@ const UpdateUserWalletDto = require("../dtos/User/UpdateUserWalletDto");
 const DeleteUserDto = require("../dtos/User/DeleteUserDto");
 const GetUsersDto = require("../dtos/User/GetUsersDto");
 const UpdateUserPointDto = require("../dtos/User/UpdateUserPointDto");
+const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const UserEnum = require("../enums/UserEnum");
 
 class UserController {
   async getAllUsersController(req, res, next) {
@@ -100,18 +102,25 @@ class UserController {
       const { userId } = req.params;
       const { fullName, nickName } = req.body;
       let avatar = req.file ? req.file.path : null;
+
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.findUserById(userId);
+      if (!user) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+      }
+      if (user.role !== UserEnum.ADMIN && req.userId !== userId) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "Forbidden access"
+        );
+      }
+
       const updateUserProfileDto = new UpdateUserProfileDto(
         userId,
         fullName,
         nickName
       );
       await updateUserProfileDto.validate();
-      if (req.userId !== userId) {
-        throw new CoreException(
-          StatusCodeEnums.Forbidden_403,
-          "Forbidden access"
-        );
-      }
 
       let updateData = { fullName, nickName };
       if (avatar) {
@@ -138,7 +147,12 @@ class UserController {
       const { userId } = req.params;
       const { email } = req.body;
 
-      if (req.userId !== userId) {
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.findUserById(userId);
+      if (!user) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+      }
+      if (user.role !== UserEnum.ADMIN && req.userId !== userId) {
         throw new CoreException(
           StatusCodeEnums.Forbidden_403,
           "Forbidden access"
@@ -164,12 +178,18 @@ class UserController {
       const { userId } = req.params;
       const { oldPassword, newPassword } = req.body;
 
-      if (req.userId !== userId) {
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.findUserById(userId);
+      if (!user) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+      }
+      if (user.role !== UserEnum.ADMIN && req.userId !== userId) {
         throw new CoreException(
           StatusCodeEnums.Forbidden_403,
           "Forbidden access"
         );
       }
+
       const updateUserPasswordDto = new UpdateUserPasswordDto(
         userId,
         oldPassword,
