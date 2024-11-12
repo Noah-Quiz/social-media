@@ -16,6 +16,14 @@ class GiftRepository {
       throw new Error(`Error creating gift: ${error.message}`);
     }
   }
+  async getGiftByNameRepository(name) {
+    try {
+      const gift = await Gift.findOne({ name: name, isDeleted: false });
+      return gift;
+    } catch (error) {
+      throw new Error(`Error getting gift by name: ${error.message}`);
+    }
+  }
 
   async getGiftRepository(id) {
     try {

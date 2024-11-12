@@ -21,13 +21,20 @@ class UpdateCategoryDto {
   }
 
   async validate() {
+    if (this.name === "") {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Name must not be an empty string"
+      );
+    }
+
+    if (!this.categoryId) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Category ID is required"
+      );
+    }
     try {
-      if (!this.categoryId) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Category ID is required"
-        );
-      }
       await validMongooseObjectId(this.categoryId);
     } catch (error) {
       throw new CoreException(

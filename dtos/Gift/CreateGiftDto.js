@@ -10,14 +10,15 @@ const CoreException = require("../../exceptions/CoreException");
  *       type: object
  *       required:
  *         - name
- *         - image
  *         - valuePerUnit
+ *         - giftCreateImg
  *       properties:
  *         name:
  *           type: string
  *           description: The gift's name.
- *         image:
+ *         giftCreateImg:
  *           type: string
+ *           format: binary
  *           description: The gift's image.
  *         valuePerUnit:
  *           type: number

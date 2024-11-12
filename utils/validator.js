@@ -19,6 +19,28 @@ const validFullName = async (fullName) => {
       StatusCodeEnums.BadRequest_400,
       "Full name is invalid, must be a minimum of 6 characters and a maximum of 50 characters."
     );
+  const regex = /^[a-zA-Z0-9]+$/;
+  if (!regex.test(fullName)) {
+    throw new CoreException(
+      StatusCodeEnums.BadRequest_400,
+      "Full name is invalid, full name just contains alphanumeric"
+    );
+  }
+};
+
+const validNickName = async (nickName) => {
+  if (!validator.isLength(nickName, { min: 6, max: 50 }))
+    throw new CoreException(
+      StatusCodeEnums.BadRequest_400,
+      "Nick name is invalid, must be a minimum of 6 characters and a maximum of 50 characters."
+    );
+  const regex = /^[a-zA-Z0-9_.-]+$/;
+  if (!regex.test(nickName)) {
+    throw new CoreException(
+      StatusCodeEnums.BadRequest_400,
+      "Nick name is invalid, nick name just contains alphanumeric, /./, /-/ and /_/"
+    );
+  }
 };
 
 const validEmail = async (email) => {
@@ -74,11 +96,21 @@ const contentModeration = (content, type) => {
     throw new Error(error.message);
   }
 };
+
+const hasSpecialCharacters = (content) => {
+  const regex = /^[a-zA-Z0-9\s]+$/;
+  if (regex.test(content)) {
+    return false;
+  }
+  return true;
+};
 module.exports = {
+  validNickName,
   validMongooseObjectId,
   validFullName,
   validEmail,
   validPassword,
   validPhoneNumber,
   contentModeration,
+  hasSpecialCharacters,
 };

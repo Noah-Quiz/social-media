@@ -5,6 +5,8 @@ const giftController = new GiftController();
 const requireRole = require("../middlewares/requireRole");
 const UserEnum = require("../enums/UserEnum");
 const giftRoutes = express.Router();
+const { uploadFile } = require("../middlewares/storeFile");
+
 giftRoutes.use(AuthMiddleware);
 
 /**
@@ -18,13 +20,24 @@ giftRoutes.use(AuthMiddleware);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/CreateGiftDto'
- *           example:
- *             name: "string"
- *             image: "string"
- *             valuePerUnit: 0
+ *             type: object
+ *             required:
+ *               - name
+ *               - valuePerUnit
+ *               - giftCreateImg
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The gift's name.
+ *               giftCreateImg:
+ *                 type: string
+ *                 format: binary
+ *                 description: The gift's image.
+ *               valuePerUnit:
+ *                 type: number
+ *                 description: The value per unit of a gift.
  *     responses:
  *       200:
  *         description: Create a gift successfully
@@ -33,7 +46,6 @@ giftRoutes.use(AuthMiddleware);
  *             example:
  *               gift:
  *                 name: "string"
- *                 image: "string"
  *                 valuePerUnit: 30000
  *                 _id: "string"
  *                 dateCreated: "2024-10-31T04:21:55.590Z"
@@ -43,9 +55,11 @@ giftRoutes.use(AuthMiddleware);
  *       500:
  *         description: Internal server error
  */
+
 giftRoutes.post(
   "/",
   requireRole(UserEnum.ADMIN),
+  uploadFile.single("giftCreateImg"),
   giftController.createGiftController
 );
 
@@ -130,13 +144,20 @@ giftRoutes.get("/:id", giftController.getGiftController);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *          multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/UpdateGiftDto'
- *           example:
- *             name: "string"
- *             image: "string"
- *             valuePerUnit: 0
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The new name for the gift
+ *               valuePerUnit:
+ *                 type: number
+ *                 description: The new price for the gift
+ *               giftUpdateImg:
+ *                 type: string
+ *                 format: binary
+ *                 description: The gift's image file
  *     responses:
  *       200:
  *         description: Update a gift successfully
@@ -146,7 +167,6 @@ giftRoutes.get("/:id", giftController.getGiftController);
  *               gift:
  *                 _id: "string"
  *                 name: "string"
- *                 image: "string"
  *                 valuePerUnit: 15000
  *                 dateCreated: "2024-10-25T03:08:32.839Z"
  *               message: "Update success"
@@ -158,6 +178,7 @@ giftRoutes.get("/:id", giftController.getGiftController);
 giftRoutes.put(
   "/:id",
   requireRole(UserEnum.ADMIN),
+  uploadFile.single("giftUpdateImg"),
   giftController.updateGiftController
 );
 
