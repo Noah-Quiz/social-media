@@ -511,6 +511,17 @@ const storage = multer.diskStorage({
         const { playlistId } = req.params;
         dir = path.join(`assets/images/playlist/${playlistId}`);
         break;
+      case "giftCreateImg":
+        dir = path.join(`assets/images/gifts/create`);
+        break;
+      case "giftUpdateImg":
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          logger.error(`Invalid gift ID: ${id}`);
+          return cb("Error: Invalid gift ID");
+        }
+        dir = path.join(`assets/images/gifts/${id}`);
+        break;
       default:
         logger.error(`Unknown field name: ${file.fieldname}`);
         return cb(`Error: Unknown field name '${file.fieldname}'`);
@@ -585,6 +596,19 @@ const storage = multer.diskStorage({
         fileName = `${baseName}${ext}`;
         dirPath = path.join(`assets/images/playlist/${playlistId}`);
         break;
+      case "giftCreateImg":
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/gifts/create`);
+        break;
+      case "giftUpdateImg":
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          logger.error(`Invalid gift ID: ${id}`);
+          return cb("Error: Invalid gift ID");
+        }
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/gifts/${id}`);
+        break;
       default:
         logger.error(`Unknown field name: ${file.fieldname}`);
         return cb(`Error: Unknown field name '${file.fieldname}'`);
@@ -609,14 +633,16 @@ const fileFilter = (req, file, cb) => {
   }
 
   const isMimeTypeValid = allowedTypes.test(file.mimetype);
-  const isExtensionValid = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const isExtensionValid = allowedTypes.test(
+    path.extname(file.originalname).toLowerCase()
+  );
 
   if (isMimeTypeValid && isExtensionValid) {
     return cb(null, true);
   }
 
   const errorMessage = `Invalid format. ${formatMessage}`;
-  
+
   cb(new CoreException(StatusCodeEnums.BadRequest_400, errorMessage), false);
 };
 

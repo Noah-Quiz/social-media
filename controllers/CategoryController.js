@@ -17,7 +17,6 @@ class CategoryController {
   async createCategoryController(req, res, next) {
     try {
       const { name } = req.body;
-      console.log(name);
       let imageUrl = req.file ? req.file.path : null;
       const createCategoryDto = new CreateCategoryDto(name);
       await createCategoryDto.validate();
@@ -76,7 +75,7 @@ class CategoryController {
       const imageUrl = req.file ? req.file.path : null;
 
       let categoryData = { name, imageUrl };
-      if (imageUrl === null||imageUrl===undefined) categoryData = { name };
+      if (imageUrl === null || imageUrl === undefined) categoryData = { name };
 
       const updateCategoryDto = new UpdateCategoryDto(categoryId, name);
       await updateCategoryDto.validate();
