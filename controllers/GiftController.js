@@ -14,11 +14,12 @@ const CoreException = require("../exceptions/CoreException");
 class GiftController {
   async createGiftController(req, res, next) {
     try {
-      const { name, image, valuePerUnit } = req.body;
-      const createGiftDto = new CreateGiftDto(name, image, valuePerUnit);
+      const giftImg = req.file ? req.file.path : null;
+      const { name, valuePerUnit } = req.body;
+      const createGiftDto = new CreateGiftDto(name, giftImg, valuePerUnit);
       await createGiftDto.validate();
 
-      const gift = await createGiftService(name, image, valuePerUnit);
+      const gift = await createGiftService(name, giftImg, valuePerUnit);
       return res
         .status(StatusCodeEnums.Created_201)
         .json({ gift: gift, message: "Success" });
@@ -30,14 +31,14 @@ class GiftController {
   async updateGiftController(req, res, next) {
     try {
       const { id } = req.params;
-      const { name, image, valuePerUnit } = req.body;
-      const updateGiftDto = new UpdateGiftDto(id, name, image, valuePerUnit);
+      const giftImg = req.file ? req.file.path : null;
+      const { name, valuePerUnit } = req.body;
+      const updateGiftDto = new UpdateGiftDto(id, name, giftImg, valuePerUnit);
       await updateGiftDto.validate();
-
       const gift = await updateGiftService(
         id,
         name || "",
-        image || "",
+        giftImg || "",
         valuePerUnit || 0
       );
       return res

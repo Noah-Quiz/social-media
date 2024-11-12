@@ -44,7 +44,8 @@ class UpdateGiftDto {
         "Invalid gift ID"
       );
     }
-    if (!isFloat(this.valuePerUnit?.toString())) {
+    if (!this.valuePerUnit) {
+    } else if (!isFloat(this.valuePerUnit?.toString())) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid price format"

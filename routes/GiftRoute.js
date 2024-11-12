@@ -5,6 +5,8 @@ const giftController = new GiftController();
 const requireRole = require("../middlewares/requireRole");
 const UserEnum = require("../enums/UserEnum");
 const giftRoutes = express.Router();
+const { uploadFile } = require("../middlewares/storeFile");
+
 giftRoutes.use(AuthMiddleware);
 
 /**
@@ -46,6 +48,7 @@ giftRoutes.use(AuthMiddleware);
 giftRoutes.post(
   "/",
   requireRole(UserEnum.ADMIN),
+  uploadFile.single("giftCreateImg"),
   giftController.createGiftController
 );
 
@@ -130,13 +133,20 @@ giftRoutes.get("/:id", giftController.getGiftController);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *          multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/UpdateGiftDto'
- *           example:
- *             name: "string"
- *             image: "string"
- *             valuePerUnit: 0
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The new name for the gift
+ *               valuePerUnit:
+ *                 type: number
+ *                 description: The new price for the gift
+ *               giftUpdateImg:
+ *                 type: string
+ *                 format: binary
+ *                 description: The gift's image file
  *     responses:
  *       200:
  *         description: Update a gift successfully
@@ -158,6 +168,7 @@ giftRoutes.get("/:id", giftController.getGiftController);
 giftRoutes.put(
   "/:id",
   requireRole(UserEnum.ADMIN),
+  uploadFile.single("giftUpdateImg"),
   giftController.updateGiftController
 );
 
