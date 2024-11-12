@@ -6,7 +6,6 @@ const UserEnum = require("../enums/UserEnum");
 const memberPackController = new MemberPackController();
 
 const route = express.Router();
-route.use(AuthMiddleware);
 
 /**
  * @swagger
@@ -118,6 +117,7 @@ route.get("/:id", memberPackController.getMemberPackController);
  */
 route.post(
   "/",
+  AuthMiddleware,
   requireRole(UserEnum.ADMIN),
   memberPackController.createMemberPackController
 );
@@ -173,6 +173,7 @@ route.post(
 
 route.put(
   "/:id",
+  AuthMiddleware,
   requireRole(UserEnum.ADMIN),
   memberPackController.updateMemberPackController
 );
@@ -225,6 +226,7 @@ route.put(
 
 route.delete(
   "/:id",
+  AuthMiddleware,
   requireRole(UserEnum.ADMIN),
   memberPackController.deleteMemberPackController
 );

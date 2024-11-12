@@ -58,7 +58,7 @@ class MemberGroupController {
       next(error);
     }
   }
-  async deleteMemberGroupController(req, res) {
+  async deleteMemberGroupController(req, res, next) {
     const requester = req.userId;
     const { ownerId } = req.params;
     console.log("Controller: ", ownerId);
