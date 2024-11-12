@@ -33,21 +33,21 @@ process.env.TZ = "Asia/Ho_Chi_Minh";
 const app = express();
 const server = require("http").createServer(app);
 const uploadIo = require("socket.io")(server, {
-  path:"/socket/upload",
+  path: "/socket/upload",
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
 });
 const chatIo = require("socket.io")(server, {
-  path:"/socket/chat",
+  path: "/socket/chat",
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
 });
 const streamIo = require("socket.io")(server, {
-  path:"/socket/stream",
+  path: "/socket/stream",
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
@@ -86,7 +86,7 @@ app.use(
   cors({
     origin: "*",
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 // Session configuration
@@ -116,7 +116,21 @@ app.get("/", (req, res) => {
 // Log API requests
 app.use((req, res, next) => {
   const logger = getLogger("API");
-  logger.info(req.method + " " + req.path);
+
+  // Capture the start time to calculate response time later
+  const startTime = new Date();
+
+  // Listen for the response to finish so we can log details after it's sent
+  res.on("finish", () => {
+    const duration = new Date() - startTime;
+    const logMessage = `${req.ip} ${req.method} ${
+      req.originalUrl
+    } ${req.protocol.toUpperCase()}/${req.httpVersion} ${res.statusCode} ${
+      res.get("Content-Length") || 0
+    } ${req.get("User-Agent")} ${duration}ms`;
+    logger.info(logMessage);
+  });
+
   next();
 });
 
@@ -143,7 +157,6 @@ app.use("/api/statistics", statisticRoutes);
 app.use("/api/advertisement-packages", packageRoutes);
 
 app.use(auditLogError);
-
 
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;

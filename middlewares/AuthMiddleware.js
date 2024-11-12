@@ -7,14 +7,42 @@ const { match } = require("path-to-regexp");
 const publicRoutes = require("../routes/PublicRoute");
 
 const isUnprotectedRoute = (path, method) => {
+  const pathname = path.split('?')[0];
   return publicRoutes.some((route) => {
     const matchPath = match(route.path, { decode: decodeURIComponent });
-    return matchPath(path) && route.method === method;
+    return matchPath(pathname) && route.method === method;
   });
 };
 
 const AuthMiddleware = async (req, res, next) => {
+
+  // Append requester ID to req for other purposes
   if (isUnprotectedRoute(req.originalUrl, req.method)) {
+    logger.info("Handling unprotected route")
+    const { authorization } = req.headers;
+
+    if (authorization) {
+      try {
+        const token = authorization.split(" ")[1];
+        const { _id, ip } = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        if (mongoose.Types.ObjectId.isValid(_id)) {
+          req.requesterId = _id;
+          logger.info(`Valid token for User ID: ${_id}, IP from token: ${ip}`);
+        } else {
+          logger.warn("Invalid user ID in token.");
+        }
+      } catch (error) {
+        if (error.name === "TokenExpiredError") {
+          logger.warn("Token expired.");
+        } else if (error.name === "JsonWebTokenError") {
+          logger.warn("Invalid token.");
+        } else {
+          logger.error(`Token verification error: ${error.message}`);
+        }
+      }
+    }
+    
     return next();
   }
 
