@@ -48,6 +48,7 @@ const signUpService = async (
       await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
     const user = await connection.userRepository.createUser({
       fullName: fullName,
+      nickName: fullName,
       email: email,
       phoneNumber: formattedPhoneNumber,
       password: hashedPassword,

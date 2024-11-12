@@ -68,10 +68,15 @@ class CreateMemberPackDto {
       );
     }
 
-    if (typeof this.price !== "number" || isNaN(this.price) || this.price < 0) {
+    if (
+      typeof this.price !== "number" ||
+      isNaN(this.price) ||
+      this.price <= 0 ||
+      !Number.isInteger(this.price)
+    ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid field: price must be a valid non-negative number."
+        "Invalid field: price must be a positive integer."
       );
     }
 
@@ -84,7 +89,11 @@ class CreateMemberPackDto {
       );
     }
 
-    if (typeof this.durationNumber !== "number" || this.durationNumber <= 0) {
+    if (
+      typeof this.durationNumber !== "number" ||
+      this.durationNumber <= 0 ||
+      !Number.isInteger(this.durationNumber)
+    ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid field: durationNumber must be a positive integer."

@@ -12,17 +12,28 @@ const getStreamService = async (streamId, requesterId) => {
     const connection = new DatabaseTransaction();
 
     if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid stream ID is required");
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Valid stream ID is required"
+      );
     }
 
     if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid requester ID is required");
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Valid requester ID is required"
+      );
     }
     // If requester is admin, return stream
     if (requesterId) {
-      const requester =  await connection.userRepository.findUserById(requesterId);
+      const requester = await connection.userRepository.findUserById(
+        requesterId
+      );
       if (!requester) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, `Requester not found`);
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          `Requester not found`
+        );
       }
       if (requester.role === 1) {
         const stream = await connection.streamRepository.getStreamRepository(
@@ -85,37 +96,46 @@ const getStreamsService = async (query, requesterId) => {
     const connection = new DatabaseTransaction();
 
     if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid requester ID is required");
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Valid requester ID is required"
+      );
     }
 
     // If requester is admin, return all streams
     if (requesterId) {
-      const requester =  await connection.userRepository.findUserById(requesterId);
+      const requester = await connection.userRepository.findUserById(
+        requesterId
+      );
       if (!requester) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, `Requester not found`);
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          `Requester not found`
+        );
       }
       if (requester.role === 1) {
-        const streams = await connection.streamRepository.getStreamsRepository(query);
+        const streams = await connection.streamRepository.getStreamsRepository(
+          query
+        );
         return streams;
       }
     }
 
     const data = await connection.streamRepository.getStreamsRepository(query);
 
-    let streams = data.streams
-      .map(async (stream) => {
-        const isOwner = stream.user?._id?.toString() === requesterId?.toString();
-        if (isOwner) {
-          return stream; 
+    let streams = data.streams.map(async (stream) => {
+      const isOwner = stream.user?._id?.toString() === requesterId?.toString();
+      if (isOwner) {
+        return stream;
+      }
+
+      let cleanedStream = cleanStreamFromNonOwner(stream);
+
+      if (stream.enumMode === "member") {
+        const isMember = await checkMemberShip(requesterId, stream.user?._id);
+        if (isMember) {
+          return cleanedStream;
         }
-
-        let cleanedStream = cleanStreamFromNonOwner(stream);
-
-        if (stream.enumMode === "member") {
-          const isMember = await checkMemberShip(requesterId, stream.user?._id);
-          if (isMember) {
-            return cleanedStream;
-          }
 
           return updateStreamForNonMembership(
             [cleanedStream],
@@ -127,8 +147,8 @@ const getStreamsService = async (query, requesterId) => {
         cleanedStream.isLiked = requesterId ? (stream.likedBy || []).some( (userId) => userId?.toString() === requesterId?.toString() ) : false; 
         delete cleanedStream.likedBy;
 
-        return cleanedStream; 
-      });
+      return cleanedStream;
+    });
 
     const processedStreams = await Promise.all(streams);
 
@@ -167,7 +187,7 @@ const updateStreamService = async (userId, streamId, updateData) => {
         "You do not have permission to perform this action"
       );
     }
-    
+
     updateData.thumbnailUrl = `${process.env.APP_BASE_URL}/${updateData.thumbnailUrl}`;
 
     const updatedData =
