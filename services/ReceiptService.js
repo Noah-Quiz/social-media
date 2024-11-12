@@ -30,6 +30,12 @@ const getAllUserReceiptService = async (userId) => {
 const deleteReceiptService = async (id) => {
   const connection = new DatabaseTransaction();
   try {
+    const checkReceipt = await connection.receiptRepository.findByIdRepository(
+      id
+    );
+    if (!checkReceipt) {
+      throw new Error("Receipt not found");
+    }
     const receipt = await connection.receiptRepository.softDeleteRepository(id);
     return receipt;
   } catch (error) {
