@@ -15,7 +15,7 @@ const auditLogError = async (err, req, res, next) => {
 
   const logMessage = `
   An error occurred in the application
-  Code: ${err.code || 500}
+  Code: ${err.code || StatusCodeEnums.InternalServerError_500}
   Message: ${err.message}
   File: ${fileName}
   Function: ${functionName}
@@ -26,7 +26,7 @@ const auditLogError = async (err, req, res, next) => {
   try {
     // Save the error to the database
     const errorData = {
-      code: err.code || 500,
+      code: err.code.toString() || "500",
       message: err.message,
       file: fileName,
       function: functionName,
@@ -40,7 +40,13 @@ const auditLogError = async (err, req, res, next) => {
   } catch (error) {
     logger.error(`Error saving error to database: ${error.message}`);
   } finally {
-    return res.status(err.code || 500).json({ message: err.message });
+    if (typeof err.code === "string")
+      return res
+        .status(StatusCodeEnums.InternalServerError_500)
+        .json({ message: err.message });
+    return res
+      .status(err.code || StatusCodeEnums.InternalServerError_500)
+      .json({ message: err.message });
   }
 };
 
