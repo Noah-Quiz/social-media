@@ -67,6 +67,13 @@ const getStreamService = async (streamId, requesterId) => {
       return result.length === 1 ? result[0] : result;
     }
 
+    if (process) {
+      process.isLiked = (process.likedBy || []).some(
+        (userId) => userId?.toString() === requesterId?.toString()
+      );
+      delete process.likedBy;
+    }
+
     return process;
   } catch (error) {
     throw error;
@@ -116,6 +123,9 @@ const getStreamsService = async (query, requesterId) => {
             "member"
           )[0];
         }
+        
+        cleanedStream.isLiked = requesterId ? (stream.likedBy || []).some( (userId) => userId?.toString() === requesterId?.toString() ) : false; 
+        delete cleanedStream.likedBy;
 
         return cleanedStream; 
       });

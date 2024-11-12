@@ -146,7 +146,7 @@ class VideoController {
   async updateAVideoByIdController(req, res, next) {
     try {
       const userId = req.userId;
-      console.log("userId", userId);
+      
       const connection = new DatabaseTransaction();
       const user = await connection.userRepository.getAnUserByIdRepository(
         userId
@@ -278,7 +278,7 @@ class VideoController {
   async getVideosByUserIdController(req, res, next) {
     try {
       const { userId } = req.params;
-      const { requesterId } = req.query;
+      const requesterId = req.requesterId;
 
       const query = {
         size: req.query.size,
@@ -313,7 +313,7 @@ class VideoController {
   async getVideoController(req, res, next) {
     try {
       const { videoId } = req.params;
-      const { requesterId } = req.query;
+      const requesterId = req.requesterId;
 
       const video = await getVideoService(videoId, requesterId);
       // const bunnyVideo = await getBunnyStreamVideoService(
@@ -339,7 +339,7 @@ class VideoController {
         order: req.query.order?.toLowerCase(),
         enumMode: req.query.enumMode?.toLowerCase(),
       };
-      const { requesterId } = req.query;
+      const requesterId = req.requesterId;
 
       const getVideosDto = new GetVideosDto(
         query.size,
@@ -375,7 +375,7 @@ class VideoController {
         order: req.query.order?.toLowerCase(),
         enumMode: req.query.enumMode?.toLowerCase(),
       };
-      const { requesterId } = req.query;
+      const requesterId = req.requesterId;
 
       const getVideosDto = new GetVideosDto(
         query.size,

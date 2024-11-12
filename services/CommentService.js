@@ -122,7 +122,7 @@ const getCommentService = async (commentId, requesterId) => {
       }
     }
 
-    const comment = await connection.commentRepository.getComment(commentId);
+    const comment = await connection.commentRepository.getComment(commentId, requesterId);
     if (!comment) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Comment not found");
     }
@@ -136,9 +136,8 @@ const getCommentService = async (commentId, requesterId) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
 
-    //count number of
     if (comment) {
-      comment.likes = (comment.likeBy || []).length;
+      comment.likesCount = (comment.likeBy || []).length;
       comment.isLiked = (comment.likeBy || []).some(
         (userId) => userId?.toString() === requesterId?.toString()
       );

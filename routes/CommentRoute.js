@@ -5,6 +5,8 @@ const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const router = express.Router();
 const commentController = new CommentController();
 
+router.use(AuthMiddleware);
+
 /**
  * @swagger
  * /api/comments:
@@ -88,7 +90,7 @@ const commentController = new CommentController();
  *                   example: "An unexpected error occurred while creating the comment."
  *
  */
-router.post("/", AuthMiddleware, commentController.createCommentController);
+router.post("/", commentController.createCommentController);
 
 /**
  * @swagger
@@ -108,12 +110,6 @@ router.post("/", AuthMiddleware, commentController.createCommentController);
  *        name: limit
  *        schema:
  *         type: string
- *      - in: query
- *        name: requesterId
- *        required: false
- *        schema:
- *          type: string
- *        description: User ID of requester. If requester is owner and comment is in private video, show comment, otherwise return video not found
  *     responses:
  *      200:
  *       description: Get children comments successfully
@@ -207,12 +203,6 @@ router.get(
  *          enum: [ascending, descending]
  *          default: descending
  *        description: Specify the order of sorting (either ascending or descending)
- *      - in: query
- *        name: requesterId
- *        required: false
- *        schema:
- *          type: string
- *        description: User ID of requester. If requester is owner and comment is in private video, show comment, otherwise return video not found
  *     responses:
  *      200:
  *       description: Get comments of a video successfully
@@ -302,7 +292,7 @@ router.get("/video/:videoId", commentController.getVideoCommentsController);
  *      500:
  *       description: Internal server error
  */
-router.put("/:commentId/like", AuthMiddleware, commentController.toggleLikeCommentController);
+router.put("/:commentId/like", commentController.toggleLikeCommentController);
 
 /**
  * @swagger
@@ -318,12 +308,6 @@ router.put("/:commentId/like", AuthMiddleware, commentController.toggleLikeComme
  *        schema:
  *         type: string
  *         required: true
- *      - in: query
- *        name: requesterId
- *        required: false
- *        schema:
- *          type: string
- *        description: User ID of requester. If requester is owner and comment is in private video, show comment, otherwise return video not found
  *     responses:
  *      200:
  *       description: Get comment successfully
@@ -400,7 +384,7 @@ router.get("/:commentId", commentController.getCommentController);
  *      500:
  *       description: Internal server error
  */
-router.put("/:commentId", AuthMiddleware, commentController.updateCommentController);
+router.put("/:commentId", commentController.updateCommentController);
 
 /**
  * @swagger
@@ -439,6 +423,6 @@ router.put("/:commentId", AuthMiddleware, commentController.updateCommentControl
  *      500:
  *       description: Internal server error
  */
-router.delete("/:commentId", AuthMiddleware, commentController.deleteCommentController);
+router.delete("/:commentId", commentController.deleteCommentController);
 
 module.exports = router;

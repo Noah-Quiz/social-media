@@ -68,7 +68,7 @@ class VideoRepository {
     }
   }
 
-  async getVideoRepository(videoId) {
+  async getVideoRepository(videoId, requesterId) {
     try {
       const result = await Video.aggregate([
         {
@@ -106,8 +106,29 @@ class VideoRepository {
           },
         },
         {
+          $lookup: {
+            from: "videolikehistories",
+            let: { videoId: "$_id", requester: new mongoose.Types.ObjectId(requesterId) },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$video", "$$videoId"] },
+                      { $eq: ["$user", "$$requester"] },
+                    ],
+                  },
+                },
+              },
+              { $project: { _id: 1 } },
+            ],
+            as: "userLike",
+          },
+        },
+        {
           $addFields: {
             likesCount: { $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0] },
+            isLiked: { $gt: [{ $size: "$userLike" }, 0] }, // True if user has liked the video
           },
         },
         {
@@ -124,6 +145,7 @@ class VideoRepository {
             lastUpdated: 1,
             numOfViews: 1,
             likesCount: 1,
+            isLiked: 1,
             user: {
               _id: 1,
               fullName: "$user.fullName",
@@ -143,13 +165,14 @@ class VideoRepository {
             },
           },
         },
-        { $project: { categoryIds: 0, isDeleted: 0, __v: 0 } }, // Optionally hide categoryIds
+        { $project: { categoryIds: 0, isDeleted: 0, __v: 0 } },
       ]);
       return result[0] || null;
     } catch (error) {
       throw new Error(`Error fetching video: ${error.message}`);
     }
   }
+  
 
   async deleteVideoRepository(id, session) {
     try {
@@ -164,12 +187,12 @@ class VideoRepository {
     }
   }
 
-  async getVideosByUserIdRepository(userId, query) {
+  async getVideosByUserIdRepository(userId, query, requesterId) {
     try {
       const page = query.page || 1;
       const size = parseInt(query.size, 10) || 10;
       const skip = (page - 1) * size;
-
+  
       // Create search query
       const searchQuery = {
         isDeleted: false,
@@ -181,26 +204,46 @@ class VideoRepository {
       if (query.enumMode) {
         searchQuery.enumMode = query.enumMode;
       }
-
+  
       let sortField = "dateCreated"; // Default sort field
       let sortOrder = query.order === "ascending" ? 1 : -1;
-
+  
       if (query.sortBy === "like") sortField = "likesCount";
       else if (query.sortBy === "view") sortField = "currentViewCount";
       else if (query.sortBy === "date") sortField = "dateCreated";
-
+  
       const totalVideos = await Video.countDocuments(searchQuery);
-
+  
+      const lookupStage = requesterId
+        ? {
+            $lookup: {
+              from: "videolikehistories",
+              let: { videoId: "$_id", requester: new mongoose.Types.ObjectId(requesterId) },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$video", "$$videoId"] },
+                        { $eq: ["$user", "$$requester"] },
+                      ],
+                    },
+                  },
+                },
+                { $project: { _id: 1 } },
+              ],
+              as: "userLike",
+            },
+          }
+        : {
+            $addFields: {
+              userLike: [],
+            },
+          };
+  
       const videos = await Video.aggregate([
         {
-          $match: searchQuery
-        },
-        {
-          $addFields: {
-            length: {
-              $size: { $ifNull: ["$likedBy", []] },
-            },
-          },
+          $match: searchQuery,
         },
         {
           $lookup: {
@@ -230,11 +273,11 @@ class VideoRepository {
             as: "likesInfo",
           },
         },
+        lookupStage,
         {
           $addFields: {
-            "likesCount": {
-              $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0],
-            },
+            likesCount: { $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0] },
+            isLiked: { $gt: [{ $size: "$userLike" }, 0] }, // True if user has liked the video
           },
         },
         {
@@ -249,6 +292,7 @@ class VideoRepository {
             lastUpdated: 1,
             numOfViews: 1,
             likesCount: 1,
+            isLiked: 1,
             user: {
               _id: 1,
               fullName: "$user.fullName",
@@ -272,7 +316,7 @@ class VideoRepository {
         { $skip: skip },
         { $limit: Number(size) },
       ]);
-
+  
       return {
         videos,
         total: totalVideos,
@@ -280,11 +324,10 @@ class VideoRepository {
         totalPages: Math.ceil(totalVideos / Number(size)),
       };
     } catch (error) {
-      throw new Error(
-        `Error when fetch all videos by user ID: ${error.message}`
-      );
+      throw new Error(`Error when fetching all videos by user ID: ${error.message}`);
     }
   }
+  
 
   //get for view and like increment => no adjust
   async getVideoByIdRepository(videoId) {
@@ -309,7 +352,7 @@ class VideoRepository {
   
       // Extract videoIds from playlist
       const videoIds = playlist.videoIds;
-      console.log(videoIds)
+
       if (!videoIds || videoIds.length === 0) {
         return {
           videos: [],
@@ -357,13 +400,6 @@ class VideoRepository {
           $match: searchQuery,
         },
         {
-          $addFields: {
-            length: {
-              $size: { $ifNull: ["$likedBy", []] },
-            },
-          },
-        },
-        {
           $lookup: {
             from: "users",
             localField: "userId",
@@ -392,10 +428,29 @@ class VideoRepository {
           },
         },
         {
+          $lookup: {
+            from: "videolikehistories",
+            let: { videoId: "$_id", requester: new mongoose.Types.ObjectId(requesterId) },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$video", "$$videoId"] },
+                      { $eq: ["$user", "$$requester"] },
+                    ],
+                  },
+                },
+              },
+              { $project: { _id: 1 } },
+            ],
+            as: "userLike",
+          },
+        },
+        {
           $addFields: {
-            "likesCount": {
-              $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0],
-            },
+            likesCount: { $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0] },
+            isLiked: { $gt: [{ $size: "$userLike" }, 0] }, // True if user has liked the video
           },
         },
         {
@@ -447,7 +502,7 @@ class VideoRepository {
     }
   }
 
-  async getAllVideosRepository(query) {
+  async getAllVideosRepository(query, requesterId) {
     try {
       const page = query.page || 1;
       const size = parseInt(query.size, 10) || 10;
@@ -511,10 +566,29 @@ class VideoRepository {
           },
         },
         {
+          $lookup: {
+            from: "videolikehistories",
+            let: { videoId: "$_id", requester: new mongoose.Types.ObjectId(requesterId) },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$video", "$$videoId"] },
+                      { $eq: ["$user", "$$requester"] },
+                    ],
+                  },
+                },
+              },
+              { $project: { _id: 1 } },
+            ],
+            as: "userLike",
+          },
+        },
+        {
           $addFields: {
-            "likesCount": {
-              $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0],
-            },
+            likesCount: { $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0] },
+            isLiked: { $gt: [{ $size: "$userLike" }, 0] }, // True if user has liked the video
           },
         },
         {
@@ -529,6 +603,7 @@ class VideoRepository {
             lastUpdated: 1,
             numOfViews: 1,
             likesCount: 1,
+            isLiked: 1,
             user: {
               _id: 1,
               fullName: "$user.fullName",
@@ -678,10 +753,31 @@ class VideoRepository {
           },
         },
         {
+          $lookup: {
+            from: "videolikehistories",
+            let: { videoId: "$_id", requester: new mongoose.Types.ObjectId(requesterId) },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$video", "$$videoId"] },
+                      { $eq: ["$user", "$$requester"] },
+                    ],
+                  },
+                },
+              },
+              { $project: { _id: 1 } },
+            ],
+            as: "userLike",
+          },
+        },
+        {
           $addFields: {
             "videoDetails.likesCount": {
               $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0],
             },
+            isLiked: { $gt: [{ $size: "$userLike" }, 0] }, // True if user has liked the video
           },
         },
         {

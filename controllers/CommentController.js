@@ -50,7 +50,7 @@ class CommentController {
 
   async getCommentController(req, res, next) {
     const { commentId } = req.params;
-    const { requesterId } = req.query;
+    const requesterId = req.requesterId;
 
     try {
       const comment = await getCommentService(commentId, requesterId);
@@ -66,7 +66,7 @@ class CommentController {
   async getVideoCommentsController(req, res, next) {
     try {
       const { videoId } = req.params;
-      const { requesterId } = req.query;
+      const requesterId = req.requesterId;
 
       const query = {
         sortBy: req.query.sortBy,
@@ -95,6 +95,7 @@ class CommentController {
       next(error);
     }
   }
+
   async deleteCommentController(req, res, next) {
     const { commentId } = req.params;
     const userId = req.userId;
@@ -153,13 +154,10 @@ class CommentController {
   async getChildrenCommentsController(req, res, next) {
     try {
       const { commentId } = req.params;
-      const { limit, requesterId } = req.query;
-
-      const getChildrenCommentsDto = new GetChildrenCommentsDto(
-        commentId,
-        limit,
-        requesterId
-      );
+      const { limit } = req.query;
+      const requesterId = req.requesterId;
+  
+      const getChildrenCommentsDto = new GetChildrenCommentsDto(commentId, limit, requesterId);
       await getChildrenCommentsDto.validate();
 
       const { comments, maxLevel } = await getChildrenCommentsService(
