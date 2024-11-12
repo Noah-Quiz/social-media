@@ -40,6 +40,11 @@ const updateMemberPackService = async (
 ) => {
   const connection = new DatabaseTransaction();
   try {
+    const checkMemberPack =
+      await connection.memberPackRepository.findMemberPackByName(name);
+    if (checkMemberPack) {
+      throw new Error("This name has been taken");
+    }
     const memberPack =
       await connection.memberPackRepository.updateMemberPackRepository(
         id,

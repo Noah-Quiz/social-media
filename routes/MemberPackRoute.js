@@ -39,7 +39,7 @@ const route = express.Router();
  *       404:
  *         description: No MemberPack found
  */
-route.get("/", memberPackController.getAllMemberPackController);
+route.get("/", AuthMiddleware, memberPackController.getAllMemberPackController);
 /**
  * @swagger
  * /api/member-pack/{id}:
@@ -72,7 +72,7 @@ route.get("/", memberPackController.getAllMemberPackController);
  *         description: Server error
  */
 
-route.get("/:id", memberPackController.getMemberPackController);
+route.get("/:id", AuthMiddleware, memberPackController.getMemberPackController);
 
 /**
  * @swagger
