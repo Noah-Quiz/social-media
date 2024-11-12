@@ -16,7 +16,7 @@ const CoreException = require("../../exceptions/CoreException");
  *         name:
  *           type: string
  *           description: The gift's name.
- *         image:
+ *         giftCreateImg:
  *           type: string
  *           description: The gift's image.
  *         valuePerUnit:
