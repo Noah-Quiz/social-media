@@ -3,15 +3,18 @@ const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
 const createCategoryService = async (categoryData) => {
-  try {
-    const connection = new DatabaseTransaction();
+  const connection = new DatabaseTransaction();
 
+  try {
     const session = await connection.startTransaction();
     const checkCate = await connection.categoryRepository.getCategoryByName(
       categoryData.name
     );
     if (checkCate) {
-      throw new CoreException("Category name has been taken");
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Category name has been taken"
+      );
     }
     categoryData.imageUrl = `${process.env.APP_BASE_URL}/${categoryData.imageUrl}`;
     const category =
@@ -60,9 +63,8 @@ const getAllCategoryService = async (query) => {
 };
 
 const updateCategoryService = async (categoryId, categoryData) => {
+  const connection = new DatabaseTransaction();
   try {
-    const connection = new DatabaseTransaction();
-
     const category = await connection.categoryRepository.getCategoryRepository(
       categoryId
     );
@@ -77,7 +79,10 @@ const updateCategoryService = async (categoryId, categoryData) => {
       categoryData.name
     );
     if (checkCate) {
-      throw new CoreException("Category name has been taken");
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Category name has been taken"
+      );
     }
 
     if (categoryData.imageUrl)
