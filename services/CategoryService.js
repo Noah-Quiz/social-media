@@ -7,7 +7,12 @@ const createCategoryService = async (categoryData) => {
     const connection = new DatabaseTransaction();
 
     const session = await connection.startTransaction();
-
+    const checkCate = await connection.categoryRepository.getCategoryByName(
+      categoryData.name
+    );
+    if (checkCate) {
+      throw new CoreException("Category name has been taken");
+    }
     categoryData.imageUrl = `${process.env.APP_BASE_URL}/${categoryData.imageUrl}`;
     const category =
       await connection.categoryRepository.createCategoryRepository(
@@ -66,6 +71,13 @@ const updateCategoryService = async (categoryId, categoryData) => {
         StatusCodeEnums.NotFound_404,
         "Category not found"
       );
+    }
+
+    const checkCate = await connection.categoryRepository.getCategoryByName(
+      categoryData.name
+    );
+    if (checkCate) {
+      throw new CoreException("Category name has been taken");
     }
 
     if (categoryData.imageUrl)
