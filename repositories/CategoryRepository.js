@@ -15,7 +15,14 @@ class CategoryRepository {
       throw new Error(`Error creating category: ${error.message}`);
     }
   }
-
+  async getCategoryByName(name) {
+    try {
+      const category = await Category.findOne({ name: name, isDeleted: false });
+      return category;
+    } catch (error) {
+      throw new Error(`Error getting category by name: ${error.message}`);
+    }
+  }
   async getCategoryRepository(id) {
     try {
       const category = await Category.findOne({ _id: id, isDeleted: false });
