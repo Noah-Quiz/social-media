@@ -20,7 +20,7 @@ class MyPlaylistController {
   // get a playlist
   async getAPlaylistController(req, res, next) {
     const { playlistId } = req.params;
-    const { requesterId } = req.query;
+    const requesterId = req.requesterId;
 
     try {
       const getPlaylistByIdDto = new GetPlaylistByIdDto(
@@ -41,7 +41,8 @@ class MyPlaylistController {
   async getAllMyPlaylistsController(req, res, next) {
     try {
       const { userId } = req.params;
-      const { requesterId, enumMode } = req.query;
+      const { enumMode } = req.query;
+      const requesterId = req.requesterId;
 
       const query = { enumMode };
 

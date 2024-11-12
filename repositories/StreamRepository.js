@@ -61,6 +61,7 @@ class StreamRepository {
         {
           $project: {
             _id: 1,
+            userId: 1,
             title: 1,
             description: 1,
             thumbnailUrl: 1,
@@ -69,6 +70,7 @@ class StreamRepository {
             currentViewCount: 1,
             peakViewCount: 1,
             likesCount: 1,
+            likedBy: 1,
             uid: 1,
             rtmps: 1,
             rtmpsPlayback: 1,
@@ -197,6 +199,7 @@ class StreamRepository {
         {
           $project: {
             _id: 1,
+            userId: 1,
             title: 1,
             description: 1,
             thumbnailUrl: 1,
@@ -205,6 +208,7 @@ class StreamRepository {
             currentViewCount: 1,
             peakViewCount: 1,
             likesCount: 1,
+            likedBy: 1,
             status: 1,
             enumMode: 1,
             dateCreated: 1,

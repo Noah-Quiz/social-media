@@ -6,6 +6,8 @@ const myPlaylistController = new MyPlaylistController();
 
 const myPlaylistRoutes = express.Router();
 
+myPlaylistRoutes.use(AuthMiddleware);
+
 /**
  * @swagger
  * /api/my-playlists:
@@ -108,7 +110,6 @@ const myPlaylistRoutes = express.Router();
 
 myPlaylistRoutes.post(
   "/",
-  AuthMiddleware,
   uploadFile.single("playlistCreate"),
   myPlaylistController.createAPlaylist
 );
@@ -215,7 +216,6 @@ myPlaylistRoutes.post(
 
 myPlaylistRoutes.patch(
   "/:playlistId",
-  AuthMiddleware,
   uploadFile.single("playlistUpdate"),
   myPlaylistController.updatePlaylistController
 );
@@ -266,7 +266,6 @@ myPlaylistRoutes.patch(
  */
 myPlaylistRoutes.delete(
   "/:playlistId",
-  AuthMiddleware,
   myPlaylistController.deletePlaylist
 );
 
@@ -282,12 +281,6 @@ myPlaylistRoutes.delete(
  *        schema:
  *         type: string
  *         required: true
- *      - in: query
- *        name: requesterId
- *        required: false
- *        schema:
- *          type: string
- *        description: User ID of requester. If requester is owner, show private playlist.
  *     responses:
  *       200:
  *         description: Get playlist successfully
@@ -360,12 +353,6 @@ myPlaylistRoutes.get(
  *        schema:
  *         type: string
  *         required: true
- *      - in: query
- *        name: requesterId
- *        required: false
- *        schema:
- *          type: string
- *        description: User ID of requester. If requester is owner, show private playlist.
  *      - in: query
  *        name: enumMode
  *        required: false
@@ -488,7 +475,6 @@ myPlaylistRoutes.get(
 
 myPlaylistRoutes.put(
   "/:playlistId/add-video",
-  AuthMiddleware,
   myPlaylistController.addToPlaylistController
 );
 
@@ -551,7 +537,7 @@ myPlaylistRoutes.put(
 
 myPlaylistRoutes.put(
   "/:playlistId/remove-video",
-  AuthMiddleware,
   myPlaylistController.removeFromPlaylist
 );
+
 module.exports = myPlaylistRoutes;

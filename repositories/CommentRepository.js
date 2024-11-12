@@ -43,7 +43,8 @@ class CommentRepository {
     }
   }
 
-  async getComment(id) {
+  async getComment(id, requesterId) {
+    console.log(requesterId)
     try {
       const comment = await Comment.aggregate([
         {
@@ -87,6 +88,7 @@ class CommentRepository {
             },
             level: 1,
             videoId: 1,
+            likesCount: { $size: "$likeBy" },
             likeBy: 1,
           },
         },
@@ -157,9 +159,7 @@ class CommentRepository {
             level: 1,
             videoId: 1,
             likesCount: { $size: "$likeBy" },
-            isLiked: {
-              $in: [new mongoose.Types.ObjectId(requesterId), "$likeBy"],
-            },
+            likeBy: 1,
           },
         },
         {

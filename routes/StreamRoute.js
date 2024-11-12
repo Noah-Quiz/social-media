@@ -7,7 +7,7 @@ const checkUserSuspended = require("../middlewares/checkUserSuspended");
 const streamController = new StreamController();
 const streamRoutes = express.Router();
 
-
+streamRoutes.use(AuthMiddleware);
 
 /**
  * @swagger
@@ -241,12 +241,6 @@ streamRoutes.get(
  *           enum: [date, view, like]
  *           default: date
  *         description: Filter for sort criteria (default date)
- *       - in: query
- *         name: requesterId
- *         required: false
- *         schema:
- *           type: string
- *         description: User ID of requester. If requester is owner, show stream in more detail. If the stream is of type member, hides critical information.
  *     responses:
  *       200:
  *         description: Get streams successfully
@@ -479,12 +473,6 @@ streamRoutes.delete(
  *        required: true
  *        schema:
  *         type: string
- *      - in: query
- *        name: requesterId
- *        required: false
- *        schema:
- *         type: string
- *        description: User ID of requester. If requester is the owner, show detailed stream info. If the stream is of type member, hides critical information.
  *     responses:
  *      200:
  *       description: Get stream successfully

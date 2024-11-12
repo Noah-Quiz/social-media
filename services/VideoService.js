@@ -191,7 +191,7 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
     const user = await connection.userRepository.getAnUserByIdRepository(
       userId
     );
-    console.log("User from service", user);
+    
     if (user === null) {
       throw new CoreException(StatusCodeEnums.NotFound_404, `User not found`);
     }
@@ -277,9 +277,9 @@ const getVideoService = async (videoId, requesterId) => {
       }
     }
 
-    const video = await connection.videoRepository.getVideoRepository(videoId);
+    const video = await connection.videoRepository.getVideoRepository(videoId, requesterId);
     if (!video) {
-      throw new Error(`Video not found`);
+      throw new CoreException(StatusCodeEnums.NotFound_404, `Video not found`);
     }
 
     if (video.enumMode === "private") {
@@ -350,7 +350,7 @@ const getVideosService = async (query, requesterId) => {
       }
       if (requester.role === UserEnum.ADMIN) {
         let { videos, total, page, totalPages } =
-          await connection.videoRepository.getAllVideosRepository(query);
+          await connection.videoRepository.getAllVideosRepository(query, requesterId);
         return { videos, total, page, totalPages };
       }
     }
@@ -367,7 +367,7 @@ const getVideosService = async (query, requesterId) => {
     }
 
     const { videos, total, page, totalPages } =
-      await connection.videoRepository.getAllVideosRepository(query);
+      await connection.videoRepository.getAllVideosRepository(query, requesterId);
 
     let filteredVideos = videos.map(async (video) => {
       const isOwner = video.user?._id?.toString() === requesterId?.toString();
