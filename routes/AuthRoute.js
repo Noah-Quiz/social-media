@@ -90,28 +90,6 @@ authRoutes.get(
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
-/**
- * @swagger
- * /api/auth/google/callback:
- *   get:
- *     summary: Receive Google OAuth2 callback
- *     description: After the user logs in with Google, Google will redirect the user back to this endpoint. This endpoint will then authenticate the user and log them in.
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/LoginGoogleDto'
- *     responses: 
- *      200:
- *       description: Login with Google successfully
- *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
- *
- */
 authRoutes.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
@@ -166,28 +144,6 @@ authRoutes.post(
  */
 authRoutes.get("/apple", passport.authenticate("apple"));
 
-/**
- * @swagger
- * /api/auth/apple/callback:
- *   post:
- *     summary: Receive Apple OAuth2 callback
- *     description: After the user logs in with Apple, Apple will redirect the user back to this endpoint. This endpoint will then authenticate the user and log them in.
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/LoginAppleDto'
- *     responses:
- *      200:
- *       description: Login with Apple successfully
- *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
- *
- */
 authRoutes.post(
   "/apple/callback",
   express.urlencoded({ extended: true }),
