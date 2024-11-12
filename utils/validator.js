@@ -97,7 +97,13 @@ const contentModeration = (content, type) => {
   }
 };
 
-const checkSpecialCharacters = (content) => {};
+const hasSpecialCharacters = (content) => {
+  const regex = /^[a-zA-Z0-9\s]+$/;
+  if (regex.test(content)) {
+    return false;
+  }
+  return true;
+};
 module.exports = {
   validNickName,
   validMongooseObjectId,
@@ -106,4 +112,5 @@ module.exports = {
   validPassword,
   validPhoneNumber,
   contentModeration,
+  hasSpecialCharacters,
 };

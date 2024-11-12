@@ -20,9 +20,7 @@ class CategoryController {
       let imageUrl = req.file ? req.file.path : null;
       const createCategoryDto = new CreateCategoryDto(name);
       await createCategoryDto.validate();
-
       const categoryData = { name, imageUrl };
-
       const result = await createCategoryService(categoryData);
 
       if (req.file) {
