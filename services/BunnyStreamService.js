@@ -7,7 +7,7 @@ const {
   extractFilenameFromPath,
   deleteFolder,
 } = require("../middlewares/storeFile");
-const logger = getLogger("BUNNY_STREAM_SERVICE");
+const logger = getLogger("BUNNY_STREAM");
 const eventEmitter = require("../socket/events");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
