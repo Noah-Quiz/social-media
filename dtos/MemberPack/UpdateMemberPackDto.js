@@ -69,11 +69,14 @@ class UpdateMemberPackDto {
 
     if (
       this.price !== undefined &&
-      (typeof this.price !== "number" || isNaN(this.price) || this.price < 0)
+      (typeof this.price !== "number" ||
+        isNaN(this.price) ||
+        this.price <= 0 ||
+        !Number.isInteger(this.price))
     ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid field: price must be a valid non-negative number."
+        "Invalid field: price must be a positive integer."
       );
     }
 
@@ -91,7 +94,9 @@ class UpdateMemberPackDto {
 
     if (
       this.durationNumber !== undefined &&
-      (typeof this.durationNumber !== "number" || this.durationNumber <= 0)
+      (typeof this.durationNumber !== "number" ||
+        this.durationNumber <= 0 ||
+        !Number.isInteger(this.durationNumber))
     ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
