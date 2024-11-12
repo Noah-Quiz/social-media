@@ -1,3 +1,4 @@
+require("dotenv").config();
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
 const createGiftService = async (name, image, pricePerUnit) => {
@@ -9,7 +10,7 @@ const createGiftService = async (name, image, pricePerUnit) => {
     }
     const gift = await connection.giftRepository.createGiftRepository({
       name: name,
-      image: image,
+      image: `${process.env.APP_BASE_URL}/${image}`,
       valuePerUnit: price,
     });
     return gift;
