@@ -9,6 +9,7 @@ const {
 const CreateGiftDto = require("../dtos/Gift/CreateGiftDto");
 const UpdateGiftDto = require("../dtos/Gift/UpdateGiftDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 
 class GiftController {
   async createGiftController(req, res, next) {
