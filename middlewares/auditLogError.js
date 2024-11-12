@@ -26,7 +26,7 @@ const auditLogError = async (err, req, res, next) => {
   try {
     // Save the error to the database
     const errorData = {
-      code: err.code.toString() || "500",
+      code: err.code?.toString() || "500",
       message: err.message,
       file: fileName,
       function: functionName,

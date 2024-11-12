@@ -28,7 +28,7 @@ module.exports = (io) => {
     logger.info(`User connected: ${socket.id}`);
 
     // Handle joining a livestream chat
-    socket.on("join_livestream_chat", async ({streamId}) => {
+    socket.on("join_livestream_chat", async ({ streamId }) => {
       try {
         socket.join(streamId);
         userStreams.add(streamId);
