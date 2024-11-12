@@ -43,7 +43,11 @@ module.exports = (io) => {
       // Handle sending messages in rooms
       socket.on("send_message", async ({ roomId, userId, message }) => {
         try {
-          const newMessage = await createAMessageService(userId, roomId, message);
+          const newMessage = await createAMessageService(
+            userId,
+            roomId,
+            message
+          );
           const user = await getUserByIdService(userId);
           io.to(roomId).emit("receive_message", {
             id: newMessage._id,
@@ -60,36 +64,38 @@ module.exports = (io) => {
         }
       });
 
-    // Handle updating a message
-    socket.on(
-      "update_message",
-      async ({ userId, messageId, roomId, newMessage }) => {
-        console.log(roomId);
-        try {
-          // Update the message in the database
-          const updatedMessage = await updateMessageService(
-            userId,
-            messageId,
-            newMessage
-          );
+      // Handle updating a message
+      socket.on(
+        "update_message",
+        async ({ userId, messageId, roomId, newMessage }) => {
+          console.log(roomId);
+          try {
+            // Update the message in the database
+            const updatedMessage = await updateMessageService(
+              userId,
+              messageId,
+              newMessage
+            );
 
-          if (updatedMessage) {
-            io.to(roomId).emit("message_updated", {
-              id: messageId,
-              message: newMessage,
+            if (updatedMessage) {
+              io.to(roomId).emit("message_updated", {
+                id: messageId,
+                message: newMessage,
+              });
+              logger.info(`Message ${messageId} updated in stream ${roomId}`);
+            } else {
+              socket.emit("update_message_error", {
+                error: "Message not found",
+              });
+            }
+          } catch (error) {
+            socket.emit("update_message_error", {
+              error: "Failed to update message",
             });
-            logger.info(`Message ${messageId} updated in stream ${roomId}`);
-          } else {
-            socket.emit("update_message_error", { error: "Message not found" });
+            logger.error("Error updating message", error);
           }
-        } catch (error) {
-          socket.emit("update_message_error", {
-            error: "Failed to update message",
-          });
-          logger.error("Error updating message", error);
         }
-      }
-    );
+      );
     }
 
     // Handle leaving a livestream
