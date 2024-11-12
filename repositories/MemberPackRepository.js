@@ -93,6 +93,17 @@ class MemberPackRepository {
       throw new Error("Error deleting member pack: " + error.message);
     }
   }
+  async findMemberPackByName(name) {
+    try {
+      const memberPack = await MemberPack.findOne({
+        name: name,
+        isDeleted: false,
+      });
+      return memberPack;
+    } catch (error) {
+      throw new Error("Error finding member pack by name: " + error.message);
+    }
+  }
 }
 
 module.exports = MemberPackRepository;

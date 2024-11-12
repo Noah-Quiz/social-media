@@ -26,39 +26,49 @@ const publicRoutes = [
   // Video
   {
     path: "/api/videos",
-    method: "GET"
+    method: "GET",
   },
   {
     path: "/api/videos/:videoId",
-    method: "GET"
+    method: "GET",
   },
   {
     path: "/api/videos/user/:userId",
-    method: "GET"
+    method: "GET",
   },
   {
     path: "/api/videos/my-playlist/:playlistId",
-    method: "GET"
+    method: "GET",
   },
 
   // Stream
   {
     path: "/api/streams",
-    method: "GET"
+    method: "GET",
   },
   {
     path: "/api/streams/:streamId",
-    method: "GET"
+    method: "GET",
   },
 
   // Playlist
   {
     path: "/api/my-playlist/:playlistId",
-    method: "GET"
+    method: "GET",
   },
   {
     path: "/api/my-playlist/user/:userId",
-    method: "GET"
+    method: "GET",
+  },
+
+  //MemberPack
+  {
+    path: "/api/member-packs/",
+    method: "GET",
+  },
+  {
+    path: "/api/member-packs/:id",
+    method: "GET",
   },
 ];
 
