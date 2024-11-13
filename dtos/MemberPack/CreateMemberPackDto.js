@@ -54,10 +54,15 @@ class CreateMemberPackDto {
   async validate() {
     const allowedDurationUnits = ["DAY", "MONTH", "YEAR"];
 
-    if (!this.name || typeof this.name !== "string") {
+    if (
+      !this.name ||
+      typeof this.name !== "string" ||
+      this.name.length < 1 ||
+      this.name.length > 50
+    ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid field: name must be a non-empty string."
+        "Invalid field: name must be a non-empty string with a length between 1 and 50 characters."
       );
     }
 

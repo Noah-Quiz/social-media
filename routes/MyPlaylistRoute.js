@@ -6,6 +6,8 @@ const myPlaylistController = new MyPlaylistController();
 
 const myPlaylistRoutes = express.Router();
 
+myPlaylistRoutes.use(AuthMiddleware);
+
 /**
  * @swagger
  * /api/my-playlists:
@@ -108,7 +110,6 @@ const myPlaylistRoutes = express.Router();
 
 myPlaylistRoutes.post(
   "/",
-  AuthMiddleware,
   uploadFile.single("playlistCreate"),
   myPlaylistController.createAPlaylist
 );
@@ -201,6 +202,16 @@ myPlaylistRoutes.post(
  *                   items:
  *                     type: string
  *                   example: ["'name' is required."]
+ *       404:
+ *         description: Playlist not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Playlist not found"
  *       500:
  *         description: Internal server error
  *         content:
@@ -215,7 +226,6 @@ myPlaylistRoutes.post(
 
 myPlaylistRoutes.patch(
   "/:playlistId",
-  AuthMiddleware,
   uploadFile.single("playlistUpdate"),
   myPlaylistController.updatePlaylistController
 );
@@ -252,6 +262,15 @@ myPlaylistRoutes.patch(
  *               properties:
  *                 message:
  *                   type: string
+ *      404:
+ *       description: Playlist not found
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *                   example: "Playlist not found"
  *      500:
  *       description: Internal server error
@@ -266,7 +285,6 @@ myPlaylistRoutes.patch(
  */
 myPlaylistRoutes.delete(
   "/:playlistId",
-  AuthMiddleware,
   myPlaylistController.deletePlaylist
 );
 
@@ -277,17 +295,11 @@ myPlaylistRoutes.delete(
  *     summary: Get a playlist by ID.
  *     tags: [MyPlaylists]
  *     parameters:
- *      - in: path
- *        name: playlistId
- *        schema:
- *         type: string
+ *       - in: path
+ *         name: playlistId
+ *         schema:
+ *           type: string
  *         required: true
- *      - in: query
- *        name: requesterId
- *        required: false
- *        schema:
- *          type: string
- *        description: User ID of requester. If requester is owner, show private playlist.
  *     responses:
  *       200:
  *         description: Get playlist successfully
@@ -298,30 +310,52 @@ myPlaylistRoutes.delete(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Get Playlist successfully."
- *                 data:
+ *                   example: "Success"
+ *                 playlist:
  *                   type: object
  *                   properties:
  *                     _id:
  *                       type: string
- *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                       example: "672ce591f44f08d504378c77"
  *                     playlistName:
  *                       type: string
- *                       example: "Electronics"
- *                     userId:
- *                      type: string
- *                      example: "607d1b2f9f1b2c0017f9d2e5"
+ *                       example: "test"
+ *                     enumMode:
+ *                       type: string
+ *                       example: "public"
+ *                     thumbnail:
+ *                       type: string
+ *                       example: "http://localhost:4000/assets\\images\\playlist\\create\\33976_1730995601116.png"
  *                     videoIds:
- *                      type: array
- *                      items:
- *                        type: string
- *                      example: ["607d1b2f9f1b2c0017f9d2e5", "607d1b2f9f1b2c0017f9d2e5"]
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: ["672ade48eff8571ede64d957"]
  *                     dateCreated:
  *                       type: string
- *                       example: "2024-10-25T02:29:35.346+00:00"
+ *                       example: "2024-11-07T16:06:41.136Z"
  *                     lastUpdated:
  *                       type: string
- *                       example: "2024-10-25T02:29:35.346+00:00"
+ *                       example: "2024-11-12T14:42:30.106Z"
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         _id:
+ *                           type: string
+ *                           example: "66e14623eec8efa60b44d7bd"
+ *                         fullName:
+ *                           type: string
+ *                           example: "Tam Tam"
+ *                         nickName:
+ *                           type: string
+ *                           example: ""
+ *                         avatar:
+ *                           type: string
+ *                           nullable: true
+ *                           example: null
+ *                     videosCount:
+ *                       type: integer
+ *                       example: 1
  *       400:
  *         description: Bad request
  *         content:
@@ -331,7 +365,16 @@ myPlaylistRoutes.delete(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Not found"
+ *       404:
+ *         description: Playlist not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Playlist not found"
  *       500:
  *         description: Internal server error
  *         content:
@@ -341,7 +384,6 @@ myPlaylistRoutes.delete(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "An unexpected error occurred while retrieve the playlist."
  */
 myPlaylistRoutes.get(
   "/:playlistId",
@@ -355,54 +397,101 @@ myPlaylistRoutes.get(
  *     summary: Get all playlists of a user by userId.
  *     tags: [MyPlaylists]
  *     parameters:
- *      - in: path
- *        name: userId
- *        schema:
- *         type: string
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
  *         required: true
- *      - in: query
- *        name: requesterId
- *        required: false
- *        schema:
- *          type: string
- *        description: User ID of requester. If requester is owner, show private playlist.
- *      - in: query
- *        name: enumMode
- *        required: false
- *        schema:
- *          type: string
- *          enum: [private, public]
- *        description: Type of playlist
+ *       - in: query
+ *         name: enumMode
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [private, public]
+ *         description: Type of playlist
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: The number of playlists to return per page (minimum is 1)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: The page number to retrieve (minimum is 1)
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *           default: test
+ *         description: Search by playlist name
  *     responses:
  *       200:
  *         description: Get all playlists successfully
  *         content:
- *          application/json:
- *            schema:
- *               type: array
- *               items:
- *                type: object
- *                properties:
- *                 _id:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
  *                   type: string
- *                   example: "607d1b2f9f1b2c0017f9d2e5"
- *                 playlistName:
- *                   type: string
- *                   example: "Electronics"
- *                 userId:
- *                  type: string
- *                  example: "607d1b2f9f1b2c0017f9d2e5"
- *                 videoIds:
- *                  type: array
- *                  items:
- *                    type: string
- *                  example: ["607d1b2f9f1b2c0017f9d2e5", "607d1b2f9f1b2c0017f9d2e5"]
- *                 dateCreated:
- *                   type: string
- *                   example: "2024-10-25T02:29:35.346+00:00"
- *                 lastUpdated:
- *                   type: string
- *                   example: "2024-10-25T02:29:35.346+00:00"
+ *                   example: "Success"
+ *                 playlists:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "6733851c439ed6008be0c930"
+ *                       playlistName:
+ *                         type: string
+ *                         example: "test"
+ *                       description:
+ *                         type: string
+ *                         example: "test"
+ *                       enumMode:
+ *                         type: string
+ *                         example: "private"
+ *                       thumbnail:
+ *                         type: string
+ *                         example: "http://localhost:4000/assets\\images\\playlist\\create\\33976_1731429660820.png"
+ *                       dateCreated:
+ *                         type: string
+ *                         example: "2024-11-12T16:41:00.830Z"
+ *                       lastUpdated:
+ *                         type: string
+ *                         example: "2024-11-12T16:41:00.830Z"
+ *                       user:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                             example: "66e14623eec8efa60b44d7bd"
+ *                           fullName:
+ *                             type: string
+ *                             example: "Tam Tam"
+ *                           nickName:
+ *                             type: string
+ *                             example: ""
+ *                           avatar:
+ *                             type: string
+ *                             nullable: true
+ *                             example: null
+ *                       videosCount:
+ *                         type: integer
+ *                         example: 0
+ *                 total:
+ *                   type: integer
+ *                   example: 1
+ *                 page:
+ *                   type: integer
+ *                   example: 1
+ *                 totalPages:
+ *                   type: integer
+ *                   example: 1
  *       400:
  *         description: Bad request
  *         content:
@@ -412,7 +501,26 @@ myPlaylistRoutes.get(
  *               properties:
  *                 message:
  *                   type: string
+ *       403:
+ *         description: Forbidden access
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *                   example: "You do not have permission to do this action"
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "User not found"
  *       500:
  *         description: Internal server error
  *         content:
@@ -422,7 +530,7 @@ myPlaylistRoutes.get(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "An unexpected error occurred while retrive the playlist."
+ *                   example: "An unexpected error occurred while retrieving the playlists."
  */
 myPlaylistRoutes.get(
   "/user/:userId",
@@ -474,6 +582,16 @@ myPlaylistRoutes.get(
  *                 message:
  *                   type: string
  *                   example: "Invalid videoId or playlistId"
+ *       404:
+ *         description: Playlist not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Playlist not found"
  *       500:
  *         description: Internal server error
  *         content:
@@ -483,12 +601,10 @@ myPlaylistRoutes.get(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Error adding video to playlist"
  */
 
 myPlaylistRoutes.put(
   "/:playlistId/add-video",
-  AuthMiddleware,
   myPlaylistController.addToPlaylistController
 );
 
@@ -537,6 +653,16 @@ myPlaylistRoutes.put(
  *                 message:
  *                   type: string
  *                   example: "Invalid videoId or playlistId"
+ *       404:
+ *         description: Playlist not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Playlist not found"
  *       500:
  *         description: Internal server error
  *         content:
@@ -551,7 +677,7 @@ myPlaylistRoutes.put(
 
 myPlaylistRoutes.put(
   "/:playlistId/remove-video",
-  AuthMiddleware,
   myPlaylistController.removeFromPlaylist
 );
+
 module.exports = myPlaylistRoutes;

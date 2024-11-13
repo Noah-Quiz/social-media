@@ -6,12 +6,6 @@ class CommentRepository {
   async createComment(commentData) {
     try {
       let level = 0; // Default for top-level comments
-      console.log(
-        "Repolayer: ",
-        commentData.responseTo !== undefined &&
-          commentData.responseTo !== null &&
-          commentData.responseTo !== ""
-      );
       if (
         commentData.responseTo !== undefined &&
         commentData.responseTo !== null &&
@@ -35,6 +29,7 @@ class CommentRepository {
       const comment = await Comment.findOne({ _id: id });
       if (comment.content !== content) {
         comment.content = content;
+        comment.lastUpdated = Date.now();
       }
       await comment.save();
       return comment;
@@ -43,7 +38,7 @@ class CommentRepository {
     }
   }
 
-  async getComment(id) {
+  async getComment(id, requesterId) {
     try {
       const comment = await Comment.aggregate([
         {
@@ -70,7 +65,23 @@ class CommentRepository {
         {
           $unwind: {
             path: "$user",
-            preserveNullAndEmptyArrays: true, // Optional: Preserve comment without user data
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $graphLookup: {
+            from: "comments", 
+            startWith: "$_id",
+            connectFromField: "_id", 
+            connectToField: "responseTo",
+            as: "allReplies", 
+            depthField: "level", 
+            restrictSearchWithMatch: { responseTo: { $ne: null } },
+          },
+        },
+        {
+          $addFields: {
+            repliesCount: { $size: "$allReplies" },
           },
         },
         {
@@ -78,7 +89,8 @@ class CommentRepository {
             _id: 1,
             content: 1,
             dateCreated: 1,
-            userId: 1, // Retain the original userId field
+            lastUpdated: 1,
+            userId: 1,
             user: {
               _id: "$user._id",
               fullName: "$user.fullName",
@@ -87,20 +99,27 @@ class CommentRepository {
             },
             level: 1,
             videoId: 1,
-            likeBy: 1,
+            likesCount: { $size: "$likedBy" },
+            likedBy: 1,
+            repliesCount: 1, // Total replies count (all descendants)
           },
         },
       ]);
-
+  
       // Return the first comment in case of multiple matches (there should ideally only be one)
       return comment.length > 0 ? comment[0] : null;
     } catch (error) {
       throw new Error(error.message);
     }
   }
+  
 
-  async getAllCommentVideoId(videoId, query, requesterId) {
+  async getAllCommentVideoId(videoId, query) {
     try {
+      const page = query.page || 1;
+      const size = parseInt(query.size, 10) || 10;
+      const skip = (page - 1) * size;
+
       // Create search query
       const searchQuery = {
         isDeleted: false,
@@ -114,6 +133,8 @@ class CommentRepository {
 
       if (query.sortBy === "like") sortField = "likesCount";
       else if (query.sortBy === "date") sortField = "dateCreated";
+
+      const totalComments = await Comment.countDocuments(searchQuery);
 
       // Base aggregation pipeline
       const basePipeline = [
@@ -143,10 +164,27 @@ class CommentRepository {
           },
         },
         {
+          $graphLookup: {
+            from: "comments", 
+            startWith: "$_id",
+            connectFromField: "_id", 
+            connectToField: "responseTo",
+            as: "allReplies", 
+            depthField: "level", 
+            restrictSearchWithMatch: { responseTo: { $ne: null } },
+          },
+        },
+        {
+          $addFields: {
+            repliesCount: { $size: "$allReplies" },
+          },
+        },
+        {
           $project: {
             userId: 1,
             content: 1,
             dateCreated: 1,
+            lastUpdated: 1,
             user: {
               _id: "$user._id",
               fullName: "$user.fullName",
@@ -156,21 +194,25 @@ class CommentRepository {
             responseTo: 1,
             level: 1,
             videoId: 1,
-            likesCount: { $size: "$likeBy" },
-            isLiked: {
-              $in: [new mongoose.Types.ObjectId(requesterId), "$likeBy"],
-            },
+            likesCount: { $size: "$likedBy" },
+            likedBy: 1,
+            repliesCount: 1,
           },
         },
-        {
-          $sort: { [sortField]: sortOrder }, // Dynamic sorting stage
-        },
+        { $sort: { [sortField]: sortOrder }, },
+        { $skip: skip },
+        { $limit: Number(size) },
       ];
 
       // Run the aggregation pipeline
       const comments = await Comment.aggregate(basePipeline);
 
-      return comments;
+      return {
+        comments,
+        total: totalComments,
+        page: Number(page),
+        totalPages: Math.ceil(totalComments / Number(size)),
+      };
     } catch (error) {
       throw new Error(error.message);
     }
@@ -179,19 +221,13 @@ class CommentRepository {
   async toggleLikeCommentRepository(userId, commentId) {
     let hasLiked = false;
     try {
-      const checkComment = await Comment.findById(commentId);
-      if (!checkComment || checkComment.isDeleted) {
-        throw new CoreException(
-          StatusCodeEnums.NotFound_404,
-          "Comment not found"
-        );
-      }
+      const comment = await Comment.findById(commentId);
 
-      hasLiked = checkComment.likeBy.includes(userId);
+      hasLiked = comment.likedBy.includes(userId);
       const action = hasLiked ? "unlike" : "like";
       const updateOperation = hasLiked
-        ? { $pull: { likeBy: userId } }
-        : { $addToSet: { likeBy: userId } };
+        ? { $pull: { likedBy: userId } }
+        : { $addToSet: { likedBy: userId } };
 
       const updatedComment = await Comment.findByIdAndUpdate(
         commentId,
@@ -201,16 +237,18 @@ class CommentRepository {
 
       return { action, updatedComment };
     } catch (error) {
-      throw new Error(`Failed to ${action ? "like" : "unlike"} comment`);
+      throw new Error(`Failed to ${hasLiked ? "like" : "unlike"} comment`);
     }
   }
 
-  async getCommentThread(commentId, limit) {
-    const numericLimit = parseInt(limit, 10); // Ensure limit is a number
-
+  async getCommentThread(commentId, query) {
     try {
-      const comment = await Comment.aggregate([
-        // Match the parent comment and ensure it is not deleted
+      const page = query.page || 1;
+      const size = parseInt(query.size, 10) || 10; // Ensure size is a number
+      const skip = (page - 1) * size;
+  
+      // Fetch the parent comment (no pagination needed here)
+      const parentComment = await Comment.aggregate([
         {
           $match: {
             _id: new mongoose.Types.ObjectId(commentId),
@@ -243,104 +281,131 @@ class CommentRepository {
         },
         {
           $graphLookup: {
-            from: "comments",
+            from: "comments", 
             startWith: "$_id",
-            connectFromField: "_id",
+            connectFromField: "_id", 
             connectToField: "responseTo",
-            as: "children",
-            maxDepth: 10, // You can make this dynamic
-            depthField: "graphLevel",
+            as: "allReplies", 
+            depthField: "level", 
+            restrictSearchWithMatch: { responseTo: { $ne: null } },
           },
         },
-        // Filter out deleted comments in the replies (children)
         {
           $addFields: {
-            children: {
-              $filter: {
-                input: "$children",
-                as: "child",
-                cond: { $eq: ["$$child.isDeleted", false] },
-              },
-            },
+            repliesCount: { $size: "$allReplies" },
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            content: 1,
+            videoId: 1,
+            userId: 1,
+            user: 1,
+            level: 1,
+            dateCreated: 1,
+            lastUpdated: 1,
+            responseTo: 1,
+            likedBy: 1,
+            repliesCount: 1,
+          },
+        },
+      ]);
+  
+      if (!parentComment.length) {
+        return null;
+      }
+  
+      // Fetch the total count of replies (children comments) to calculate totalPages
+      const totalChildren = await Comment.countDocuments({
+        responseTo: new mongoose.Types.ObjectId(commentId),
+        isDeleted: false,
+      });
+  
+      // Fetch the immediate children with pagination (applied only here)
+      const children = await Comment.aggregate([
+        {
+          $match: {
+            responseTo: new mongoose.Types.ObjectId(commentId),
+            isDeleted: false,
           },
         },
         {
           $lookup: {
             from: "users",
-            localField: "children.userId",
+            localField: "userId",
             foreignField: "_id",
-            as: "childUsers",
+            as: "user",
             pipeline: [
               {
                 $project: {
                   _id: 1,
-                  avatar: 1,
                   fullName: 1,
                   nickName: 1,
+                  avatar: 1,
                 },
               },
             ],
           },
         },
         {
-          $addFields: {
-            children: {
-              $map: {
-                input: "$children",
-                as: "child",
-                in: {
-                  $mergeObjects: [
-                    "$$child",
-                    {
-                      user: {
-                        $arrayElemAt: [
-                          {
-                            $filter: {
-                              input: "$childUsers",
-                              as: "userDetail",
-                              cond: {
-                                $eq: ["$$userDetail._id", "$$child.userId"],
-                              },
-                            },
-                          },
-                          0,
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-            },
+          $unwind: {
+            path: "$user",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "comments",
+            localField: "_id",
+            foreignField: "responseTo",
+            as: "replies",
           },
         },
         {
           $addFields: {
-            children: {
-              $sortArray: { input: "$children", sortBy: { graphLevel: 1 } },
-            },
+            repliesCount: { $size: "$replies" },
           },
         },
-        { $addFields: { children: { $slice: ["$children", numericLimit] } } },
+        {
+          $sort: { dateCreated: -1 }, // Sort by dateCreated, descending
+        },
+        {
+          $skip: skip, // Pagination: Skip items based on page number
+        },
+        {
+          $limit: size, // Pagination: Limit the number of items per page
+        },
         {
           $project: {
-            "children.isDeleted": 0,
-            "children.__v": 0,
-            "children.graphLevel": 0,
-            "children.lastUpdated": 0,
-            isDeleted: 0,
-            __v: 0,
-            graphLevel: 0,
-            lastUpdated: 0,
-            childUsers: 0,
+            _id: 1,
+            content: 1,
+            videoId: 1,
+            userId: 1,
+            user: 1,
+            level: 1,
+            dateCreated: 1,
+            lastUpdated: 1,
+            responseTo: 1,
+            likedBy: 1,
+            repliesCount: 1,
           },
         },
       ]);
-
-      return comment[0] || null;
+  
+      // Attach the children to the parent comment
+      parentComment[0].children = children;
+  
+      // Add pagination details
+      parentComment[0].total = totalChildren;
+      parentComment[0].page = Number(page);
+      parentComment[0].totalPages = Math.ceil(totalChildren / Number(size));
+  
+      return parentComment[0];
     } catch (err) {
       throw new Error("Unable to fetch comment thread");
     }
-  }
+  }  
 
   async softDeleteCommentRepository(id) {
     try {

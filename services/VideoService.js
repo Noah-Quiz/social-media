@@ -72,12 +72,23 @@ const toggleLikeVideoService = async (videoId, userId) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const video = await connection.videoRepository.getVideoByIdRepository(
-      videoId
-    );
+    const user = await connection.userRepository.findUserById(userId);
+    if (!user) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
 
+    const video = await connection.videoRepository.getVideoByIdRepository(videoId);
     if (!video) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
+    }
+
+    if ((video.enumMode === "private" || video.enumMode === "draft") && user.role !== UserEnum.ADMIN && video.user?._id?.toString() !== userId?.toString()) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
+    }
+    
+    // Prevent like on draft video
+    if (video.enumMode === "draft") {
+      throw new CoreException(StatusCodeEnums.Forbidden_403, "Likes are disabled on draft video");
     }
 
     const videoOwnerId = video.user?._id;
@@ -86,8 +97,6 @@ const toggleLikeVideoService = async (videoId, userId) => {
       videoId,
       userId
     );
-
-    const user = await connection.userRepository.findUserById(userId);
 
     const notification = {
       avatar: user.avatar,
@@ -167,7 +176,7 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
         let { videos, total, page, totalPages } =
           await connection.videoRepository.getVideosByUserIdRepository(
             userId,
-            query
+            query,
           );
         return { videos, total, page, totalPages };
       }
@@ -182,7 +191,8 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
         let { videos, total, page, totalPages } =
           await connection.videoRepository.getVideosByUserIdRepository(
             userId,
-            query
+            query,
+            requesterId
           );
         return { videos, total, page, totalPages };
       }
@@ -191,7 +201,7 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
     const user = await connection.userRepository.getAnUserByIdRepository(
       userId
     );
-    console.log("User from service", user);
+    
     if (user === null) {
       throw new CoreException(StatusCodeEnums.NotFound_404, `User not found`);
     }
@@ -211,7 +221,8 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
     let { videos, total, page, totalPages } =
       await connection.videoRepository.getVideosByUserIdRepository(
         userId,
-        query
+        query,
+        requesterId
       );
 
     let filteredVideos = videos.map(async (video) => {
@@ -277,9 +288,9 @@ const getVideoService = async (videoId, requesterId) => {
       }
     }
 
-    const video = await connection.videoRepository.getVideoRepository(videoId);
+    const video = await connection.videoRepository.getVideoRepository(videoId, requesterId);
     if (!video) {
-      throw new Error(`Video not found`);
+      throw new CoreException(StatusCodeEnums.NotFound_404, `Video not found`);
     }
 
     if (video.enumMode === "private") {
@@ -350,7 +361,7 @@ const getVideosService = async (query, requesterId) => {
       }
       if (requester.role === UserEnum.ADMIN) {
         let { videos, total, page, totalPages } =
-          await connection.videoRepository.getAllVideosRepository(query);
+          await connection.videoRepository.getAllVideosRepository(query, requesterId);
         return { videos, total, page, totalPages };
       }
     }
@@ -367,7 +378,7 @@ const getVideosService = async (query, requesterId) => {
     }
 
     const { videos, total, page, totalPages } =
-      await connection.videoRepository.getAllVideosRepository(query);
+      await connection.videoRepository.getAllVideosRepository(query, requesterId);
 
     let filteredVideos = videos.map(async (video) => {
       const isOwner = video.user?._id?.toString() === requesterId?.toString();
@@ -456,7 +467,8 @@ const getVideosByPlaylistIdService = async (playlistId, query, requesterId) => {
     const { videos, total, page, totalPages } =
       await connection.videoRepository.getVideosByPlaylistIdRepository(
         playlistId,
-        query
+        query,
+        requesterId
       );
 
     let filteredVideos = videos.map(async (video) => {
@@ -481,9 +493,7 @@ const getVideosByPlaylistIdService = async (playlistId, query, requesterId) => {
 
     return { videos: result, page, total, totalPages };
   } catch (error) {
-    throw new Error(
-      `Error fetching videos for playlist ${playlistId}: ${error.message}`
-    );
+    throw error;
   }
 };
 

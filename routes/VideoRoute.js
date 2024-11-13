@@ -5,9 +5,10 @@ const { uploadFile } = require("../middlewares/storeFile");
 const videoRoutes = express.Router();
 const videoController = new VideoController();
 
+videoRoutes.use(AuthMiddleware);
+
 videoRoutes.get(
   "/like-history",
-  AuthMiddleware,
   videoController.getVideoLikeHistoryController
 );
 
@@ -98,7 +99,6 @@ videoRoutes.get(
 
 videoRoutes.post(
   "/",
-  AuthMiddleware,
   uploadFile.fields([{ name: "video" }]),
   videoController.createVideoController
 );
@@ -148,12 +148,6 @@ videoRoutes.post(
  *           type: string
  *           enum: [private, public, unlisted, draft, member]
  *         description: Type of video. Only videos of type public or member are shown. Only admin can access all videos of all types
- *       - in: query
- *         name: requesterId
- *         required: false
- *         schema:
- *           type: string
- *         description: User ID of requester. If requester is owner, show video in more detail. If the video is of type member, hides critical information.
  *     responses:
  *       200:
  *         description: Get all videos successfully
@@ -294,12 +288,6 @@ videoRoutes.get("/", videoController.getVideosController);
  *           type: string
  *           enum: [private, public, unlisted, draft, member]
  *         description: Type of video. Only videos of type public or member are shown. Only admin can access all videos of all types
- *       - in: query
- *         name: requesterId
- *         required: false
- *         schema:
- *           type: string
- *         description: User ID of requester. If requester is owner, show video in more detail. If the video is of type member, hides critical information.
  *     responses:
  *       200:
  *         description: Get videos by user ID successfully
@@ -430,12 +418,6 @@ videoRoutes.get(
  *           type: string
  *           enum: [private, public, unlisted, draft, member]
  *         description: Type of video. Only videos of type public or member are shown. Only admin can access all videos of all types
- *       - in: query
- *         name: requesterId
- *         required: false
- *         schema:
- *           type: string
- *         description: User ID of requester. If requester is owner, show video in more detail. If the video is of type member, hides critical information.
  *     responses:
  *       200:
  *         description: Get videos by playlist id successfully
@@ -634,7 +616,6 @@ videoRoutes.get(
 
 videoRoutes.patch(
   "/:videoId",
-  AuthMiddleware,
   uploadFile.fields([{ name: "videoThumbnail" }]),
   videoController.updateAVideoByIdController
 );
@@ -652,12 +633,6 @@ videoRoutes.patch(
  *        schema:
  *          type: string
  *        description: Video ID
- *      - in: query
- *        name: requesterId
- *        required: false
- *        schema:
- *          type: string
- *        description: User ID of requester. If requester is owner, show video in more detail. If the video is of type member, hides critical information.
  *   responses:
  *    200:
  *      description: Get video by id successfully
@@ -727,7 +702,6 @@ videoRoutes.get(
  */
 videoRoutes.post(
   "/:videoId/like",
-  AuthMiddleware,
   videoController.toggleLikeVideoController
 );
 
@@ -822,7 +796,6 @@ videoRoutes.post(
 
 videoRoutes.post(
   "/:videoId/view",
-  AuthMiddleware,
   videoController.viewIncrementController
 );
 
@@ -854,7 +827,6 @@ videoRoutes.post(
 
 videoRoutes.delete(
   "/:videoId",
-  AuthMiddleware,
   videoController.deleteVideoController
 );
 
