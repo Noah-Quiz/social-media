@@ -10,8 +10,6 @@ const {
   getVideoCommentsService,
   updateCommentService,
   softDeleteCommentService,
-  likeService,
-  unlikeService,
   getChildrenCommentsService,
   toggleLikeCommentService,
 } = require("../services/CommentService");
@@ -25,7 +23,6 @@ class CommentController {
       const responseTo = req.body.responseTo;
 
       const createCommentDto = new CreateCommentDto(
-        userId,
         videoId,
         content,
         responseTo?.trim()
@@ -69,26 +66,33 @@ class CommentController {
       const requesterId = req.requesterId;
 
       const query = {
-        sortBy: req.query.sortBy,
-        order: req.query.order,
+        sortBy: req.query.sortBy?.toLowerCase(),
+        order: req.query.order?.toLowerCase(),
+        size: req.query.size,
+        page: req.query.page,
       };
 
       const getVideoCommentsDto = new GetVideoCommentsDto(
         videoId,
         query.sortBy,
-        query.order
+        query.order,
+        query.page,
+        query.size,
+        requesterId
       );
-      await getVideoCommentsDto.validate();
+      const validatedQuery = await getVideoCommentsDto.validate();
 
-      const comments = await getVideoCommentsService(
+      const { comments, total, page, totalPages } = await getVideoCommentsService(
         videoId,
-        query,
+        validatedQuery,
         requesterId
       );
 
       return res.status(StatusCodeEnums.OK_200).json({
         comments: comments,
-        size: comments.length,
+        total, 
+        page, 
+        totalPages,
         message: "Success",
       });
     } catch (error) {
@@ -140,7 +144,7 @@ class CommentController {
       await toggleLikeCommentDto.validate();
 
       const action = await toggleLikeCommentService(userId, commentId);
-
+      
       return res.status(StatusCodeEnums.OK_200).json({
         message: `${
           action?.charAt(0)?.toUpperCase() + action?.slice(1)
@@ -154,41 +158,26 @@ class CommentController {
   async getChildrenCommentsController(req, res, next) {
     try {
       const { commentId } = req.params;
-      const { limit } = req.query;
+      const query = {
+        size: req.query.size,
+        page: req.query.page
+      }
       const requesterId = req.requesterId;
   
-      const getChildrenCommentsDto = new GetChildrenCommentsDto(commentId, limit, requesterId);
+      const getChildrenCommentsDto = new GetChildrenCommentsDto(commentId, query.size, query.page, requesterId);
       await getChildrenCommentsDto.validate();
 
       const { comments, maxLevel } = await getChildrenCommentsService(
         commentId,
-        limit || 10,
+        query,
         requesterId
       );
 
-      if (Array.isArray(comments)) {
-        // Calculate the total number of comments and their children
-        const size = comments.reduce((total, comment) => {
-          return total + 1 + (comment.children ? comment.children.length : 0);
-        }, 0);
-
-        return res.status(StatusCodeEnums.OK_200).json({
-          comments,
-          size,
-          maxLevel,
-          message: "Success",
-        });
-      } else {
-        // If comments is a single comment, handle it accordingly
-        const size = 1 + (comments.children ? comments.children.length : 0);
-
-        return res.status(StatusCodeEnums.OK_200).json({
-          comments,
-          size,
-          maxLevel,
-          message: "Success",
-        });
-      }
+      return res.status(StatusCodeEnums.OK_200).json({
+        comments,
+        maxLevel,
+        message: "Success",
+      });
     } catch (error) {
       next(error);
     }

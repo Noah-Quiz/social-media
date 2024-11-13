@@ -53,22 +53,12 @@ const publicRoutes = [
 
   // Playlist
   {
-    path: "/api/my-playlist/:playlistId",
-    method: "GET",
+    path: "/api/my-playlists/:playlistId",
+    method: "GET"
   },
   {
-    path: "/api/my-playlist/user/:userId",
-    method: "GET",
-  },
-
-  //MemberPack
-  {
-    path: "/api/member-packs/",
-    method: "GET",
-  },
-  {
-    path: "/api/member-packs/:id",
-    method: "GET",
+    path: "/api/my-playlists/user/:userId",
+    method: "GET"
   },
 ];
 

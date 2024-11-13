@@ -21,7 +21,7 @@ class MyPlaylistController {
   async getAPlaylistController(req, res, next) {
     const { playlistId } = req.params;
     const requesterId = req.requesterId;
-
+    
     try {
       const getPlaylistByIdDto = new GetPlaylistByIdDto(
         playlistId,
@@ -41,26 +41,32 @@ class MyPlaylistController {
   async getAllMyPlaylistsController(req, res, next) {
     try {
       const { userId } = req.params;
-      const { enumMode } = req.query;
+      const query = {
+        page: req.query.page,
+        size: req.query.size,
+        enumMode: req.query.enumMode,
+        name: req.query.name,
+      }
       const requesterId = req.requesterId;
-
-      const query = { enumMode };
 
       const getPlaylistByUserIdDto = new GetPlaylistByUserIdDto(
         requesterId,
-        enumMode
+        query.enumMode,
+        query.page,
+        query.size,
+        query.name,
       );
-      await getPlaylistByUserIdDto.validate();
+      const validatedQuery = await getPlaylistByUserIdDto.validate();
 
-      const playlists = await getAllMyPlaylistsService(
+      const { playlists, total, page, totalPages } = await getAllMyPlaylistsService(
         userId,
         requesterId,
-        query
+        validatedQuery
       );
 
       res
         .status(StatusCodeEnums.OK_200)
-        .json({ playlists, message: "Success" });
+        .json({ playlists, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }
@@ -127,7 +133,7 @@ class MyPlaylistController {
     try {
       const { playlistName, description, enumMode } = req.body;
       const userId = req.userId;
-      console.log(enumMode);
+
       // Check if a thumbnail file is provided
       const thumbnail = req.file ? req.file.path : null;
 

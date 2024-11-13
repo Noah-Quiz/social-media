@@ -1,10 +1,11 @@
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const { capitalizeWords } = require("../utils/validator");
 
 const createCategoryService = async (categoryData) => {
   const connection = new DatabaseTransaction();
-
+  categoryData.name = capitalizeWords(categoryData.name);
   try {
     const session = await connection.startTransaction();
     const checkCate = await connection.categoryRepository.getCategoryByName(
