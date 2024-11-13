@@ -95,10 +95,10 @@ class MyPlaylistRepository {
   }
 
   // Get all user's own playlists
-  async getAllMyPlaylistsRepository(userId, query) {
+  async getAllMyPlaylistsRepository(userId, query = {}) {
     try {
       const { enumMode } = query;
-
+      console.log(userId);
       const searchQuery = {
         isDeleted: false,
         userId: new mongoose.Types.ObjectId(userId),
@@ -155,7 +155,7 @@ class MyPlaylistRepository {
       console.log(playlists);
       return playlists;
     } catch (error) {
-      throw new Error(`Error fetching streams: ${error.message}`);
+      throw new Error(`Error fetching playlist: ${error.message}`);
     }
   }
   async addToPlaylistRepository(playlistId, videoId) {

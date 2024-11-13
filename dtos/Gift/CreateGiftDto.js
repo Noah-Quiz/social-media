@@ -32,12 +32,13 @@ class CreateGiftDto {
   }
 
   async validate() {
-    if (!this.name) {
+    if (!this.name || this.name.length < 1 || this.name.length > 50) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Name is required"
+        "Name is required and must be between 1 and 50 characters."
       );
     }
+
     if (!this.image) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,

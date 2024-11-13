@@ -227,12 +227,12 @@ const deletePlaylistService = async (userId, playlistId) => {
         StatusCodeEnums.NotFound_404,
         "Playlist not found"
       );
+    } else {
+      console.log("playlistFound");
     }
 
     const userPlaylists =
-      await connection.myPlaylistRepository.getAllMyPlaylistsRepository({
-        userId,
-      });
+      await connection.myPlaylistRepository.getAllMyPlaylistsRepository(userId);
 
     if (user.role === UserEnum.USER) {
       const checkPlaylist = userPlaylists.find(
