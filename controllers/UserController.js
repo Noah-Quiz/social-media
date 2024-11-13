@@ -17,6 +17,7 @@ const {
   getFollowerService,
   getFollowingService,
   updatePointService,
+  checkUserAuthorizationService,
 } = require("../services/UserService");
 const mongoose = require("mongoose");
 const { deleteFile, checkFileSuccess } = require("../middlewares/storeFile");
@@ -103,17 +104,7 @@ class UserController {
       const { fullName, nickName } = req.body;
       let avatar = req.file ? req.file.path : null;
 
-      const connection = new DatabaseTransaction();
-      const user = await connection.userRepository.findUserById(userId);
-      if (!user) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
-      }
-      if (user.role !== UserEnum.ADMIN && req.userId !== userId) {
-        throw new CoreException(
-          StatusCodeEnums.Forbidden_403,
-          "Forbidden access"
-        );
-      }
+      await checkUserAuthorizationService(userId, req.userId);
 
       const updateUserProfileDto = new UpdateUserProfileDto(
         userId,
@@ -147,17 +138,7 @@ class UserController {
       const { userId } = req.params;
       const { email } = req.body;
 
-      const connection = new DatabaseTransaction();
-      const user = await connection.userRepository.findUserById(userId);
-      if (!user) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
-      }
-      if (user.role !== UserEnum.ADMIN && req.userId !== userId) {
-        throw new CoreException(
-          StatusCodeEnums.Forbidden_403,
-          "Forbidden access"
-        );
-      }
+      await checkUserAuthorizationService(userId, req.userId);
 
       const updateUserEmailDto = new UpdateUserEmailDto(userId, email);
       await updateUserEmailDto.validate();
@@ -178,17 +159,7 @@ class UserController {
       const { userId } = req.params;
       const { oldPassword, newPassword } = req.body;
 
-      const connection = new DatabaseTransaction();
-      const user = await connection.userRepository.findUserById(userId);
-      if (!user) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
-      }
-      if (user.role !== UserEnum.ADMIN && req.userId !== userId) {
-        throw new CoreException(
-          StatusCodeEnums.Forbidden_403,
-          "Forbidden access"
-        );
-      }
+      await checkUserAuthorizationService(userId, req.userId);
 
       const updateUserPasswordDto = new UpdateUserPasswordDto(
         userId,

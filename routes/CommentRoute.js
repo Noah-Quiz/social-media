@@ -400,7 +400,7 @@ router.get("/video/:videoId", commentController.getVideoCommentsController);
 /**
  * @swagger
  * /api/comments/{commentId}/like:
- *   put:
+ *   post:
  *     security:
  *      - bearerAuth: []
  *     summary: Toggle like/unlike a comment
@@ -447,7 +447,7 @@ router.get("/video/:videoId", commentController.getVideoCommentsController);
  *                 message:
  *                   type: string
  */
-router.put("/:commentId/like", commentController.toggleLikeCommentController);
+router.post("/:commentId/like", commentController.toggleLikeCommentController);
 
 /**
  * @swagger
