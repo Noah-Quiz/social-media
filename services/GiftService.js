@@ -2,15 +2,18 @@ require("dotenv").config();
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const { capitalizeWords } = require("../utils/validator");
 const createGiftService = async (name, image, pricePerUnit) => {
   const connection = new DatabaseTransaction();
   try {
     const price = parseFloat(pricePerUnit);
+
     if (isNaN(price)) {
       throw new Error("Invalid price");
     }
+    const newName = capitalizeWords(name);
     const checkGift = await connection.giftRepository.getGiftByNameRepository(
-      name
+      newName
     );
     if (checkGift) {
       throw new CoreException(
@@ -18,8 +21,9 @@ const createGiftService = async (name, image, pricePerUnit) => {
         "Gift name has already been taken"
       );
     }
+
     const gift = await connection.giftRepository.createGiftRepository({
-      name: name,
+      name: newName,
       image: `${process.env.APP_BASE_URL}/${image}`,
       valuePerUnit: price,
     });
@@ -43,7 +47,7 @@ const updateGiftService = async (id, name, image, price) => {
     const gift = await connection.giftRepository.updateGiftRepository(
       id,
       name,
-      image,
+      `${process.env.APP_BASE_URL}/${image}`,
       price
     );
     return gift;

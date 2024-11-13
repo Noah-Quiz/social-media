@@ -16,12 +16,15 @@ const commentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  likeBy: [
-    {
-      type: mongoose.Types.ObjectId,
-      ref: "User",
-    },
-  ],
+  likedBy: {
+    type: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    default: [],
+  },
   responseTo: {
     type: mongoose.Types.ObjectId,
     ref: "Comment",
@@ -35,4 +38,5 @@ const commentSchema = new mongoose.Schema({
 });
 
 const Comment = mongoose.model("Comment", commentSchema);
+
 module.exports = Comment;
