@@ -31,7 +31,7 @@ class RoomController {
   // 2. Direct Message Room
   async DirectMessageController(req, res, next) {
     const currentUserId = req.userId;
-    const targetedUserId = req.query.userId;
+    const targetedUserId = req.params.targetedUserId;
     try {
       const directMessageRoom = await DirectMessageService(
         currentUserId,
