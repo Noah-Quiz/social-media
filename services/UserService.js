@@ -417,4 +417,23 @@ module.exports = {
       throw error;
     }
   },
+
+  async checkUserAuthorizationService(userId, requesterId) {
+    try {
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.findUserById(userId);
+      if (!user) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
+      if (requesterId !== userId && user.role !== UserEnum.ADMIN) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "You do not have permission to perform this action"
+        );
+      }
+      return;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
