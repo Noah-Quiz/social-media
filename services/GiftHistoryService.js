@@ -120,7 +120,10 @@ const getGiftHistoryByStreamIdService = async (streamId, userId) => {
       checkUser._id?.toString() !== checkStream?.userId?.toString() &&
       checkUser.role !== UserEnum.ADMIN
     ) {
-      throw new Error("You do not have permission to perform this action");
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "You do not have permission to perform this action"
+      );
     }
     const giftHistories =
       await connection.giftHistoryRepository.getGiftHistoryByStreamIdRepository(
@@ -156,7 +159,7 @@ const getGiftHistoryByUserIdService = async (userId) => {
     throw new Error(error.message);
   }
 };
-const deleteGiftHistoryService = async (id) => {
+const deleteGiftHistoryService = async (id, userId) => {
   const connection = new DatabaseTransaction();
   try {
     const Checkgift =
@@ -166,6 +169,20 @@ const deleteGiftHistoryService = async (id) => {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
         "No gift history found"
+      );
+    }
+    const checkUser = await connection.userRepository.getAnUserByIdRepository(
+      userId
+    );
+    if (
+      !checkUser ||
+      checkUser === false ||
+      (Checkgift.userId?.toString() !== userId?.toString() &&
+        checkUser.role !== UserEnum.ADMIN)
+    ) {
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "You do not have permission to perform this action"
       );
     }
     const giftHistory =

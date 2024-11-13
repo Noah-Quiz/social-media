@@ -29,7 +29,7 @@ const createGiftService = async (name, image, pricePerUnit) => {
     });
     return gift;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const updateGiftService = async (id, name, image, price) => {
@@ -52,7 +52,7 @@ const updateGiftService = async (id, name, image, price) => {
     );
     return gift;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const getGiftService = async (id) => {
@@ -61,7 +61,7 @@ const getGiftService = async (id) => {
     const gift = await connection.giftRepository.getGiftRepository(id);
     return gift;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const getAllGiftService = async () => {
@@ -70,7 +70,7 @@ const getAllGiftService = async () => {
     const gifts = await connection.giftRepository.getAllGiftRepository();
     return gifts;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const deleteGiftService = async (id) => {
@@ -83,7 +83,7 @@ const deleteGiftService = async (id) => {
     const gift = await connection.giftRepository.deleteGiftRepository(id);
     return gift;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 

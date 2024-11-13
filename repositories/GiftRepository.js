@@ -1,4 +1,6 @@
 const Gift = require("../entities/GiftEntity");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 
 class GiftRepository {
   async createGiftRepository(giftData) {
@@ -70,7 +72,7 @@ class GiftRepository {
       // Fetch the gift by ID
       const gift = await Gift.findById(id);
       if (!gift) {
-        throw new Error("Gift not found");
+        throw new CoreException(StatusCodeEnums.NotFound_404, "Gift not found");
       }
 
       // Update fields only if they are provided and valid
