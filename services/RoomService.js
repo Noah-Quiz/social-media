@@ -64,11 +64,10 @@ const DirectMessageService = async (userIdA, userIdB) => {
     if (!existingRoom) {
       const participants = [userIdA, userIdB];
       const roomData = {
-        name: `Direct message with ${user.fullName || user.nickName}`,
         type: "private",
         participants: participants,
       };
-      const room = await createRoom(roomData);
+      const room = await connection.roomRepository.createRoom(roomData);
       return room;
     }
     return existingRoom;
