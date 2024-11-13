@@ -10,7 +10,7 @@ route.use(AuthMiddleware);
 
 // Room routes
 route.get("/global-chat", roomController.GlobalChatController);
-route.get("/dm-room", roomController.DirectMessageController);
+route.get("/dm-room/:targetedUserId", roomController.DirectMessageController);
 route.get("/video-chat", roomController.VideoChatController);
 route.post("/", roomController.CreateRoomController);
 route.get("/:id", roomController.GetRoomController);
