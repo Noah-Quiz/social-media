@@ -78,10 +78,7 @@ class UserRepository {
         _id: new mongoose.Types.ObjectId(userId),
         isDeleted: false,
       })
-        .select(
-          "email fullName nickName avatar phoneNumber dateCreated lastLogin follow followBy role"
-        )
-        .lean();
+      .lean();
 
       if (user) {
         return user;
@@ -139,6 +136,8 @@ class UserRepository {
             avatar: 1,
             phoneNumber: 1,
             dateCreated: 1,
+            lastUpdated: 1,
+            role: 1,
             lastLogin: 1,
             point: 1,
           },

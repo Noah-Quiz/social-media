@@ -44,7 +44,7 @@ class MyPlaylistController {
       const query = {
         page: req.query.page,
         size: req.query.size,
-        enumMode: req.query.enumMode,
+        enumMode: req.query.enumMode?.toLowerCase(),
         name: req.query.name,
       }
       const requesterId = req.requesterId;
