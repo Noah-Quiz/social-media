@@ -200,13 +200,6 @@ const deletePlaylistService = async (userId, playlistId) => {
     if (!user)
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
 
-    if (user.role !== UserEnum.ADMIN && user.role !== UserEnum.USER) {
-      throw new CoreException(
-        StatusCodeEnums.Forbidden_403,
-        "You are not allowed to update playlist"
-      );
-    }
-
     const playlist =
       await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
     if (!playlist) {
@@ -214,8 +207,6 @@ const deletePlaylistService = async (userId, playlistId) => {
         StatusCodeEnums.NotFound_404,
         "Playlist not found"
       );
-    } else {
-      console.log("playlistFound");
     }
 
     const userPlaylists =
