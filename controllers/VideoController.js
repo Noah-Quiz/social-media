@@ -264,7 +264,7 @@ class VideoController {
       if (user.role !== UserEnum.ADMIN && existVideo.userId !== userId) {
         throw new CoreException(
           StatusCodeEnums.Forbidden_403,
-          "You don't have access to perform this action on this video"
+          "You do not have permission to perform this action"
         );
       }
       const video = await deleteVideoService(videoId, userId);

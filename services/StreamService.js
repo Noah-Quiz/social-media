@@ -4,6 +4,7 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum.js");
 const CoreException = require("../exceptions/CoreException.js");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction.js");
 const { default: mongoose } = require("mongoose");
+const UserEnum = require("../enums/UserEnum.js");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
@@ -83,6 +84,7 @@ const getStreamService = async (streamId, requesterId) => {
         (userId) => userId?.toString() === requesterId?.toString()
       );
       delete process.likedBy;
+      delete process.userId;
     }
 
     return process;
@@ -273,10 +275,12 @@ const toggleLikeStreamService = async (streamId, userId) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const stream = await connection.streamRepository.getStreamRepository(
-      streamId
-    );
+    const user = await connection.userRepository.findUserById(userId);
+    if (!user) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
 
+    const stream = await connection.streamRepository.getStreamRepository(streamId);
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }

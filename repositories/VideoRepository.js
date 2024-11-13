@@ -60,8 +60,10 @@ class VideoRepository {
 
   async updateAVideoByIdRepository(videoId, data) {
     try {
-      await Video.findByIdAndUpdate(videoId, data);
-      const video = await Video.findById(videoId);
+      data.lastUpdated = Date.now();
+
+      const video = await Video.findByIdAndUpdate(videoId, data, { new: true });
+      
       return video;
     } catch (error) {
       throw new Error(`Error when update video: ${error.message}`);
@@ -126,9 +128,21 @@ class VideoRepository {
           },
         },
         {
+          $lookup: {
+            from: "comments",
+            let: { videoId: "$_id" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$videoId", "$$videoId"] } } },
+              { $count: "commentsCount" },
+            ],
+            as: "commentsInfo",
+          },
+        },
+        {
           $addFields: {
             likesCount: { $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0] },
-            isLiked: { $gt: [{ $size: "$userLike" }, 0] }, // True if user has liked the video
+            isLiked: { $gt: [{ $size: "$userLike" }, 0] },
+            commentsCount: { $ifNull: [{ $arrayElemAt: ["$commentsInfo.commentsCount", 0] }, 0] },
           },
         },
         {
@@ -145,6 +159,7 @@ class VideoRepository {
             lastUpdated: 1,
             numOfViews: 1,
             likesCount: 1,
+            commentsCount: 1,
             isLiked: 1,
             user: {
               _id: 1,
@@ -214,33 +229,6 @@ class VideoRepository {
   
       const totalVideos = await Video.countDocuments(searchQuery);
   
-      const lookupStage = requesterId
-        ? {
-            $lookup: {
-              from: "videolikehistories",
-              let: { videoId: "$_id", requester: new mongoose.Types.ObjectId(requesterId) },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: ["$video", "$$videoId"] },
-                        { $eq: ["$user", "$$requester"] },
-                      ],
-                    },
-                  },
-                },
-                { $project: { _id: 1 } },
-              ],
-              as: "userLike",
-            },
-          }
-        : {
-            $addFields: {
-              userLike: [],
-            },
-          };
-  
       const videos = await Video.aggregate([
         {
           $match: searchQuery,
@@ -273,11 +261,42 @@ class VideoRepository {
             as: "likesInfo",
           },
         },
-        lookupStage,
+        {
+          $lookup: {
+            from: "videolikehistories",
+            let: { videoId: "$_id", requester: new mongoose.Types.ObjectId(requesterId) },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$video", "$$videoId"] },
+                      { $eq: ["$user", "$$requester"] },
+                    ],
+                  },
+                },
+              },
+              { $project: { _id: 1 } },
+            ],
+            as: "userLike",
+          },
+        },
+        {
+          $lookup: {
+            from: "comments",
+            let: { videoId: "$_id" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$videoId", "$$videoId"] } } },
+              { $count: "commentsCount" },
+            ],
+            as: "commentsInfo",
+          },
+        },
         {
           $addFields: {
             likesCount: { $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0] },
-            isLiked: { $gt: [{ $size: "$userLike" }, 0] }, // True if user has liked the video
+            isLiked: { $gt: [{ $size: "$userLike" }, 0] },
+            commentsCount: { $ifNull: [{ $arrayElemAt: ["$commentsInfo.commentsCount", 0] }, 0] },
           },
         },
         {
@@ -292,6 +311,7 @@ class VideoRepository {
             lastUpdated: 1,
             numOfViews: 1,
             likesCount: 1,
+            commentsCount: 1,
             isLiked: 1,
             user: {
               _id: 1,
@@ -329,7 +349,7 @@ class VideoRepository {
   }
   
 
-  //get for view and like increment => no adjust
+  // Get video with no field adjustment
   async getVideoByIdRepository(videoId) {
     try {
       const video = await Video.findOne({ _id: videoId, isDeleted: false });
@@ -339,7 +359,7 @@ class VideoRepository {
     }
   }
 
-  async getVideosByPlaylistIdRepository(playlistId, query) {
+  async getVideosByPlaylistIdRepository(playlistId, query, requesterId) {
     try {
       // Retrieve playlist
       const playlist = await MyPlaylist.findById(playlistId).select("videoIds");
@@ -448,9 +468,21 @@ class VideoRepository {
           },
         },
         {
+          $lookup: {
+            from: "comments",
+            let: { videoId: "$_id" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$videoId", "$$videoId"] } } },
+              { $count: "commentsCount" },
+            ],
+            as: "commentsInfo",
+          },
+        },
+        {
           $addFields: {
             likesCount: { $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0] },
-            isLiked: { $gt: [{ $size: "$userLike" }, 0] }, // True if user has liked the video
+            isLiked: { $gt: [{ $size: "$userLike" }, 0] },
+            commentsCount: { $ifNull: [{ $arrayElemAt: ["$commentsInfo.commentsCount", 0] }, 0] },
           },
         },
         {
@@ -465,6 +497,8 @@ class VideoRepository {
             lastUpdated: 1,
             numOfViews: 1,
             likesCount: 1,
+            commentsCount: 1,
+            isLiked: 1,
             user: {
               _id: 1,
               fullName: "$user.fullName",
@@ -586,9 +620,21 @@ class VideoRepository {
           },
         },
         {
+          $lookup: {
+            from: "comments",
+            let: { videoId: "$_id" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$videoId", "$$videoId"] } } },
+              { $count: "commentsCount" },
+            ],
+            as: "commentsInfo",
+          },
+        },
+        {
           $addFields: {
             likesCount: { $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0] },
-            isLiked: { $gt: [{ $size: "$userLike" }, 0] }, // True if user has liked the video
+            isLiked: { $gt: [{ $size: "$userLike" }, 0] },
+            commentsCount: { $ifNull: [{ $arrayElemAt: ["$commentsInfo.commentsCount", 0] }, 0] },
           },
         },
         {
@@ -603,6 +649,7 @@ class VideoRepository {
             lastUpdated: 1,
             numOfViews: 1,
             likesCount: 1,
+            commentsCount: 1,
             isLiked: 1,
             user: {
               _id: 1,

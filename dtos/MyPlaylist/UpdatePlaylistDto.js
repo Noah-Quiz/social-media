@@ -58,12 +58,6 @@ class UpdatePlaylistDto {
         "Invalid enum mode, must be in ['public', 'private']"
       );
     }
-    if (!this.playlistName) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Playlist name is required"
-      );
-    }
   }
 }
 

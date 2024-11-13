@@ -23,43 +23,27 @@ const { contentModeration } = require("../../utils/validator");
  *           description: The previous comment's id.
  */
 class CreateCommentDto {
-  constructor(userId, videoId, content, responseTo) {
-    this.userId = userId;
+  constructor(videoId, content, responseTo) {
     this.videoId = videoId;
     this.content = content;
     this.responseTo = responseTo;
   }
 
   async validate() {
-    // Validate userId
-    if (!this.userId) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Missing required userId field"
-      );
-    }
-    try {
-      await validMongooseObjectId(this.userId); // Validate as ObjectId
-    } catch (error) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Invalid user ID"
-      );
-    }
 
     // Validate videoId
     if (!this.videoId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Missing required videoId field"
+        "Video ID required"
       );
     }
     try {
-      await validMongooseObjectId(this.videoId); // Validate as ObjectId
+      await validMongooseObjectId(this.videoId);
     } catch (error) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid video ID"
+        "Invalid Video ID"
       );
     }
 
