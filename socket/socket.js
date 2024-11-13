@@ -41,7 +41,7 @@ module.exports = (io) => {
 
     if (socketPath == "/socket/chat") {
       // Handle sending messages in rooms
-      socket.on("send_message", async ({ roomId, userId, message }) => {
+      socket.on("send_message", async ({ roomId, userId, message, role }) => {
         try {
           const newMessage = await createAMessageService(
             userId,
@@ -55,6 +55,7 @@ module.exports = (io) => {
             sender: user.nickName,
             message,
             avatar: user.avatar,
+            role,
           });
           logger.info(`Message sent to room ${roomId}`);
         } catch (error) {

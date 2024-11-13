@@ -1,3 +1,4 @@
+const CreateGiftHistoryDto = require("../dtos/GiftHistory/CreateGiftHistoryDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const {
   createGiftHistoryService,
@@ -11,7 +12,10 @@ class GiftHistoryController {
   async createGiftHistoryController(req, res, next) {
     const { streamId, gifts } = req.body;
     const userId = req.userId;
+    console.log(userId);
     try {
+      const createGiftHistoryDto = new CreateGiftHistoryDto(streamId, gifts);
+      await createGiftHistoryDto.validate();
       const giftHistory = await createGiftHistoryService(
         streamId,
         userId,
@@ -26,8 +30,12 @@ class GiftHistoryController {
   }
   async getGiftHistoryByStreamIdController(req, res, next) {
     const { streamId } = req.params;
+    const userId = req.userId;
     try {
-      const giftHistory = await getGiftHistoryByStreamIdService(streamId);
+      const giftHistory = await getGiftHistoryByStreamIdService(
+        streamId,
+        userId
+      );
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ giftHistory: giftHistory, message: "Success" });
@@ -59,6 +67,7 @@ class GiftHistoryController {
   }
   async deleteGiftHistoryController(req, res, next) {
     const { id } = req.params;
+    const userId = req.userId;
     try {
       const giftHistory = await deleteGiftHistoryService(id);
       return res
