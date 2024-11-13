@@ -112,17 +112,20 @@ class StreamRepository {
   // Update a stream
   async updateStreamRepository(streamId, updateData, session = null) {
     try {
+      updateData.lastUpdated = Date.now();
+
       const updatedStream = await Stream.findByIdAndUpdate(
         streamId,
-        updateData
+        updateData,
+        { new: true, session }
       );
-      const stream = await Stream.findById(streamId);
 
-      return stream;
+      return updatedStream;
     } catch (error) {
       throw new Error(`Error updating stream: ${error.message}`);
     }
   }
+
 
   // Delete a stream by ID
   async deleteStreamRepository(streamId, session) {
