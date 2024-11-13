@@ -82,7 +82,10 @@ class GiftHistoryRepository {
   }
   async getGiftHistoryRepository(id) {
     try {
-      const giftHistory = await GiftHistory.find({ _id: id, isDeleted: false });
+      const giftHistory = await GiftHistory.findOne({
+        _id: id,
+        isDeleted: false,
+      });
       return giftHistory;
     } catch (error) {
       throw new Error("Error getting gift history:", error.message);
