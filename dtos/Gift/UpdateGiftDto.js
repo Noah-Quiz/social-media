@@ -44,6 +44,13 @@ class UpdateGiftDto {
         "Invalid gift ID"
       );
     }
+    if (this.name && (this.name.length < 1 || this.name.length > 50)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Name must be between 1 and 50 characters."
+      );
+    }
+
     if (!this.valuePerUnit) {
     } else if (!isFloat(this.valuePerUnit?.toString())) {
       throw new CoreException(

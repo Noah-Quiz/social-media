@@ -61,6 +61,7 @@ class StreamRepository {
         {
           $project: {
             _id: 1,
+            userId: 1,
             title: 1,
             description: 1,
             thumbnailUrl: 1,
@@ -69,6 +70,7 @@ class StreamRepository {
             currentViewCount: 1,
             peakViewCount: 1,
             likesCount: 1,
+            likedBy: 1,
             uid: 1,
             rtmps: 1,
             rtmpsPlayback: 1,
@@ -110,17 +112,20 @@ class StreamRepository {
   // Update a stream
   async updateStreamRepository(streamId, updateData, session = null) {
     try {
+      updateData.lastUpdated = Date.now();
+
       const updatedStream = await Stream.findByIdAndUpdate(
         streamId,
-        updateData
+        updateData,
+        { new: true, session }
       );
-      const stream = await Stream.findById(streamId);
 
-      return stream;
+      return updatedStream;
     } catch (error) {
       throw new Error(`Error updating stream: ${error.message}`);
     }
   }
+
 
   // Delete a stream by ID
   async deleteStreamRepository(streamId, session) {
@@ -197,6 +202,7 @@ class StreamRepository {
         {
           $project: {
             _id: 1,
+            userId: 1,
             title: 1,
             description: 1,
             thumbnailUrl: 1,
@@ -205,6 +211,7 @@ class StreamRepository {
             currentViewCount: 1,
             peakViewCount: 1,
             likesCount: 1,
+            likedBy: 1,
             status: 1,
             enumMode: 1,
             dateCreated: 1,

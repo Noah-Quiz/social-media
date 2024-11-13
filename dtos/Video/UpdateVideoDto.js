@@ -64,12 +64,6 @@ class UpdateVideoDto {
         "Invalid Video ID"
       );
     }
-    if (!this.title) {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "Title is required"
-      );
-    }
     if (
       this.enumMode != null &&
       !["public", "private", "unlisted", "member", "draft"].includes(

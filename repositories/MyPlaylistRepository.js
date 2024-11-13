@@ -38,11 +38,11 @@ class MyPlaylistRepository {
           $project: {
             _id: 1,
             playlistName: 1,
-            userId: 1,
             dateCreated: 1,
             lastUpdated: 1,
             thumbnail: 1,
             enumMode: 1,
+            videoIds: 1,
             videosCount: { $size: "$videoIds" },
             user: {
               _id: 1,
@@ -95,15 +95,25 @@ class MyPlaylistRepository {
   }
 
   // Get all user's own playlists
-  async getAllMyPlaylistsRepository(userId, query) {
+  async getAllMyPlaylistsRepository(userId, query = {}) {
     try {
-      const { enumMode } = query;
+      const page = query.page || 1;
+      const size = parseInt(query.size, 10) || 10;
+      const skip = (page - 1) * size;
 
       const searchQuery = {
         isDeleted: false,
         userId: new mongoose.Types.ObjectId(userId),
       };
-      if (enumMode) searchQuery.enumMode = enumMode;
+
+      if (query.name) {
+        searchQuery.playlistName = { $regex: new RegExp(query.name, "i") };
+      }
+      if (query.enumMode) {
+        searchQuery.enumMode = query.enumMode;
+      }
+
+      const totalPlaylists = await MyPlaylist.countDocuments(searchQuery);
 
       const playlists = await MyPlaylist.aggregate([
         {
@@ -148,74 +158,53 @@ class MyPlaylistRepository {
             },
           },
         },
-        {
-          $sort: { lastUpdated: -1 },
-        },
+        { $sort: { lastUpdated: -1 }, },
+        { $skip: skip },
+        { $limit: Number(size) },
       ]);
-      console.log(playlists);
-      return playlists;
+
+      return {
+        playlists,
+        total: totalPlaylists,
+        page: Number(page),
+        totalPages: Math.ceil(totalPlaylists / Number(size)),
+      };
     } catch (error) {
-      throw new Error(`Error fetching streams: ${error.message}`);
+      throw new Error(`Error fetching playlist: ${error.message}`);
     }
   }
+
   async addToPlaylistRepository(playlistId, videoId) {
     try {
-      const playlist = await MyPlaylist.findOne({
-        _id: new mongoose.Types.ObjectId(playlistId),
-        isDeleted: false,
-      });
-
-      if (!playlist) {
-        throw new Error("Playlist not found");
-      }
-
-      const video = await Video.findOne({
-        _id: new mongoose.Types.ObjectId(videoId),
-        isDeleted: false,
-      });
-
-      if (!video) {
-        throw new Error("Video not found");
-      }
-
       // Use $addToSet to add videoId to videoIds array if it doesn't already exist
       const updatedPlaylist = await MyPlaylist.findByIdAndUpdate(
         playlistId,
         { $addToSet: { videoIds: videoId }, lastUpdated: Date.now() },
-        { new: true } // Option to return the updated document
+        { new: true }
       );
 
-      return updatedPlaylist; // Return the updated playlist if needed
+      return updatedPlaylist;
     } catch (error) {
       throw new Error(`Error adding video to playlist: ${error.message}`);
     }
   }
+
   async removeFromPlaylist(playlistId, videoId) {
-    try {
-      const playlist = await MyPlaylist.findOne({
-        _id: new mongoose.Types.ObjectId(playlistId),
-        isDeleted: false,
-      });
-      if (!playlist) {
-        throw new Error("Playlist not found");
-      }
-      const video = await Video.findOne({
-        _id: new mongoose.Types.ObjectId(videoId),
-        isDeleted: false,
-      });
-      if (!video) {
-        throw new Error("Video not found");
-      }
-      if (!playlist.videoIds.includes(videoId)) {
-        throw new Error("Video not found in playlist");
-      }
-      playlist.videoIds.pull(videoId);
-      playlist.lastUpdated = Date.now();
-      await playlist.save();
-      return playlist;
-    } catch (error) {
-      throw new Error(`Error removing video to playlist: ${error.message}`);
-    }
+  try {
+    const playlist = await MyPlaylist.findOneAndUpdate(
+      { _id: new mongoose.Types.ObjectId(playlistId), isDeleted: false },
+      { 
+        $pull: { videoIds: videoId },
+        lastUpdated: Date.now(),
+      },
+      { new: true }
+    );
+
+    return playlist;
+  } catch (error) {
+    throw new Error(`Error removing video from playlist: ${error.message}`);
   }
+}
+
 }
 module.exports = MyPlaylistRepository;

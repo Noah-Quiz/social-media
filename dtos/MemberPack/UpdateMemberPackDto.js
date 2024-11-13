@@ -50,10 +50,15 @@ class UpdateMemberPackDto {
   async validate() {
     const allowedDurationUnits = ["DAY", "MONTH", "YEAR"];
 
-    if (this.name !== undefined && typeof this.name !== "string") {
+    if (
+      this.name !== undefined &&
+      (typeof this.name !== "string" ||
+        this.name.length < 1 ||
+        this.name.length > 50)
+    ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid field: name must be a string."
+        "Invalid field: name must be a string with a length between 1 and 50 characters."
       );
     }
 

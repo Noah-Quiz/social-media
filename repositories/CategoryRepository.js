@@ -32,10 +32,9 @@ class CategoryRepository {
 
       const result = category.toObject();
 
-      // Remove unwanted fields
       delete result.__v;
-      delete result.lastUpdated;
       delete result.isDeleted;
+      
       return result;
     } catch (error) {
       throw new Error(`Error getting category: ${error.message}`);

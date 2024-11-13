@@ -24,7 +24,7 @@ const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 class StreamController {
   async getStreamController(req, res, next) {
     const { streamId } = req.params;
-    const { requesterId } = req.query;
+    const requesterId = req.requesterId;
 
     try {
       const stream = await getStreamService(streamId, requesterId);
@@ -39,7 +39,7 @@ class StreamController {
 
   async getStreamsController(req, res, next) {
     try {
-      const { requesterId } = req.query;
+      const requesterId = req.requesterId;
 
       const query = {
         size: req.query.size || 10,
