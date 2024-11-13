@@ -72,6 +72,10 @@ const getAllGiftService = async () => {
 const deleteGiftService = async (id) => {
   const connection = new DatabaseTransaction();
   try {
+    const checkGift = await connection.giftRepository.getGiftRepository(id);
+    if (!checkGift) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Gift not found");
+    }
     const gift = await connection.giftRepository.deleteGiftRepository(id);
     return gift;
   } catch (error) {
