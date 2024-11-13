@@ -104,6 +104,16 @@ const hasSpecialCharacters = (content) => {
   }
   return true;
 };
+
+const capitalizeWords = (str) => {
+  const newString = str.trim().replace(/\s+/g, " ").toLowerCase();
+
+  return newString
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 module.exports = {
   validNickName,
   validMongooseObjectId,
@@ -113,4 +123,5 @@ module.exports = {
   validPhoneNumber,
   contentModeration,
   hasSpecialCharacters,
+  capitalizeWords,
 };
