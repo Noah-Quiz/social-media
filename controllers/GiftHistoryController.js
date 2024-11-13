@@ -67,6 +67,7 @@ class GiftHistoryController {
   }
   async deleteGiftHistoryController(req, res, next) {
     const { id } = req.params;
+    const userId = req.userId;
     try {
       const giftHistory = await deleteGiftHistoryService(id);
       return res
