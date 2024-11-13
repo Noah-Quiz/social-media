@@ -44,6 +44,10 @@ const updateGiftService = async (id, name, image, price) => {
         "Gift name has already been taken"
       );
     }
+    const checkGiftId = await connection.giftRepository.getGiftRepository(id);
+    if (!checkGiftId) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Gift not found");
+    }
     const gift = await connection.giftRepository.updateGiftRepository(
       id,
       name,
@@ -59,6 +63,9 @@ const getGiftService = async (id) => {
   const connection = new DatabaseTransaction();
   try {
     const gift = await connection.giftRepository.getGiftRepository(id);
+    if (!gift) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Gift not found");
+    }
     return gift;
   } catch (error) {
     throw error;
