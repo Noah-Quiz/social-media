@@ -69,7 +69,7 @@ const getAPlaylistService = async (playlistId, requesterId) => {
       await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
 
     if (
-      playlist.enumMode === "private" &&
+      (playlist.enumMode === "private" || playlist.enumMode === "unlisted") &&
       requesterId?.toString() !== playlist?.user?._id?.toString() &&
       requester?.role !== UserEnum.ADMIN
     ) {
@@ -109,7 +109,7 @@ const getAllMyPlaylistsService = async (userId, requesterId, query) => {
     }
 
     if (
-      query.enumMode === "private" &&
+      (query.enumMode === "private" || query.enumMode === "unlisted") &&
       userId?.toString() !== requesterId?.toString() &&
       requester?.role !== UserEnum.ADMIN
     ) {
@@ -129,7 +129,6 @@ const getAllMyPlaylistsService = async (userId, requesterId, query) => {
         userId,
         query
       );
-    user;
     return { playlists, total, page, totalPages };
   } catch (error) {
     throw error;
