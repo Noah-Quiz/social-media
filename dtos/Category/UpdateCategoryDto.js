@@ -11,7 +11,7 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *       properties:
  *         name:
  *           type: string
- *           description: The category's name.
+ *           description: The category's name. Must be a minimum of 2 characters and a maximum of 100 characters.
 
  */
 class UpdateCategoryDto {

@@ -17,11 +17,11 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *         title:
  *           type: string
  *           default: example
- *           description: Video's title
+ *           description: Video's title. Must be a minimum of 2 characters and a maximum of 100 characters.
  *         description:
  *           type: string
  *           default: example description
- *           description: Video's description
+ *           description: Video's description. Must be a minimum of 1 characters and a maximum of 2000 characters.
  *         categoryIds:
  *           type: array
  *           default: []
