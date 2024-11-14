@@ -662,41 +662,41 @@ route.put("/watch-time", userController.updateTotalWatchTimeController);
  * /api/users:
  *   get:
  *     security:
- *      - bearerAuth: []
+ *       - bearerAuth: []
  *     summary: Get all users
  *     tags: [Users]
  *     parameters:
- *      - in: query
- *        name: page
- *        schema:
- *          type: integer
- *          default: 1
- *        description: Page number
- *      - in: query
- *        name: size
- *        schema:
- *          type: integer
- *          default: 10
- *        description: Number of items per page
- *      - in: query
- *        name: search
- *        schema:
- *          type: string
- *        description: Search by full name or nickname
- *      - in: query
- *        name: order
- *        required: false
- *        schema:
- *          type: string
- *          enum: [ascending, descending]
- *        description: Filter for sort order (default descending)
- *      - in: query
- *        name: sortBy
- *        required: false
- *        schema:
- *          type: string
- *          enum: [date, follower]
- *        description: Filter for sort criteria (default date)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by full name or nickname
+ *       - in: query
+ *         name: order
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [ascending, descending]
+ *         description: Sort order (default is descending)
+ *       - in: query
+ *         name: sortBy
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [date, follower]
+ *         description: Sort criteria (default is date)
  *     responses:
  *       200:
  *         description: Get all users successfully
@@ -705,7 +705,10 @@ route.put("/watch-time", userController.updateTotalWatchTimeController);
  *             schema:
  *               type: object
  *               properties:
- *                 data:
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *                 users:
  *                   type: array
  *                   items:
  *                     type: object
@@ -713,65 +716,70 @@ route.put("/watch-time", userController.updateTotalWatchTimeController);
  *                       _id:
  *                         type: string
  *                         example: "66e1185472404e6811cf15bc"
- *                       email:
- *                         type: string
- *                         example: "user@example.com"
  *                       fullName:
  *                         type: string
- *                         example: "string"
- *                       avatar:
- *                         type: string
- *                         example: "string"
+ *                         example: "Hoang Tam"
  *                       nickName:
  *                         type: string
- *                         example: "string"
- *                       phoneNumber:
+ *                         example: "Tam Tam"
+ *                       role:
+ *                         type: integer
+ *                         example: 1
+ *                       avatar:
  *                         type: string
- *                         example: "string"
- *                       follow:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             followId:
- *                               type: string
- *                               example: "66f6577eb4ffd9ae01870e52"
- *                             followDate:
- *                               type: string
- *                               format: date-time
- *                               example: "2024-10-18T02:31:33.735Z"
- *                       followBy:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             followById:
- *                               type: string
- *                               example: "66f6577eb4ffd9ae01870e52"
- *                             followByDate:
- *                               type: string
- *                               format: date-time
- *                               example: "2024-10-18T02:36:17.291Z"
- *                 message:
- *                   type: string
- *                   example: "Get all users successfully"
+ *                         nullable: true
+ *                         example: null
+ *                       point:
+ *                         type: integer
+ *                         example: 15103
+ *                       followCount:
+ *                         type: integer
+ *                         example: 2
+ *                       followByCount:
+ *                         type: integer
+ *                         example: 1
+ *                       lastLogin:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-11-12T13:08:04.015Z"
+ *                       dateCreated:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-10-08T08:52:21.724Z"
+ *                       lastUpdated:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-11-05T07:06:45.221Z"
+ *                 total:
+ *                   type: integer
+ *                   example: 4
  *                 page:
  *                   type: integer
  *                   example: 1
- *                 total:
- *                   type: integer
- *                   example: 10
  *                 totalPages:
  *                   type: integer
  *                   example: 1
  *       400:
  *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 route.get(
   "/",
-  requireRole(UserEnum.ADMIN),
   userController.getAllUsersController
 );
 
@@ -780,15 +788,16 @@ route.get(
  * /api/users/{userId}:
  *   get:
  *     security:
- *      - bearerAuth: []
+ *       - bearerAuth: []
  *     summary: Get user by ID
  *     tags: [Users]
  *     parameters:
- *      - in: path
- *        name: userId
- *        schema:
- *         type: string
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
  *         required: true
+ *         description: ID of the user to fetch
  *     responses:
  *       200:
  *         description: Get user successfully
@@ -817,6 +826,22 @@ route.get(
  *                     phoneNumber:
  *                       type: string
  *                       nullable: true
+ *                     lastLogin:
+ *                       type: string
+ *                       format: date-time
+ *                     streak:
+ *                       type: integer
+ *                     point:
+ *                       type: integer
+ *                     wallet:
+ *                       type: object
+ *                       properties:
+ *                         balance:
+ *                           type: number
+ *                         coin:
+ *                           type: integer
+ *                     totalWatchTime:
+ *                       type: integer
  *                     follow:
  *                       type: array
  *                       items:
@@ -831,14 +856,53 @@ route.get(
  *                       type: array
  *                       items:
  *                         type: object
- *                         properties: {}
+ *                         properties:
+ *                           followById:
+ *                             type: string
+ *                           followByDate:
+ *                             type: string
+ *                             format: date-time
+ *                     dateCreated:
+ *                       type: string
+ *                       format: date-time
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *                     followCount:
+ *                       type: integer
+ *                     followerCount:
+ *                       type: integer
  *                 message:
  *                   type: string
- *                   example: "Get user successfully"
+ *                   example: "Success"
  *       400:
  *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "User not found"
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 route.get("/:userId", userController.getUserByIdController);
 
