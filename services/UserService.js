@@ -83,8 +83,6 @@ module.exports = {
         delete filteredUser.wallet;
         delete filteredUser.streak;
         delete filteredUser.totalWatchTime;
-        delete filteredUser.followCount;
-        delete filteredUser.followerCount;
       }
       
       return filteredUser;
