@@ -60,6 +60,16 @@ const publicRoutes = [
     path: "/api/my-playlists/user/:userId",
     method: "GET"
   },
+
+  // User 
+  {
+    path: "/api/users",
+    method: "GET"
+  },
+  {
+    path: "/api/users/:userId",
+    method: "GET"
+  },
 ];
 
 module.exports = publicRoutes;

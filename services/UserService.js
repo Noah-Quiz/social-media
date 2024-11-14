@@ -10,48 +10,84 @@ const { default: mongoose } = require("mongoose");
 require("dotenv").config();
 
 module.exports = {
-  getAllUsersService: async (query) => {
+  getAllUsersService: async (query, requesterId) => {
     const connection = new DatabaseTransaction();
 
+    let requester = null;
+    if (requesterId) {
+      requester = await connection.userRepository.getAnUserByIdRepository(requesterId);
+      if (!requester) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "Requester not found");
+      }
+    }
+
     const data = await connection.userRepository.getAllUsersRepository(query);
+
+    const { users } = data;
+
+    data.users = users.map((user) => {
+      if (user._id?.toString() !== requesterId?.toString() && requester?.role !== UserEnum.ADMIN) {
+        delete user.email;
+        delete user.phoneNumber;
+      }
+
+      return user;
+    })
 
     return data;
   },
 
-  getUserByIdService: async (userId, requester) => {
+  getUserByIdService: async (userId, requesterId) => {
     try {
       const connection = new DatabaseTransaction();
 
-      let user = await connection.userRepository.getAnUserByIdRepository(
-        userId
-      );
-      const caller = await connection.userRepository.getAnUserByIdRepository(
-        requester
-      );
-      console.log("My own: ", userId?.toString() === requester?.toString());
-      if (userId?.toString() === requester?.toString()) {
-        if (caller.role != 1) {
-        }
-      } else {
-        user = { ...user };
-
-        console.log("isAdmin:", caller.role === 1);
-
-        //not admin
-        if (caller.role !== 1) {
-          user.followCount = user?.follow ? user.follow.length : 0;
-          user.followerCount = user?.followBy ? user.followBy.length : 0;
-          delete user.follow;
-          delete user.followBy;
-          delete user.role;
-        }
-      }
-
+      let user = await connection.userRepository.getAnUserByIdRepository(userId);
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
       }
+      
+      let requester = null;
+      if (requesterId) {
+        requester = await connection.userRepository.getAnUserByIdRepository(requesterId);
+        if (!requester) {
+          throw new CoreException(StatusCodeEnum.NotFound_404, "Requester not found");
+        }
+      }
 
-      return user;
+      const filteredUser = {
+        _id: user._id,
+        fullName: user.fullName,
+        nickName: user.nickName,
+        role: user.role,
+        avatar: user.avatar,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        lastLogin: user.lastLogin,
+        streak: user.streak,
+        point: user.point,
+        wallet: user.wallet,
+        totalWatchTime: user.totalWatchTime,
+        follow: user.follow,
+        followBy: user.followBy,
+        dateCreated: user.dateCreated,
+        lastUpdated: user.lastUpdated,
+      }
+      filteredUser.followCount =  user.follow?.length || 0;
+      filteredUser.followerCount = user.followBy?.length || 0;
+
+      if (user._id?.toString() !== requesterId?.toString() && requester?.role !== UserEnum.ADMIN) {
+        delete filteredUser.follow;
+        delete filteredUser.followBy;
+        delete filteredUser.email;
+        delete filteredUser.phoneNumber;
+        delete filteredUser.wallet;
+        delete filteredUser.streak;
+        delete filteredUser.totalWatchTime;
+        delete filteredUser.followCount;
+        delete filteredUser.followerCount;
+      }
+      
+      return filteredUser;
     } catch (error) {
       throw error;
     }
