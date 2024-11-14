@@ -13,7 +13,7 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *       properties:
  *         playlistName:
  *           type: string
- *           description: The playlist's name.
+ *           description: The playlist's name. Must be a minimum of 2 characters and a maximum of 100 characters.
  */
 class CreatePlaylistDto {
   constructor(userId, playlistName, enumMode) {
