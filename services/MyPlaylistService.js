@@ -4,6 +4,7 @@ const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const UserEnum = require("../enums/UserEnum");
 const { promises } = require("nodemailer/lib/xoauth2");
+const { validLength } = require("../utils/validator");
 
 const createAPlaylistService = async (
   userId,
@@ -27,6 +28,14 @@ const createAPlaylistService = async (
     if (data.thumbnail !== null) {
       data.thumbnail = `${process.env.APP_BASE_URL}/${data.thumbnail}`;
     }
+    //validate name
+    validLength(2, 100, playlistName, "Name of playlist");
+
+    //validate description
+    if (description) {
+      validLength(1, 1000, description, "Description of playlist");
+    }
+
     const playlist =
       await connection.myPlaylistRepository.createAPlaylistRepository(
         data,
@@ -55,11 +64,15 @@ const getAPlaylistService = async (playlistId, requesterId) => {
         );
       }
     }
-    
+
     const playlist =
       await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
 
-    if (playlist.enumMode === "private" && requesterId?.toString() !== playlist?.user?._id?.toString() && requester?.role !== UserEnum.ADMIN) {
+    if (
+      (playlist.enumMode === "private" || playlist.enumMode === "unlisted") &&
+      requesterId?.toString() !== playlist?.user?._id?.toString() &&
+      requester?.role !== UserEnum.ADMIN
+    ) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
         "Playlist not found"
@@ -95,11 +108,19 @@ const getAllMyPlaylistsService = async (userId, requesterId, query) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
 
-    if (query.enumMode === "private" && userId?.toString() !== requesterId?.toString() && requester?.role !== UserEnum.ADMIN) {
+    if (
+      (query.enumMode === "private" || query.enumMode === "unlisted") &&
+      userId?.toString() !== requesterId?.toString() &&
+      requester?.role !== UserEnum.ADMIN
+    ) {
       query.enumMode = "public";
     }
 
-    if (!query.enumMode && userId?.toString() !== requesterId?.toString() && requester?.role !== UserEnum.ADMIN) {
+    if (
+      !query.enumMode &&
+      userId?.toString() !== requesterId?.toString() &&
+      requester?.role !== UserEnum.ADMIN
+    ) {
       query.enumMode = "public";
     }
 
@@ -108,7 +129,6 @@ const getAllMyPlaylistsService = async (userId, requesterId, query) => {
         userId,
         query
       );
-user
     return { playlists, total, page, totalPages };
   } catch (error) {
     throw error;
@@ -132,6 +152,13 @@ const updatePlaylistService = async (data) => {
       enumMode,
     } = data;
 
+    //validate name
+    validLength(2, 100, playlistName, "Name of playlist");
+
+    //validate description
+    if (description) {
+      validLength(1, 1000, description, "Description of playlist");
+    }
     // Check if user exists
     const user = await connection.userRepository.getAnUserByIdRepository(
       userId
@@ -150,7 +177,10 @@ const updatePlaylistService = async (data) => {
       );
     }
 
-    if (user?._id.toString() !== playlist.user?._id?.toString() && user.role !== UserEnum.ADMIN) {
+    if (
+      user?._id.toString() !== playlist.user?._id?.toString() &&
+      user.role !== UserEnum.ADMIN
+    ) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
         "You do not have permission to perform this action"
@@ -245,17 +275,14 @@ const addToPlaylistService = async (playlistId, videoId, userId) => {
 
     const video = await connection.videoRepository.getVideoRepository(videoId);
     if (!video) {
-      throw new CoreException(
-        StatusCodeEnums.NotFound_404,
-        "Video not found"
-      );
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
 
-    if (video.user?._id?.toString() !== userId?.toString() && (video.enumMode === "draft" || video.enumMode === "private")) {
-      throw new CoreException(
-        StatusCodeEnums.NotFound_404,
-        "Video not found"
-      );
+    if (
+      video.user?._id?.toString() !== userId?.toString() &&
+      (video.enumMode === "draft" || video.enumMode === "private")
+    ) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
 
     const playlist =
@@ -275,7 +302,9 @@ const addToPlaylistService = async (playlistId, videoId, userId) => {
       );
     }
 
-    if (playlist.videoIds?.some(id => id.toString() === video._id.toString())) {
+    if (
+      playlist.videoIds?.some((id) => id.toString() === video._id.toString())
+    ) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
         "Video is already in playlist"
@@ -300,12 +329,9 @@ const removeFromPlaylist = async (playlistId, videoId, userId) => {
 
     const video = await connection.videoRepository.getVideoRepository(videoId);
     if (!video) {
-      throw new CoreException(
-        StatusCodeEnums.NotFound_404,
-        "Video not found"
-      );
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
-    
+
     const playlist =
       await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
     if (!playlist) {
@@ -318,9 +344,10 @@ const removeFromPlaylist = async (playlistId, videoId, userId) => {
     const user = await connection.userRepository.getAnUserByIdRepository(
       userId
     );
-    
-    const notPlaylistOwner = playlist.user?._id?.toString() !== userId?.toString();
-    
+
+    const notPlaylistOwner =
+      playlist.user?._id?.toString() !== userId?.toString();
+
     const notAdmin = user.role !== UserEnum.ADMIN;
     if (notPlaylistOwner && notAdmin) {
       throw new CoreException(
@@ -329,7 +356,9 @@ const removeFromPlaylist = async (playlistId, videoId, userId) => {
       );
     }
 
-    if (!playlist.videoIds?.some(id => id.toString() === video._id.toString())) {
+    if (
+      !playlist.videoIds?.some((id) => id.toString() === video._id.toString())
+    ) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
         "Video not found in playlist"
