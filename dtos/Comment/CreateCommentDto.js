@@ -17,7 +17,7 @@ const { contentModeration } = require("../../utils/validator");
  *           description: The video's id.
  *         content:
  *           type: string
- *           description: The comment's content.
+ *           description: The comment's content. Must be a minimum of 1 characters and a maximum of 2000 characters.
  *         responseTo:
  *           type: string
  *           description: The previous comment's id.
@@ -30,7 +30,6 @@ class CreateCommentDto {
   }
 
   async validate() {
-
     // Validate videoId
     if (!this.videoId) {
       throw new CoreException(

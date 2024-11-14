@@ -114,6 +114,15 @@ const capitalizeWords = (str) => {
     .join(" ");
 };
 
+const validLength = (min, max, string, type) => {
+  if (!validator.isLength(string, { min, max })) {
+    throw new CoreException(
+      StatusCodeEnums.BadRequest_400,
+      `${type} is invalid, must be a minimum of ${min} characters and a maximum of ${max} characters.`
+    );
+  }
+};
+
 module.exports = {
   validNickName,
   validMongooseObjectId,
@@ -124,4 +133,5 @@ module.exports = {
   contentModeration,
   hasSpecialCharacters,
   capitalizeWords,
+  validLength,
 };

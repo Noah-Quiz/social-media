@@ -1,11 +1,15 @@
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
-const { capitalizeWords } = require("../utils/validator");
+const { capitalizeWords, validLength } = require("../utils/validator");
 
 const createCategoryService = async (categoryData) => {
   const connection = new DatabaseTransaction();
   categoryData.name = capitalizeWords(categoryData.name);
+
+  //validate name
+  validLength(2, 100, categoryData.name, "Name of category");
+
   try {
     const session = await connection.startTransaction();
     const checkCate = await connection.categoryRepository.getCategoryByName(
@@ -79,12 +83,14 @@ const updateCategoryService = async (categoryId, categoryData) => {
     const checkCate = await connection.categoryRepository.getCategoryByName(
       categoryData.name
     );
+
     if (checkCate) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Category name has been taken"
       );
     }
+    validLength(2, 100, categoryData.name, "Name of category");
 
     if (categoryData.imageUrl)
       categoryData.imageUrl = `${process.env.APP_BASE_URL}/${categoryData.imageUrl}`;

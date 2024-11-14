@@ -15,10 +15,10 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *       properties:
  *         title:
  *           type: string
- *           description: The stream's title.
+ *           description: The stream's title. Must be a minimum of 2 characters and a maximum of 100 characters.
  *         description:
  *           type: string
- *           description: The stream's description.
+ *           description: The stream's description. Must be a minimum of 1 characters and a maximum of 2000 characters.
  *         categoryIds:
  *           type: array
  *           items:
@@ -56,7 +56,8 @@ class UpdateStreamDto {
         "Invalid Stream ID"
       );
     }
-    if (this.enumMode != null &&
+    if (
+      this.enumMode != null &&
       !["public", "private", "unlisted", "member", "draft"].includes(
         this.enumMode
       )
