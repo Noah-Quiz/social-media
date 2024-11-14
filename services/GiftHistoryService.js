@@ -23,7 +23,10 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
           gift.giftId
         );
         if (!giftData) {
-          throw new Error(`Gift with ID ${gift.giftId} not found.`);
+          throw new CoreException(
+            StatusCodeEnums.NotFound_404,
+            `Gift with ID ${gift.giftId} not found.`
+          );
         }
         return { ...gift, pricePerUnit: giftData.valuePerUnit };
       })
@@ -93,7 +96,7 @@ const getGiftService = async (id) => {
     }
     return gift;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const getGiftHistoryByStreamIdService = async (streamId, userId) => {
@@ -137,7 +140,7 @@ const getGiftHistoryByStreamIdService = async (streamId, userId) => {
     }
     return giftHistories;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const getGiftHistoryByUserIdService = async (userId) => {
@@ -156,7 +159,7 @@ const getGiftHistoryByUserIdService = async (userId) => {
     }
     return giftHistories;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const deleteGiftHistoryService = async (id, userId) => {
@@ -189,7 +192,7 @@ const deleteGiftHistoryService = async (id, userId) => {
       await connection.giftHistoryRepository.deleteGiftHistoryRepository(id);
     return giftHistory;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 module.exports = {

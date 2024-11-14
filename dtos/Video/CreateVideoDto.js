@@ -13,7 +13,7 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *       properties:
  *         title:
  *           type: string
- *           description: Title of the video
+ *           description: Title of the video. Must be a minimum of 2 characters and a maximum of 100 characters.
  */
 
 class CreateVideoDto {

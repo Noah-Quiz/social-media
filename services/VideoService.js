@@ -4,18 +4,15 @@ const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const { deleteBunnyStorageFileService } = require("./BunnyStreamService");
 const UserEnum = require("../enums/UserEnum");
+const { validLength } = require("../utils/validator");
 const createVideoService = async (
   userId,
   { title, videoUrl, videoEmbedUrl, thumbnailUrl }
 ) => {
   try {
     const connection = new DatabaseTransaction();
-
-    // const { videoUrl, embedUrl, thumbnailUrl } = await uploadFiles(
-    //   videoFile,
-    //   thumbnailFile
-    // );
-
+    //validate title
+    validLength(2, 100, title, "Title of video");
     const video = await connection.videoRepository.createVideoRepository({
       userId,
       title,
@@ -56,6 +53,9 @@ const updateAVideoByIdService = async (
       data.thumbnailUrl = `${process.env.APP_BASE_URL}/${thumbnailFile.path}`;
     }
 
+    //validate title
+    validLength(2, 100, data.title, "Title of video");
+
     const updatedVideo =
       await connection.videoRepository.updateAVideoByIdRepository(
         videoId,
@@ -77,18 +77,27 @@ const toggleLikeVideoService = async (videoId, userId) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
 
-    const video = await connection.videoRepository.getVideoByIdRepository(videoId);
+    const video = await connection.videoRepository.getVideoByIdRepository(
+      videoId
+    );
     if (!video) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
 
-    if ((video.enumMode === "private" || video.enumMode === "draft") && user.role !== UserEnum.ADMIN && video.user?._id?.toString() !== userId?.toString()) {
+    if (
+      (video.enumMode === "private" || video.enumMode === "draft") &&
+      user.role !== UserEnum.ADMIN &&
+      video.user?._id?.toString() !== userId?.toString()
+    ) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
-    
+
     // Prevent like on draft video
     if (video.enumMode === "draft") {
-      throw new CoreException(StatusCodeEnums.Forbidden_403, "Likes are disabled on draft video");
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "Likes are disabled on draft video"
+      );
     }
 
     const videoOwnerId = video.user?._id;
@@ -176,7 +185,7 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
         let { videos, total, page, totalPages } =
           await connection.videoRepository.getVideosByUserIdRepository(
             userId,
-            query,
+            query
           );
         return { videos, total, page, totalPages };
       }
@@ -201,7 +210,7 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
     const user = await connection.userRepository.getAnUserByIdRepository(
       userId
     );
-    
+
     if (user === null) {
       throw new CoreException(StatusCodeEnums.NotFound_404, `User not found`);
     }
@@ -288,7 +297,10 @@ const getVideoService = async (videoId, requesterId) => {
       }
     }
 
-    const video = await connection.videoRepository.getVideoRepository(videoId, requesterId);
+    const video = await connection.videoRepository.getVideoRepository(
+      videoId,
+      requesterId
+    );
     if (!video) {
       throw new CoreException(StatusCodeEnums.NotFound_404, `Video not found`);
     }
@@ -361,7 +373,10 @@ const getVideosService = async (query, requesterId) => {
       }
       if (requester.role === UserEnum.ADMIN) {
         let { videos, total, page, totalPages } =
-          await connection.videoRepository.getAllVideosRepository(query, requesterId);
+          await connection.videoRepository.getAllVideosRepository(
+            query,
+            requesterId
+          );
         return { videos, total, page, totalPages };
       }
     }
@@ -378,7 +393,10 @@ const getVideosService = async (query, requesterId) => {
     }
 
     const { videos, total, page, totalPages } =
-      await connection.videoRepository.getAllVideosRepository(query, requesterId);
+      await connection.videoRepository.getAllVideosRepository(
+        query,
+        requesterId
+      );
 
     let filteredVideos = videos.map(async (video) => {
       const isOwner = video.user?._id?.toString() === requesterId?.toString();
