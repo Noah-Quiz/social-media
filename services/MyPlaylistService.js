@@ -68,9 +68,8 @@ const getAPlaylistService = async (playlistId, requesterId) => {
     const playlist =
       await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
 
-    if ((playlist.enumMode === "private"||playlist.enumMode==="unlisted") && requesterId?.toString() !== playlist?.user?._id?.toString() && requester?.role !== UserEnum.ADMIN) {
     if (
-      playlist.enumMode === "private" &&
+      (playlist.enumMode === "private" || playlist.enumMode === "unlisted") &&
       requesterId?.toString() !== playlist?.user?._id?.toString() &&
       requester?.role !== UserEnum.ADMIN
     ) {
@@ -109,7 +108,11 @@ const getAllMyPlaylistsService = async (userId, requesterId, query) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
 
-    if (query.enumMode === "private" && userId?.toString() !== requesterId?.toString() && requester?.role !== UserEnum.ADMIN) {
+    if (
+      (query.enumMode === "private" || query.enumMode === "unlisted") &&
+      userId?.toString() !== requesterId?.toString() &&
+      requester?.role !== UserEnum.ADMIN
+    ) {
       query.enumMode = "public";
     }
 
@@ -126,7 +129,6 @@ const getAllMyPlaylistsService = async (userId, requesterId, query) => {
         userId,
         query
       );
-user
     return { playlists, total, page, totalPages };
   } catch (error) {
     throw error;
