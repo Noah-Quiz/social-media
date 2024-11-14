@@ -29,7 +29,7 @@ const createGiftService = async (name, image, pricePerUnit) => {
     });
     return gift;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const updateGiftService = async (id, name, image, price) => {
@@ -44,6 +44,10 @@ const updateGiftService = async (id, name, image, price) => {
         "Gift name has already been taken"
       );
     }
+    const checkGiftId = await connection.giftRepository.getGiftRepository(id);
+    if (!checkGiftId) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Gift not found");
+    }
     const gift = await connection.giftRepository.updateGiftRepository(
       id,
       name,
@@ -52,16 +56,19 @@ const updateGiftService = async (id, name, image, price) => {
     );
     return gift;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const getGiftService = async (id) => {
   const connection = new DatabaseTransaction();
   try {
     const gift = await connection.giftRepository.getGiftRepository(id);
+    if (!gift) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Gift not found");
+    }
     return gift;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const getAllGiftService = async () => {
@@ -70,7 +77,7 @@ const getAllGiftService = async () => {
     const gifts = await connection.giftRepository.getAllGiftRepository();
     return gifts;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const deleteGiftService = async (id) => {
@@ -83,7 +90,7 @@ const deleteGiftService = async (id) => {
     const gift = await connection.giftRepository.deleteGiftRepository(id);
     return gift;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 

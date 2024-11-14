@@ -67,8 +67,9 @@ class GiftHistoryController {
   }
   async deleteGiftHistoryController(req, res, next) {
     const { id } = req.params;
+    const userId = req.userId;
     try {
-      const giftHistory = await deleteGiftHistoryService(id);
+      const giftHistory = await deleteGiftHistoryService(id, userId);
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ giftHistory: giftHistory, message: "Success" });

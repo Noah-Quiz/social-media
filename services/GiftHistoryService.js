@@ -23,7 +23,10 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
           gift.giftId
         );
         if (!giftData) {
-          throw new Error(`Gift with ID ${gift.giftId} not found.`);
+          throw new CoreException(
+            StatusCodeEnums.NotFound_404,
+            `Gift with ID ${gift.giftId} not found.`
+          );
         }
         return { ...gift, pricePerUnit: giftData.valuePerUnit };
       })
@@ -93,7 +96,7 @@ const getGiftService = async (id) => {
     }
     return gift;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const getGiftHistoryByStreamIdService = async (streamId, userId) => {
@@ -120,7 +123,10 @@ const getGiftHistoryByStreamIdService = async (streamId, userId) => {
       checkUser._id?.toString() !== checkStream?.userId?.toString() &&
       checkUser.role !== UserEnum.ADMIN
     ) {
-      throw new Error("You do not have permission to perform this action");
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "You do not have permission to perform this action"
+      );
     }
     const giftHistories =
       await connection.giftHistoryRepository.getGiftHistoryByStreamIdRepository(
@@ -134,7 +140,7 @@ const getGiftHistoryByStreamIdService = async (streamId, userId) => {
     }
     return giftHistories;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const getGiftHistoryByUserIdService = async (userId) => {
@@ -153,10 +159,10 @@ const getGiftHistoryByUserIdService = async (userId) => {
     }
     return giftHistories;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
-const deleteGiftHistoryService = async (id) => {
+const deleteGiftHistoryService = async (id, userId) => {
   const connection = new DatabaseTransaction();
   try {
     const Checkgift =
@@ -168,11 +174,25 @@ const deleteGiftHistoryService = async (id) => {
         "No gift history found"
       );
     }
+    const checkUser = await connection.userRepository.getAnUserByIdRepository(
+      userId
+    );
+    if (
+      !checkUser ||
+      checkUser === false ||
+      (Checkgift.userId?.toString() !== userId?.toString() &&
+        checkUser.role !== UserEnum.ADMIN)
+    ) {
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "You do not have permission to perform this action"
+      );
+    }
     const giftHistory =
       await connection.giftHistoryRepository.deleteGiftHistoryRepository(id);
     return giftHistory;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 module.exports = {

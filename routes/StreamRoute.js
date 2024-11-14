@@ -105,7 +105,6 @@ streamRoutes.use(AuthMiddleware);
  */
 streamRoutes.post(
   "/relevant",
-  AuthMiddleware,
   streamController.getRelevantStreamsController
 );
 
@@ -191,7 +190,6 @@ streamRoutes.post(
  */
 streamRoutes.get(
   "/recommendation",
-  AuthMiddleware,
   streamController.getRecommendedStreamsController
 );
 
@@ -311,9 +309,23 @@ streamRoutes.get(
  *                   type: string
  *                   example: "Success"
  *       400:
- *         description: Bad request due to invalid parameters
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 streamRoutes.get("/", streamController.getStreamsController);
 
@@ -415,12 +427,35 @@ streamRoutes.get("/", streamController.getStreamsController);
  *                       format: date-time
  *       400:
  *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Stream not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Stream not found"
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 streamRoutes.post(
   "/",
-  AuthMiddleware,
   checkUserSuspended,
   streamController.createStreamController
 );
@@ -452,12 +487,35 @@ streamRoutes.post(
  *                   example: "Success"
  *       400:
  *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Stream not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Stream not found"
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 streamRoutes.delete(
   "/:streamId",
-  AuthMiddleware,
   streamController.deleteStreamController
 );
 
@@ -468,82 +526,106 @@ streamRoutes.delete(
  *     summary: Get stream
  *     tags: [Streams]
  *     parameters:
- *      - in: path
- *        name: streamId
- *        required: true
- *        schema:
- *         type: string
+ *       - in: path
+ *         name: streamId
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
- *      200:
- *       description: Get stream successfully
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               stream:
- *                 type: object
- *                 properties:
- *                   _id:
- *                     type: string
- *                   title:
- *                     type: string
- *                   description:
- *                     type: string
- *                   userId:
- *                     type: string
- *                   streamOnlineUrl:
- *                     type: string
- *                   streamServerUrl:
- *                     type: string
- *                   meta:
- *                     type: object
- *                     properties:
- *                       name:
- *                         type: string
- *                   status:
- *                     type: string
- *                   thumbnailUrl:
- *                     type: string
- *                   likedBy:
- *                     type: array
- *                     items:
+ *       200:
+ *         description: Get stream successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 stream:
+ *                   type: object
+ *                   properties:
+ *                     _id:
  *                       type: string
- *                   lastUpdated:
- *                     type: string
- *                     format: date-time
- *                   isDeleted:
- *                     type: boolean
- *                   dateCreated:
- *                     type: string
- *                     format: date-time
- *                   enumMode:
- *                     type: string
- *                   user:
- *                     type: object
- *                     properties:
- *                       fullName:
- *                         type: string
- *                       nickName:
- *                         type: string
- *                       avatar:
- *                         type: string
- *                   categories:
- *                     type: array
- *                     items:
+ *                     title:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     userId:
+ *                       type: string
+ *                     streamOnlineUrl:
+ *                       type: string
+ *                     streamServerUrl:
+ *                       type: string
+ *                     meta:
  *                       type: object
  *                       properties:
  *                         name:
  *                           type: string
- *                         imageUrl:
+ *                     status:
+ *                       type: string
+ *                     thumbnailUrl:
+ *                       type: string
+ *                     likedBy:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *                     isDeleted:
+ *                       type: boolean
+ *                     dateCreated:
+ *                       type: string
+ *                       format: date-time
+ *                     enumMode:
+ *                       type: string
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         fullName:
  *                           type: string
- *               message:
- *                 type: string
- *                 example: "Success"
- *      400:
- *       description: Bad request due to invalid streamId or requesterId
- *      500:
- *       description: Internal server error
+ *                         nickName:
+ *                           type: string
+ *                         avatar:
+ *                           type: string
+ *                     categories:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                           imageUrl:
+ *                             type: string
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Stream not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Stream not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 streamRoutes.get(
   "/:streamId",
@@ -635,14 +717,36 @@ streamRoutes.get(
  *                   type: string
  *                   example: "Success"
  *      400:
- *       description: Bad request
+ *        description: Bad request
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                message:
+ *                  type: string
+ *      404:
+ *        description: Stream not found
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                message:
+ *                  type: string
+ *                  example: "Stream not found"
  *      500:
- *       description: Internal server error
- *
+ *        description: Internal server error
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                message:
+ *                  type: string
  */
 streamRoutes.patch(
   "/:streamId",
-  AuthMiddleware,
   uploadFile.single("streamThumbnail"),
   streamController.updateStreamController
 );
@@ -675,12 +779,35 @@ streamRoutes.patch(
  *                   example: "Success"
  *       400:
  *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Stream not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Stream not found"
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 streamRoutes.post(
   "/:streamId/like",
-  AuthMiddleware,
   streamController.toggleLikeStreamController
 );
 
