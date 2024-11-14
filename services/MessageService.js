@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
-const { contentModeration } = require("../utils/validator");
+const { contentModeration, validLength } = require("../utils/validator");
 
 const findMessageService = async (messageId) => {
   try {
@@ -40,6 +40,11 @@ const updateMessageService = async (userId, messageId, newMessage) => {
     // if (originalMessage.userId.toString() !== userId.toString()) {
     //   throw new Error("You are not the owner of this message");
     // }
+    contentModeration(newMessage);
+
+    //validate message
+    validLength(1, 200, newMessage, "Update message");
+
     const message = await connection.messageRepository.updateMessage(
       messageId,
       newMessage
@@ -74,6 +79,8 @@ const createAMessageService = async (userId, roomId, content) => {
   try {
     const connection = new DatabaseTransaction();
     contentModeration(content);
+    validLength(1, 200, content, "Message");
+
     const response = await connection.messageRepository.createMessage({
       userId,
       roomId,

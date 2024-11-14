@@ -5,6 +5,7 @@ const CoreException = require("../exceptions/CoreException.js");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction.js");
 const { default: mongoose } = require("mongoose");
 const UserEnum = require("../enums/UserEnum.js");
+const { validLength } = require("../utils/validator.js");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
@@ -139,15 +140,19 @@ const getStreamsService = async (query, requesterId) => {
           return cleanedStream;
         }
 
-          return updateStreamForNonMembership(
-            [cleanedStream],
-            [cleanedStream._id],
-            "member"
-          )[0];
-        }
-        
-        cleanedStream.isLiked = requesterId ? (stream.likedBy || []).some( (userId) => userId?.toString() === requesterId?.toString() ) : false; 
-        delete cleanedStream.likedBy;
+        return updateStreamForNonMembership(
+          [cleanedStream],
+          [cleanedStream._id],
+          "member"
+        )[0];
+      }
+
+      cleanedStream.isLiked = requesterId
+        ? (stream.likedBy || []).some(
+            (userId) => userId?.toString() === requesterId?.toString()
+          )
+        : false;
+      delete cleanedStream.likedBy;
 
       return cleanedStream;
     });
@@ -178,6 +183,16 @@ const updateStreamService = async (userId, streamId, updateData) => {
     const stream = await connection.streamRepository.getStreamRepository(
       streamId
     );
+
+    //valid title
+    if (updateData.title) {
+      validLength(2, 100, updateData.title, "Title of stream");
+    }
+
+    //valid description
+    if (updateData.description) {
+      validLength(1, 2000, updateData.description, "Description of stream");
+    }
 
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
@@ -254,6 +269,16 @@ const createStreamService = async (data) => {
   const connection = new DatabaseTransaction();
   const session = await connection.startTransaction();
 
+  //valid title
+  if (data.title) {
+    validLength(2, 100, data.title, "Title of stream");
+  }
+
+  //valid description
+  if (data.description) {
+    validLength(1, 2000, data.description, "Description of stream");
+  }
+
   try {
     const stream = await connection.streamRepository.createStreamRepository(
       data,
@@ -280,7 +305,9 @@ const toggleLikeStreamService = async (streamId, userId) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
 
-    const stream = await connection.streamRepository.getStreamRepository(streamId);
+    const stream = await connection.streamRepository.getStreamRepository(
+      streamId
+    );
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
