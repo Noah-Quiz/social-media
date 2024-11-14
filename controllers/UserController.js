@@ -30,6 +30,7 @@ const GetUsersDto = require("../dtos/User/GetUsersDto");
 const UpdateUserPointDto = require("../dtos/User/UpdateUserPointDto");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const UserEnum = require("../enums/UserEnum");
+const GetUserDto = require("../dtos/User/GetUserDto");
 
 class UserController {
   async getAllUsersController(req, res, next) {
@@ -38,9 +39,10 @@ class UserController {
         page: req.query.page || 1,
         size: req.query.size || 10,
         search: req.query.search,
-        order: req.query.order,
-        sortBy: req.query.sortBy,
+        order: req.query.order?.toLowerCase(),
+        sortBy: req.query.sortBy?.toLowerCase(),
       };
+      const requesterId = req.requesterId;
 
       const getUsersDto = new GetUsersDto(
         query.page,
@@ -51,7 +53,8 @@ class UserController {
       await getUsersDto.validate();
 
       const { users, total, page, totalPages } = await getAllUsersService(
-        query
+        query,
+        requesterId
       );
 
       return res
@@ -78,17 +81,13 @@ class UserController {
 
   async getUserByIdController(req, res, next) {
     const { userId } = req.params;
-    const requester = req.userId;
+    const requesterId = req.requesterId;
 
     try {
-      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Invalid user ID"
-        );
-      }
+      const getUserDto = new GetUserDto(userId, requesterId);
+      await getUserDto.validate();
 
-      const user = await getUserByIdService(userId, requester);
+      const user = await getUserByIdService(userId, requesterId);
 
       return res
         .status(StatusCodeEnums.OK_200)
