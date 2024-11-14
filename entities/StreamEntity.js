@@ -95,10 +95,6 @@ const streamSchema = new Schema({
     type: Number,
     default: 0,
   },
-  duration: {
-    type: Number,
-    default: 0,
-  },
   ...baseEntitySchema.obj,
 });
 const Stream = mongoose.model("Stream", streamSchema);
