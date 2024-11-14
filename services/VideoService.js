@@ -4,6 +4,7 @@ const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const { deleteBunnyStorageFileService } = require("./BunnyStreamService");
 const UserEnum = require("../enums/UserEnum");
+const { validLength } = require("../utils/validator");
 const createVideoService = async (
   userId,
   { title, videoUrl, videoEmbedUrl, thumbnailUrl }
