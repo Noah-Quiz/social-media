@@ -6,17 +6,12 @@
  *       type: object
  *       required:
  *         - videoId
- *         - userId
  *         - packageId
  *       properties:
  *         videoId:
  *           type: string
  *           default: fasdjfhasdkjfh
  *           description: ID of video
- *         userId:
- *           type: string
- *           default: fasdjfhasdkjfh
- *           description: ID of user
  *         packageId:
  *           type: string
  *           default: fasdjfhasdkjfh
