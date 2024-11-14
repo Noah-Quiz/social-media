@@ -4,7 +4,7 @@ const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const AdvertisementPackageController = require("../controllers/AdvertisementPackageController");
 const packageController = new AdvertisementPackageController();
 
-// packageRoutes.use(AuthMiddleware);
+packageRoutes.use(AuthMiddleware);
 /**
  * @swagger
  * /api/advertisement-packages/:
@@ -45,24 +45,44 @@ packageRoutes.post("/", packageController.createAPackageController);
 
 /**
  * @swagger
- * /api/advertisement-packages/:
- *  put:
- *    summary: Update a package by id
- *    tags: [Advertisement Packages]
- *    requestBody:
- *      required: true
- *      content:
- *        application/json:
- *          schema:
- *            $ref: '#/components/schemas/UpdatePackageDto'
- *    200:
- *      description: Update a package by id successfully
- *    400:
- *      description: Bad request
- *    500:
- *      description: Internal server error
+ * /api/advertisement-packages/{id}:
+ *   put:
+ *     summary: Update an advertisement package by ID
+ *     tags: [Advertisement Packages]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID of the package to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               coin:
+ *                 type: integer
+ *               dateUnit:
+ *                 type: string
+ *               numberOfDateUnit:
+ *                 type: integer
+ *             required:
+ *               - coin
+ *               - dateUnit
+ *               - numberOfDateUnit
+ *     responses:
+ *       200:
+ *         description: Package updated successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
  */
-packageRoutes.put("/", packageController.updateAPackageByIdController);
+
+packageRoutes.put("/:id", packageController.updateAPackageByIdController);
 
 /**
  * @swagger
