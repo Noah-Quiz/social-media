@@ -9,6 +9,9 @@ const {
 } = require("../services/AdvertisementService");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const { getVideoService } = require("../services/VideoService");
+const {
+  getAPackageByIdService,
+} = require("../services/AdvertisementPackageService");
 const CoreException = require("../exceptions/CoreException");
 
 class AdvertisementController {
@@ -27,13 +30,19 @@ class AdvertisementController {
 
       const video = await getVideoService(videoId);
 
+      if (!video) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Video not found"
+        );
+      }
       const checkUserId = new mongoose.Types.ObjectId(userId);
-      if (!video.userId.equals(checkUserId)) {
+      if (!video.user._id.equals(checkUserId)) {
         return res
           .status(StatusCodeEnums.BadRequest_400)
           .json({ message: "This user does not own this video" });
       }
-      if (video.enumMode != "public" || video.enumMode != "member") {
+      if (video.enumMode != "public" && video.enumMode != "member") {
         return res.status(StatusCodeEnums.BadRequest_400).json({
           message: "Type of video for advertisement must be public or member",
         });
