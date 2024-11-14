@@ -520,7 +520,6 @@ const deleteVideoService = async (videoId, userId) => {
   const connection = new DatabaseTransaction();
 
   try {
-    console.log(videoId, userId);
     const session = await connection.startTransaction();
 
     const video = await connection.videoRepository.getVideoRepository(
