@@ -298,18 +298,19 @@ const addToPlaylistService = async (playlistId, videoId, userId) => {
     if (!video) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
-    if (
-      video.user?._id?.toString() !== userId?.toString() &&
-      (video.enumMode === "draft" || video.enumMode === "private")
-    ) {
+    
+    if (video.user?._id?.toString() !== userId?.toString() && video.enumMode === "draft") {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
+    }
+    if (video.user?._id?.toString() === userId?.toString() && video.enumMode === "draft") {
+      throw new CoreException(StatusCodeEnums.Forbidden_403, "Draft video cannot be added to playlist");
     }
 
     if (
       playlist.videoIds?.some((id) => id.toString() === video._id.toString())
     ) {
       throw new CoreException(
-        StatusCodeEnums.NotFound_404,
+        StatusCodeEnums.Conflict_409,
         "Video is already in playlist"
       );
     }
