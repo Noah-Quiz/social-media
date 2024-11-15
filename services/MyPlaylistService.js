@@ -294,7 +294,6 @@ const addToPlaylistService = async (playlistId, videoId, userId) => {
     if (!video) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
-
     if (
       video.user?._id?.toString() !== userId?.toString() &&
       (video.enumMode === "draft" || video.enumMode === "private")
