@@ -37,7 +37,10 @@ const updateAVideoByIdService = async (
   try {
     const connection = new DatabaseTransaction();
 
-    const video = await connection.videoRepository.getVideoRepository(videoId);
+    const video = await connection.videoRepository.getVideoRepository(
+      videoId,
+      userId
+    );
     if (!video) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
@@ -646,7 +649,6 @@ const getVideoLikeHistoryService = async (userId) => {
 module.exports = {
   createVideoService,
   updateAVideoByIdService,
-  createVideoService,
   updateAVideoByIdService,
   toggleLikeVideoService,
   getVideosByUserIdService,
