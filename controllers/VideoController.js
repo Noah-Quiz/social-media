@@ -397,7 +397,7 @@ class VideoController {
       );
       const validatedQuery = await getVideosDto.validate();
 
-      const videos = await getVideosByPlaylistIdService(
+      const { videos, total, page, totalPages } = await getVideosByPlaylistIdService(
         playlistId,
         validatedQuery,
         requesterId
@@ -405,7 +405,7 @@ class VideoController {
 
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ videos, message: "Success" });
+        .json({ videos, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }
