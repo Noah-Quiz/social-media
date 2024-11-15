@@ -47,7 +47,11 @@ class GiftHistoryRepository {
             0
           ) * rate.ReceivePercentage;
         // Save the updated history
-        return await history.save();
+        await history.save();
+        return await GiftHistory.findOne({
+          _id: history._id,
+          isDeleted: false,
+        }).lean();
       } else {
         // Create new gift history if none exists
         const newGiftHistory = new GiftHistory({
@@ -67,8 +71,11 @@ class GiftHistoryRepository {
             ) * rate.ReceivePercentage,
         });
         console.log();
+        // Save the new gift history
+        const savedHistory = await newGiftHistory.save();
 
-        return await newGiftHistory.save();
+        // Retrieve the new document as a plain object
+        return await GiftHistory.findById(savedHistory._id).lean(); // Returning the plain object
       }
     } catch (error) {
       throw new Error(
@@ -93,7 +100,7 @@ class GiftHistoryRepository {
       const giftHistory = await GiftHistory.findOne({
         _id: id,
         isDeleted: false,
-      });
+      }).lean();
       return giftHistory;
     } catch (error) {
       throw new Error("Error getting gift history:", error.message);
@@ -104,7 +111,7 @@ class GiftHistoryRepository {
       const giftHistories = await GiftHistory.find({
         streamId: streamId,
         isDeleted: false,
-      });
+      }).lean();
       return giftHistories;
     } catch (error) {
       throw new Error(
@@ -118,7 +125,7 @@ class GiftHistoryRepository {
       const giftHistories = await GiftHistory.find({
         userId: userId,
         isDeleted: false,
-      });
+      }).lean();
       return giftHistories;
     } catch (error) {
       throw new Error("Error getting gift history by user id:", error.message);
@@ -128,7 +135,7 @@ class GiftHistoryRepository {
     try {
       const giftHistory = await GiftHistory.findByIdAndUpdate(id, {
         $set: { isDeleted: true },
-      });
+      }).lean();
       return giftHistory;
     } catch (error) {
       throw new Error("Error deleting gift history:", error.message);
