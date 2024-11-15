@@ -272,17 +272,6 @@ const deletePlaylistService = async (userId, playlistId) => {
 const addToPlaylistService = async (playlistId, videoId, userId) => {
   try {
     const connection = new DatabaseTransaction();
-    const video = await connection.videoRepository.getVideoRepository(videoId);
-    if (!video) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
-    }
-
-    if (
-      video.user?._id?.toString() !== userId?.toString() &&
-      (video.enumMode === "draft" || video.enumMode === "private")
-    ) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
-    }
 
     const playlist =
       await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
@@ -299,6 +288,18 @@ const addToPlaylistService = async (playlistId, videoId, userId) => {
         StatusCodeEnums.Forbidden_403,
         "You do not have permission to perform this action"
       );
+    }
+
+    const video = await connection.videoRepository.getVideoRepository(videoId);
+    if (!video) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
+    }
+
+    if (
+      video.user?._id?.toString() !== userId?.toString() &&
+      (video.enumMode === "draft" || video.enumMode === "private")
+    ) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
 
     if (
@@ -326,11 +327,6 @@ const removeFromPlaylist = async (playlistId, videoId, userId) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const video = await connection.videoRepository.getVideoRepository(videoId);
-    if (!video) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
-    }
-
     const playlist =
       await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
     if (!playlist) {
@@ -338,6 +334,11 @@ const removeFromPlaylist = async (playlistId, videoId, userId) => {
         StatusCodeEnums.NotFound_404,
         "Playlist not found"
       );
+    }
+
+    const video = await connection.videoRepository.getVideoRepository(videoId);
+    if (!video) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
 
     const user = await connection.userRepository.getAnUserByIdRepository(

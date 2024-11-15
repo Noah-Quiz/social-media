@@ -72,14 +72,6 @@ class VideoRepository {
 
   async getVideoRepository(videoId, requesterId) {
     try {
-        if (!mongoose.Types.ObjectId.isValid(videoId)) {
-      throw new Error("Invalid videoId format");
-    }
-    if (!mongoose.Types.ObjectId.isValid(requesterId)) {
-      console.log(requesterId);
-      throw new Error("Invalid requesterId format");
-    }
-
       const result = await Video.aggregate([
         {
           $match: {
