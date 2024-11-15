@@ -4,7 +4,7 @@ const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const UserEnum = require("../enums/UserEnum");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
-const { validLength } = require("../utils/validator");
+const { validLength, contentModeration } = require("../utils/validator");
 
 const createCommentService = async (userId, videoId, content, responseTo) => {
   const connection = new DatabaseTransaction();
@@ -67,7 +67,7 @@ const createCommentService = async (userId, videoId, content, responseTo) => {
 
     //validate comment
     validLength(1, 2000, newContent, "Content of comment");
-
+    contentModeration(newContent, "comment");
     const data = {
       videoId,
       userId,
@@ -284,7 +284,7 @@ const updateCommentService = async (userId, id, content) => {
     }
     //validate comment
     validLength(1, 2000, content, "Content of comment");
-
+    contentModeration(content, "update comment");
     const comment = await connection.commentRepository.updateComment(
       id,
       content

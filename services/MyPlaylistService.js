@@ -30,10 +30,12 @@ const createAPlaylistService = async (
     }
     //validate name
     validLength(2, 100, playlistName, "Name of playlist");
+    contentModeration(playlistName, "name of playlist");
 
     //validate description
     if (description) {
       validLength(1, 1000, description, "Description of playlist");
+      contentModeration(description, "description of playlist");
     }
 
     const playlist =
@@ -154,10 +156,12 @@ const updatePlaylistService = async (data) => {
 
     //validate name
     validLength(2, 100, playlistName, "Name of playlist");
+    contentModeration(playlistName, "update name of playlist");
 
     //validate description
     if (description) {
       validLength(1, 1000, description, "Description of playlist");
+      contentModeration(description, "update description of playlist");
     }
     // Check if user exists
     const user = await connection.userRepository.getAnUserByIdRepository(
