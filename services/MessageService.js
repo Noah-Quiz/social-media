@@ -61,7 +61,7 @@ const updateMessageService = async (userId, messageId, newMessage) => {
     // if (originalMessage.userId.toString() !== userId.toString()) {
     //   throw new Error("You are not the owner of this message");
     // }
-    contentModeration(newMessage);
+    contentModeration(newMessage, "message");
 
     //validate message
     validLength(1, 200, newMessage, "Update message");
@@ -122,7 +122,7 @@ const createAMessageService = async (userId, roomId, content) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found")
     }
 
-    contentModeration(content);
+    contentModeration(content, "message");
     validLength(1, 200, content, "Message");
 
     const response = await connection.messageRepository.createMessage({

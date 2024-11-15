@@ -1,7 +1,11 @@
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
-const { capitalizeWords, validLength } = require("../utils/validator");
+const {
+  capitalizeWords,
+  validLength,
+  contentModeration,
+} = require("../utils/validator");
 
 const createCategoryService = async (categoryData) => {
   const connection = new DatabaseTransaction();
@@ -9,6 +13,7 @@ const createCategoryService = async (categoryData) => {
 
   //validate name
   validLength(2, 100, categoryData.name, "Name of category");
+  contentModeration(categoryData.name, "name of category");
 
   try {
     const session = await connection.startTransaction();
@@ -91,6 +96,7 @@ const updateCategoryService = async (categoryId, categoryData) => {
       );
     }
     validLength(2, 100, categoryData.name, "Name of category");
+    contentModeration(categoryData.name, "update name of category");
 
     if (categoryData.imageUrl)
       categoryData.imageUrl = `${process.env.APP_BASE_URL}/${categoryData.imageUrl}`;
