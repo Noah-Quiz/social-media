@@ -5,7 +5,7 @@ const {
   deleteGiftHistoryService,
   getGiftHistoryByStreamIdService,
   getGiftHistoryByUserIdService,
-  getGiftService,
+  getGiftHistoryService,
 } = require("../services/GiftHistoryService");
 
 class GiftHistoryController {
@@ -56,8 +56,9 @@ class GiftHistoryController {
   }
   async getGiftController(req, res, next) {
     const { id } = req.params;
+    const userId = req.userId;
     try {
-      const gift = await getGiftService(id);
+      const gift = await getGiftHistoryService(id, userId);
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ gift: gift, message: "Success" });
