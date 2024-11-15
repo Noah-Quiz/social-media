@@ -5,7 +5,7 @@ const CoreException = require("../exceptions/CoreException.js");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction.js");
 const { default: mongoose } = require("mongoose");
 const UserEnum = require("../enums/UserEnum.js");
-const { validLength } = require("../utils/validator.js");
+const { validLength, contentModeration } = require("../utils/validator.js");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
@@ -187,11 +187,13 @@ const updateStreamService = async (userId, streamId, updateData) => {
     //valid title
     if (updateData.title) {
       validLength(2, 100, updateData.title, "Title of stream");
+      contentModeration(updateData.title, "update title of stream");
     }
 
     //valid description
     if (updateData.description) {
       validLength(1, 2000, updateData.description, "Description of stream");
+      contentModeration(updateData.description, "update description of stream");
     }
 
     if (!stream) {
@@ -272,11 +274,13 @@ const createStreamService = async (data) => {
   //valid title
   if (data.title) {
     validLength(2, 100, data.title, "Title of stream");
+    contentModeration(data.title, "title of stream");
   }
 
   //valid description
   if (data.description) {
     validLength(1, 2000, data.description, "Description of stream");
+    contentModeration(data.description, "description of stream");
   }
 
   try {
