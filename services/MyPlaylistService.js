@@ -272,7 +272,6 @@ const deletePlaylistService = async (userId, playlistId) => {
 const addToPlaylistService = async (playlistId, videoId, userId) => {
   try {
     const connection = new DatabaseTransaction();
-
     const video = await connection.videoRepository.getVideoRepository(videoId);
     if (!video) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
