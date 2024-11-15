@@ -22,12 +22,7 @@ class MessageController {
       await getMessageDto.validate();
 
       const message = await findMessageService(messageId);
-      if (!message) {
-        throw new CoreException(
-          StatusCodeEnums.NotFound_404,
-          `Message with id ${messageId} not found`
-        );
-      }
+      
       res
         .status(StatusCodeEnums.OK_200)
         .json({ data: message, message: "Success" });
@@ -59,7 +54,7 @@ class MessageController {
         messages,
         totalPages,
         page,
-        totalMessages,
+        total: totalMessages,
         message: "Success",
       });
     } catch (error) {
@@ -82,7 +77,7 @@ class MessageController {
       res
         .status(StatusCodeEnums.OK_200)
         .json({ data: message, message: "Success" });
-    } catch (error) {
+    } catch (error) {s
       next(error);
     }
   }
@@ -105,6 +100,7 @@ class MessageController {
     try {
       const userId = req.userId;
       const { roomId, content } = req.body;
+      
       const createMessageDto = new CreateMessageDto(userId, roomId, content);
       await createMessageDto.validate();
 

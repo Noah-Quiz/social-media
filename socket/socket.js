@@ -60,7 +60,7 @@ module.exports = (io) => {
           logger.info(`Message sent to room ${roomId}`);
         } catch (error) {
           io.to(roomId).emit("receive_message", {
-            messageError: "Fail to send message",
+            error: `Fail to send message ${error.message}`,
           });
         }
       });
@@ -69,7 +69,6 @@ module.exports = (io) => {
       socket.on(
         "update_message",
         async ({ userId, messageId, roomId, newMessage }) => {
-          console.log(roomId);
           try {
             // Update the message in the database
             const updatedMessage = await updateMessageService(
@@ -86,12 +85,12 @@ module.exports = (io) => {
               logger.info(`Message ${messageId} updated in stream ${roomId}`);
             } else {
               socket.emit("update_message_error", {
-                error: "Message not found",
+                error: `Message not found`,
               });
             }
           } catch (error) {
             socket.emit("update_message_error", {
-              error: "Failed to update message",
+              error: `Failed to update message ${error.message} `,
             });
             logger.error("Error updating message", error);
           }

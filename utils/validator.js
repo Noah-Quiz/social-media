@@ -115,13 +115,26 @@ const capitalizeWords = (str) => {
 };
 
 const validLength = (min, max, string, type) => {
-  if (!validator.isLength(string, { min, max })) {
+  // Trim the string to remove leading and trailing whitespace
+  const trimmedString = string.trim();
+
+  // Check if the trimmed string is within the length limits
+  if (!validator.isLength(trimmedString, { min, max })) {
     throw new CoreException(
       StatusCodeEnums.BadRequest_400,
       `${type} is invalid, must be a minimum of ${min} characters and a maximum of ${max} characters.`
     );
   }
+
+  // Additional check for blank (empty or whitespace-only) strings
+  if (trimmedString.length === 0) {
+    throw new CoreException(
+      StatusCodeEnums.BadRequest_400,
+      `${type} cannot be blank.`
+    );
+  }
 };
+
 
 module.exports = {
   validNickName,
