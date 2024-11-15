@@ -282,7 +282,7 @@ const addToPlaylistService = async (playlistId, videoId, userId) => {
         "Playlist not found"
       );
     }
-    
+
     if (playlist.user?._id?.toString() !== userId?.toString()) {
       throw new CoreException(
         StatusCodeEnums.Forbidden_403,
