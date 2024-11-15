@@ -72,6 +72,7 @@ class VideoController {
         await deleteFile(newFilePath);
 
         await updateAVideoByIdService(video._id, userId, {
+          title: title,
           duration: closestTsFile.duration,
         });
       } catch (error) {
@@ -146,7 +147,7 @@ class VideoController {
   async updateAVideoByIdController(req, res, next) {
     try {
       const userId = req.userId;
-      
+
       const connection = new DatabaseTransaction();
       const user = await connection.userRepository.getAnUserByIdRepository(
         userId
@@ -164,7 +165,10 @@ class VideoController {
         );
       }
 
-      if (user.role !== UserEnum.ADMIN && existVideo.userId?.toString() !== userId?.toString()) {
+      if (
+        user.role !== UserEnum.ADMIN &&
+        existVideo.userId?.toString() !== userId?.toString()
+      ) {
         throw new CoreException(
           StatusCodeEnums.Forbidden_403,
           "You do not have permission to perform this action"
@@ -261,13 +265,19 @@ class VideoController {
         );
       }
 
-      if (user.role !== UserEnum.ADMIN && existVideo.userId !== userId) {
+      if (
+        user.role !== UserEnum.ADMIN &&
+        existVideo.userId?.toString() !== userId?.toString()
+      ) {
         throw new CoreException(
           StatusCodeEnums.Forbidden_403,
           "You do not have permission to perform this action"
         );
       }
-      const video = await deleteVideoService(videoId, userId);
+      const video = await deleteVideoService(
+        videoId,
+        userId
+      );
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
