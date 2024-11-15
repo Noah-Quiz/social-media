@@ -5,7 +5,13 @@ class GiftHistoryRepository {
   constructor() {
     this.exchangeRateRepository = new ExchangeRateRepository();
   }
-  async createGiftHistoryRepository(streamId, userId, gifts) {
+  async createGiftHistoryRepository(
+    streamId,
+    streamTitle,
+    streamThumbnail,
+    userId,
+    gifts
+  ) {
     try {
       const existingHistory = await this.findExistingHistory(streamId, userId);
       const rate =
@@ -46,6 +52,8 @@ class GiftHistoryRepository {
         // Create new gift history if none exists
         const newGiftHistory = new GiftHistory({
           streamId,
+          streamTitle,
+          streamThumbnail,
           userId,
           gifts,
           total: gifts.reduce(

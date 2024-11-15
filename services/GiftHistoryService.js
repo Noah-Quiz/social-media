@@ -28,7 +28,12 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
             `Gift with ID ${gift.giftId} not found.`
           );
         }
-        return { ...gift, pricePerUnit: giftData.valuePerUnit };
+        return {
+          ...gift,
+          pricePerUnit: giftData.valuePerUnit,
+          name: giftData.name,
+          image: giftData.image,
+        };
       })
     );
 
@@ -56,6 +61,8 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
     const giftHistory =
       await connection.giftHistoryRepository.createGiftHistoryRepository(
         streamId,
+        stream.title,
+        stream.thumbnailUrl,
         userId,
         giftDetails
       );
