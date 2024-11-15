@@ -84,7 +84,7 @@ const uploadBunnyStorageFileService = async ({
   try {
     logger.info(`Uploading video to Bunny Storage: ${videoFolderPath}`);
     const files = fs.readdirSync(videoFolderPath);
-    const filteredFiles = files.filter(file => file.includes(videoId));
+    const filteredFiles = files.filter((file) => file.includes(videoId));
     const totalFiles = filteredFiles.length; // Total number of files to upload
     let uploadedFilesCount = 0; // Count of successfully uploaded files
     for (const file of filteredFiles) {
@@ -104,7 +104,7 @@ const uploadBunnyStorageFileService = async ({
 
       if (res.status === StatusCodeEnums.Created_201) {
         logger.info(`Upload video response: ${JSON.stringify(res.data)}`);
-        if (fileName.includes(".m3u8")) {
+        if (fileName.includes(".m3u8") && fileName.endsWith(".m3u8")) {
           const connection = new DatabaseTransaction();
           const video = await connection.videoRepository.getVideoByIdRepository(
             videoId
@@ -117,7 +117,7 @@ const uploadBunnyStorageFileService = async ({
               }
             );
           }
-        }else if(fileName.includes(".png")){
+        } else if (fileName.includes(".png")) {
           const connection = new DatabaseTransaction();
           const video = await connection.videoRepository.getVideoByIdRepository(
             videoId
