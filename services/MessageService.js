@@ -1,16 +1,27 @@
 const mongoose = require("mongoose");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const { contentModeration, validLength } = require("../utils/validator");
+const CoreException = require("../exceptions/CoreException");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 
 const findMessageService = async (messageId) => {
   try {
     const connection = new DatabaseTransaction();
+    
     const message = await connection.messageRepository.getMessageById(
       messageId
     );
+
+    if (!message) {
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        `Message not found`
+      );
+    }
+
     return message;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -26,7 +37,7 @@ const findMessagesByRoomIdService = async (id, page, size) => {
 
     return messages;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -34,6 +45,16 @@ const findMessagesByRoomIdService = async (id, page, size) => {
 const updateMessageService = async (userId, messageId, newMessage) => {
   try {
     const connection = new DatabaseTransaction();
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid user ID is required")
+    }
+
+    const user = await connection.userRepository.findUserById(userId);
+    if (!user) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found")
+    }
+
     const originalMessage = await connection.messageRepository.getMessageById(
       messageId
     );
@@ -52,32 +73,55 @@ const updateMessageService = async (userId, messageId, newMessage) => {
 
     return message;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
 const deleteMessageService = async (userId, messageId) => {
   try {
     const connection = new DatabaseTransaction();
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid user ID is required")
+    }
+
+    const user = await connection.userRepository.findUserById(userId);
+    if (!user) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found")
+    }
+
     const originalMessage = await connection.messageRepository.getMessageById(
       messageId
     );
+
     if (originalMessage.userId?.toString() !== userId?.toString()) {
       throw new Error("You are not the owner of this message");
     }
+
     if (!mongoose.Types.ObjectId.isValid(messageId)) {
-      throw new Error("Ko valid");
+      throw new Error("Invalid message ID");
     }
+
     const message = await connection.messageRepository.deleteMessage(messageId);
     return message;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
 const createAMessageService = async (userId, roomId, content) => {
   try {
     const connection = new DatabaseTransaction();
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid user ID is required")
+    }
+
+    const user = await connection.userRepository.findUserById(userId);
+    if (!user) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found")
+    }
+
     contentModeration(content);
     validLength(1, 200, content, "Message");
 
@@ -86,9 +130,10 @@ const createAMessageService = async (userId, roomId, content) => {
       roomId,
       content,
     });
+
     return response;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
