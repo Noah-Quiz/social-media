@@ -2,6 +2,7 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const UserEnum = require("../enums/UserEnum");
+
 const createGiftHistoryService = async (streamId, userId, gifts) => {
   const connection = new DatabaseTransaction();
   const session = await connection.startTransaction();
@@ -28,7 +29,12 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
             `Gift with ID ${gift.giftId} not found.`
           );
         }
-        return { ...gift, pricePerUnit: giftData.valuePerUnit };
+        return {
+          ...gift,
+          pricePerUnit: giftData.valuePerUnit,
+          name: giftData.name,
+          image: giftData.image,
+        };
       })
     );
 
@@ -56,6 +62,8 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
     const giftHistory =
       await connection.giftHistoryRepository.createGiftHistoryRepository(
         streamId,
+        stream.title,
+        stream.thumbnailUrl,
         userId,
         giftDetails
       );
@@ -75,6 +83,18 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
     );
 
     // Commit transaction if all operations succeed
+    const checkUser = await connection.userRepository.getAnUserByIdRepository(
+      userId
+    );
+    if (!checkUser || checkUser === false) {
+      await connection.abortTransaction();
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
+    console.log("isUser:", checkUser.role === UserEnum.USER);
+    if (checkUser.role === UserEnum.USER) {
+      delete giftHistory.streamerTotal;
+    }
+    console.log("GiftHistory: ", giftHistory);
     await connection.commitTransaction();
     return giftHistory;
   } catch (error) {
@@ -83,9 +103,16 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
   }
 };
 
-const getGiftService = async (id) => {
+const getGiftHistoryService = async (id, userId) => {
   const connection = new DatabaseTransaction();
   try {
+    const checkUser = await connection.userRepository.getAnUserByIdRepository(
+      userId
+    );
+    if (!checkUser || checkUser === false) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
+
     const gift =
       await connection.giftHistoryRepository.getGiftHistoryRepository(id);
     if (!gift) {
@@ -93,6 +120,9 @@ const getGiftService = async (id) => {
         StatusCodeEnums.NotFound_404,
         "No gift history found"
       );
+    }
+    if (checkUser.role === UserEnum.USER) {
+      delete gift.streamerTotal;
     }
     return gift;
   } catch (error) {
@@ -146,6 +176,13 @@ const getGiftHistoryByStreamIdService = async (streamId, userId) => {
 const getGiftHistoryByUserIdService = async (userId) => {
   const connection = new DatabaseTransaction();
   try {
+    const checkUser = await connection.userRepository.getAnUserByIdRepository(
+      userId
+    );
+    if (!checkUser || checkUser === false) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
+
     const giftHistories =
       await connection.giftHistoryRepository.getGiftHistoryByUserIdRepository(
         userId
@@ -156,6 +193,11 @@ const getGiftHistoryByUserIdService = async (userId) => {
         StatusCodeEnums.NotFound_404,
         "No gift history found"
       );
+    }
+    if (checkUser.role === UserEnum.USER) {
+      giftHistories.forEach((giftHistory) => {
+        delete giftHistory.streamerTotal;
+      });
     }
     return giftHistories;
   } catch (error) {
@@ -197,7 +239,7 @@ const deleteGiftHistoryService = async (id, userId) => {
 };
 module.exports = {
   createGiftHistoryService,
-  getGiftService,
+  getGiftHistoryService,
   getGiftHistoryByStreamIdService,
   getGiftHistoryByUserIdService,
   deleteGiftHistoryService,
