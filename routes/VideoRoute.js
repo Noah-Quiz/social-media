@@ -7,8 +7,216 @@ const videoController = new VideoController();
 
 videoRoutes.use(AuthMiddleware);
 
+/**
+ * @swagger
+ * /api/videos/relevant:
+ *   get:
+ *     summary: Get relevant videos based on categories
+ *     description: Fetch relevant videos, with optional filters for categories and pagination.
+ *     tags: [Videos]
+ *     parameters:
+ *       - name: page
+ *         in: query
+ *         description: The page number for pagination
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: size
+ *         in: query
+ *         description: The number of videos per page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: categoryIds
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: 671a01672a386fca99c73c02,671a01672a386fca99c73c04
+ *         description: Categories to identify relevant streams, if empty return all streams
+ *     responses:
+ *       200:
+ *         description: A list of relevant videos with pagination information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 videos:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       title:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       videoUrl:
+ *                         type: string
+ *                       thumbnailUrl:
+ *                         type: string
+ *                       likesCount:
+ *                         type: integer
+ *                       commentsCount:
+ *                         type: integer
+ *                       isLiked:
+ *                         type: boolean
+ *                 total:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
+ *       400:
+ *         description: Invalid input
+ *       500:
+ *         description: Internal server error
+ */
 videoRoutes.get(
-  "/like-history",
+  "/relevant",
+  videoController.getRelevantVideosController
+);
+
+/**
+ * @swagger
+ * /api/videos/recommendation:
+ *   get:
+ *     summary: Get recommended videos
+ *     description: Fetch recommended videos
+ *     tags: [Videos]
+ *     parameters:
+ *       - name: page
+ *         in: query
+ *         description: The page number for pagination
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: size
+ *         in: query
+ *         description: The number of videos per page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: A list of recommended videos with pagination information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 videos:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       title:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       videoUrl:
+ *                         type: string
+ *                       thumbnailUrl:
+ *                         type: string
+ *                       likesCount:
+ *                         type: integer
+ *                       commentsCount:
+ *                         type: integer
+ *                       isLiked:
+ *                         type: boolean
+ *                 total:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
+ *       400:
+ *         description: Invalid input
+ *       500:
+ *         description: Internal server error
+ */
+videoRoutes.get(
+  "/recommendation",
+  videoController.getRecommendedVideosController
+);
+
+/**
+ * @swagger
+ * /api/videos/user/like-history:
+ *   get:
+ *     summary: Get history of liked videos
+ *     tags: [Videos]
+ *     parameters:
+ *       - name: page
+ *         in: query
+ *         description: The page number for pagination
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: size
+ *         in: query
+ *         description: The number of videos per page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - name: title
+ *         in: query
+ *         description: Used to search
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: A list of liked videos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 videos:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       title:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       videoUrl:
+ *                         type: string
+ *                       thumbnailUrl:
+ *                         type: string
+ *                       likesCount:
+ *                         type: integer
+ *                       commentsCount:
+ *                         type: integer
+ *                       isLiked:
+ *                         type: boolean
+ *                 total:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
+ *       400:
+ *         description: Invalid input
+ *       500:
+ *         description: Internal server error
+ */
+videoRoutes.get(
+  "/user/like-history",
   videoController.getVideoLikeHistoryController
 );
 

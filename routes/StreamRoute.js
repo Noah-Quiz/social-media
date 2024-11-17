@@ -12,23 +12,27 @@ streamRoutes.use(AuthMiddleware);
 /**
  * @swagger
  * /api/streams/relevant:
- *   post:
+ *   get:
  *     summary: Get streams relevant to specific categories
  *     tags: [Streams]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               categoryIds:
- *                 type: array
- *                 items:
- *                   type: string
- *                 description: List of category IDs
- *             required:
- *               - categoryIds
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: size
+ *         required: false
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: categoryIds
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: 671a01672a386fca99c73c02,671a01672a386fca99c73c04
+ *         description: Categories to identify relevant streams, if empty return all streams
  *     responses:
  *       200:
  *         description: Get streams relevant successfully
@@ -103,7 +107,7 @@ streamRoutes.use(AuthMiddleware);
  *       500:
  *         description: Internal server error
  */
-streamRoutes.post(
+streamRoutes.get(
   "/relevant",
   streamController.getRelevantStreamsController
 );
@@ -112,8 +116,19 @@ streamRoutes.post(
  * @swagger
  * /api/streams/recommendation:
  *   get:
- *     summary: Get streams recommendation
+ *     summary: Get streams recommendation.
  *     tags: [Streams]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: size
+ *         required: false
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: Get streams recommendation successfully

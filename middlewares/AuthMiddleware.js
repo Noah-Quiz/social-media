@@ -7,12 +7,17 @@ const { match } = require("path-to-regexp");
 const publicRoutes = require("../routes/PublicRoute");
 
 const isUnprotectedRoute = (path, method) => {
-  const pathname = path.split('?')[0];
+  const pathname = path.split("?")[0];
   return publicRoutes.some((route) => {
     const matchPath = match(route.path, { decode: decodeURIComponent });
-    return matchPath(pathname) && route.method === method;
+    return (
+      matchPath(pathname) &&
+      route.method === method &&
+      matchPath(pathname).isExact
+    );
   });
 };
+
 
 const AuthMiddleware = async (req, res, next) => {
 
