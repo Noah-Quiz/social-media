@@ -40,6 +40,14 @@ const publicRoutes = [
     path: "/api/videos/my-playlist/:playlistId",
     method: "GET",
   },
+  {
+    path: "/api/videos/relevant",
+    method: "GET",
+  },
+  {
+    path: "api/videos/recommendation",
+    method: "GET",
+  },
 
   // Stream
   {
@@ -48,6 +56,14 @@ const publicRoutes = [
   },
   {
     path: "/api/streams/:streamId",
+    method: "GET",
+  },
+  {
+    path: "/api/streams/relevant",
+    method: "GET",
+  },
+  {
+    path: "api/streams/recommendation",
     method: "GET",
   },
 

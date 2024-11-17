@@ -168,7 +168,7 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
     if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Valid requester ID is required"
+        "Invalid requester ID"
       );
     }
 
@@ -278,7 +278,7 @@ const getVideoService = async (videoId, requesterId) => {
     if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Valid requester ID is required"
+        "Invalid requester ID"
       );
     }
 
@@ -360,7 +360,7 @@ const getVideosService = async (query, requesterId) => {
     if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Valid requester ID is required"
+        "Invalid requester ID"
       );
     }
 
@@ -450,7 +450,7 @@ const getVideosByPlaylistIdService = async (playlistId, query, requesterId) => {
     if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Valid requester ID is required"
+        "Invalid requester ID"
       );
     }
 
@@ -613,19 +613,29 @@ const checkMemberShip = async (requester, userId) => {
   }
 };
 
-const getVideoLikeHistoryService = async (userId) => {
+const getVideoLikeHistoryService = async (data) => {
   try {
     const connection = new DatabaseTransaction();
 
-    const videos =
-      await connection.videoRepository.getVideoLikeHistoryRepository(userId);
+    const { userId } = data;
+    const query = data;
+
+    const user = await connection.userRepository.findUserById(userId);
+    if (!user) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
+
+    const result =
+      await connection.videoRepository.getVideoLikeHistoryRepository(userId, query);
+
+    const { videos } = result;
 
     let filteredVideos = videos.map(async (video) => {
       const isOwner = video.user?._id?.toString() === userId?.toString();
       if (isOwner) {
         return video;
       }
-
+      
       if (video.enumMode === "member") {
         const isMember = await checkMemberShip(userId, video.user?._id);
         if (isMember) {
@@ -638,7 +648,100 @@ const getVideoLikeHistoryService = async (userId) => {
       return video;
     });
 
-    const result = await Promise.all(filteredVideos);
+    result.videos = await Promise.all(filteredVideos);
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getRecommendedVideosService = async (data) => {
+  try {
+    const connection = new DatabaseTransaction()
+
+    const { requesterId } = data;
+
+    if (requesterId) {
+      const requester = await connection.userRepository.findUserById(requesterId);
+      if (!requester) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "Requester not found");
+      }
+    }
+
+    const result =
+      await connection.videoRepository.getRecommendedVideosRepository(data);
+
+    const { videos } = result;
+    let filteredVideos = videos.map(async (video) => {
+      const isOwner = video.user?._id?.toString() === requesterId?.toString();
+      if (isOwner) {
+        return video;
+      }
+
+      if (video.enumMode === "member") {
+        const isMember = await checkMemberShip(requesterId, video.user?._id);
+        if (isMember) {
+          return video;
+        }
+
+        return updateVideosForNonMembership([video], [video._id], "member")[0];
+      }
+
+      return video;
+    });
+
+    result.videos = await Promise.all(filteredVideos);
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getRelevantVideosService = async (data) => {
+  try {
+    const connection = new DatabaseTransaction();
+
+    const { requesterId } = data;
+
+    if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid requester ID"
+      );
+    }
+
+    if (requesterId) {
+      const requester = await connection.userRepository.findUserById(requesterId);
+      if (!requester) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "Requester not found");
+      }
+    }
+
+    const result =
+      await connection.videoRepository.getRelevantVideosRepository(data);
+
+    const { videos } = result;
+    let filteredVideos = videos.map(async (video) => {
+      const isOwner = video.user?._id?.toString() === requesterId?.toString();
+      if (isOwner) {
+        return video;
+      }
+
+      if (video.enumMode === "member") {
+        const isMember = await checkMemberShip(requesterId, video.user?._id);
+        if (isMember) {
+          return video;
+        }
+
+        return updateVideosForNonMembership([video], [video._id], "member")[0];
+      }
+
+      return video;
+    });
+
+    result.videos = await Promise.all(filteredVideos);
 
     return result;
   } catch (error) {
@@ -658,4 +761,6 @@ module.exports = {
   getVideoService,
   getVideosService,
   getVideoLikeHistoryService,
+  getRecommendedVideosService,
+  getRelevantVideosService,
 };

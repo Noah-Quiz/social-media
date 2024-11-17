@@ -333,16 +333,20 @@ class StreamRepository {
     return streamsMonthly;
   }
 
-  async getRecommendedStreamsRepository(data) {
+  async getRecommendedStreamsRepository(query) {
     try {
-      const { userId } = data;
+      const page = query.page || 1;
+      const size = query.size || 10;
+      const skip = (page - 1) * size;
+
+      const { requesterId } = query;
 
       const recentLikedStreams = await Stream.aggregate([
         {
-          $match: { likedBy: new mongoose.Types.ObjectId(userId) },
+          $match: { likedBy: new mongoose.Types.ObjectId(requesterId) },
         },
         { $sort: { dateCreated: -1 } },
-        { $limit: 100 },
+        { $limit: 50 },
         { $unwind: "$categoryIds" },
         {
           $group: {
@@ -355,20 +359,18 @@ class StreamRepository {
         },
       ]);
 
-      if (
-        !recentLikedStreams.length ||
-        !recentLikedStreams[0].categoryIds.length
-      ) {
-        return [];
-      }
+      const categoryIds = recentLikedStreams[0]?.categoryIds || [];
 
-      const categoryIds = recentLikedStreams[0].categoryIds;
+      const searchQuery = {
+        status: "live",
+        ...(categoryIds.length > 0 && { categoryIds: { $in: categoryIds } }),
+      };
+
+      const totalRecommendedStreams = await Stream.countDocuments(searchQuery);
+
       const recommendedStreams = await Stream.aggregate([
         {
-          $match: {
-            status: "live",
-            categoryIds: { $in: categoryIds },
-          },
+          $match: searchQuery
         },
         {
           $lookup: {
@@ -388,6 +390,13 @@ class StreamRepository {
           },
         },
         {
+          $addFields: {
+            isLiked: {
+              $in: [new mongoose.Types.ObjectId(requesterId), "$likedBy"],
+            },
+          },
+        },
+        {
           $project: {
             _id: 1,
             title: 1,
@@ -402,6 +411,7 @@ class StreamRepository {
             dateCreated: 1,
             lastUpdated: 1,
             likesCount: { $size: "$likedBy" },
+            isLiked: 1,
             user: {
               _id: 1,
               fullName: "$user.fullName",
@@ -421,31 +431,47 @@ class StreamRepository {
             },
           },
         },
-        { $sort: { dateCreated: -1 } },
-        { $limit: 50 },
+        { $sort: { likesCount: -1, currentViewCount: -1 } },
+        { $skip: skip },
+        { $limit: Number(size) },
       ]);
 
-      return recommendedStreams;
+      return {
+        streams: recommendedStreams,
+        total: totalRecommendedStreams,
+        page: Number(page),
+        totalPages: Math.ceil(totalRecommendedStreams / Number(size)),
+      };
     } catch (error) {
-      throw new Error("Error fetching recommended streams:", error.message);
+      throw error;
     }
   }
 
-  async getRelevantStreamsRepository(data) {
+  async getRelevantStreamsRepository(query) {
     try {
-      const { categoryIds } = data;
+      const page = query.page || 1;
+      const size = query.size || 10;
+      const skip = (page - 1) * size;
+
+      const { requesterId } = query;
+
+      const { categoryIds } = query;
       const categoryIdsObjectIds = categoryIds.map(
         (id) => new mongoose.Types.ObjectId(id)
       );
+  
+      let searchQuery = { status: "live" };
+  
+      // If categoryIds is not empty, filter by categoryIds
+      if (categoryIdsObjectIds && categoryIdsObjectIds.length > 0) {
+        searchQuery.categoryIds = { $in: categoryIdsObjectIds };
+      }
 
-      const query = {
-        status: "live",
-        categoryIds: { $in: categoryIdsObjectIds },
-      };
-
+      const totalRelevantStreams = await Stream.countDocuments(searchQuery)
+  
       const relevantStreams = await Stream.aggregate([
         {
-          $match: query,
+          $match: searchQuery,
         },
         {
           $lookup: {
@@ -465,6 +491,13 @@ class StreamRepository {
           },
         },
         {
+          $addFields: {
+            isLiked: {
+              $in: [new mongoose.Types.ObjectId(requesterId), "$likedBy"],
+            },
+          },
+        },
+        {
           $project: {
             _id: 1,
             title: 1,
@@ -479,6 +512,7 @@ class StreamRepository {
             dateCreated: 1,
             lastUpdated: 1,
             likesCount: { $size: "$likedBy" },
+            isLiked: 1,
             user: {
               _id: 1,
               fullName: "$user.fullName",
@@ -500,13 +534,21 @@ class StreamRepository {
         },
         {
           $sort: {
-            likesCount: -1,
-            dateCreated: -1,
+            likesCount: -1,  // Sort by likes count
+            currentViewCount: -1,  // Sort by view count
+            dateCreated: -1,  // Sort by creation date
           },
         },
+        { $skip: skip },
+        { $limit: Number(size) },
       ]);
 
-      return relevantStreams;
+      return {
+        streams: relevantStreams,
+        total: totalRelevantStreams,
+        page: Number(page),
+        totalPages: Math.ceil(totalRelevantStreams / Number(size)),
+      };
     } catch (error) {
       throw error;
     }

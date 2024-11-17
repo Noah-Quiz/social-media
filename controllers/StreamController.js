@@ -15,9 +15,10 @@ const { deleteFile, checkFileSuccess } = require("../middlewares/storeFile");
 const CreateStreamDto = require("../dtos/Stream/CreateStreamDto");
 const DeleteStreamDto = require("../dtos/Stream/DeleteStreamDto");
 const UpdateStreamDto = require("../dtos/Stream/UpdateStreamDto");
-const StreamRecommendationDto = require("../dtos/Stream/StreamRecommendationDto");
 const { default: axios } = require("axios");
 const GetStreamsDto = require("../dtos/Stream/GetStreamsDto");
+const GetRelevantStreamsDto = require("../dtos/Stream/GetRelevantStreamsDto");
+const GetRecommendedStreamsDto = require("../dtos/Stream/GetRecommendedStreamsDto");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
@@ -215,38 +216,44 @@ class StreamController {
   }
 
   async getRecommendedStreamsController(req, res, next) {
-    const userId = req.userId;
-    const data = { userId };
+    const requesterId = req.requesterId;
+    const query = {
+      size: req.query.size,
+      page: req.query.page,
+    };
 
     try {
-      const streams = await getRecommendedStreamsService(data);
+      const getRecommendedStreamsDto = new GetRecommendedStreamsDto(query.page, query.size, requesterId);
+      const validatedData = await getRecommendedStreamsDto.validate();
+
+      const { streams, total, page, totalPages } = await getRecommendedStreamsService(validatedData);
 
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ streams, message: "Success" });
+        .json({ streams, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }
   }
 
   async getRelevantStreamsController(req, res, next) {
-    const { categoryIds } = req.body;
+    const requesterId = req.requesterId;
+    const query = {
+      page: req.query.page,
+      size: req.query.size,
+      categoryIds: req.query.categoryIds,
+      requesterId,
+    }
     
     try {
-      const streamRecommendationDto = new StreamRecommendationDto(
-        categoryIds
-      );
-      await streamRecommendationDto.validate();
+      const getRelevantStreamsDto = new GetRelevantStreamsDto(query.page, query.size, query.categoryIds, requesterId);
+      const validatedData = await getRelevantStreamsDto.validate();
 
-      const data = {
-        categoryIds
-      };
-
-      const streams = await getRelevantStreamsService(data);
+      const { streams, total, page, totalPages } = await getRelevantStreamsService(validatedData);
 
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ streams, message: "Success" });
+        .json({ streams, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }
