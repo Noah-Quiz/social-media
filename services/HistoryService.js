@@ -1,4 +1,5 @@
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const UserEnum = require("../enums/UserEnum");
 const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
@@ -33,6 +34,13 @@ const clearAllHistoryRecordsService = async (userId) => {
   try {
     const connection = new DatabaseTransaction();
 
+    const user = await connection.userRepository.getAnUserByIdRepository(
+      userId
+    );
+    if (!user) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
+
     await connection.historyRepository.clearAllHistoryRecordsRepository(userId);
 
     return;
@@ -41,9 +49,33 @@ const clearAllHistoryRecordsService = async (userId) => {
   }
 };
 
-const deleteHistoryRecordService = async (historyId) => {
+const deleteHistoryRecordService = async (historyId, userId) => {
   try {
     const connection = new DatabaseTransaction();
+
+    const user = await connection.userRepository.getAnUserByIdRepository(
+      userId
+    );
+    if (!user) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
+
+    const historyRecord =
+      await connection.historyRepository.getHistoryRecordRepository(historyId);
+
+    if (!historyRecord) {
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "History record not found"
+      );
+    }
+
+    if (user.role !== UserEnum.ADMIN && historyRecord.userId !== userId) {
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "You are not authorized to delete this history record"
+      );
+    }
 
     await connection.historyRepository.deleteHistoryRecordRepository(historyId);
 
