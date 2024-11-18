@@ -45,7 +45,7 @@ const publicRoutes = [
     method: "GET",
   },
   {
-    path: "api/videos/recommendation",
+    path: "/api/videos/recommendation",
     method: "GET",
   },
 
@@ -63,7 +63,7 @@ const publicRoutes = [
     method: "GET",
   },
   {
-    path: "api/streams/recommendation",
+    path: "/api/streams/recommendation",
     method: "GET",
   },
 
