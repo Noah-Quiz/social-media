@@ -2,10 +2,270 @@ const express = require("express");
 const VideoController = require("../controllers/VideoController");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const { uploadFile } = require("../middlewares/storeFile");
+const HistoryController = require("../controllers/HistoryController");
+const UserController = require("../controllers/UserController");
 const videoRoutes = express.Router();
 const videoController = new VideoController();
-
+const historyController = new HistoryController();
+const userController = new UserController();
 videoRoutes.use(AuthMiddleware);
+
+/**
+ * @swagger
+ * /api/videos/user/watch-history:
+ *   get:
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Get all history records
+ *     tags: [Videos]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: number
+ *           default: 1
+ *           description: Page number
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: number
+ *           default: 10
+ *           description: Number of items per page
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [ascending, descending]
+ *           default: descending
+ *         description: Specify the order of sorting (either ascending or descending)
+ *       - in: query
+ *         name: title
+ *         schema:
+ *           type: string
+ *         description: Search videos by title (case-insensitive)
+ *     responses:
+ *       200:
+ *         description: Get all history records successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 historyRecords:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "string"
+ *                       userId:
+ *                         type: string
+ *                         example: "string"
+ *                       videoId:
+ *                         type: string
+ *                         example: "string"
+ *                       dateCreated:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-10-29T08:59:12.203Z"
+ *                       isDeleted:
+ *                         type: boolean
+ *                         example: false
+ *                       lastUpdated:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-10-29T08:59:12.201Z"
+ *                 total:
+ *                   type: number
+ *                   example: 1
+ *                 page:
+ *                   type: number
+ *                   example: 1
+ *                 totalPages:
+ *                   type: number
+ *                   example: 1
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
+videoRoutes.get(
+  "/user/watch-history",
+  historyController.getAllHistoryRecordsController
+);
+
+/**
+ * @swagger
+ * /api/videos/user/watch-history:
+ *   post:
+ *     security:
+ *      - bearerAuth: []
+ *     summary: Create history record
+ *     tags: [Videos]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateHistoryRecordDto'
+ *     responses:
+ *      200:
+ *         description: Create history record successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 historyRecord:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "string"
+ *                     userId:
+ *                       type: string
+ *                       example: "string"
+ *                     videoId:
+ *                       type: string
+ *                       example: "string"
+ *                     dateCreated:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-10-29T08:59:12.203Z"
+ *                     isDeleted:
+ *                       type: boolean
+ *                       example: false
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-10-29T08:59:12.201Z"
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *      400:
+ *       description: Bad request
+ *      500:
+ *       description: Internal server error
+ *
+ */
+videoRoutes.post(
+  "/user/watch-history",
+  historyController.createHistoryRecordController
+);
+
+/**
+ * @swagger
+ * /api/videos/user/watch-history:
+ *   delete:
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Delete history records of a user
+ *     tags: [Videos]
+ *     responses:
+ *       200:
+ *         description: Delete all history records successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
+
+videoRoutes.delete(
+  "/user/watch-history",
+  historyController.clearAllHistoryRecordsController
+);
+
+/**
+ * @swagger
+ * /api/videos/user/watch-history/{historyId}:
+ *   delete:
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Delete history record by ID
+ *     tags: [Videos]
+ *     parameters:
+ *       - in: path
+ *         name: historyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The history record's ID
+ *     responses:
+ *       200:
+ *         description: Delete history record successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Bad request
+ *       404:
+ *         description: History record not found
+ *       500:
+ *         description: Internal server error
+ */
+videoRoutes.delete(
+  "user/watch-history/:historyId",
+  historyController.deleteHistoryRecordController
+);
+
+/**
+ * @swagger
+ * /api/videos/user/watch-time:
+ *   put:
+ *     summary: Update total watch time
+ *     description: Update the total watch time for the authenticated user.
+ *     tags: [Videos]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 example: "string"
+ *               watchTime:
+ *                 type: number
+ *                 example: 120
+ *     responses:
+ *       200:
+ *         description: Successfully updated watch time
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Update watch time successfully"
+ *       400:
+ *         description: Bad request
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Internal server error
+ */
+videoRoutes.put(
+  "/user/watch-time",
+  userController.updateTotalWatchTimeController
+);
 
 /**
  * @swagger
@@ -76,10 +336,7 @@ videoRoutes.use(AuthMiddleware);
  *       500:
  *         description: Internal server error
  */
-videoRoutes.get(
-  "/relevant",
-  videoController.getRelevantVideosController
-);
+videoRoutes.get("/relevant", videoController.getRelevantVideosController);
 
 /**
  * @swagger
@@ -225,7 +482,7 @@ videoRoutes.get(
  * /api/videos/:
  *   post:
  *     summary: Create a video by uploading a video file
- *     description: Socket connect http://API_BASE_URL/socket/upload?userId=     Event Listener upload_video_progress   Emit upload_video_progress 
+ *     description: Socket connect http://API_BASE_URL/socket/upload?userId=     Event Listener upload_video_progress   Emit upload_video_progress
  *     tags: [Videos]
  *     consumes:
  *       - multipart/form-data
@@ -570,10 +827,7 @@ videoRoutes.get("/", videoController.getVideosController);
  *       500:
  *         description: Internal server error
  */
-videoRoutes.get(
-  "/user/:userId",
-  videoController.getVideosByUserIdController
-);
+videoRoutes.get("/user/:userId", videoController.getVideosByUserIdController);
 
 /**
  * @swagger
@@ -876,10 +1130,7 @@ videoRoutes.patch(
  *      description: Internal server error
  */
 
-videoRoutes.get(
-  "/:videoId",
-  videoController.getVideoController
-);
+videoRoutes.get("/:videoId", videoController.getVideoController);
 
 /**
  * @swagger
@@ -908,10 +1159,7 @@ videoRoutes.get(
  *    500:
  *      description: Internal server error
  */
-videoRoutes.post(
-  "/:videoId/like",
-  videoController.toggleLikeVideoController
-);
+videoRoutes.post("/:videoId/like", videoController.toggleLikeVideoController);
 
 /**
  * @swagger
@@ -1002,10 +1250,7 @@ videoRoutes.post(
  *      description: Internal server error
  */
 
-videoRoutes.post(
-  "/:videoId/view",
-  videoController.viewIncrementController
-);
+videoRoutes.post("/:videoId/view", videoController.viewIncrementController);
 
 /**
  * @swagger
@@ -1033,9 +1278,5 @@ videoRoutes.post(
  *      description: Internal server error
  */
 
-videoRoutes.delete(
-  "/:videoId",
-  videoController.deleteVideoController
-);
-
+videoRoutes.delete("/:videoId", videoController.deleteVideoController);
 module.exports = videoRoutes;
