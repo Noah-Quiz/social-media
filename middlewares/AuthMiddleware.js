@@ -29,13 +29,10 @@ const isUnprotectedRoute = (path, method) => {
       // Iterate over all parameters and validate if they end with 'Id'
       for (const [key, value] of Object.entries(matchedParams)) {
         if (key.endsWith("Id")) {
-          try {
-            if (!/^[0-9a-fA-F]{24}$/.test(value)) { // MongoDB ObjectId format validation
-              logger.info(`Invalid ${key} parameter: ${value}`);
-              return false; // Reject invalid parameter matches
-            }
-          } catch (error) {
-            throw error;
+          if (!/^[0-9a-fA-F]{24}$/.test(value)) {
+            // MongoDB ObjectId format validation
+            logger.info(`Invalid ${key} parameter: ${value}`);
+            return false; // Reject invalid parameter matches
           }
         }
       }
@@ -48,13 +45,14 @@ const isUnprotectedRoute = (path, method) => {
     );
     return true;
   }
-
   return false;
 };
 
 const AuthMiddleware = async (req, res, next) => {
   // Append requester ID to req for other purposes
-  if (isUnprotectedRoute(req.originalUrl, req.method)) {
+  const isUnprotected = isUnprotectedRoute(req.originalUrl, req.method);
+  logger.info("Is unprotected route: " + isUnprotected);
+  if (isUnprotected) {
     logger.info("Handling unprotected route");
     const { authorization } = req.headers;
 

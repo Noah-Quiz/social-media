@@ -29,6 +29,14 @@ const publicRoutes = [
     method: "GET",
   },
   {
+    path: "/api/videos/relevant",
+    method: "GET",
+  },
+  {
+    path: "/api/videos/recommendation",
+    method: "GET",
+  },
+  {
     path: "/api/videos/:videoId",
     method: "GET",
   },
@@ -40,22 +48,11 @@ const publicRoutes = [
     path: "/api/videos/my-playlist/:playlistId",
     method: "GET",
   },
-  {
-    path: "/api/videos/relevant",
-    method: "GET",
-  },
-  {
-    path: "/api/videos/recommendation",
-    method: "GET",
-  },
+
 
   // Stream
   {
     path: "/api/streams",
-    method: "GET",
-  },
-  {
-    path: "/api/streams/:streamId",
     method: "GET",
   },
   {
@@ -66,6 +63,11 @@ const publicRoutes = [
     path: "/api/streams/recommendation",
     method: "GET",
   },
+  {
+    path: "/api/streams/:streamId",
+    method: "GET",
+  },
+
 
   // Playlist
   {
