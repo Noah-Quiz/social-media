@@ -7,14 +7,11 @@ const { match } = require("path-to-regexp");
 const publicRoutes = require("../routes/PublicRoute");
 
 const isUnprotectedRoute = (path, method) => {
-  const pathname = path.split("?")[0];
+  const pathname = path.split("?")[0]; // Remove query string
   return publicRoutes.some((route) => {
-    const matchPath = match(route.path, { decode: decodeURIComponent });
-    return (
-      matchPath(pathname) &&
-      route.method === method &&
-      matchPath(pathname).isExact
-    );
+    const matchFn = match(route.path, { decode: decodeURIComponent });
+    const matched = matchFn(pathname);
+    return matched && route.method === method && matched.path === pathname;
   });
 };
 
