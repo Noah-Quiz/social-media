@@ -28,14 +28,24 @@ module.exports = (io) => {
     logger.info(`User connected: ${socket.id}`);
 
     // Handle joining a livestream chat
-    socket.on("join_livestream_chat", async ({ streamId }) => {
+    socket.on("join_live_chat", async ({ streamId }) => {
       try {
         socket.join(streamId);
         userStreams.add(streamId);
         await updateViewersCount(streamId);
-        logger.info(`${socket.id} joined livestream room: ${streamId}`);
+        logger.info(`${socket.id} joined live room: ${streamId}`);
       } catch (error) {
-        logger.error(`Fail to join live stream`);
+        logger.error(`Fail to join live room`);
+      }
+    });
+
+    socket.on("join_video_chat", async ({ videoId }) => {
+      try {
+        socket.join(videoId);
+        userStreams.add(streamId);
+        logger.info(`${socket.id} joined video room: ${videoId}`);
+      } catch (error) {
+        logger.error(`Fail to join video room`);
       }
     });
 
@@ -64,7 +74,7 @@ module.exports = (io) => {
           logger.info(`Message sent to room ${roomId}`);
         } catch (error) {
           io.to(roomId).emit("receive_message", {
-            messageError: "Fail to send message",
+            error: `Fail to send message ${error.message}`,
           });
         }
       });
@@ -73,7 +83,6 @@ module.exports = (io) => {
       socket.on(
         "update_message",
         async ({ userId, messageId, roomId, newMessage }) => {
-          console.log(roomId);
           try {
             // Update the message in the database
             const updatedMessage = await updateMessageService(
@@ -90,12 +99,12 @@ module.exports = (io) => {
               logger.info(`Message ${messageId} updated in stream ${roomId}`);
             } else {
               socket.emit("update_message_error", {
-                error: "Message not found",
+                error: `Message not found`,
               });
             }
           } catch (error) {
             socket.emit("update_message_error", {
-              error: "Failed to update message",
+              error: `Failed to update message ${error.message} `,
             });
             logger.error("Error updating message", error);
           }
