@@ -12,8 +12,18 @@ class RoomRepository {
     }
   }
 
+  async getRoomByEnumModeRepository(enumMode) {
+    try {
+      const rooms = await Room.findOne({ enumMode });
+
+      return rooms;
+    } catch (error) {
+      throw new Error(`Error retrieving room: ${error.message}`);
+    }
+  }
+
   // Get a room by its ID
-  async getRoomRepository(roomId) {
+  async getRoomByIdRepository(roomId) {
     try {
       return await Room.findOne({ _id: roomId, isDeleted: false })
     } catch (error) {
@@ -24,7 +34,7 @@ class RoomRepository {
   }
 
   // Update room by ID
-  async updateRoomById(roomId, updateData) {
+  async updateRoomByIdRepository(roomId, updateData) {
     try {
       return await Room.findByIdAndUpdate(roomId, updateData, {
         new: true,
@@ -38,18 +48,16 @@ class RoomRepository {
   }
 
   // Soft delete a room by setting isDeleted to true
-  async deleteRoomById(roomId) {
+  async deleteRoomByIdRepository(roomId) {
     try {
       const deletedRoom = await Room.findByIdAndUpdate(
         roomId,
         {
-          $set: { isDeleted: true, lastUpdated: Date.now() }, // Soft delete with timestamp
+          $set: { isDeleted: true, lastUpdated: Date.now() },
         },
         { new: true }
       );
-      if (!deletedRoom) {
-        throw new Error(`Room with ID ${roomId} not found`);
-      }
+      
       return deletedRoom;
     } catch (error) {
       throw new Error(

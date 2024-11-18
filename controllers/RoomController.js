@@ -72,22 +72,21 @@ class RoomController {
   }
 
   // Get a Specific Room by ID
-  async GetRoomController(req, res, next) {
-    const roomId = req.params.id;
+  async getRoomController(req, res, next) {
+    const { roomId } = req.params;
+
     try {
       const room = await getRoomService(roomId);
-      if (!room) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, "Room not found");
-      }
+
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ data: room, message: "Success" });
+        .json({ room, message: "Success" });
     } catch (error) {
       next(error);
     }
   }
 
-  // 6. Get All Rooms
+  // Get all rooms
   async GetAllRoomsController(req, res, next) {
     try {
       const rooms = await getAllRoomsService();
@@ -117,23 +116,22 @@ class RoomController {
     }
   }
 
-  // 8. Delete a Room by ID (Soft Delete)
-  async DeleteRoomController(req, res, next) {
-    const roomId = req.params.id;
+  // Delete a Room by ID (Soft Delete)
+  async deleteRoomController(req, res, next) {
+    const { roomId } = req.params;
+
     try {
-      const deletedRoom = await deleteRoomService(roomId);
-      if (!deletedRoom) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, "Room not found");
-      }
+      await deleteRoomService(roomId);
+
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ data: deletedRoom, message: "Room deleted successfully!" });
+        .json({ message: "Success" });
     } catch (error) {
       next(error);
     }
   }
-  //9. Get all direct message by userID
 
+  //9. Get all direct message by userID
   async UserChatRoomsController(req, res, next) {
     const userId = req.userId;
     try {
