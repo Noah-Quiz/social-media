@@ -94,13 +94,13 @@ route.post(
 
 route.get("/dm-room/:targetedUserId", roomController.DirectMessageController);
 
-route.get("/:roomId", roomController.GetRoomController);
+route.get("/:roomId", roomController.getRoomController);
 
 route.get("/all-room", roomController.GetAllRoomsController);
 
 route.put("/:roomId", roomController.updateRoomController);
 
-route.delete("/:roomId", roomController.DeleteRoomController);
+route.delete("/:roomId", roomController.deleteRoomController);
 
 route.get("/all-dm-room", roomController.UserChatRoomsController);
 
