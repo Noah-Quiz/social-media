@@ -50,6 +50,10 @@ module.exports = (io) => {
     });
 
     if (socketPath == "/socket/chat") {
+      socket.on("join_room", (room) => {
+        socket.join(room);
+        console.log(`${socket.id} joined room: ${room}`);
+      });
       // Handle sending messages in rooms
       socket.on("send_message", async ({ roomId, userId, message, role }) => {
         try {
@@ -117,6 +121,10 @@ module.exports = (io) => {
       } catch (error) {
         logger.error(`Error when performing action`);
       }
+    });
+
+    socket.on("leave_room", (roomId) => {
+      logger.info(`${socket.id} left room: ${roomId}`);
     });
 
     // Handle disconnect event
