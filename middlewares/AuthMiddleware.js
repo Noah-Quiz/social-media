@@ -5,22 +5,57 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const logger = getLogger("AUTH_MIDDLEWARE");
 const { match } = require("path-to-regexp");
 const publicRoutes = require("../routes/PublicRoute");
+const { validMongooseObjectId } = require("../utils/validator");
 
 const isUnprotectedRoute = (path, method) => {
-  const pathname = path.split("?")[0]; // Remove query string
-  return publicRoutes.some((route) => {
+  const pathname = path.split("?")[0];
+  logger.info(
+    `Checking if route is unprotected: ${pathname}, method: ${method}`
+  );
+
+  const matchedRoute = publicRoutes.find((route) => {
     const matchFn = match(route.path, { decode: decodeURIComponent });
     const matched = matchFn(pathname);
     return matched && route.method === method && matched.path === pathname;
   });
+
+  if (matchedRoute) {
+    logger.info(`Matched route: ${matchedRoute.path}`);
+    // Additional validation for dynamic parameters
+    const matchFn = match(matchedRoute.path, { decode: decodeURIComponent });
+    const matchedParams = matchFn(pathname)?.params;
+
+    if (matchedParams) {
+      // Iterate over all parameters and validate if they end with 'Id'
+      for (const [key, value] of Object.entries(matchedParams)) {
+        if (key.endsWith("Id")) {
+          try {
+            if (!/^[0-9a-fA-F]{24}$/.test(value)) { // MongoDB ObjectId format validation
+              logger.info(`Invalid ${key} parameter: ${value}`);
+              return false; // Reject invalid parameter matches
+            }
+          } catch (error) {
+            throw error;
+          }
+        }
+      }
+    }
+
+    logger.info(
+      `Matched route: ${
+        matchedRoute.path
+      }, matched parameters: ${JSON.stringify(matchedParams)}`
+    );
+    return true;
+  }
+
+  return false;
 };
 
-
 const AuthMiddleware = async (req, res, next) => {
-
   // Append requester ID to req for other purposes
   if (isUnprotectedRoute(req.originalUrl, req.method)) {
-    logger.info("Handling unprotected route")
+    logger.info("Handling unprotected route");
     const { authorization } = req.headers;
 
     if (authorization) {
@@ -44,7 +79,7 @@ const AuthMiddleware = async (req, res, next) => {
         }
       }
     }
-    
+
     return next();
   }
 
