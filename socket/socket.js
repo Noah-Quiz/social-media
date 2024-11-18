@@ -28,14 +28,24 @@ module.exports = (io) => {
     logger.info(`User connected: ${socket.id}`);
 
     // Handle joining a livestream chat
-    socket.on("join_livestream_chat", async ({ streamId }) => {
+    socket.on("join_live_chat", async ({ streamId }) => {
       try {
         socket.join(streamId);
         userStreams.add(streamId);
         await updateViewersCount(streamId);
-        logger.info(`${socket.id} joined livestream room: ${streamId}`);
+        logger.info(`${socket.id} joined live room: ${streamId}`);
       } catch (error) {
-        logger.error(`Fail to join live stream`);
+        logger.error(`Fail to join live room`);
+      }
+    });
+
+    socket.on("join_video_chat", async ({ videoId }) => {
+      try {
+        socket.join(videoId);
+        userStreams.add(streamId);
+        logger.info(`${socket.id} joined video room: ${videoId}`);
+      } catch (error) {
+        logger.error(`Fail to join video room`);
       }
     });
 
