@@ -2,11 +2,11 @@ const mongoose = require("mongoose");
 const baseEntitySchema = require("./BaseEntity");
 
 const videoLikeHistorySchema = new mongoose.Schema({
-  user: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
-  video: {
+  videoId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Video",
   },
@@ -16,8 +16,6 @@ const videoLikeHistorySchema = new mongoose.Schema({
   },
 });
 
-const VideoLikeHistory = mongoose.model(
-  "VideoLikeHistory",
-  videoLikeHistorySchema
-);
+const VideoLikeHistory = mongoose.model("VideoLikeHistory", videoLikeHistorySchema);
+
 module.exports = VideoLikeHistory;

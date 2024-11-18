@@ -101,7 +101,7 @@ const getStreamsService = async (query, requesterId) => {
     if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Valid requester ID is required"
+        "Invalid requester ID"
       );
     }
 
@@ -329,8 +329,17 @@ const toggleLikeStreamService = async (streamId, userId) => {
 
 const getRecommendedStreamsService = async (data) => {
   try {
-    const connection = new DatabaseTransaction();
-
+    const connection = new DatabaseTransaction()
+    
+    const { requesterId } = data;
+    
+    if (requesterId) {
+      const requester = await connection.userRepository.findUserById(requesterId);
+      if (!requester) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "Requester not found");
+      }
+    }
+    
     const result =
       await connection.streamRepository.getRecommendedStreamsRepository(data);
 
@@ -352,6 +361,7 @@ const getRelevantStreamsService = async (data) => {
     throw error;
   }
 };
+
 const cleanStreamFromNonOwner = (obj) => {
   const {
     uid,

@@ -18,6 +18,8 @@ const {
   getVideoService,
   getVideosService,
   getVideoLikeHistoryService,
+  getRelevantVideosService,
+  getRecommendedVideosService,
 } = require("../services/VideoService");
 const { default: mongoose } = require("mongoose");
 const {
@@ -40,6 +42,9 @@ const UpdateVideoDto = require("../dtos/Video/UpdateVideoDto");
 const GetVideosDto = require("../dtos/Video/GetVideosDto");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const UserEnum = require("../enums/UserEnum");
+const GetRelevantVideosDto = require("../dtos/Video/GetRelevantVideosDto");
+const GetRecommendedVideosDto = require("../dtos/Video/GetRecommendedVideosDto");
+const GetVideoLikeHistoryDto = require("../dtos/Video/GetVideoLikeHistoryDto");
 const logger = getLogger("VIDEO_CONTROLLER");
 class VideoController {
   async createVideoController(req, res, next) {
@@ -397,7 +402,7 @@ class VideoController {
       );
       const validatedQuery = await getVideosDto.validate();
 
-      const videos = await getVideosByPlaylistIdService(
+      const { videos, total, page, totalPages } = await getVideosByPlaylistIdService(
         playlistId,
         validatedQuery,
         requesterId
@@ -405,7 +410,7 @@ class VideoController {
 
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ videos, message: "Success" });
+        .json({ videos, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }
@@ -413,13 +418,65 @@ class VideoController {
 
   async getVideoLikeHistoryController(req, res, next) {
     const userId = req.userId;
+    const query = {
+      size: req.query.size,
+      page: req.query.page,
+      title: req.query.title,
+    };
 
     try {
-      const videos = await getVideoLikeHistoryService(userId);
+      const getVideoLikeHistoryDto = new GetVideoLikeHistoryDto(query.page, query.size, query.title, userId);
+      const validatedData = await getVideoLikeHistoryDto.validate();
+
+      const { videos, total, page, totalPages } = await getVideoLikeHistoryService(validatedData);
 
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ videos, message: "Get videos like history successfully" });
+        .json({ videos, total, page, totalPages, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getRecommendedVideosController(req, res, next) {
+    const requesterId = req.requesterId;
+    const query = {
+      size: req.query.size,
+      page: req.query.page,
+    };
+
+    try {
+      const getRecommendedVideosDto = new GetRecommendedVideosDto(query.page, query.size, requesterId);
+      const validatedData = await getRecommendedVideosDto.validate();
+
+      const { videos, total, page, totalPages } = await getRecommendedVideosService(validatedData);
+
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ videos, total, page, totalPages, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getRelevantVideosController(req, res, next) {
+    const requesterId = req.requesterId;
+    const query = {
+      page: req.query.page,
+      size: req.query.size,
+      categoryIds: req.query.categoryIds,
+      requesterId,
+    }
+    
+    try {
+      const getRelevantVideosDto = new GetRelevantVideosDto(query.page, query.size, query.categoryIds, requesterId);
+      const validatedData = await getRelevantVideosDto.validate();
+
+      const { videos, total, page, totalPages } = await getRelevantVideosService(validatedData);
+
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ videos, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }

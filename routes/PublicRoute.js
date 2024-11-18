@@ -1,3 +1,7 @@
+/***
+ * NOTE: put all the static routes in front of the dynamic routes
+ */
+
 const publicRoutes = [
   // Categories
   {
@@ -29,6 +33,14 @@ const publicRoutes = [
     method: "GET",
   },
   {
+    path: "/api/videos/relevant",
+    method: "GET",
+  },
+  {
+    path: "/api/videos/recommendation",
+    method: "GET",
+  },
+  {
     path: "/api/videos/:videoId",
     method: "GET",
   },
@@ -41,9 +53,18 @@ const publicRoutes = [
     method: "GET",
   },
 
+
   // Stream
   {
     path: "/api/streams",
+    method: "GET",
+  },
+  {
+    path: "/api/streams/relevant",
+    method: "GET",
+  },
+  {
+    path: "/api/streams/recommendation",
     method: "GET",
   },
   {
@@ -51,24 +72,34 @@ const publicRoutes = [
     method: "GET",
   },
 
+
   // Playlist
   {
     path: "/api/my-playlists/:playlistId",
-    method: "GET"
+    method: "GET",
   },
   {
     path: "/api/my-playlists/user/:userId",
-    method: "GET"
+    method: "GET",
   },
 
-  // User 
+  // User
   {
     path: "/api/users",
-    method: "GET"
+    method: "GET",
   },
   {
     path: "/api/users/:userId",
-    method: "GET"
+    method: "GET",
+  },
+  //Gifts
+  {
+    path: "/api/gifts/",
+    method: "GET",
+  },
+  {
+    path: "/api/gifts/:id",
+    method: "GET",
   },
 ];
 
