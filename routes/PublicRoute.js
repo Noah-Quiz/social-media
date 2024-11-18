@@ -70,21 +70,30 @@ const publicRoutes = [
   // Playlist
   {
     path: "/api/my-playlists/:playlistId",
-    method: "GET"
+    method: "GET",
   },
   {
     path: "/api/my-playlists/user/:userId",
-    method: "GET"
+    method: "GET",
   },
 
-  // User 
+  // User
   {
     path: "/api/users",
-    method: "GET"
+    method: "GET",
   },
   {
     path: "/api/users/:userId",
-    method: "GET"
+    method: "GET",
+  },
+  //Gifts
+  {
+    path: "/api/gifts/",
+    method: "GET",
+  },
+  {
+    path: "/api/gifts/:id",
+    method: "GET",
   },
 ];
 
