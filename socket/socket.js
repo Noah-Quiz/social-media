@@ -28,7 +28,7 @@ module.exports = (io) => {
     logger.info(`User connected: ${socket.id}`);
 
     // Handle joining a livestream chat
-    socket.on("join_live_chat", async ({ streamId }) => {
+    socket.on("join_livestream_chat", async ({ streamId }) => {
       try {
         socket.join(streamId);
         userStreams.add(streamId);
@@ -71,7 +71,7 @@ module.exports = (io) => {
         } catch (error) {
           io.to(roomId).emit("receive_message", {
             error: `Fail to send message ${error.message}`,
-          });
+          }); 
         }
       });
 

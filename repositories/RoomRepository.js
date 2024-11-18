@@ -2,21 +2,20 @@ const Room = require("../entities/RoomEntity");
 
 class RoomRepository {
   // Create a new room
-  async createRoom(roomData) {
+  async createRoomRepository(roomData, session) {
     try {
-      const room = new Room(roomData);
-      return await room.save();
+      const room = await Room.create([roomData], { session })
+
+      return room[0];
     } catch (error) {
       throw new Error(`Error creating room: ${error.message}`);
     }
   }
 
   // Get a room by its ID
-  async getRoomById(roomId) {
+  async getRoomRepository(roomId) {
     try {
-      return await Room.findOne({ _id: roomId, isDeleted: false }).populate(
-        "videoId"
-      );
+      return await Room.findOne({ _id: roomId, isDeleted: false })
     } catch (error) {
       throw new Error(
         `Error retrieving room with ID ${roomId}: ${error.message}`

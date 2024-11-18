@@ -504,6 +504,13 @@ const storage = multer.diskStorage({
         const { streamId } = req.params;
         dir = path.join(`assets/images/streams/${streamId}`);
         break;
+      case "roomCreateImg":
+        dir = path.join(`assets/images/room/create`);
+        break;
+      case "roomUpdateImg":
+        const { roomId } = req.params;
+        dir = path.join(`assets/images/room/${roomId}`);
+        break;
       case "playlistCreate":
         dir = path.join(`assets/images/playlist/create`);
         break;
@@ -595,6 +602,19 @@ const storage = multer.diskStorage({
         }
         fileName = `${baseName}${ext}`;
         dirPath = path.join(`assets/images/playlist/${playlistId}`);
+        break;
+      case "roomCreateImg":
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/rooms/create`);
+        break;
+      case "roomUpdateImg":
+        const { roomId } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(roomId)) {
+          logger.error(`Invalid room ID: ${roomId}`);
+          return cb("Error: Invalid room ID");
+        }
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/rooms/${roomId}`);
         break;
       case "giftCreateImg":
         fileName = `${baseName}${ext}`;
