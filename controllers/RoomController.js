@@ -1,5 +1,7 @@
+const CreateRoomDto = require("../dtos/Room/CreateRoomDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
+const { checkFileSuccess, deleteFile } = require("../middlewares/storeFile");
 const {
   createRoomService,
   deleteRoomService,
@@ -16,19 +18,8 @@ const {
 const mongoose = require("mongoose");
 
 class RoomController {
-  // 1. Global Chat Room
-  async GlobalChatController(req, res, next) {
-    try {
-      const globalRoom = await getGlobalRoomService();
-      return res
-        .status(StatusCodeEnums.OK_200)
-        .json({ data: globalRoom, message: "Success" });
-    } catch (error) {
-      next(error);
-    }
-  }
 
-  // 2. Direct Message Room
+  // Direct Message Room
   async DirectMessageController(req, res, next) {
     const currentUserId = req.userId;
     const targetedUserId = req.params.targetedUserId;
@@ -45,33 +36,42 @@ class RoomController {
     }
   }
 
-  // 3. Video Chat Room
-  async VideoChatController(req, res, next) {
-    const videoId = req.query.videoId;
-    try {
-      const roomVideoId = await getRoomVideoIdService(videoId);
-      return res
-        .status(StatusCodeEnums.OK_200)
-        .json({ data: roomVideoId, message: "Success" });
-    } catch (error) {
-      next(error);
+  // Create a Room
+  async createRoomController(req, res, next) {
+    const { name, enumMode } = req.body;
+    let avatar = req.file ? req.file.path : null;
+    if (enumMode === "private") {
+      avatar = null;
     }
-  }
 
-  // 4. Create a Room
-  async CreateRoomController(req, res, next) {
-    const roomData = req.body;
     try {
-      const newRoom = await createRoomService(roomData);
+      const createRoomDto = new CreateRoomDto(name, enumMode);
+      await createRoomDto.validate();
+
+      const data = { name, enumMode, avatar };
+
+      const room = await createRoomService(data);
+
+      if (enumMode !== "private") {
+        if (req.file) {
+          await checkFileSuccess(avatar);
+        }
+      }
+
       return res
         .status(StatusCodeEnums.Created_201)
-        .json({ data: newRoom, message: "Room created successfully!" });
+        .json({ room, message: "Success" });
     } catch (error) {
+      if (enumMode !== "private") {
+        if (req.file) {
+          await deleteFile(req.file.path);
+        }
+      }
       next(error);
     }
   }
 
-  // 5. Get a Specific Room by ID
+  // Get a Specific Room by ID
   async GetRoomController(req, res, next) {
     const roomId = req.params.id;
     try {
@@ -99,18 +99,19 @@ class RoomController {
     }
   }
 
-  // 7. Update a Room by ID
-  async UpdateRoomController(req, res, next) {
-    const roomId = req.params.id;
-    const roomData = req.body;
+  // Update a Room by ID
+  async updateRoomController(req, res, next) {
+    const { roomId } = req.params;
+    let avatar = req.file ? req.file.path : null;
+    const { name } = req.body;
+
     try {
-      const updatedRoom = await updateRoomService(roomId, roomData);
-      if (!updatedRoom) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, "Room not found");
-      }
+      const roomData = { name, avatar }
+      const room = await updateRoomService(roomId, roomData);
+
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ data: updatedRoom, message: "Room updated successfully!" });
+        .json({ room, message: "Success" });
     } catch (error) {
       next(error);
     }

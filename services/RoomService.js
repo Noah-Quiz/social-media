@@ -3,7 +3,10 @@ const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const createRoomService = async (roomData) => {
   const connection = new DatabaseTransaction();
   try {
-    const room = await connection.roomRepository.createRoom(roomData);
+    const isExist = await connection.roomRepository.getRoomRepository()
+
+    const room = await connection.roomRepository.createRoomRepository(roomData);
+
     return room;
   } catch (error) {
     throw new Error(error.message);
@@ -13,7 +16,7 @@ const createRoomService = async (roomData) => {
 const getRoomService = async (id) => {
   const connection = new DatabaseTransaction();
   try {
-    const room = await connection.roomRepository.getRoomById(id);
+    const room = await connection.roomRepository.getRoomRepository(id);
     return room;
   } catch (error) {
     throw new Error(error.message);
@@ -64,7 +67,7 @@ const DirectMessageService = async (userIdA, userIdB) => {
     if (!existingRoom) {
       const participants = [userIdA, userIdB];
       const roomData = {
-        type: "private",
+        enumMode: "private",
         participants: participants,
       };
       const room = await connection.roomRepository.createRoom(roomData);
@@ -99,7 +102,7 @@ const getRoomVideoIdService = async (videoId) => {
     if (!existingRoom) {
       const videoRoom = {
         name: `${video.title}'S CHAT ROOM`,
-        type: "video",
+        enumMode: "video",
         videoId: videoId,
       };
       const room = await createRoom(videoRoom);
@@ -118,7 +121,7 @@ const getGlobalRoomService = async () => {
     if (!existingRoom) {
       const globalRoom = {
         name: "Global Chat Room",
-        type: "public",
+        enumMode: "public",
       };
       const room = await createRoom(globalRoom);
       return room;
