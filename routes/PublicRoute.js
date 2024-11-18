@@ -1,3 +1,7 @@
+/***
+ * NOTE: put all the static routes in front of the dynamic routes
+ */
+
 const publicRoutes = [
   // Categories
   {
