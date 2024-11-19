@@ -28,16 +28,11 @@ class HistoryRepository {
       const skip = (page - 1) * size;
 
       const searchQuery = { userId: new mongoose.Types.ObjectId(userId) };
-      let sortField = "lastUpdated"; // Default sort field
-      let sortOrder = query.order === "ascending" ? 1 : -1;
-      
-      const totalRecords = await WatchHistory.aggregate([
-        {
-          $match: searchQuery,
-        },
-      ]);
+      const sortField = query.sortField || "lastUpdated"; // Default sort field
+      const sortOrder = query.order === "ascending" ? 1 : -1;
 
-      const historyRecords = await WatchHistory.aggregate([
+      // Construct the pipeline dynamically
+      const pipeline = [
         {
           $match: searchQuery,
         },
@@ -52,11 +47,18 @@ class HistoryRepository {
         {
           $unwind: "$video",
         },
-        query.title && {
+      ];
+
+      // Add a title match stage if query.title exists
+      if (query.title) {
+        pipeline.push({
           $match: {
             "video.title": { $regex: query.title, $options: "i" },
           },
-        },
+        });
+      }
+
+      pipeline.push(
         {
           $lookup: {
             from: "videolikehistories",
@@ -70,7 +72,7 @@ class HistoryRepository {
         },
         {
           $addFields: {
-            "likesCount": {
+            likesCount: {
               $ifNull: [{ $arrayElemAt: ["$likesInfo.likesCount", 0] }, 0],
             },
           },
@@ -88,19 +90,27 @@ class HistoryRepository {
               thumbnailUrl: 1,
               numOfViews: 1,
               likesCount: 1,
-            }
-          }
+            },
+          },
         },
         {
-          $sort: {[sortField]: sortOrder},
+          $sort: { [sortField]: sortOrder },
         },
         {
           $skip: skip,
         },
         {
           $limit: Number(size),
-        },
+        }
+      );
+
+      // Fetch total records count
+      const totalRecords = await WatchHistory.aggregate([
+        { $match: searchQuery },
       ]);
+
+      // Fetch paginated history records
+      const historyRecords = await WatchHistory.aggregate(pipeline);
 
       return {
         historyRecords,
@@ -110,6 +120,20 @@ class HistoryRepository {
       };
     } catch (error) {
       throw new Error(`Error getting history records: ${error.message}`);
+    }
+  }
+
+  async getHistoryRecordRepository(historyId) {
+    try {
+      const historyRecord = await WatchHistory.findById(historyId);
+
+      if (!historyRecord) {
+        throw new Error("History record not found");
+      }
+
+      return historyRecord;
+    } catch (error) {
+      throw new Error(`Error fetching history record: ${error.message}`);
     }
   }
 
