@@ -14,7 +14,10 @@ class RoomRepository {
 
   async getRoomByEnumModeRepository(enumMode) {
     try {
-      const rooms = await Room.findOne({ enumMode });
+      const rooms = await Room.findOne({ 
+        enumMode,
+        isDeleted: false,
+      });
 
       return rooms;
     } catch (error) {
@@ -22,16 +25,56 @@ class RoomRepository {
     }
   }
 
+  async getPrivateRoomByUserIds(userId, recipientId) {
+    try {
+      const room = await Room.findOne({
+        enumMode: "private",
+        participants: {
+          $elemMatch: {
+            userId: { $in: [userId, recipientId] },
+          },
+        },
+      });
+  
+      return room || null;
+    } catch (error) {
+      throw new Error(`Error retrieving private room: ${error.message}`);
+    }
+  }  
+  
   // Get a room by its ID
   async getRoomByIdRepository(roomId) {
     try {
-      return await Room.findOne({ _id: roomId, isDeleted: false })
+      const rooms = await Room.aggregate([
+        {
+          $lookup: {
+            from: "messages",
+            localField: "_id",
+            foreignField: "roomId",
+            as: "messages",
+          },
+        },
+        {
+          $addFields: {
+            messagesCount: { $size: "$messages" },
+          },
+        },
+        {
+          $project: {
+            messages: 0,
+            isDeleted: 0,
+            __v: 0,
+          },
+        },
+      ]);
+  
+      return rooms;
     } catch (error) {
       throw new Error(
         `Error retrieving room with ID ${roomId}: ${error.message}`
       );
     }
-  }
+  }  
 
   // Update room by ID
   async updateRoomByIdRepository(roomId, updateData) {

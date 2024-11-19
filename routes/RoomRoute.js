@@ -2,6 +2,8 @@ const express = require("express");
 const RoomController = require("../controllers/RoomController");
 const AuthMiddleware = require("../middlewares/AuthMiddleware");
 const { uploadFile } = require("../middlewares/storeFile");
+const UserEnum = require("../enums/UserEnum");
+const requireRole = require("../middlewares/requireRole");
 const roomController = new RoomController();
 
 const route = express.Router();
@@ -87,9 +89,26 @@ route.use(AuthMiddleware);
  *                   example: "Server error"
  */
 route.post(
-    "/", 
+    "/private", 
+    roomController.createPrivateRoomController
+);
+
+route.post(
+    "/public",
+    requireRole(UserEnum.ADMIN),
+    roomController.createPublicRoomController
+);
+
+route.post(
+    "/group", 
     uploadFile.single("roomCreateImg"),
-    roomController.createRoomController
+    roomController.createGroupRoomController
+);
+
+route.post(
+    "/member", 
+    uploadFile.single("roomCreateImg"),
+    roomController.createMemberRoomController
 );
 
 route.get("/dm-room/:targetedUserId", roomController.DirectMessageController);
