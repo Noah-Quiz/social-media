@@ -17,9 +17,7 @@ class HistoryController {
       const { videoId } = req.body;
       const userId = req.userId;
 
-      const createHistoryRecordDto = new CreateHistoryRecordDto(
-        videoId
-      );
+      const createHistoryRecordDto = new CreateHistoryRecordDto(videoId);
       await createHistoryRecordDto.validate();
 
       const data = { videoId, userId };
@@ -50,11 +48,13 @@ class HistoryController {
 
   async deleteHistoryRecordController(req, res, next) {
     try {
+      const userId = req.userId;
+      console.log(userId);
       const { historyId } = req.params;
       const deleteHistoryRecordDto = new DeleteHistoryRecordDto(historyId);
       await deleteHistoryRecordDto.validate();
 
-      await deleteHistoryRecordService(historyId);
+      await deleteHistoryRecordService(historyId, userId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
@@ -69,7 +69,7 @@ class HistoryController {
         page: req.query.page,
         size: req.query.size,
         title: req.query.title,
-      }
+      };
 
       const getHistoryRecordsDto = new GetHistoryRecordsDto(
         userId,
@@ -77,7 +77,7 @@ class HistoryController {
         query.size
       );
       await getHistoryRecordsDto.validate();
-    
+
       const { historyRecords, total, page, totalPages } =
         await getAllHistoryRecordsService(userId, query);
 

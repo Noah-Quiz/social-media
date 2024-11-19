@@ -102,6 +102,7 @@ app.use(
   })
 );
 app.use("/", express.static(__dirname));
+app.use("/.well-known", express.static(".well-known"));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
