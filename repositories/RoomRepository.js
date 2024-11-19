@@ -2,21 +2,30 @@ const Room = require("../entities/RoomEntity");
 
 class RoomRepository {
   // Create a new room
-  async createRoom(roomData) {
+  async createRoomRepository(roomData, session) {
     try {
-      const room = new Room(roomData);
-      return await room.save();
+      const room = await Room.create([roomData], { session })
+
+      return room[0];
     } catch (error) {
       throw new Error(`Error creating room: ${error.message}`);
     }
   }
 
-  // Get a room by its ID
-  async getRoomById(roomId) {
+  async getRoomByEnumModeRepository(enumMode) {
     try {
-      return await Room.findOne({ _id: roomId, isDeleted: false }).populate(
-        "videoId"
-      );
+      const rooms = await Room.findOne({ enumMode });
+
+      return rooms;
+    } catch (error) {
+      throw new Error(`Error retrieving room: ${error.message}`);
+    }
+  }
+
+  // Get a room by its ID
+  async getRoomByIdRepository(roomId) {
+    try {
+      return await Room.findOne({ _id: roomId, isDeleted: false })
     } catch (error) {
       throw new Error(
         `Error retrieving room with ID ${roomId}: ${error.message}`
@@ -25,7 +34,7 @@ class RoomRepository {
   }
 
   // Update room by ID
-  async updateRoomById(roomId, updateData) {
+  async updateRoomByIdRepository(roomId, updateData) {
     try {
       return await Room.findByIdAndUpdate(roomId, updateData, {
         new: true,
@@ -39,18 +48,16 @@ class RoomRepository {
   }
 
   // Soft delete a room by setting isDeleted to true
-  async deleteRoomById(roomId) {
+  async deleteRoomByIdRepository(roomId) {
     try {
       const deletedRoom = await Room.findByIdAndUpdate(
         roomId,
         {
-          $set: { isDeleted: true, lastUpdated: Date.now() }, // Soft delete with timestamp
+          $set: { isDeleted: true, lastUpdated: Date.now() },
         },
         { new: true }
       );
-      if (!deletedRoom) {
-        throw new Error(`Room with ID ${roomId} not found`);
-      }
+      
       return deletedRoom;
     } catch (error) {
       throw new Error(
