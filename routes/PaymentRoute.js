@@ -116,4 +116,15 @@ paymentRouters.get(
 
 paymentRouters.get("/paypal/cancel", paymentController.cancelPayPalController);
 
+paymentRouters.get(
+  "/stripe",
+  // AuthMiddleware,
+  paymentController.payWithStripeController
+);
+
+paymentRouters.get(
+  "/stripe/success",
+  paymentController.successStripeController
+);
+
 module.exports = paymentRouters;
