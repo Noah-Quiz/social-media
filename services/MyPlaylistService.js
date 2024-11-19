@@ -4,7 +4,7 @@ const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const UserEnum = require("../enums/UserEnum");
 const { promises } = require("nodemailer/lib/xoauth2");
-const { validLength } = require("../utils/validator");
+const { validLength, contentModeration } = require("../utils/validator");
 
 const createAPlaylistService = async (
   userId,
@@ -298,7 +298,7 @@ const addToPlaylistService = async (playlistId, videoId, userId) => {
     if (!video) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
-    
+
     if (
       video.user?._id?.toString() !== userId?.toString() &&
       (video.enumMode === "draft" || video.enumMode === "private")
@@ -306,8 +306,14 @@ const addToPlaylistService = async (playlistId, videoId, userId) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
 
-    if (video.user?._id?.toString() === userId?.toString() && video.enumMode === "draft") {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Draft video cannot be added to playlist");
+    if (
+      video.user?._id?.toString() === userId?.toString() &&
+      video.enumMode === "draft"
+    ) {
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Draft video cannot be added to playlist"
+      );
     }
 
     if (
