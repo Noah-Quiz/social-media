@@ -1,22 +1,34 @@
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
 const createRoomService = async (roomData) => {
   const connection = new DatabaseTransaction();
   try {
-    const room = await connection.roomRepository.createRoom(roomData);
+    const checkRoom = await connection.roomRepository.getRoomByEnumModeRepository(roomData.enumMode)
+    if (checkRoom?.enumMode === "public") {
+      throw new CoreException(StatusCodeEnums.Conflict_409, "This room type already exist");
+    }
+
+    const room = await connection.roomRepository.createRoomRepository(roomData);
+
     return room;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
-const getRoomService = async (id) => {
+const getRoomService = async (roomId) => {
   const connection = new DatabaseTransaction();
   try {
-    const room = await connection.roomRepository.getRoomById(id);
+    const room = await connection.roomRepository.getRoomByIdRepository(roomId);
+    if (!room) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Room not found");
+    }
+
     return room;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -26,27 +38,33 @@ const getAllRoomsService = async () => {
     const rooms = await connection.roomRepository.getAllRooms();
     return rooms;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
-const deleteRoomService = async (id) => {
+const deleteRoomService = async (roomId) => {
   const connection = new DatabaseTransaction();
   try {
-    const room = await connection.roomRepository.deleteRoomById(id);
+    const checkRoom = await connection.roomRepository.getRoomByIdRepository(roomId);
+    if (checkRoom?.enumMode === "private") {
+      throw new CoreException(StatusCodeEnums.MethodNotAllowed_405, "Private conversation cannot be deleted")
+    }
+
+    const room = await connection.roomRepository.deleteRoomByIdRepository(roomId);
+
     return room;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
 const updateRoomService = async (id, roomData) => {
   const connection = new DatabaseTransaction();
   try {
-    const room = await connection.roomRepository.updateRoomById(id, roomData);
+    const room = await connection.roomRepository.updateRoomByIdRepository(id, roomData);
     return room;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -64,7 +82,7 @@ const DirectMessageService = async (userIdA, userIdB) => {
     if (!existingRoom) {
       const participants = [userIdA, userIdB];
       const roomData = {
-        type: "private",
+        enumMode: "private",
         participants: participants,
       };
       const room = await connection.roomRepository.createRoom(roomData);
@@ -72,7 +90,7 @@ const DirectMessageService = async (userIdA, userIdB) => {
     }
     return existingRoom;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -82,7 +100,7 @@ const getRoomUserIdService = async (userId) => {
     const rooms = await connection.roomRepository.findChatRoomUserId(userId);
     return rooms;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -99,7 +117,7 @@ const getRoomVideoIdService = async (videoId) => {
     if (!existingRoom) {
       const videoRoom = {
         name: `${video.title}'S CHAT ROOM`,
-        type: "video",
+        enumMode: "video",
         videoId: videoId,
       };
       const room = await createRoom(videoRoom);
@@ -107,7 +125,7 @@ const getRoomVideoIdService = async (videoId) => {
     }
     return existingRoom;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -118,14 +136,14 @@ const getGlobalRoomService = async () => {
     if (!existingRoom) {
       const globalRoom = {
         name: "Global Chat Room",
-        type: "public",
+        enumMode: "public",
       };
       const room = await createRoom(globalRoom);
       return room;
     }
     return existingRoom;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -140,7 +158,7 @@ const handleMemberGroupChatService = async (roomId, memberId, action) => {
       );
     return room;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 

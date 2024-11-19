@@ -37,6 +37,7 @@ const auditLogError = async (err, req, res, next) => {
     const res = await connection.errorRepository.createErrorRepository(
       errorData
     );
+
     logger.info(`Error saved to database with ID: ${res._id}`);
   } catch (error) {
     logger.error(`Error saving error to database: ${error.message}`);
@@ -47,7 +48,7 @@ const auditLogError = async (err, req, res, next) => {
         .json({ message: `Database Error: ${err.message}` });
     }
     return res
-      .status(StatusCodeEnums.InternalServerError_500)
+      .status(err.code || StatusCodeEnums.InternalServerError_500)
       .json({ message: err.message });
   }
 };
