@@ -346,6 +346,147 @@ streamRoutes.get("/", streamController.getStreamsController);
 
 /**
  * @swagger
+ * /api/streams/user/{userId}:
+ *   get:
+ *     summary: Get all streams by user ID
+ *     tags: [Streams]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: size
+ *         required: false
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: title
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filter for search (search all by default)
+ *       - in: query
+ *         name: status
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [live, offline]
+ *         description: Filter for stream status (search all by default)
+ *       - in: query
+ *         name: order
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [ascending, descending]
+ *           default: descending
+ *         description: Filter for sort order (default descending)
+ *       - in: query
+ *         name: sortBy
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [date, view, like]
+ *           default: date
+ *         description: Filter for sort criteria (default date)
+ *     responses:
+ *       200:
+ *         description: Get streams successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 streams:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       title:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       userId:
+ *                         type: string
+ *                       streamOnlineUrl:
+ *                         type: string
+ *                       streamServerUrl:
+ *                         type: string
+ *                       meta:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                       status:
+ *                         type: string
+ *                       thumbnailUrl:
+ *                         type: string
+ *                       likedBy:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       lastUpdated:
+ *                         type: string
+ *                         format: date-time
+ *                       isDeleted:
+ *                         type: boolean
+ *                       dateCreated:
+ *                         type: string
+ *                         format: date-time
+ *                       enumMode:
+ *                         type: string
+ *                       user:
+ *                         type: object
+ *                         properties:
+ *                           fullName:
+ *                             type: string
+ *                           nickName:
+ *                             type: string
+ *                           avatar:
+ *                             type: string
+ *                       categories:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             name:
+ *                               type: string
+ *                             imageUrl:
+ *                               type: string
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+streamRoutes.get("/user/:userId", streamController.getStreamsByUserIdController);
+
+/**
+ * @swagger
  * /api/streams:
  *   post:
  *     security:
