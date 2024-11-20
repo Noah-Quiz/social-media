@@ -278,7 +278,6 @@ class UserRepository {
       const videoOfUser = await User.findOne({ _id: videoOwnerId });
 
       if (!videoOfUser) {
-        console.log("Video not found");
         return false;
       }
 

@@ -234,7 +234,7 @@ const updatePlaylistService = async (data) => {
 const deletePlaylistService = async (userId, playlistId) => {
   try {
     const connection = new DatabaseTransaction();
-    const checkExist = checkExistById(Playlist, playlistId);
+    const checkExist = await checkExistById(Playlist, playlistId);
     if (!checkExist)
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
