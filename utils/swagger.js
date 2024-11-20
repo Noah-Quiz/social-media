@@ -92,6 +92,10 @@ const options = {
         name: "Streams",
         description: "Operations about streams",
       },
+      {
+        name: "Rooms",
+        description: "Operations about rooms",
+      },
     ],
     components: {
       securitySchemes: {

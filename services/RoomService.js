@@ -28,8 +28,8 @@ const createRoomService = async (userId, data) => {
 
         roomData = {
           participants: [
-            { userId },
-            { userId: data?.recipientId },
+            { userId: new mongoose.Types.ObjectId(userId), joinedDate: new Date() },
+            { userId: new mongoose.Types.ObjectId(data?.recipientId), joinedDate: new Date() },
           ],
           enumMode: "private",
         };
@@ -37,37 +37,65 @@ const createRoomService = async (userId, data) => {
         break;
 
       case "public":
-        const checkRoom = await connection.roomRepository.getRoomByEnumModeRepository(data.enumMode)
-        if (checkRoom?.enumMode === "public") {
-          throw new CoreException(StatusCodeEnums.Conflict_409, "This room type already exist");
+        const existingPublicRoom = await connection.roomRepository.getRoomByEnumModeRepository(data.enumMode);
+        if (existingPublicRoom?.enumMode === "public") {
+          throw new CoreException(StatusCodeEnums.Conflict_409, "This room type already exists");
         }
 
         roomData = {
           ...data,
-          name: "Global Chat",
-          admins: [{ userId }],
-        }
-
-        break;
-
-      case "group":
-        const participantIds = new Set(data.participantIds || []);
-        
-        participantIds.add(userId);
-      
-        data.participants = Array.from(participantIds).map(id => ({
-          userId: new mongoose.Types.ObjectId(id),
-        }));
-        
-        roomData = {
-          ...data,
-          admins: [{ userId }],
+          participants: [
+            {
+              userId: new mongoose.Types.ObjectId(userId),
+              joinedDate: new Date(),
+              isAdmin: true,
+              assignedDate: new Date(),
+            },
+          ],
         };
-      
+
         break;
+
+        case "group":
+          const groupParticipantIds = new Set(data.participantIds || []);
+          groupParticipantIds.add(userId);
+      
+          // Check if all IDs are valid before creating ObjectIds
+          const participants = Array.from(groupParticipantIds).map((id) => {
+              return {
+                  userId: new mongoose.Types.ObjectId(id),
+                  joinedDate: new Date(),
+                  isAdmin: id === userId,
+                  assignedDate: id === userId ? new Date() : null,
+              };
+          });
+      
+          roomData = {
+              ...data,
+              participants,
+          };
+      
+          break;
+      
 
       case "member":
+        const memberParticipantIds = new Set(data.participantIds || []);
+        memberParticipantIds.add(userId);
+
+        roomData = {
+          ...data,
+          participants: Array.from(memberParticipantIds).map((id) => ({
+            userId: new mongoose.Types.ObjectId(id),
+            joinedDate: new Date(),
+            isAdmin: id === userId,
+            assignedDate: id === userId ? new Date() : null,
+          })),
+        };
+
         break;
+
+      default:
+        throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid room type");
     }
 
     const room = await connection.roomRepository.createRoomRepository(roomData);
@@ -90,6 +118,13 @@ const getRoomService = async (userId, roomId) => {
     if (!room) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Room not found");
     }
+    const isParticipant = room.participants.some(
+      (participant) => participant.user._id?.toString() === userId?.toString()
+    );
+
+    if (!isParticipant) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Room not found");
+    }
 
     return room;
   } catch (error) {
@@ -97,23 +132,38 @@ const getRoomService = async (userId, roomId) => {
   }
 };
 
-const getAllRoomsService = async () => {
+const getUserRoomsService = async (userId) => {
   const connection = new DatabaseTransaction();
+
   try {
-    const rooms = await connection.roomRepository.getAllRooms();
+    const user = await connection.userRepository.findUserById(userId);
+    if (!user) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
+
+    const rooms = await connection.roomRepository.getUserRoomsRepository(userId);
+
     return rooms;
   } catch (error) {
     throw error;
   }
 };
 
-const deleteRoomService = async (roomId) => {
+const deleteRoomService = async (roomId, userId) => {
   const connection = new DatabaseTransaction();
   try {
     const checkRoom = await connection.roomRepository.getRoomByIdRepository(roomId);
     if (!checkRoom) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Room not found")
     }
+
+    const isParticipant = checkRoom.participants.some(
+      (participant) => participant.user._id?.toString() === userId?.toString()
+    );
+    if (!isParticipant) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Room not found");
+    }
+
     if (checkRoom?.enumMode === "private") {
       throw new CoreException(StatusCodeEnums.MethodNotAllowed_405, "Private conversation cannot be deleted")
     }
@@ -233,7 +283,7 @@ const handleMemberGroupChatService = async (roomId, memberId, action) => {
 module.exports = {
   createRoomService,
   deleteRoomService,
-  getAllRoomsService,
+  getUserRoomsService,
   getRoomService,
   updateRoomService,
   DirectMessageService,
