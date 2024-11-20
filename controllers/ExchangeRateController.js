@@ -7,6 +7,7 @@ const {
   deleteExchangeRateService,
   getExchangeRateService,
   updateExchangeRateService,
+  getSingleExchangeRateService,
 } = require("../services/ExchangeRateService");
 
 class ExchangeRateController {
@@ -43,8 +44,8 @@ class ExchangeRateController {
 
   async deleteExchangeRateController(req, res, next) {
     try {
-      const { id } = req.params;
-      const { name } = req.body;
+      // const { id } = req.params;
+      const { id, name } = req.query;
       console.log(name);
       if (!name) {
         throw new CoreException(
@@ -64,8 +65,8 @@ class ExchangeRateController {
 
   async updateExchangeRateController(req, res, next) {
     try {
-      const { id } = req.params;
-      const { name, value, description } = req.body;
+      // const { id } = req.params;
+      const { id, name, value, description } = req.body;
       const updateExchangeRateDto = new UpdateExchangeRateDto(
         id,
         name,
@@ -91,6 +92,24 @@ class ExchangeRateController {
   async getExchangeRateController(req, res, next) {
     try {
       const result = await getExchangeRateService();
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ exchangeRate: result, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getOneExchangeRate(req, res, next) {
+    try {
+      const { id, name } = req.query; // Use query parameters
+      if (!id && !name) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Either id or name must be provided"
+        );
+      }
+      const result = await getSingleExchangeRateService(id, name);
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ exchangeRate: result, message: "Success" });

@@ -146,6 +146,113 @@ class StreamRepository {
     }
   }
 
+  async getStreamsByUserIdRepository(query, userId) {
+    try {
+      const page = query.page || 1;
+      const size = query.size || 10;
+      const skip = (page - 1) * size;
+
+      const searchQuery = { 
+        isDeleted: false,
+        userId: new mongoose.Types.ObjectId(userId), 
+      };
+
+      // Prepare query
+      if (query.title) {
+        searchQuery.title = { $regex: new RegExp(query.title, "i") };
+      }      
+      if (query.uid) searchQuery.uid = query.uid;
+      if (query.status) searchQuery.status = query.status;
+
+      let sortField = "dateCreated"; // Default sort field
+      let sortOrder = -1; // Default to descending order
+
+      if (query.sortBy === "like") sortField = "likesCount";
+      else if (query.sortBy === "view") sortField = "currentViewCount";
+      else if (query.sortBy === "date") sortField = "dateCreated";
+
+      sortOrder = query.order === "ascending" ? 1 : -1;
+      
+      const totalStreams = await Stream.countDocuments(searchQuery);
+
+      // Get streams with sorting on computed fields
+      const streams = await Stream.aggregate([
+        { $match: searchQuery },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryIds",
+            foreignField: "_id",
+            as: "categories",
+          },
+        },
+        {
+          $addFields: {
+            likesCount: { $size: "$likedBy" },
+            currentViewCount: { $ifNull: ["$currentViewCount", 0] },
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            userId: 1,
+            title: 1,
+            description: 1,
+            thumbnailUrl: 1,
+            streamServerUrl: 1,
+            streamOnlineUrl: 1,
+            currentViewCount: 1,
+            peakViewCount: 1,
+            likesCount: 1,
+            likedBy: 1,
+            status: 1,
+            enumMode: 1,
+            dateCreated: 1,
+            lastUpdated: 1,
+            user: {
+              _id: 1,
+              fullName: "$user.fullName",
+              nickName: "$user.nickName",
+              avatar: "$user.avatar",
+            },
+            categories: {
+              $map: {
+                input: "$categories",
+                as: "category",
+                in: {
+                  _id: "$$category._id",
+                  name: "$$category.name",
+                  imageUrl: "$$category.imageUrl",
+                },
+              },
+            },
+          },
+        },
+        { $sort: { [sortField]: sortOrder } },
+        { $skip: skip },
+        { $limit: Number(size) },
+      ]);
+
+      return {
+        streams,
+        total: totalStreams,
+        page: Number(page),
+        totalPages: Math.ceil(totalStreams / Number(size)),
+      };
+    } catch (error) {
+      throw new Error(`Error getting streams: ${error.message}`);
+    }
+  }
+
   // Get all streams
   async getStreamsRepository(query) {
     try {

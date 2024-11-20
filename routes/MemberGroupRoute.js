@@ -64,7 +64,7 @@ route.use(AuthMiddleware);
  *       500:
  *         description: Internal server error
  */
-route.put("/upgrade-vip", memberGroupController.updateVipController);
+route.put("/upgrade-vip", memberGroupController.updateMembershipController);
 
 /**
  * @swagger
