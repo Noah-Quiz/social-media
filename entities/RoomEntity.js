@@ -35,22 +35,13 @@ const roomSchema = new Schema(
             type: Date,
             default: Date.now,
           },
-        },
-      ],
-      default: [],
-    },
-
-    admins: {
-      type: [
-        {
-          _id: false,
-          userId: {
-            type: mongoose.Types.ObjectId,
-            ref: "User",
+          isAdmin: {
+            type: Boolean,
+            default: false,
           },
           assignedDate: {
             type: Date,
-            default: Date.now,
+            default: null,
           },
         },
       ],

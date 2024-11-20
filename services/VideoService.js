@@ -226,7 +226,7 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
       userId
     );
 
-    if (user === null) {
+    if (!user) {
       throw new CoreException(StatusCodeEnums.NotFound_404, `User not found`);
     }
 
