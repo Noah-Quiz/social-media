@@ -1,20 +1,15 @@
 const CreateGroupRoomDto = require("../dtos/Room/CreateGroupRoomDto");
 const CreatePrivateRoomDto = require("../dtos/Room/CreatePrivateRoomDto");
 const GetRoomDto = require("../dtos/Room/GetRoomDto");
+const GetUserRoomsDto = require("../dtos/Room/GetUserRoomsDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const { checkFileSuccess, deleteFile } = require("../middlewares/storeFile");
 const {
   createRoomService,
   deleteRoomService,
-  getAllRoomsService,
   getRoomService,
   updateRoomService,
-  DirectMessageService,
-  getRoomUserIdService,
-  getRoomVideoIdService,
-  getGlobalRoomService,
-  handleMemberGroupChatService,
   getUserRoomsService,
 } = require("../services/RoomService");
 
@@ -157,14 +152,23 @@ class RoomController {
 
   // Get all rooms
   async getUserRoomsController(req, res, next) {
-    const userId = req.userId;
-
     try {
-      const rooms = await getUserRoomsService(userId);
+      const userId = req.userId;
+
+      const query = {
+        size: req.query.size,
+        page: req.query.page,
+        title: req.query.title,
+      };
+
+      const getUserRoomsDto = new GetUserRoomsDto(query.title, query.page, query.size);
+      const validatedQuery = getUserRoomsDto.validate();
+
+      const { rooms, total, page, totalPages } = await getUserRoomsService(userId, validatedQuery);
 
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ rooms, message: "Success" });
+        .json({ rooms, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }

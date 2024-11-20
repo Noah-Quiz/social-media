@@ -165,15 +165,35 @@ class RoomRepository {
   }
 
   // Get all rooms (non-deleted only)
-  async getUserRoomsRepository(userId) {
+  async getUserRoomsRepository(userId, query) {
     try {
-      return await Room.find({ 
+      const page = query.page || 1;
+      const size = parseInt(query.size, 10) || 10;
+      const skip = (page - 1) * size;
+  
+      const searchQuery = {
         isDeleted: false,
         participants: { $elemMatch: { userId: userId } },
-      },
-      { __v: 0, isDeleted: 0 }
-    );
-
+      };
+  
+      const totalRooms = await Room.countDocuments(searchQuery);
+  
+      const rooms = await Room.find(
+        searchQuery,
+        { __v: 0, isDeleted: 0 },
+        {
+          sort: { lastUpdated: -1 },
+          skip: skip,
+          limit: size,
+        }
+      );
+  
+      return {
+        rooms,
+        total: totalRooms,
+        page: Number(page),
+        totalPages: Math.ceil(totalRooms / Number(size)),
+      };
     } catch (error) {
       throw new Error(`Error retrieving rooms: ${error.message}`);
     }
