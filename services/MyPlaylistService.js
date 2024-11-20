@@ -4,8 +4,12 @@ const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const UserEnum = require("../enums/UserEnum");
 const { promises } = require("nodemailer/lib/xoauth2");
-const { validLength, contentModeration } = require("../utils/validator");
-
+const {
+  validLength,
+  contentModeration,
+  checkExistById,
+} = require("../utils/validator");
+const Playlist = require("../entities/MyPlaylistEntity");
 const createAPlaylistService = async (
   userId,
   playlistName,
@@ -71,9 +75,10 @@ const getAPlaylistService = async (playlistId, requesterId) => {
       await connection.myPlaylistRepository.getAPlaylistRepository(playlistId);
 
     if (
-      (playlist.enumMode === "private" || playlist.enumMode === "unlisted") &&
-      requesterId?.toString() !== playlist?.user?._id?.toString() &&
-      requester?.role !== UserEnum.ADMIN
+      !playlist ||
+      ((playlist.enumMode === "private" || playlist.enumMode === "unlisted") &&
+        requesterId?.toString() !== playlist?.user?._id?.toString() &&
+        requester?.role !== UserEnum.ADMIN)
     ) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
@@ -229,6 +234,12 @@ const updatePlaylistService = async (data) => {
 const deletePlaylistService = async (userId, playlistId) => {
   try {
     const connection = new DatabaseTransaction();
+    const checkExist = checkExistById(Playlist, playlistId);
+    if (!checkExist)
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Playlist not found"
+      );
 
     const user = await connection.userRepository.findUserById(userId);
     if (!user)
@@ -247,7 +258,7 @@ const deletePlaylistService = async (userId, playlistId) => {
       await connection.myPlaylistRepository.getAllMyPlaylistsRepository(userId);
 
     if (user.role === UserEnum.USER) {
-      const checkPlaylist = userPlaylists.find(
+      const checkPlaylist = userPlaylists.playlists.find(
         (playlist) => playlist._id == playlistId
       );
       if (!checkPlaylist)
