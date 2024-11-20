@@ -13,13 +13,10 @@ const createVideoService = async (
   try {
     const connection = new DatabaseTransaction();
     //validate title
-    validLength(2, 100, title, "Title of video");
+    await validLength(2, 500, title, "Title of video");
     const video = await connection.videoRepository.createVideoRepository({
       userId,
       title,
-      videoUrl,
-      videoEmbedUrl,
-      thumbnailUrl,
       enumMode: "draft",
     });
 
@@ -58,7 +55,7 @@ const updateAVideoByIdService = async (
     }
 
     //validate title
-    validLength(2, 100, data.title, "Title of video");
+    validLength(2, 500, data.title, "Title of video");
 
     const updatedVideo =
       await connection.videoRepository.updateAVideoByIdRepository(

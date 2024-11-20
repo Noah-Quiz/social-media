@@ -114,7 +114,7 @@ const capitalizeWords = (str) => {
     .join(" ");
 };
 
-const validLength = (min, max, string, type) => {
+const validLength = async (min, max, string, type) => {
   // Trim the string to remove leading and trailing whitespace
   const trimmedString = string.trim();
 
