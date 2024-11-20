@@ -136,7 +136,13 @@ const deleteCategoryService = async (categoryId) => {
       );
 
     await connection.commitTransaction();
-    return deletedCategory;
+    if (deletedCategory.isDeleted == false) {
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        "Category not deleted"
+      );
+    }
+    return deletedCategory.isDeleted === true;
   } catch (error) {
     await connection.abortTransaction();
     throw error;

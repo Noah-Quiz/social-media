@@ -4,8 +4,12 @@ const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const { deleteBunnyStorageFileService } = require("./BunnyStreamService");
 const UserEnum = require("../enums/UserEnum");
-const { validLength } = require("../utils/validator");
-const createVideoService = async (userId, { title }) => {
+const { validLength, checkExistById } = require("../utils/validator");
+const User = require("../entities/UserEntity");
+const createVideoService = async (
+  userId,
+  { title, videoUrl, videoEmbedUrl, thumbnailUrl }
+) => {
   try {
     const connection = new DatabaseTransaction();
     //validate title
@@ -163,6 +167,20 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid requester ID"
+      );
+    }
+
+    const checkExistUser = await checkExistById(User, userId);
+    const checkExistRequester = await checkExistById(User, requesterId);
+
+    if (!checkExistUser) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
+
+    if (!checkExistRequester && requesterId) {
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Requester not found"
       );
     }
 

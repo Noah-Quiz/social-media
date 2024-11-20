@@ -41,9 +41,12 @@ const clearAllHistoryRecordsService = async (userId) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
 
-    await connection.historyRepository.clearAllHistoryRecordsRepository(userId);
+    const result =
+      await connection.historyRepository.clearAllHistoryRecordsRepository(
+        userId
+      );
 
-    return;
+    return result;
   } catch (error) {
     throw error;
   }

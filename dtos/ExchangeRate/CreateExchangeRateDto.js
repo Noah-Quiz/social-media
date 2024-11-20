@@ -55,10 +55,14 @@ class CreateExchangeRateDto {
       );
     }
 
-    if (typeof this.value !== "number" || isNaN(this.value)) {
+    if (
+      typeof this.value !== "number" ||
+      isNaN(this.value) ||
+      this.value <= 0
+    ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid field: value must be a valid number."
+        "Invalid field: value must be a valid positive number."
       );
     }
   }

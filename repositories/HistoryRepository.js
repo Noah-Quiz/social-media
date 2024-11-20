@@ -140,8 +140,10 @@ class HistoryRepository {
   // Clear all history of associated userId
   async clearAllHistoryRecordsRepository(userId) {
     try {
-      await WatchHistory.deleteMany({ userId: userId });
-
+      const result = await WatchHistory.deleteMany({ userId: userId });
+      if (result && result.deletedCount === 0) {
+        return false;
+      }
       return true;
     } catch (error) {
       throw new Error(`Error clearing history: ${error.message}`);
@@ -151,7 +153,6 @@ class HistoryRepository {
   async deleteHistoryRecordRepository(historyId) {
     try {
       const result = await WatchHistory.findByIdAndDelete(historyId);
-
       if (!result) {
         throw new Error("History record not found");
       }
