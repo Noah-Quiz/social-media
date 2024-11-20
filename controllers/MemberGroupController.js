@@ -8,7 +8,7 @@ const {
 } = require("../services/MemberGroupService");
 
 class MemberGroupController {
-  async updateVipController(req, res, next) {
+  async updateMembershipController(req, res, next) {
     try {
       const { userId, ownerId, packId } = req.body;
       if (!userId || !ownerId || !packId) {

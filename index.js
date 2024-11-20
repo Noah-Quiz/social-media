@@ -27,6 +27,7 @@ const memberPackRoutes = require("./routes/MemberPackRoute.js");
 const memberGroupRoutes = require("./routes/MemberGroupRoute.js");
 const paymentRouters = require("./routes/PaymentRoute.js");
 const statisticRoutes = require("./routes/StatisticRoute.js");
+const vipPackageRoutes = require("./routes/VipPackageRoute.js");
 const socket = require("./socket/socket.js");
 process.env.TZ = "Asia/Ho_Chi_Minh";
 
@@ -156,6 +157,7 @@ app.use("/api/member-pack", memberPackRoutes);
 app.use("/api/member-group", memberGroupRoutes);
 app.use("/api/statistics", statisticRoutes);
 app.use("/api/advertisement-packages", packageRoutes);
+app.use("/api/vip-packages", vipPackageRoutes);
 
 app.use(auditLogError);
 

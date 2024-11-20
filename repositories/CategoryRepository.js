@@ -34,7 +34,7 @@ class CategoryRepository {
 
       delete result.__v;
       delete result.isDeleted;
-      
+
       return result;
     } catch (error) {
       throw new Error(`Error getting category: ${error.message}`);
@@ -99,7 +99,7 @@ class CategoryRepository {
             lastUpdated: new Date(),
           },
         },
-        { session }
+        { session, new: true }
       );
       if (!category) {
         return null;
