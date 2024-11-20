@@ -138,6 +138,15 @@ const userEntitySchema = new mongoose.Schema({
       default: 0,
     },
   },
+  vip: {
+    status: { type: Boolean, default: false },
+    joinDate: { type: Date, default: null },
+    endDate: { type: Date, default: null },
+    packageId: {
+      type: mongoose.Types.ObjectId,
+      ref: "VipPackage",
+    },
+  },
   ...baseEntitySchema.obj,
 });
 

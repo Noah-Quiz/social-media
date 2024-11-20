@@ -135,9 +135,7 @@ class PaymentController {
           await processPaymentQueue(userId, amountInVnd, paymentParams);
           await consumePaymentQueue();
           await consumeResponseQueue();
-          res
-            .status(StatusCodeEnums.OK_200)
-            .json({ message: "Payment successfully." });
+          res.redirect("http://localhost:3001/popout/payment/success");
         }
       }
     );

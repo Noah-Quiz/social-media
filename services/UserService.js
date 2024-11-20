@@ -2,11 +2,16 @@ const StatusCodeEnum = require("../enums/StatusCodeEnum");
 const UserEnum = require("../enums/UserEnum");
 const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
-const { validFullName, validEmail } = require("../utils/validator");
+const {
+  validFullName,
+  validEmail,
+  checkExistById,
+} = require("../utils/validator");
 const bcrypt = require("bcrypt");
 const { sendVerificationEmailService } = require("./AuthService");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const { default: mongoose } = require("mongoose");
+const User = require("../entities/UserEntity");
 require("dotenv").config();
 
 module.exports = {
@@ -15,9 +20,14 @@ module.exports = {
 
     let requester = null;
     if (requesterId) {
-      requester = await connection.userRepository.getAnUserByIdRepository(requesterId);
+      requester = await connection.userRepository.getAnUserByIdRepository(
+        requesterId
+      );
       if (!requester) {
-        throw new CoreException(StatusCodeEnum.NotFound_404, "Requester not found");
+        throw new CoreException(
+          StatusCodeEnum.NotFound_404,
+          "Requester not found"
+        );
       }
     }
 
@@ -26,13 +36,16 @@ module.exports = {
     const { users } = data;
 
     data.users = users.map((user) => {
-      if (user._id?.toString() !== requesterId?.toString() && requester?.role !== UserEnum.ADMIN) {
+      if (
+        user._id?.toString() !== requesterId?.toString() &&
+        requester?.role !== UserEnum.ADMIN
+      ) {
         delete user.email;
         delete user.phoneNumber;
       }
 
       return user;
-    })
+    });
 
     return data;
   },
@@ -41,16 +54,23 @@ module.exports = {
     try {
       const connection = new DatabaseTransaction();
 
-      let user = await connection.userRepository.getAnUserByIdRepository(userId);
+      let user = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
       if (!user) {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
       }
-      
+
       let requester = null;
       if (requesterId) {
-        requester = await connection.userRepository.getAnUserByIdRepository(requesterId);
+        requester = await connection.userRepository.getAnUserByIdRepository(
+          requesterId
+        );
         if (!requester) {
-          throw new CoreException(StatusCodeEnum.NotFound_404, "Requester not found");
+          throw new CoreException(
+            StatusCodeEnum.NotFound_404,
+            "Requester not found"
+          );
         }
       }
 
@@ -71,11 +91,14 @@ module.exports = {
         followBy: user.followBy,
         dateCreated: user.dateCreated,
         lastUpdated: user.lastUpdated,
-      }
-      filteredUser.followCount =  user.follow?.length || 0;
+      };
+      filteredUser.followCount = user.follow?.length || 0;
       filteredUser.followerCount = user.followBy?.length || 0;
 
-      if (user._id?.toString() !== requesterId?.toString() && requester?.role !== UserEnum.ADMIN) {
+      if (
+        user._id?.toString() !== requesterId?.toString() &&
+        requester?.role !== UserEnum.ADMIN
+      ) {
         delete filteredUser.follow;
         delete filteredUser.followBy;
         delete filteredUser.email;
@@ -84,7 +107,7 @@ module.exports = {
         delete filteredUser.streak;
         delete filteredUser.totalWatchTime;
       }
-      
+
       return filteredUser;
     } catch (error) {
       throw error;
@@ -268,6 +291,20 @@ module.exports = {
   updateTotalWatchTimeService: async (userId, watchTime) => {
     const connection = new DatabaseTransaction();
     try {
+      const checkExistUser = await checkExistById(User, userId);
+      console.log(checkExistUser);
+      if (!checkExistUser) {
+        throw new CoreException(
+          StatusCodeEnum.BadRequest_400,
+          "Invalid user ID"
+        );
+      }
+      if (watchTime <= 0) {
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "There's something wrong! Please try again"
+        );
+      }
       await connection.userRepository.updateTotalWatchTimeRepository(
         userId,
         watchTime
