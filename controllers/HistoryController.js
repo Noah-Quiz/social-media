@@ -38,8 +38,12 @@ class HistoryController {
       const deleteHistoryRecordsDto = new DeleteHistoryRecordsDto(userId);
       await deleteHistoryRecordsDto.validate();
 
-      await clearAllHistoryRecordsService(userId);
-
+      const result = await clearAllHistoryRecordsService(userId);
+      if (result !== true) {
+        return res
+          .status(StatusCodeEnums.BadRequest_400)
+          .json({ message: "No history record exist" });
+      }
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
       next(error);
