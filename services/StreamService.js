@@ -94,6 +94,75 @@ const getStreamService = async (streamId, requesterId) => {
   }
 };
 
+const getStreamsByUserIdService = async (query, requesterId, userId) => {
+  try {
+    const connection = new DatabaseTransaction();
+
+    if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid requester ID"
+      );
+    }
+
+    // If requester is admin, return all streams
+    if (requesterId) {
+      const requester = await connection.userRepository.findUserById(
+        requesterId
+      );
+      if (!requester) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          `Requester not found`
+        );
+      }
+      if (requester.role === 1) {
+        const streams = await connection.streamRepository.getStreamsByUserIdRepository(query, userId);
+        return streams;
+      }
+    }
+
+    const data = await connection.streamRepository.getStreamsByUserIdRepository(query, userId);
+
+    let streams = data.streams.map(async (stream) => {
+      const isOwner = stream.user?._id?.toString() === requesterId?.toString();
+      if (isOwner) {
+        return stream;
+      }
+
+      let cleanedStream = cleanStreamFromNonOwner(stream);
+
+      if (stream.enumMode === "member") {
+        const isMember = await checkMemberShip(requesterId, stream.user?._id);
+        if (isMember) {
+          return cleanedStream;
+        }
+
+        return updateStreamForNonMembership(
+          [cleanedStream],
+          [cleanedStream._id],
+          "member"
+        )[0];
+      }
+
+      cleanedStream.isLiked = requesterId
+        ? (stream.likedBy || []).some(
+            (userId) => userId?.toString() === requesterId?.toString()
+          )
+        : false;
+      delete cleanedStream.likedBy;
+
+      return cleanedStream;
+    });
+
+    const processedStreams = await Promise.all(streams);
+
+    return { ...data, streams: processedStreams };
+  } catch (error) {
+    throw error;
+  }
+}
+
 const getStreamsService = async (query, requesterId) => {
   try {
     const connection = new DatabaseTransaction();
@@ -430,4 +499,5 @@ module.exports = {
   updateStreamViewsService,
   getRecommendedStreamsService,
   getRelevantStreamsService,
+  getStreamsByUserIdService,
 };

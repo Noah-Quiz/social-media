@@ -1,4 +1,6 @@
-const CreateRoomDto = require("../dtos/Room/CreateRoomDto");
+const CreateGroupRoomDto = require("../dtos/Room/CreateGroupRoomDto");
+const CreatePrivateRoomDto = require("../dtos/Room/CreatePrivateRoomDto");
+const GetRoomDto = require("../dtos/Room/GetRoomDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const { checkFileSuccess, deleteFile } = require("../middlewares/storeFile");
@@ -37,35 +39,95 @@ class RoomController {
   }
 
   // Create a Room
-  async createRoomController(req, res, next) {
-    const { name, enumMode } = req.body;
-    let avatar = req.file ? req.file.path : null;
-    if (enumMode === "private") {
-      avatar = null;
-    }
+  async createPublicRoomController(req, res, next) {
+    const { name } = req.body;
+    const userId = req.userId;
 
     try {
-      const createRoomDto = new CreateRoomDto(name, enumMode);
-      await createRoomDto.validate();
+      const data = { name, enumMode: "public" };
 
-      const data = { name, enumMode, avatar };
+      const room = await createRoomService(userId, data);
 
-      const room = await createRoomService(data);
+      return res
+        .status(StatusCodeEnums.Created_201)
+        .json({ room, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
 
-      if (enumMode !== "private") {
-        if (req.file) {
-          await checkFileSuccess(avatar);
-        }
+  // Create a Room
+  async createPrivateRoomController(req, res, next) {
+    const { recipientId } = req.body;
+    const userId = req.userId;
+
+    try {
+      const createPrivateRoomDto = new CreatePrivateRoomDto(userId, recipientId);
+      await createPrivateRoomDto.validate();
+
+      const data = { enumMode: "private", recipientId };
+
+      const room = await createRoomService(userId, data);
+
+      return res
+        .status(StatusCodeEnums.Created_201)
+        .json({ room, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Create a group Room
+  async createGroupRoomController(req, res, next) {
+    const { name, participantIds } = req.body;
+    const userId = req.userId;
+    let avatar = req.file ? req.file.path : null;
+
+    try {
+      const createGroupRoomDto = new CreateGroupRoomDto(name, participantIds);
+      await createGroupRoomDto.validate();
+
+      const data = { name, enumMode: "group", avatar, participantIds };
+
+      const room = await createRoomService(userId, data);
+
+      if (req.file) {
+        await checkFileSuccess(avatar);
       }
 
       return res
         .status(StatusCodeEnums.Created_201)
         .json({ room, message: "Success" });
     } catch (error) {
-      if (enumMode !== "private") {
-        if (req.file) {
-          await deleteFile(req.file.path);
-        }
+      if (req.file) {
+        await deleteFile(req.file.path);
+      }
+      next(error);
+    }
+  }
+
+  // Create a Room
+  async createMemberRoomController(req, res, next) {
+    const { name } = req.body;
+    let avatar = req.file ? req.file.path : null;
+    try {
+      const createGroupRoomDto = new CreateGroupRoomDto(name);
+      await createGroupRoomDto.validate();
+
+      const data = { name, enumMode: "member", avatar };
+
+      const room = await createRoomService(data);
+
+      if (req.file) {
+        await checkFileSuccess(avatar);
+      }
+
+      return res
+        .status(StatusCodeEnums.Created_201)
+        .json({ room, message: "Success" });
+    } catch (error) {
+      if (req.file) {
+        await deleteFile(req.file.path);
       }
       next(error);
     }
@@ -74,9 +136,13 @@ class RoomController {
   // Get a Specific Room by ID
   async getRoomController(req, res, next) {
     const { roomId } = req.params;
+    const userId = req.userId;
 
     try {
-      const room = await getRoomService(roomId);
+      const getRoomDto = new GetRoomDto(roomId);
+      await getRoomDto.validate();
+
+      const room = await getRoomService(userId, roomId);
 
       return res
         .status(StatusCodeEnums.OK_200)

@@ -103,8 +103,8 @@ class CategoryController {
 
       const category = await deleteCategoryService(categoryId);
       // await deleteFile(category.imageUrl);
-
-      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
+      if (category === true)
+        return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
       next(error);
     }
