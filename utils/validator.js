@@ -4,7 +4,7 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const mongoose = require("mongoose");
 const banWords = require("../enums/BanWords");
 
-const validMongooseObjectId = async (id) => {
+const validMongooseObjectId = (id) => {
   if (!mongoose.Types.ObjectId.isValid(id))
     throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid ID");
 };
@@ -114,7 +114,7 @@ const capitalizeWords = (str) => {
     .join(" ");
 };
 
-const validLength = (min, max, string, type) => {
+const validLength = async (min, max, string, type) => {
   // Trim the string to remove leading and trailing whitespace
   const trimmedString = string.trim();
 
@@ -135,6 +135,13 @@ const validLength = (min, max, string, type) => {
   }
 };
 
+const convertToMongoObjectId = (id) => {
+  return new mongoose.Types.ObjectId(id);
+};
+
+const checkExistById = async (model, id) => {
+  return await model.findOne({ _id: convertToMongoObjectId(id) });
+};
 
 module.exports = {
   validNickName,
@@ -147,4 +154,6 @@ module.exports = {
   hasSpecialCharacters,
   capitalizeWords,
   validLength,
+  checkExistById,
+  convertToMongoObjectId,
 };
