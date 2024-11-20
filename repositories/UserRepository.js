@@ -15,7 +15,10 @@ class UserRepository {
 
   async findUserById(userId) {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findOne({
+        _id: new mongoose.Types.ObjectId(userId),
+        isDeleted: false,
+      });
 
       return user;
     } catch (error) {
@@ -77,8 +80,7 @@ class UserRepository {
       const user = await User.findOne({
         _id: new mongoose.Types.ObjectId(userId),
         isDeleted: false,
-      })
-      .lean();
+      }).lean();
 
       if (user) {
         return user;
