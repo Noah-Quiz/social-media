@@ -56,40 +56,56 @@ const createRoomService = async (userId, data) => {
 
         break;
 
-        case "group":
-          const groupParticipantIds = new Set(data.participantIds || []);
-          groupParticipantIds.add(userId);
-      
-          // Check if all IDs are valid before creating ObjectIds
-          const participants = Array.from(groupParticipantIds).map((id) => {
-              return {
-                  userId: new mongoose.Types.ObjectId(id),
-                  joinedDate: new Date(),
-                  isAdmin: id === userId,
-                  assignedDate: id === userId ? new Date() : null,
-              };
-          });
-      
-          roomData = {
-              ...data,
-              participants,
+      case "group":
+        const groupParticipantIds = new Set(data.participantIds || []);
+        groupParticipantIds.add(userId);
+
+        let groupParticipants = Array.from(groupParticipantIds).map(async (id) => {
+          const groupParticipant = await connection.userRepository.findUserById(id);
+          if (!groupParticipant) {
+            throw new CoreException(StatusCodeEnums.NotFound_404, `User not found for ID: ${id}`);
+          }
+
+          return {
+            userId: new mongoose.Types.ObjectId(id),
+            joinedDate: new Date(),
+            isAdmin: id === userId,
+            assignedDate: id === userId ? new Date() : null,
           };
-      
-          break;
-      
+        });
+
+        groupParticipants = await Promise.all(groupParticipants);
+
+        roomData = {
+          ...data,
+          participants: groupParticipants,
+        };
+
+        break;
 
       case "member":
         const memberParticipantIds = new Set(data.participantIds || []);
         memberParticipantIds.add(userId);
 
-        roomData = {
-          ...data,
-          participants: Array.from(memberParticipantIds).map((id) => ({
+        let memberParticipants = Array.from(memberParticipantIds).map(async (id) => {
+          const memberParticipant = await connection.userRepository.findUserById(id);
+          if (!memberParticipant) {
+            throw new CoreException(StatusCodeEnums.NotFound_404, `User not found for ID: ${id}`);
+          }
+
+          return {
             userId: new mongoose.Types.ObjectId(id),
             joinedDate: new Date(),
             isAdmin: id === userId,
             assignedDate: id === userId ? new Date() : null,
-          })),
+          };
+        });
+
+        memberParticipants = await Promise.all(memberParticipants);
+
+        roomData = {
+          ...data,
+          participants: memberParticipants,
         };
 
         break;
@@ -132,7 +148,7 @@ const getRoomService = async (userId, roomId) => {
   }
 };
 
-const getUserRoomsService = async (userId) => {
+const getUserRoomsService = async (userId, query) => {
   const connection = new DatabaseTransaction();
 
   try {
@@ -141,9 +157,9 @@ const getUserRoomsService = async (userId) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
 
-    const rooms = await connection.roomRepository.getUserRoomsRepository(userId);
+    const data = await connection.roomRepository.getUserRoomsRepository(userId, query);
 
-    return rooms;
+    return data;
   } catch (error) {
     throw error;
   }
@@ -186,109 +202,10 @@ const updateRoomService = async (id, roomData) => {
   }
 };
 
-const DirectMessageService = async (userIdA, userIdB) => {
-  const connection = new DatabaseTransaction();
-  try {
-    const user = await connection.userRepository.getAnUserByIdRepository(
-      userIdB
-    );
-    const existingRoom = await connection.roomRepository.findDMRoom(
-      userIdA,
-      userIdB
-    );
-
-    if (!existingRoom) {
-      const participants = [userIdA, userIdB];
-      const roomData = {
-        enumMode: "private",
-        participants: participants,
-      };
-      const room = await connection.roomRepository.createRoom(roomData);
-      return room;
-    }
-    return existingRoom;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const getRoomUserIdService = async (userId) => {
-  const connection = new DatabaseTransaction();
-  try {
-    const rooms = await connection.roomRepository.findChatRoomUserId(userId);
-    return rooms;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const getRoomVideoIdService = async (videoId) => {
-  const connection = new DatabaseTransaction();
-  try {
-    const video = await connection.videoRepository.getVideoRepository(videoId);
-    if (!video) {
-      throw new Error("No video found");
-    }
-    const existingRoom = await connection.roomRepository.findChatRoomVideoId(
-      videoId
-    );
-    if (!existingRoom) {
-      const videoRoom = {
-        name: `${video.title}'S CHAT ROOM`,
-        enumMode: "video",
-        videoId: videoId,
-      };
-      const room = await createRoom(videoRoom);
-      return room;
-    }
-    return existingRoom;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const getGlobalRoomService = async () => {
-  const connection = new DatabaseTransaction();
-  try {
-    const existingRoom = await connection.roomRepository.findPublicChatRoom();
-    if (!existingRoom) {
-      const globalRoom = {
-        name: "Global Chat Room",
-        enumMode: "public",
-      };
-      const room = await createRoom(globalRoom);
-      return room;
-    }
-    return existingRoom;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const handleMemberGroupChatService = async (roomId, memberId, action) => {
-  const connection = new DatabaseTransaction();
-  try {
-    const room =
-      await connection.roomRepository.handleMemberGroupChatRepository(
-        roomId,
-        memberId,
-        action
-      );
-    return room;
-  } catch (error) {
-    throw error;
-  }
-};
-
 module.exports = {
   createRoomService,
   deleteRoomService,
   getUserRoomsService,
   getRoomService,
   updateRoomService,
-  DirectMessageService,
-  getRoomUserIdService,
-  getRoomVideoIdService,
-  getGlobalRoomService,
-  handleMemberGroupChatService,
 };
