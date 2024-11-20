@@ -269,7 +269,9 @@ class UserController {
           "Invalid user ID"
         );
       }
+
       const result = await updateTotalWatchTimeService(userId, watchTime);
+
       return res.status(StatusCodeEnums.OK_200).json({
         message: "Update watch time successfully",
       });

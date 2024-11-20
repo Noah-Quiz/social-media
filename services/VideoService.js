@@ -4,7 +4,8 @@ const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const { deleteBunnyStorageFileService } = require("./BunnyStreamService");
 const UserEnum = require("../enums/UserEnum");
-const { validLength } = require("../utils/validator");
+const { validLength, checkExistById } = require("../utils/validator");
+const User = require("../entities/UserEntity");
 const createVideoService = async (
   userId,
   { title, videoUrl, videoEmbedUrl, thumbnailUrl }
@@ -12,13 +13,10 @@ const createVideoService = async (
   try {
     const connection = new DatabaseTransaction();
     //validate title
-    validLength(2, 100, title, "Title of video");
+    await validLength(2, 500, title, "Title of video");
     const video = await connection.videoRepository.createVideoRepository({
       userId,
       title,
-      videoUrl,
-      videoEmbedUrl,
-      thumbnailUrl,
       enumMode: "draft",
     });
 
@@ -57,7 +55,7 @@ const updateAVideoByIdService = async (
     }
 
     //validate title
-    validLength(2, 100, data.title, "Title of video");
+    validLength(2, 500, data.title, "Title of video");
 
     const updatedVideo =
       await connection.videoRepository.updateAVideoByIdRepository(
@@ -169,6 +167,20 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid requester ID"
+      );
+    }
+
+    const checkExistUser = await checkExistById(User, userId);
+    const checkExistRequester = await checkExistById(User, requesterId);
+
+    if (!checkExistUser) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
+
+    if (!checkExistRequester && requesterId) {
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Requester not found"
       );
     }
 
@@ -626,7 +638,10 @@ const getVideoLikeHistoryService = async (data) => {
     }
 
     const result =
-      await connection.videoRepository.getVideoLikeHistoryRepository(userId, query);
+      await connection.videoRepository.getVideoLikeHistoryRepository(
+        userId,
+        query
+      );
 
     const { videos } = result;
 
@@ -635,7 +650,7 @@ const getVideoLikeHistoryService = async (data) => {
       if (isOwner) {
         return video;
       }
-      
+
       if (video.enumMode === "member") {
         const isMember = await checkMemberShip(userId, video.user?._id);
         if (isMember) {
@@ -658,14 +673,19 @@ const getVideoLikeHistoryService = async (data) => {
 
 const getRecommendedVideosService = async (data) => {
   try {
-    const connection = new DatabaseTransaction()
+    const connection = new DatabaseTransaction();
 
     const { requesterId } = data;
 
     if (requesterId) {
-      const requester = await connection.userRepository.findUserById(requesterId);
+      const requester = await connection.userRepository.findUserById(
+        requesterId
+      );
       if (!requester) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, "Requester not found");
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Requester not found"
+        );
       }
     }
 
@@ -713,14 +733,20 @@ const getRelevantVideosService = async (data) => {
     }
 
     if (requesterId) {
-      const requester = await connection.userRepository.findUserById(requesterId);
+      const requester = await connection.userRepository.findUserById(
+        requesterId
+      );
       if (!requester) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, "Requester not found");
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Requester not found"
+        );
       }
     }
 
-    const result =
-      await connection.videoRepository.getRelevantVideosRepository(data);
+    const result = await connection.videoRepository.getRelevantVideosRepository(
+      data
+    );
 
     const { videos } = result;
     let filteredVideos = videos.map(async (video) => {

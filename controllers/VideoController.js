@@ -279,10 +279,7 @@ class VideoController {
           "You do not have permission to perform this action"
         );
       }
-      const video = await deleteVideoService(
-        videoId,
-        userId
-      );
+      const video = await deleteVideoService(videoId, userId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
@@ -313,7 +310,6 @@ class VideoController {
         query.title
       );
       const validatedQuery = await getVideosDto.validate();
-
       const { videos, total, page, totalPages } =
         await getVideosByUserIdService(userId, validatedQuery, requesterId);
 
@@ -330,6 +326,7 @@ class VideoController {
       const { videoId } = req.params;
       const requesterId = req.requesterId;
 
+      console.log();
       const video = await getVideoService(videoId, requesterId);
       // const bunnyVideo = await getBunnyStreamVideoService(
       //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,
@@ -402,11 +399,12 @@ class VideoController {
       );
       const validatedQuery = await getVideosDto.validate();
 
-      const { videos, total, page, totalPages } = await getVideosByPlaylistIdService(
-        playlistId,
-        validatedQuery,
-        requesterId
-      );
+      const { videos, total, page, totalPages } =
+        await getVideosByPlaylistIdService(
+          playlistId,
+          validatedQuery,
+          requesterId
+        );
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -425,10 +423,16 @@ class VideoController {
     };
 
     try {
-      const getVideoLikeHistoryDto = new GetVideoLikeHistoryDto(query.page, query.size, query.title, userId);
+      const getVideoLikeHistoryDto = new GetVideoLikeHistoryDto(
+        query.page,
+        query.size,
+        query.title,
+        userId
+      );
       const validatedData = await getVideoLikeHistoryDto.validate();
 
-      const { videos, total, page, totalPages } = await getVideoLikeHistoryService(validatedData);
+      const { videos, total, page, totalPages } =
+        await getVideoLikeHistoryService(validatedData);
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -446,10 +450,15 @@ class VideoController {
     };
 
     try {
-      const getRecommendedVideosDto = new GetRecommendedVideosDto(query.page, query.size, requesterId);
+      const getRecommendedVideosDto = new GetRecommendedVideosDto(
+        query.page,
+        query.size,
+        requesterId
+      );
       const validatedData = await getRecommendedVideosDto.validate();
 
-      const { videos, total, page, totalPages } = await getRecommendedVideosService(validatedData);
+      const { videos, total, page, totalPages } =
+        await getRecommendedVideosService(validatedData);
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -466,13 +475,19 @@ class VideoController {
       size: req.query.size,
       categoryIds: req.query.categoryIds,
       requesterId,
-    }
-    
+    };
+
     try {
-      const getRelevantVideosDto = new GetRelevantVideosDto(query.page, query.size, query.categoryIds, requesterId);
+      const getRelevantVideosDto = new GetRelevantVideosDto(
+        query.page,
+        query.size,
+        query.categoryIds,
+        requesterId
+      );
       const validatedData = await getRelevantVideosDto.validate();
 
-      const { videos, total, page, totalPages } = await getRelevantVideosService(validatedData);
+      const { videos, total, page, totalPages } =
+        await getRelevantVideosService(validatedData);
 
       return res
         .status(StatusCodeEnums.OK_200)
