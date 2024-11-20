@@ -10,6 +10,7 @@ const {
   toggleLikeStreamService,
   getRecommendedStreamsService,
   getRelevantStreamsService,
+  getStreamsByUserIdService,
 } = require("../services/StreamService");
 const { deleteFile, checkFileSuccess } = require("../middlewares/storeFile");
 const CreateStreamDto = require("../dtos/Stream/CreateStreamDto");
@@ -33,6 +34,37 @@ class StreamController {
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ stream, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getStreamsByUserIdController(req, res, next) {
+    try {
+      const requesterId = req.requesterId;
+      const { userId } = req.params;
+
+      const query = {
+        size: req.query.size || 10,
+        page: req.query.page || 1,
+        title: req.query.title,
+        status: req.query.status?.toLowerCase(),
+        sortBy: req.query.sortBy?.toLowerCase(),
+        order: req.query.order?.toLowerCase(),
+      };
+
+      const getStreamsDto = new GetStreamsDto(query.size, query.page, query.status, query.sortBy, query.order);
+      await getStreamsDto.validate();
+
+      const { streams, total, page, totalPages } = await getStreamsByUserIdService(
+        query,
+        requesterId,
+        userId,
+      );
+
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ streams, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }

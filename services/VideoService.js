@@ -270,7 +270,7 @@ const getVideoService = async (videoId, requesterId) => {
 
     if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
       throw new CoreException(
-        StatusCodes.BadRequest_400,
+        StatusCodeEnums.BadRequest_400,
         "Valid video ID is required"
       );
     }
