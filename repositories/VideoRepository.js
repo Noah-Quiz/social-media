@@ -101,7 +101,7 @@ class VideoRepository {
             from: "videolikehistories",
             let: { videoId: "$_id" },
             pipeline: [
-              { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+              { $match: { $expr: { $eq: ["$videoId", "$$videoId"] } } },
               { $count: "likesCount" },
             ],
             as: "likesInfo",
@@ -119,8 +119,8 @@ class VideoRepository {
                 $match: {
                   $expr: {
                     $and: [
-                      { $eq: ["$video", "$$videoId"] },
-                      { $eq: ["$user", "$$requester"] },
+                      { $eq: ["$videoId", "$$videoId"] },
+                      { $eq: ["$userId", "$$requester"] },
                     ],
                   },
                 },
@@ -233,7 +233,7 @@ class VideoRepository {
       let sortOrder = query.order === "ascending" ? 1 : -1;
 
       if (query.sortBy === "like") sortField = "likesCount";
-      else if (query.sortBy === "view") sortField = "currentViewCount";
+      else if (query.sortBy === "view") sortField = "numOfViews";
       else if (query.sortBy === "date") sortField = "dateCreated";
 
       const totalVideos = await Video.countDocuments(searchQuery);
@@ -264,7 +264,7 @@ class VideoRepository {
             from: "videolikehistories",
             let: { videoId: "$_id" },
             pipeline: [
-              { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+              { $match: { $expr: { $eq: ["$videoId", "$$videoId"] } } },
               { $count: "likesCount" },
             ],
             as: "likesInfo",
@@ -282,8 +282,8 @@ class VideoRepository {
                 $match: {
                   $expr: {
                     $and: [
-                      { $eq: ["$video", "$$videoId"] },
-                      { $eq: ["$user", "$$requester"] },
+                      { $eq: ["$videoId", "$$videoId"] },
+                      { $eq: ["$userId", "$$requester"] },
                     ],
                   },
                 },
@@ -428,7 +428,7 @@ class VideoRepository {
       let sortOrder = query.order === "ascending" ? 1 : -1;
 
       if (query.sortBy === "like") sortField = "likesCount";
-      else if (query.sortBy === "view") sortField = "currentViewCount";
+      else if (query.sortBy === "view") sortField = "numOfViews";
       else if (query.sortBy === "date") sortField = "dateCreated";
 
       // Total video count
@@ -461,7 +461,7 @@ class VideoRepository {
             from: "videolikehistories",
             let: { videoId: "$_id" },
             pipeline: [
-              { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+              { $match: { $expr: { $eq: ["$videoId", "$$videoId"] } } },
               { $count: "likesCount" },
             ],
             as: "likesInfo",
@@ -479,8 +479,8 @@ class VideoRepository {
                 $match: {
                   $expr: {
                     $and: [
-                      { $eq: ["$video", "$$videoId"] },
-                      { $eq: ["$user", "$$requester"] },
+                      { $eq: ["$videoId", "$$videoId"] },
+                      { $eq: ["$userId", "$$requester"] },
                     ],
                   },
                 },
@@ -587,7 +587,7 @@ class VideoRepository {
       let sortOrder = query.order === "ascending" ? 1 : -1;
 
       if (query.sortBy === "like") sortField = "likesCount";
-      else if (query.sortBy === "view") sortField = "currentViewCount";
+      else if (query.sortBy === "view") sortField = "numOfViews";
       else if (query.sortBy === "date") sortField = "dateCreated";
 
       const totalVideos = await Video.countDocuments(searchQuery);
@@ -623,7 +623,7 @@ class VideoRepository {
             from: "videolikehistories",
             let: { videoId: "$_id" },
             pipeline: [
-              { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+              { $match: { $expr: { $eq: ["$videoId", "$$videoId"] } } },
               { $count: "likesCount" },
             ],
             as: "likesInfo",
@@ -641,8 +641,8 @@ class VideoRepository {
                 $match: {
                   $expr: {
                     $and: [
-                      { $eq: ["$video", "$$videoId"] },
-                      { $eq: ["$user", "$$requester"] },
+                      { $eq: ["$videoId", "$$videoId"] },
+                      { $eq: ["$userId", "$$requester"] },
                     ],
                   },
                 },
@@ -971,7 +971,7 @@ class VideoRepository {
             from: "videolikehistories",
             let: { videoId: "$_id" },
             pipeline: [
-              { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+              { $match: { $expr: { $eq: ["$videoId", "$$videoId"] } } },
               { $count: "likesCount" },
             ],
             as: "likesInfo",
@@ -989,8 +989,8 @@ class VideoRepository {
                 $match: {
                   $expr: {
                     $and: [
-                      { $eq: ["$video", "$$videoId"] },
-                      { $eq: ["$user", "$$requester"] },
+                      { $eq: ["$videoId", "$$videoId"] },
+                      { $eq: ["$userId", "$$requester"] },
                     ],
                   },
                 },
@@ -1061,7 +1061,7 @@ class VideoRepository {
         {
           $sort: {
             likesCount: -1, // Sort by likes count
-            currentViewCount: -1, // Sort by view count
+            numOfViews: -1, // Sort by view count
             dateCreated: -1, // Sort by creation date
           },
         },
@@ -1161,7 +1161,7 @@ class VideoRepository {
             from: "videolikehistories",
             let: { videoId: "$_id" },
             pipeline: [
-              { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+              { $match: { $expr: { $eq: ["$videoId", "$$videoId"] } } },
               { $count: "likesCount" },
             ],
             as: "likesInfo",
@@ -1179,8 +1179,8 @@ class VideoRepository {
                 $match: {
                   $expr: {
                     $and: [
-                      { $eq: ["$video", "$$videoId"] },
-                      { $eq: ["$user", "$$requester"] },
+                      { $eq: ["$videoId", "$$videoId"] },
+                      { $eq: ["$userId", "$$requester"] },
                     ],
                   },
                 },
@@ -1251,7 +1251,7 @@ class VideoRepository {
         {
           $sort: {
             likesCount: -1, // Sort by likes count
-            currentViewCount: -1, // Sort by view count
+            numOfViews: -1, // Sort by view count
             dateCreated: -1, // Sort by creation date
           },
         },
