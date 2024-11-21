@@ -3,23 +3,23 @@ const CoreException = require("../../exceptions/CoreException");
 const { validMongooseObjectId } = require("../../utils/validator");
 
 class GetMessageDto {
-  constructor(messageId) {
-    this.messageId = messageId;
+  constructor(roomId) {
+    this.roomId = roomId;
   }
 
   async validate() {
-    if (!this.messageId) {
+    if (!this.roomId) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Message ID is required"
+        "roomId ID is required"
       );
     }
     try {
-      await validMongooseObjectId(this.messageId);
+      await validMongooseObjectId(this.roomId);
     } catch (error) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid Message ID"
+        "Invalid Room ID"
       );
     }
   }
