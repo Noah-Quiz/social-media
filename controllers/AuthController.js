@@ -34,8 +34,7 @@ class AuthController {
       const signupDto = new SignupDto(fullName, email, phoneNumber, password);
       await signupDto.validate();
 
-      const ipAddress =
-        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+      const ipAddress = req.ip?.replace(/^.*:/, ""); //->192.168.0.101
 
       const user = await signUpService(
         fullName,
@@ -55,8 +54,8 @@ class AuthController {
   async loginController(req, res, next) {
     try {
       const { email, password } = req.body;
-      const ipAddress =
-        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+      const ipAddress = req.ip?.replace(/^.*:/, ""); //->192.168.0.101
+
 
       const loginDto = new LoginDto(email, password);
       await loginDto.validate();
@@ -78,8 +77,8 @@ class AuthController {
   async loginGoogleController(req, res, next) {
     try {
       const googleUser = req.user._json;
-      const ipAddress =
-        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+      const ipAddress = req.ip?.replace(/^.*:/, ""); //->192.168.0.101
+
 
       const user = await loginGoogleService(googleUser, ipAddress);
       const accessToken = createAccessToken(
@@ -98,8 +97,8 @@ class AuthController {
   async loginGoogleFromMobileController(req, res, next) {
     try {
       const googleUser = req.body;
-      const ipAddress =
-        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+      const ipAddress = req.ip?.replace(/^.*:/, ""); //->192.168.0.101
+
 
       const user = await loginGoogleService(googleUser, ipAddress);
       const accessToken = createAccessToken(
