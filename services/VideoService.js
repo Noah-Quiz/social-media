@@ -789,4 +789,5 @@ module.exports = {
   getVideoLikeHistoryService,
   getRecommendedVideosService,
   getRelevantVideosService,
+  checkMemberShip,
 };

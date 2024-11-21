@@ -258,6 +258,93 @@ route.post(
     roomController.createGroupRoomController
 );
 
+/**
+ * @swagger
+ * /api/rooms/member:
+ *   post:
+ *     summary: Create a member room
+ *     description: Creates a member room with the provided name, participants, and optional avatar image. The user must be authenticated to create the room.
+ *     tags: [Rooms]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The name of the member room.
+ *                 example: "Team A"
+ *               participantIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   description: "ID of a participant in the member room."
+ *                   example: "60d5f60d18b3a645edaf3b6d"
+ *               roomCreateImg:
+ *                 type: string
+ *                 format: binary
+ *                 description: The image file for the room avatar (optional).
+ *     responses:
+ *       201:
+ *         description: member room created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 room:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       description: "ID of the created room"
+ *                       example: "60d5f60d18b3a645edaf3b6d"
+ *                     name:
+ *                       type: string
+ *                       description: "Name of the room"
+ *                       example: "Team A"
+ *                     enumMode:
+ *                       type: string
+ *                       description: "Type of the room"
+ *                       enum: ["member"]
+ *                       example: "member"
+ *                     avatar:
+ *                       type: string
+ *                       description: "Avatar image URL for the room (if uploaded)"
+ *                       example: "uploads/member-avatar.png"
+ *                     participantIds:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                         description: "IDs of participants"
+ *                         example: "60d5f60d18b3a645edaf3b6d"
+ *                 message:
+ *                   type: string
+ *                   description: "A success message"
+ *                   example: "Success"
+ *       400:
+ *         description: Invalid input or missing parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Room name and participantIds are required"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
+ */
 route.post(
     "/member", 
     uploadFile.single("roomCreateImg"),
@@ -266,14 +353,14 @@ route.post(
 
 route.get("/user", roomController.getUserRoomsController);
 
+route.put("/:roomId/add-participant", roomController.addRoomParticipantController);
+
+route.put("/:roomId/remove-participant", roomController.removeRoomParticipantController);
+
 route.get("/:roomId", roomController.getRoomController);
 
 route.put("/:roomId", roomController.updateRoomController);
 
 route.delete("/:roomId", roomController.deleteRoomController);
-
-route.get("/all-dm-room", roomController.UserChatRoomsController);
-
-route.put("/group-chat/member", roomController.handleMemberGroupChatController);
 
 module.exports = route;

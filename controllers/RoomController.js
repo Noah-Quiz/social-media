@@ -1,7 +1,9 @@
 const CreateGroupRoomDto = require("../dtos/Room/CreateGroupRoomDto");
 const CreatePrivateRoomDto = require("../dtos/Room/CreatePrivateRoomDto");
+const DeleteRoomDto = require("../dtos/Room/DeleteRoomDto");
 const GetRoomDto = require("../dtos/Room/GetRoomDto");
 const GetUserRoomsDto = require("../dtos/Room/GetUserRoomsDto");
+const UpdateRoomParticipantsDto = require("../dtos/Room/UdpdateRoomParticpantsDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const { checkFileSuccess, deleteFile } = require("../middlewares/storeFile");
@@ -11,6 +13,9 @@ const {
   getRoomService,
   updateRoomService,
   getUserRoomsService,
+  updateRoomParticipantsService,
+  addRoomParticipantService,
+  removeRoomParticipantService,
 } = require("../services/RoomService");
 
 const mongoose = require("mongoose");
@@ -96,7 +101,8 @@ class RoomController {
 
   // Create a Room
   async createMemberRoomController(req, res, next) {
-    const { name, participantIds } = req.body;
+    const { name } = req.body;
+    let { participantIds } = req.body;
     const userId = req.userId;
     let avatar = req.file ? req.file.path : null;
 
@@ -135,7 +141,7 @@ class RoomController {
   async getRoomController(req, res, next) {
     const { roomId } = req.params;
     const userId = req.userId;
-
+    console.log("test")
     try {
       const getRoomDto = new GetRoomDto(roomId);
       await getRoomDto.validate();
@@ -198,6 +204,9 @@ class RoomController {
     const userId = req.userId;
 
     try {
+      const deleteRoomDto = new DeleteRoomDto(roomId);
+      await deleteRoomDto.validate();
+
       await deleteRoomService(roomId, userId);
 
       return res
@@ -208,48 +217,43 @@ class RoomController {
     }
   }
 
-  //9. Get all direct message by userID
-  async UserChatRoomsController(req, res, next) {
+  async addRoomParticipantController(req, res, next) {
+    const { roomId } = req.params;
+    const { participantId } = req.body;
     const userId = req.userId;
+  
     try {
-      const rooms = await getRoomUserIdService(userId);
-      res
+      const addParticipantDto = new UpdateRoomParticipantsDto(roomId, participantId);
+      await addParticipantDto.validate();
+      
+      await addRoomParticipantService(roomId, userId, participantId);
+  
+      return res
         .status(StatusCodeEnums.OK_200)
-        .json({ data: rooms, size: rooms.length, message: "Success" });
+        .json({ message: "User added successfully" });
     } catch (error) {
       next(error);
     }
   }
-
-  async handleMemberGroupChatController(req, res, next) {
-    const { roomId, memberId, action } = req.body;
-    const room = await getRoom(roomId);
-    console.log(room);
-    if (
-      !mongoose.Types.ObjectId.isValid(roomId) ||
-      !mongoose.Types.ObjectId.isValid(memberId)
-    ) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid ID");
-    }
-    if (room.type !== "group") {
-      throw new CoreException(
-        StatusCodeEnums.BadRequest_400,
-        "This is not a group chat"
-      );
-    }
+  
+  async removeRoomParticipantController(req, res, next) {
+    const { roomId } = req.params;
+    const { participantId } = req.body;
+    const userId = req.userId;
+  
     try {
-      const result = await handleMemberGroupChatService(
-        roomId,
-        memberId,
-        action
-      );
-      res
+      const removeParticipantDto = new UpdateRoomParticipantsDto(roomId, participantId);
+      await removeParticipantDto.validate();
+  
+      await removeRoomParticipantService(roomId, userId, participantId);
+  
+      return res
         .status(StatusCodeEnums.OK_200)
-        .json({ message: "Success", data: result });
+        .json({ message: "User removed successfully" });
     } catch (error) {
       next(error);
     }
-  }
+  }  
 }
 
 module.exports = RoomController;
