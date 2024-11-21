@@ -21,9 +21,6 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           description: Type of update currency ["SpendBalance", "SpendCoin", "ExchangeBalanceToCoin","ExchangeCoinToBalance"].
  *           enum: ["SpendBalance", "SpendCoin", "ExchangeBalanceToCoin","ExchangeCoinToBalance"]
  *           example: SpendBalance
- *         exchangeRate:
- *           type: number
- *           description: The exchange rate.
  */
 class UpdateUserWalletDto {
   constructor(userId, amount, actionCurrencyType, exchangeRate) {

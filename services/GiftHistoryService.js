@@ -14,7 +14,10 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
     );
     if (!stream) {
       await connection.abortTransaction();
-      throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Failed to create gift history: Stream not found"
+      );
     }
 
     // Fetch all gifts information to get their pricePerUnit
@@ -26,7 +29,7 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
         if (!giftData) {
           throw new CoreException(
             StatusCodeEnums.NotFound_404,
-            `Gift with ID ${gift.giftId} not found.`
+            `Failed to create gift history: Gift with ID ${gift.giftId} not found.`
           );
         }
         return {
@@ -50,7 +53,7 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
       await connection.abortTransaction();
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Insufficient coins in the user's wallet."
+        "Failed to create gift history: Insufficient coins in the user's wallet."
       );
     }
 
@@ -88,18 +91,21 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
     );
     if (!checkUser || checkUser === false) {
       await connection.abortTransaction();
-      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Failed to create gift history: User not found"
+      );
     }
-    console.log("isUser:", checkUser.role === UserEnum.USER);
+
     if (checkUser.role === UserEnum.USER) {
       delete giftHistory.streamerTotal;
     }
-    console.log("GiftHistory: ", giftHistory);
+
     await connection.commitTransaction();
     return giftHistory;
   } catch (error) {
     await connection.abortTransaction(); // Rollback transaction on error
-    throw new Error(`Failed to create gift history: ${error.message}`);
+    throw error;
   }
 };
 
@@ -144,11 +150,7 @@ const getGiftHistoryByStreamIdService = async (streamId, userId) => {
     if (!checkUser) {
       throw new CoreException("Invalid userId");
     }
-    console.log(
-      "not owner: ",
-      checkUser._id?.toString() !== checkStream?.userId?.toString()
-    );
-    console.log("not admin: ", checkUser.role !== UserEnum.ADMIN);
+
     if (
       checkUser._id?.toString() !== checkStream?.userId?.toString() &&
       checkUser.role !== UserEnum.ADMIN

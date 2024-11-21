@@ -5,6 +5,7 @@ const {
   capitalizeWords,
   validLength,
   contentModeration,
+  hasSpecialCharacters,
 } = require("../utils/validator");
 
 const createCategoryService = async (categoryData) => {
@@ -97,6 +98,13 @@ const updateCategoryService = async (categoryId, categoryData) => {
     }
     validLength(2, 100, categoryData.name, "Name of category");
     contentModeration(categoryData.name, "update name of category");
+    const hasSpecial = hasSpecialCharacters(categoryData.name);
+    if (hasSpecial) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Category name contains special character"
+      );
+    }
 
     if (categoryData.imageUrl)
       categoryData.imageUrl = `${process.env.APP_BASE_URL}/${categoryData.imageUrl}`;

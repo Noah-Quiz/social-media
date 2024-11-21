@@ -7,7 +7,7 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const findMessageService = async (messageId) => {
   try {
     const connection = new DatabaseTransaction();
-    
+
     const message = await connection.messageRepository.getMessageById(
       messageId
     );
@@ -25,14 +25,15 @@ const findMessageService = async (messageId) => {
   }
 };
 
-const findMessagesByRoomIdService = async (id, page, size) => {
+const findMessagesByRoomIdService = async (id, page, size, content) => {
   try {
     const connection = new DatabaseTransaction();
 
     const messages = await connection.messageRepository.getMessagesByRoomId(
       id,
       page,
-      size
+      size,
+      content
     );
 
     return messages;
@@ -44,27 +45,67 @@ const findMessagesByRoomIdService = async (id, page, size) => {
 //only message owner can update
 const updateMessageService = async (userId, messageId, newMessage) => {
   try {
+    contentModeration(newMessage, "message");
+
+    //validate message
+    validLength(1, 200, newMessage, "Update message");
+
     const connection = new DatabaseTransaction();
 
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid user ID is required")
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Valid user ID is required"
+      );
     }
 
     const user = await connection.userRepository.findUserById(userId);
     if (!user) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found")
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
 
     const originalMessage = await connection.messageRepository.getMessageById(
       messageId
     );
-    // if (originalMessage.userId.toString() !== userId.toString()) {
-    //   throw new Error("You are not the owner of this message");
-    // }
-    contentModeration(newMessage, "message");
+    if (!originalMessage) {
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Message not found"
+      );
+    }
 
-    //validate message
-    validLength(1, 200, newMessage, "Update message");
+    if (originalMessage.userId?.toString() !== userId?.toString()) {
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "Not your message"
+      );
+    }
+
+    const room = await connection.roomRepository.getRoomByIdRepository(
+      originalMessage.roomId
+    );
+    if (!room) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Message not in any room"
+      );
+    }
+
+    if (room.enumMode !== "public") {
+      const isParticipant = room.participants.some((participant) => {
+        console.log(participant.user._id?.toString(), userId?.toString());
+        if (participant.user._id?.toString() === userId?.toString()) {
+          return true;
+        }
+      });
+
+      if (!isParticipant) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "User is not a participant in the room"
+        );
+      }
+    }
 
     const message = await connection.messageRepository.updateMessage(
       messageId,
@@ -82,12 +123,15 @@ const deleteMessageService = async (userId, messageId) => {
     const connection = new DatabaseTransaction();
 
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid user ID is required")
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Valid user ID is required"
+      );
     }
 
     const user = await connection.userRepository.findUserById(userId);
     if (!user) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found")
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
 
     const originalMessage = await connection.messageRepository.getMessageById(
@@ -95,11 +139,36 @@ const deleteMessageService = async (userId, messageId) => {
     );
 
     if (originalMessage.userId?.toString() !== userId?.toString()) {
-      throw new Error("You are not the owner of this message");
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "Not your message"
+      );
     }
 
-    if (!mongoose.Types.ObjectId.isValid(messageId)) {
-      throw new Error("Invalid message ID");
+    const room = await connection.roomRepository.getRoomByIdRepository(
+      originalMessage.roomId
+    );
+    if (!room) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Message not in any room"
+      );
+    }
+
+    if (room.enumMode !== "public") {
+      const isParticipant = room.participants.some((participant) => {
+        console.log(participant.user._id?.toString(), userId?.toString());
+        if (participant.user._id?.toString() === userId?.toString()) {
+          return true;
+        }
+      });
+
+      if (!isParticipant) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "User is not a participant in the room"
+        );
+      }
     }
 
     const message = await connection.messageRepository.deleteMessage(messageId);
@@ -111,19 +180,42 @@ const deleteMessageService = async (userId, messageId) => {
 
 const createAMessageService = async (userId, roomId, content) => {
   try {
+    contentModeration(content, "message");
+    validLength(1, 200, content, "Message");
+
     const connection = new DatabaseTransaction();
 
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid user ID is required")
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Valid user ID is required"
+      );
     }
 
     const user = await connection.userRepository.findUserById(userId);
     if (!user) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found")
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
 
-    contentModeration(content, "message");
-    validLength(1, 200, content, "Message");
+    const room = await connection.roomRepository.getRoomByIdRepository(roomId);
+    if (!room) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Room not found");
+    }
+
+    if (room.enumMode !== "public") {
+      const isParticipant = room.participants.some((participant) => {
+        if (participant.user._id?.toString() === userId?.toString()) {
+          return true;
+        }
+      });
+
+      if (!isParticipant) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "User is not a participant in the room"
+        );
+      }
+    }
 
     const response = await connection.messageRepository.createMessage({
       userId,

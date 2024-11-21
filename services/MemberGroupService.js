@@ -2,6 +2,8 @@ const {
   VerificationAttemptsSummaryInstance,
 } = require("twilio/lib/rest/verify/v2/verificationAttemptsSummary");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const CoreException = require("../exceptions/CoreException");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 
 const updateVipService = async (userId, ownerId, packId) => {
   try {
@@ -13,7 +15,7 @@ const updateVipService = async (userId, ownerId, packId) => {
     );
     return response;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -24,7 +26,7 @@ const getMemberGroupService = async (ownerId) => {
       await connection.memberGroupRepository.getMemberGroupRepository(ownerId);
     return memberGroup;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -35,12 +37,11 @@ const getAllMemberGroupService = async () => {
       await connection.memberGroupRepository.getAllMemberGroupRepository();
     return memberGroup;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const deleteMemberGroupService = async (requester, ownerId) => {
   try {
-    console.log("Service: ", ownerId);
     const connection = new DatabaseTransaction();
     const user = await connection.userRepository.getAnUserByIdRepository(
       requester
@@ -48,18 +49,24 @@ const deleteMemberGroupService = async (requester, ownerId) => {
     const notAdmin = user.role !== 1;
     const notOwner = requester !== ownerId;
     if (notAdmin && notOwner) {
-      throw new Error("You don't have authorization to delete this group");
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "You don't have authorization to delete this group"
+      );
     }
     const checkuser = await connection.userRepository.getAnUserByIdRepository(
       ownerId
     );
     if (!checkuser || checkuser === false) {
-      throw new Error("User not found");
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
     const room =
       await connection.memberGroupRepository.getMemberGroupRepository(ownerId);
     if (!room) {
-      throw new Error("Member group not found");
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Member group not found"
+      );
     }
 
     const deleted =
@@ -68,7 +75,7 @@ const deleteMemberGroupService = async (requester, ownerId) => {
       );
     return deleted;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
