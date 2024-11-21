@@ -41,7 +41,7 @@ class HistoryController {
       const result = await clearAllHistoryRecordsService(userId);
       if (result !== true) {
         return res
-          .status(StatusCodeEnums.BadRequest_400)
+          .status(StatusCodeEnums.NotFound_404)
           .json({ message: "No history record exist" });
       }
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
@@ -53,7 +53,6 @@ class HistoryController {
   async deleteHistoryRecordController(req, res, next) {
     try {
       const userId = req.userId;
-      console.log(userId);
       const { historyId } = req.params;
       const deleteHistoryRecordDto = new DeleteHistoryRecordDto(historyId);
       await deleteHistoryRecordDto.validate();

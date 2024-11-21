@@ -4,8 +4,13 @@ const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const { deleteBunnyStorageFileService } = require("./BunnyStreamService");
 const UserEnum = require("../enums/UserEnum");
-const { validLength, checkExistById } = require("../utils/validator");
+const {
+  validLength,
+  checkExistById,
+  convertToMongoObjectId,
+} = require("../utils/validator");
 const User = require("../entities/UserEntity");
+const Category = require("../entities/CategoryEntity");
 const createVideoService = async (
   userId,
   { title, videoUrl, videoEmbedUrl, thumbnailUrl }
@@ -43,6 +48,20 @@ const updateAVideoByIdService = async (
       throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
     }
 
+    if (data.categoryIds) {
+      for (const categoryId of data.categoryIds) {
+        const category = await Category.findOne({
+          _id: convertToMongoObjectId(categoryId),
+          isDeleted: false,
+        });
+        if (!category) {
+          throw new CoreException(
+            StatusCodeEnums.NotFound_404,
+            `Category with ID ${categoryId} not found`
+          );
+        }
+      }
+    }
     // if (userId?.toString() !== video?.user?._id?.toString()) {
     //   throw new CoreException(
     //     StatusCodeEnums.BadRequest_400,
@@ -55,7 +74,9 @@ const updateAVideoByIdService = async (
     }
 
     //validate title
-    validLength(2, 500, data.title, "Title of video");
+    if (data.title) {
+      validLength(2, 500, data.title, "Title of video");
+    }
 
     const updatedVideo =
       await connection.videoRepository.updateAVideoByIdRepository(
@@ -226,7 +247,7 @@ const getVideosByUserIdService = async (userId, query, requesterId) => {
       userId
     );
 
-    if (user === null) {
+    if (!user) {
       throw new CoreException(StatusCodeEnums.NotFound_404, `User not found`);
     }
 

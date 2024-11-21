@@ -18,10 +18,11 @@ class CreateGroupRoomDto {
                 );
             }
 
-            if (this.participantIds && this.participantIds.length > 0) {
+            // Ensure participantIds is an array before calling map
+            if (Array.isArray(this.participantIds) && this.participantIds.length > 0) {
                 await Promise.all(
                     this.participantIds.map(async (id) => {
-                        if (id || id.length > 0 || id === "") {
+                        if (id && id.length > 0) {
                             try {
                                 await validMongooseObjectId(id);
                             } catch (error) {
@@ -30,8 +31,18 @@ class CreateGroupRoomDto {
                                     "Invalid participant ID"
                                 );
                             }
+                        } else {
+                            throw new CoreException(
+                                StatusCodeEnums.BadRequest_400,
+                                "Participant ID cannot be empty"
+                            );
                         }
                     })
+                );
+            } else if (this.participantIds && this.participantIds.length === 0) {
+                throw new CoreException(
+                    StatusCodeEnums.BadRequest_400,
+                    "Participant IDs cannot be an empty array"
                 );
             }
         } catch (error) {

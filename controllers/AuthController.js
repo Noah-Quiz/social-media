@@ -78,7 +78,6 @@ class AuthController {
   async loginGoogleController(req, res, next) {
     try {
       const googleUser = req.user._json;
-      console.log(googleUser);
       const ipAddress =
         req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 

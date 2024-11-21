@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const Room = require("../entities/RoomEntity");
 
 class RoomRepository {
@@ -45,7 +46,59 @@ class RoomRepository {
   // Get a room by its ID
   async getRoomByIdRepository(roomId) {
     try {
-      const rooms = await Room.aggregate([
+      const room = await Room.aggregate([
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(roomId),
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "participants.userId",
+            foreignField: "_id",
+            as: "participantDetails",
+          },
+        },
+        {
+          $addFields: {
+            participants: {
+              $map: {
+                input: "$participants",
+                as: "participant",
+                in: {
+                  user: {
+                    $let: {
+                      vars: {
+                        userDetail: {
+                          $arrayElemAt: [
+                            {
+                              $filter: {
+                                input: "$participantDetails",
+                                as: "userDetail",
+                                cond: { $eq: ["$$userDetail._id", "$$participant.userId"] },
+                              },
+                            },
+                            0,
+                          ],
+                        },
+                      },
+                      in: {
+                        _id: "$$userDetail._id",
+                        fullName: "$$userDetail.fullName",
+                        nickName: "$$userDetail.nickName",
+                        avatar: "$$userDetail.avatar",
+                      },
+                    },
+                  },
+                  joinedDate: "$$participant.joinedDate",
+                  isAdmin: "$$participant.isAdmin",
+                  assignedDate: "$$participant.assignedDate",
+                },
+              },
+            },
+          },
+        },
         {
           $lookup: {
             from: "messages",
@@ -62,19 +115,21 @@ class RoomRepository {
         {
           $project: {
             messages: 0,
+            participantDetails: 0,
             isDeleted: 0,
             __v: 0,
           },
         },
       ]);
   
-      return rooms;
+      return room[0];
     } catch (error) {
       throw new Error(
         `Error retrieving room with ID ${roomId}: ${error.message}`
       );
     }
-  }  
+  }
+   
 
   // Update room by ID
   async updateRoomByIdRepository(roomId, updateData) {
@@ -110,9 +165,35 @@ class RoomRepository {
   }
 
   // Get all rooms (non-deleted only)
-  async getAllRooms() {
+  async getUserRoomsRepository(userId, query) {
     try {
-      return await Room.find({ isDeleted: false }); // Only fetch non-deleted rooms
+      const page = query.page || 1;
+      const size = parseInt(query.size, 10) || 10;
+      const skip = (page - 1) * size;
+  
+      const searchQuery = {
+        isDeleted: false,
+        participants: { $elemMatch: { userId: userId } },
+      };
+  
+      const totalRooms = await Room.countDocuments(searchQuery);
+  
+      const rooms = await Room.find(
+        searchQuery,
+        { __v: 0, isDeleted: 0 },
+        {
+          sort: { lastUpdated: -1 },
+          skip: skip,
+          limit: size,
+        }
+      );
+  
+      return {
+        rooms,
+        total: totalRooms,
+        page: Number(page),
+        totalPages: Math.ceil(totalRooms / Number(size)),
+      };
     } catch (error) {
       throw new Error(`Error retrieving rooms: ${error.message}`);
     }
