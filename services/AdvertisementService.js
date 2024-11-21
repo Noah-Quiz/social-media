@@ -91,7 +91,7 @@ module.exports = {
         );
       return advertisement;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 

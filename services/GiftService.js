@@ -9,7 +9,7 @@ const createGiftService = async (name, image, pricePerUnit) => {
     const price = parseFloat(pricePerUnit);
 
     if (isNaN(price)) {
-      throw new Error("Invalid price");
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid price");
     }
     const newName = capitalizeWords(name);
     const checkGift = await connection.giftRepository.getGiftByNameRepository(
