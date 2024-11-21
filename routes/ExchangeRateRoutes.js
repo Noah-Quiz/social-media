@@ -137,11 +137,11 @@ exchangeRateRoutes.get(
 
 /**
  * @swagger
- * /api/exchange-rate:
+ * /api/exchange-rate/by-name:
  *   put:
  *     security:
  *      - bearerAuth: []
- *     summary: Update an exchange rate value and description based on name or id
+ *     summary: Update an exchange rate value and description based on name
  *     tags: [ExchangeRates]
  *     requestBody:
  *       required: true
@@ -150,16 +150,11 @@ exchangeRateRoutes.get(
  *           schema:
  *             type: object
  *             properties:
- *               id:
- *                 type: string
- *                 required: false
- *                 example: "672328f60427946cbe166f45"
- *                 description: "ID of the exchange rate. If provided, must match the name if also provided."
  *               name:
  *                 type: string
  *                 required: true
  *                 example: "topUpBalanceRate"
- *                 description: "Name of the exchange rate. Must match the ID if both are provided."
+ *                 description: "Name of the exchange rate."
  *               value:
  *                 type: number
  *                 required: false
@@ -209,13 +204,93 @@ exchangeRateRoutes.get(
  *                   type: string
  *                   example: "Success"
  *       400:
- *         description: Bad request. Examples include missing fields or mismatched id and name.
+ *         description: Bad request. Examples include missing fields or invalid `name`.
  *       500:
  *         description: Internal server error.
  */
 
 exchangeRateRoutes.put(
-  "/",
+  "/by-name",
+  requireRole(UserEnum.ADMIN),
+  exchangeRateController.updateExchangeRateController
+);
+
+/**
+ * @swagger
+ * /api/exchange-rate/by-id:
+ *   put:
+ *     security:
+ *      - bearerAuth: []
+ *     summary: Update an exchange rate value and description based on ID
+ *     tags: [ExchangeRates]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 required: true
+ *                 example: "672328f60427946cbe166f45"
+ *                 description: "ID of the exchange rate."
+ *               value:
+ *                 type: number
+ *                 required: false
+ *                 example: 1
+ *               description:
+ *                 type: string
+ *                 required: false
+ *                 example: "Updated description"
+ *     responses:
+ *       200:
+ *         description: Update exchange rate successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exchangeRate:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: "672328f60427946cbe166f45"
+ *                     name:
+ *                       type: string
+ *                       example: "topUpBalanceRate"
+ *                     value:
+ *                       type: number
+ *                       example: 1
+ *                     description:
+ *                       type: string
+ *                       example: "Updated description"
+ *                     isDeleted:
+ *                       type: boolean
+ *                       example: false
+ *                     dateCreated:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-10-31T06:51:34.546Z"
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-10-31T06:51:34.546Z"
+ *                     __v:
+ *                       type: integer
+ *                       example: 0
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Bad request. Examples include missing fields or invalid `id`.
+ *       500:
+ *         description: Internal server error.
+ */
+
+exchangeRateRoutes.put(
+  "/by-id",
   requireRole(UserEnum.ADMIN),
   exchangeRateController.updateExchangeRateController
 );
@@ -268,11 +343,11 @@ exchangeRateRoutes.delete(
 
 /**
  * @swagger
- * /api/exchange-rate/single:
+ * /api/exchange-rate/by-id:
  *   get:
  *     security:
  *      - bearerAuth: []
- *     summary: Get a single exchange rate based on name or id
+ *     summary: Get a single exchange rate by ID
  *     tags: [ExchangeRates]
  *     parameters:
  *       - in: query
@@ -280,12 +355,72 @@ exchangeRateRoutes.delete(
  *         schema:
  *           type: string
  *           example: "672328f60427946cbe166f45"
+ *         required: true
  *         description: The unique ID of the exchange rate
+ *     responses:
+ *       200:
+ *         description: Get a single exchange rate successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exchangeRate:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                       example: "topUpBalanceRate"
+ *                     value:
+ *                       type: number
+ *                       example: 1
+ *                     description:
+ *                       type: string
+ *                       example: "Example description"
+ *                     isDeleted:
+ *                       type: boolean
+ *                       example: false
+ *                     _id:
+ *                       type: string
+ *                       example: "672328f60427946cbe166f45"
+ *                     dateCreated:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-10-31T06:51:34.546Z"
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-10-31T06:51:34.546Z"
+ *                     __v:
+ *                       type: integer
+ *                       example: 0
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Bad request, invalid ID
+ *       404:
+ *         description: Exchange rate not found
+ *       500:
+ *         description: Internal server error
+ */
+exchangeRateRoutes.get("/by-id", exchangeRateController.getOneExchangeRate);
+
+/**
+ * @swagger
+ * /api/exchange-rate/by-name:
+ *   get:
+ *     security:
+ *      - bearerAuth: []
+ *     summary: Get a single exchange rate by name
+ *     tags: [ExchangeRates]
+ *     parameters:
  *       - in: query
  *         name: name
  *         schema:
  *           type: string
  *           example: "topUpBalanceRate"
+ *         required: true
  *         description: The name of the exchange rate
  *     responses:
  *       200:
@@ -328,12 +463,13 @@ exchangeRateRoutes.delete(
  *                   type: string
  *                   example: "Success"
  *       400:
- *         description: Bad request, invalid input
+ *         description: Bad request, invalid name
  *       404:
  *         description: Exchange rate not found
  *       500:
  *         description: Internal server error
  */
 
-exchangeRateRoutes.get("/single", exchangeRateController.getOneExchangeRate);
+exchangeRateRoutes.get("/by-name", exchangeRateController.getOneExchangeRate);
+
 module.exports = exchangeRateRoutes;
