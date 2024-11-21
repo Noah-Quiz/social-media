@@ -40,7 +40,6 @@ const getAllMemberGroupService = async () => {
 };
 const deleteMemberGroupService = async (requester, ownerId) => {
   try {
-    console.log("Service: ", ownerId);
     const connection = new DatabaseTransaction();
     const user = await connection.userRepository.getAnUserByIdRepository(
       requester

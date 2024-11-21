@@ -22,7 +22,7 @@ class MessageController {
       await getMessageDto.validate();
 
       const message = await findMessageService(messageId);
-      
+
       res
         .status(StatusCodeEnums.OK_200)
         .json({ data: message, message: "Success" });
@@ -68,7 +68,6 @@ class MessageController {
       const { content } = req.body;
       const userId = req.userId;
       const updateData = content;
-      console.log("Content: ", content, typeof content);
       const updateMessageDto = new UpdateMessageDto(messageId, content, userId);
       await updateMessageDto.validate();
 
@@ -77,7 +76,8 @@ class MessageController {
       res
         .status(StatusCodeEnums.OK_200)
         .json({ data: message, message: "Success" });
-    } catch (error) {s
+    } catch (error) {
+      s;
       next(error);
     }
   }
@@ -100,7 +100,7 @@ class MessageController {
     try {
       const userId = req.userId;
       const { roomId, content } = req.body;
-      
+
       const createMessageDto = new CreateMessageDto(userId, roomId, content);
       await createMessageDto.validate();
 
