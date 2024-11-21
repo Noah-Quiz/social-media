@@ -19,6 +19,7 @@ const {
   updatePointService,
   checkUserAuthorizationService,
 } = require("../services/UserService");
+const { registerPremiumService } = require("../services/VipService");
 const mongoose = require("mongoose");
 const { deleteFile, checkFileSuccess } = require("../middlewares/storeFile");
 const UpdateUserPasswordDto = require("../dtos/User/UpdateUserPasswordDto");
@@ -332,6 +333,18 @@ class UserController {
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ data: result, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async registerPremiumController(req, res, next) {
+    try {
+      const userId = req.userId;
+      const { packageId } = req.body;
+      await registerPremiumService(userId, packageId);
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Register premium success" });
     } catch (error) {
       next(error);
     }

@@ -533,10 +533,7 @@ route.post("/follow", userController.toggleFollowController);
  *                 message:
  *                   type: string
  */
-route.get(
-  "/",
-  userController.getAllUsersController
-);
+route.get("/", userController.getAllUsersController);
 
 /**
  * @swagger
@@ -661,7 +658,6 @@ route.get(
  */
 route.get("/:userId", userController.getUserByIdController);
 
-
 /**
  * @swagger
  * /api/users/{userId}/email:
@@ -784,5 +780,42 @@ route.delete(
   requireRole(UserEnum.ADMIN),
   userController.deleteUserByIdController
 );
+/**
+ * @swagger
+ * /api/users/register-premium:
+ *   post:
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Register for a premium package
+ *     description: Registers the authenticated user for a selected premium package.
+ *     tags: [Premium]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               packageId:
+ *                 type: string
+ *                 description: The ID of the premium package to register for.
+ *                 example: "premium_package_123"
+ *     responses:
+ *       200:
+ *         description: Registration successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Register premium success"
+ *       400:
+ *         description: Bad request - Invalid input
+ *       500:
+ *         description: Internal server error
+ */
+route.post("/register-premium", userController.registerPremiumController);
 
 module.exports = route;
