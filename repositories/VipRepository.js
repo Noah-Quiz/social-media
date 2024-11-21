@@ -3,8 +3,9 @@ const VipPackage = require("../entities/VipPackageEntity");
 const User = require("../entities/UserEntity");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
-class VipClass {
-  async upgradeSystemVip(userId, packageId) {
+const getLogger = require("../utils/logger");
+class VipRepository {
+  async upgradeSystemVipRepository(userId, packageId) {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
@@ -73,5 +74,57 @@ class VipClass {
       throw error;
     }
   }
+  async findExpiredPremiumUser() {
+    try {
+      const ExpList = await User.find({
+        isDeleted: false,
+        "vip.status": true,
+        "vip.endDate": { $lt: Date.now() },
+      });
+      return ExpList;
+    } catch (error) {
+      console.log(`Error getting expired premium user: ${error.message}`);
+    }
+  }
+  async RemovePremium(userId) {
+    try {
+      const user = await User.findOne({
+        _id: new mongoose.Types.ObjectId(userId),
+        isDeleted: false,
+        "vip.status": true,
+        "vip.endDate": { $lt: Date.now() },
+      });
+      if (!user) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+      }
+      user.vip.status = false;
+      user.vip.endDate = null;
+      user.vip.packageId = null;
+      user.vip.joinDate = null;
+      await user.save();
+    } catch (error) {
+      console.log(
+        `Error removing premium for user ${userId}: ${error.message}`
+      );
+    }
+  }
+  async handleExpire() {
+    try {
+      const logger = getLogger("PREMIUM");
+      const ExpList = await this.findExpiredPremiumUser();
+      if (ExpList.length > 0) {
+        ExpList.forEach((user) => {
+          this.RemovePremium(user._id);
+        });
+      }
+      logger.info(
+        `Number of people expired and removed: ${(ExpList || []).length}`
+      );
+    } catch (error) {
+      console.log(
+        `Error getting and removing expired premium user: ${error.message}`
+      );
+    }
+  }
 }
-module.exports = VipPackageClass;
+module.exports = VipRepository;

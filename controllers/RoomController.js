@@ -1,42 +1,21 @@
 const CreateGroupRoomDto = require("../dtos/Room/CreateGroupRoomDto");
 const CreatePrivateRoomDto = require("../dtos/Room/CreatePrivateRoomDto");
 const GetRoomDto = require("../dtos/Room/GetRoomDto");
+const GetUserRoomsDto = require("../dtos/Room/GetUserRoomsDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const { checkFileSuccess, deleteFile } = require("../middlewares/storeFile");
 const {
   createRoomService,
   deleteRoomService,
-  getAllRoomsService,
   getRoomService,
   updateRoomService,
-  DirectMessageService,
-  getRoomUserIdService,
-  getRoomVideoIdService,
-  getGlobalRoomService,
-  handleMemberGroupChatService,
+  getUserRoomsService,
 } = require("../services/RoomService");
 
 const mongoose = require("mongoose");
 
 class RoomController {
-  // Direct Message Room
-  async DirectMessageController(req, res, next) {
-    const currentUserId = req.userId;
-    const targetedUserId = req.params.targetedUserId;
-    try {
-      const directMessageRoom = await DirectMessageService(
-        currentUserId,
-        targetedUserId
-      );
-      return res
-        .status(StatusCodeEnums.OK_200)
-        .json({ data: directMessageRoom, message: "Success" });
-    } catch (error) {
-      next(error);
-    }
-  }
-
   // Create a Room
   async createPublicRoomController(req, res, next) {
     const { name } = req.body;
@@ -81,9 +60,18 @@ class RoomController {
 
   // Create a group Room
   async createGroupRoomController(req, res, next) {
-    const { name, participantIds } = req.body;
+    const { name } = req.body;
+    let { participantIds } = req.body;
     const userId = req.userId;
     let avatar = req.file ? req.file.path : null;
+
+    if (typeof participantIds === "string") {
+      if (participantIds.includes(",")) {
+        participantIds = participantIds.split(",").map((id) => id.trim());
+      } else {
+        participantIds = [participantIds.trim()];
+      }
+    }
 
     try {
       const createGroupRoomDto = new CreateGroupRoomDto(name, participantIds);
@@ -110,15 +98,25 @@ class RoomController {
 
   // Create a Room
   async createMemberRoomController(req, res, next) {
-    const { name } = req.body;
+    const { name, participantIds } = req.body;
+    const userId = req.userId;
     let avatar = req.file ? req.file.path : null;
+
+    if (typeof participantIds === "string") {
+      if (participantIds.includes(",")) {
+        participantIds = participantIds.split(",").map((id) => id.trim());
+      } else {
+        participantIds = [participantIds.trim()];
+      }
+    }
+
     try {
-      const createGroupRoomDto = new CreateGroupRoomDto(name);
+      const createGroupRoomDto = new CreateGroupRoomDto(name, participantIds);
       await createGroupRoomDto.validate();
 
-      const data = { name, enumMode: "member", avatar };
+      const data = { name, enumMode: "member", avatar, participantIds };
 
-      const room = await createRoomService(data);
+      const room = await createRoomService(userId, data);
 
       if (req.file) {
         await checkFileSuccess(avatar);
@@ -155,12 +153,31 @@ class RoomController {
   }
 
   // Get all rooms
-  async GetAllRoomsController(req, res, next) {
+  async getUserRoomsController(req, res, next) {
     try {
-      const rooms = await getAllRoomsService();
+      const userId = req.userId;
+
+      const query = {
+        size: req.query.size,
+        page: req.query.page,
+        title: req.query.title,
+      };
+
+      const getUserRoomsDto = new GetUserRoomsDto(
+        query.title,
+        query.page,
+        query.size
+      );
+      const validatedQuery = getUserRoomsDto.validate();
+
+      const { rooms, total, page, totalPages } = await getUserRoomsService(
+        userId,
+        validatedQuery
+      );
+
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ data: rooms, message: "Success" });
+        .json({ rooms, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }
@@ -187,9 +204,10 @@ class RoomController {
   // Delete a Room by ID (Soft Delete)
   async deleteRoomController(req, res, next) {
     const { roomId } = req.params;
+    const userId = req.userId;
 
     try {
-      await deleteRoomService(roomId);
+      await deleteRoomService(roomId, userId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
