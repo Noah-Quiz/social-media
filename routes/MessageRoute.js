@@ -94,6 +94,11 @@ messageRoutes.post("/", messageController.createAMessageController);
  *          type: integer
  *          example: 20
  *        description: Number of messages per page
+ *      - in: query
+ *        name: content
+ *        schema:
+ *          type: string
+ *        description: Search for messages containing this string
  *     responses:
  *       200:
  *         description: Successfully retrieved messages

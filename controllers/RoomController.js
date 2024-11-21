@@ -21,7 +21,6 @@ const {
 const mongoose = require("mongoose");
 
 class RoomController {
-
   // Create a Room
   async createPublicRoomController(req, res, next) {
     const { name } = req.body;
@@ -46,7 +45,10 @@ class RoomController {
     const userId = req.userId;
 
     try {
-      const createPrivateRoomDto = new CreatePrivateRoomDto(userId, recipientId);
+      const createPrivateRoomDto = new CreatePrivateRoomDto(
+        userId,
+        recipientId
+      );
       await createPrivateRoomDto.validate();
 
       const data = { enumMode: "private", recipientId };
@@ -67,7 +69,7 @@ class RoomController {
     let { participantIds } = req.body;
     const userId = req.userId;
     let avatar = req.file ? req.file.path : null;
-    
+
     if (typeof participantIds === "string") {
       if (participantIds.includes(",")) {
         participantIds = participantIds.split(",").map((id) => id.trim());
@@ -167,10 +169,17 @@ class RoomController {
         title: req.query.title,
       };
 
-      const getUserRoomsDto = new GetUserRoomsDto(query.title, query.page, query.size);
+      const getUserRoomsDto = new GetUserRoomsDto(
+        query.title,
+        query.page,
+        query.size
+      );
       const validatedQuery = getUserRoomsDto.validate();
 
-      const { rooms, total, page, totalPages } = await getUserRoomsService(userId, validatedQuery);
+      const { rooms, total, page, totalPages } = await getUserRoomsService(
+        userId,
+        validatedQuery
+      );
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -187,7 +196,7 @@ class RoomController {
     const { name } = req.body;
 
     try {
-      const roomData = { name, avatar }
+      const roomData = { name, avatar };
       const room = await updateRoomService(roomId, roomData);
 
       return res
@@ -209,9 +218,7 @@ class RoomController {
 
       await deleteRoomService(roomId, userId);
 
-      return res
-        .status(StatusCodeEnums.OK_200)
-        .json({ message: "Success" });
+      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
       next(error);
     }

@@ -320,7 +320,6 @@ class VideoController {
       const { videoId } = req.params;
       const requesterId = req.requesterId;
 
-      console.log();
       const video = await getVideoService(videoId, requesterId);
       // const bunnyVideo = await getBunnyStreamVideoService(
       //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,

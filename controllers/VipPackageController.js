@@ -1,3 +1,5 @@
+const CreateVipPackageDto = require("../dtos/VipPackage/CreateVipPackageDto");
+const UpdateVipPackageDto = require("../dtos/VipPackage/UpdateVipPackageDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const {
   createVipPackageService,
@@ -35,7 +37,14 @@ class VipPackageController {
     try {
       const { name, description, price, durationUnit, durationNumber } =
         req.body;
-      //validate dto
+      const createVipPackageDto = new CreateVipPackageDto(
+        name,
+        description,
+        price,
+        durationUnit,
+        durationNumber
+      );
+      await createVipPackageDto.validate();
       const result = await createVipPackageService(
         name,
         description,
@@ -51,11 +60,24 @@ class VipPackageController {
       next(error);
     }
   }
+
   async updateVipPackageController(req, res, next) {
     const { id } = req.params;
     try {
       const { name, description, price, durationUnit, durationNumber } =
         req.body;
+
+      // Create and validate DTO
+      const updateVipPackageDto = new UpdateVipPackageDto({
+        id,
+        name,
+        description,
+        price,
+        durationUnit,
+        durationNumber,
+      });
+      await updateVipPackageDto.validate();
+
       const result = await updateVipPackageService(
         id,
         name,

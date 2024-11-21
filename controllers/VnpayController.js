@@ -151,9 +151,7 @@ exports.vnpayReturn = async (req, res) => {
       //     vnp_Params: vnp_Params,
       //   });
       // }
-      console.log(
-        `Top-up successful for User ID: ${userId}, Amount: ${amount} VND`
-      );
+
       res.redirect("http://localhost:3001/popout/payment/success");
     } catch (error) {
       console.error("Error processing payment:", error);

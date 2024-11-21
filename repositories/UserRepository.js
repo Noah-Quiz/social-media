@@ -249,7 +249,6 @@ class UserRepository {
       const follow = await User.findOne({ _id: followId });
 
       if (!follow) {
-        console.log("User to follow not found");
         return false;
       }
 
@@ -266,7 +265,6 @@ class UserRepository {
         { $push: { notifications: notificationObject } }
       );
 
-      console.log(`Notification sent to user ${followId} successfully`);
       return true;
     } catch (error) {
       return false;
@@ -287,7 +285,6 @@ class UserRepository {
         { $push: { notifications: notificationObject } }
       );
 
-      console.log(`Notification sent to user ${followId} successfully`);
       return true;
     } catch (error) {
       return false;
@@ -300,7 +297,7 @@ class UserRepository {
         { _id: userId },
         { $push: { notifications: notification } }
       );
-      console.log(`Notification sent to user ${userId} successfully`);
+
       return true;
     } catch (error) {
       throw new Error(`Failed to send notification: ${error.message}`);

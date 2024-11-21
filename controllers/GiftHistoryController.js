@@ -12,7 +12,6 @@ class GiftHistoryController {
   async createGiftHistoryController(req, res, next) {
     const { streamId, gifts } = req.body;
     const userId = req.userId;
-    console.log(userId);
     try {
       const createGiftHistoryDto = new CreateGiftHistoryDto(streamId, gifts);
       await createGiftHistoryDto.validate();

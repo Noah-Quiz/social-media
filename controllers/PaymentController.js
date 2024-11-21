@@ -23,7 +23,7 @@ paypal.configure({
 
 class PaymentController {
   async payWithStripeController(req, res, next) {
-    req.session.amount=3000;
+    req.session.amount = 3000;
 
     const session = await stripe.checkout.sessions.create({
       line_items: [
@@ -48,7 +48,12 @@ class PaymentController {
   async successStripeController(req, res) {
     res
       .status(StatusCodeEnums.OK_200)
-      .json({ body: req.body, query: req.query, params: req.params, amount: req.session.amount });
+      .json({
+        body: req.body,
+        query: req.query,
+        params: req.params,
+        amount: req.session.amount,
+      });
   }
 
   async payWithPayPalController(req, res, next) {
@@ -119,7 +124,6 @@ class PaymentController {
       execute_payment_json,
       async function (error, payment) {
         if (error) {
-          console.log(error.response);
           throw error;
         } else {
           const amountInVnd = await convertMoney(

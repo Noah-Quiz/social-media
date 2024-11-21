@@ -5,7 +5,12 @@ const CoreException = require("../exceptions/CoreException.js");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction.js");
 const { default: mongoose } = require("mongoose");
 const UserEnum = require("../enums/UserEnum.js");
-const { validLength, contentModeration } = require("../utils/validator.js");
+const {
+  validLength,
+  contentModeration,
+  convertToMongoObjectId,
+} = require("../utils/validator.js");
+const Category = require("../entities/CategoryEntity.js");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
@@ -117,12 +122,19 @@ const getStreamsByUserIdService = async (query, requesterId, userId) => {
         );
       }
       if (requester.role === 1) {
-        const streams = await connection.streamRepository.getStreamsByUserIdRepository(query, userId);
+        const streams =
+          await connection.streamRepository.getStreamsByUserIdRepository(
+            query,
+            userId
+          );
         return streams;
       }
     }
 
-    const data = await connection.streamRepository.getStreamsByUserIdRepository(query, userId);
+    const data = await connection.streamRepository.getStreamsByUserIdRepository(
+      query,
+      userId
+    );
 
     let streams = data.streams.map(async (stream) => {
       const isOwner = stream.user?._id?.toString() === requesterId?.toString();
@@ -161,7 +173,7 @@ const getStreamsByUserIdService = async (query, requesterId, userId) => {
   } catch (error) {
     throw error;
   }
-}
+};
 
 const getStreamsService = async (query, requesterId) => {
   try {
@@ -265,6 +277,21 @@ const updateStreamService = async (userId, streamId, updateData) => {
       contentModeration(updateData.description, "update description of stream");
     }
 
+    if (updateData.categoryIds) {
+      for (const categoryId of updateData.categoryIds) {
+        const category = await Category.findOne({
+          _id: convertToMongoObjectId(categoryId),
+          isDeleted: false,
+        });
+        if (!category) {
+          throw new CoreException(
+            StatusCodeEnums.NotFound_404,
+            `Category with ID ${categoryId} not found`
+          );
+        }
+      }
+    }
+
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
@@ -352,6 +379,20 @@ const createStreamService = async (data) => {
     contentModeration(data.description, "description of stream");
   }
 
+  if (data.categoryIds) {
+    for (const categoryId of data.categoryIds) {
+      const category = await Category.findOne({
+        _id: convertToMongoObjectId(categoryId),
+        isDeleted: false,
+      });
+      if (!category) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          `Category with ID ${categoryId} not found`
+        );
+      }
+    }
+  }
   try {
     const stream = await connection.streamRepository.createStreamRepository(
       data,
@@ -398,17 +439,22 @@ const toggleLikeStreamService = async (streamId, userId) => {
 
 const getRecommendedStreamsService = async (data) => {
   try {
-    const connection = new DatabaseTransaction()
-    
+    const connection = new DatabaseTransaction();
+
     const { requesterId } = data;
-    
+
     if (requesterId) {
-      const requester = await connection.userRepository.findUserById(requesterId);
+      const requester = await connection.userRepository.findUserById(
+        requesterId
+      );
       if (!requester) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, "Requester not found");
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Requester not found"
+        );
       }
     }
-    
+
     const result =
       await connection.streamRepository.getRecommendedStreamsRepository(data);
 
