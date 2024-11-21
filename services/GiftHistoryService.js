@@ -96,11 +96,11 @@ const createGiftHistoryService = async (streamId, userId, gifts) => {
         "Failed to create gift history: User not found"
       );
     }
-    console.log("isUser:", checkUser.role === UserEnum.USER);
+
     if (checkUser.role === UserEnum.USER) {
       delete giftHistory.streamerTotal;
     }
-    console.log("GiftHistory: ", giftHistory);
+
     await connection.commitTransaction();
     return giftHistory;
   } catch (error) {
@@ -150,11 +150,7 @@ const getGiftHistoryByStreamIdService = async (streamId, userId) => {
     if (!checkUser) {
       throw new CoreException("Invalid userId");
     }
-    console.log(
-      "not owner: ",
-      checkUser._id?.toString() !== checkStream?.userId?.toString()
-    );
-    console.log("not admin: ", checkUser.role !== UserEnum.ADMIN);
+
     if (
       checkUser._id?.toString() !== checkStream?.userId?.toString() &&
       checkUser.role !== UserEnum.ADMIN

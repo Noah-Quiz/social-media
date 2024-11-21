@@ -1,12 +1,6 @@
-const GetVideosByPlaylistIdDto = require("../dtos/Video/GetVideosByPlaylistId");
 const path = require("path");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
-const {
-  createBunnyStreamVideoService,
-  updateBunnyStreamVideoService,
-  getBunnyStreamVideoService,
-} = require("../services/BunnyStreamService");
 const {
   createVideoService,
   toggleLikeVideoService,
@@ -326,7 +320,6 @@ class VideoController {
       const { videoId } = req.params;
       const requesterId = req.requesterId;
 
-      console.log();
       const video = await getVideoService(videoId, requesterId);
       // const bunnyVideo = await getBunnyStreamVideoService(
       //   process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID,

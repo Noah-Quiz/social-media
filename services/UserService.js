@@ -270,7 +270,6 @@ module.exports = {
           "Follow unsuccessfully"
         );
       }
-      console.log(result);
 
       const notification = {
         avatar: user.avatar,
@@ -292,7 +291,6 @@ module.exports = {
     const connection = new DatabaseTransaction();
     try {
       const checkExistUser = await checkExistById(User, userId);
-      console.log(checkExistUser);
       if (!checkExistUser) {
         throw new CoreException(
           StatusCodeEnum.BadRequest_400,
