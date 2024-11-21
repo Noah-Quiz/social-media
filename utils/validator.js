@@ -4,7 +4,7 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const mongoose = require("mongoose");
 const banWords = require("../enums/BanWords");
 
-const validMongooseObjectId = (id) => {
+const validMongooseObjectId = async (id) => {
   if (!mongoose.Types.ObjectId.isValid(id))
     throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid ID");
 };
