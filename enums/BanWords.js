@@ -1,4 +1,13 @@
 const banWords = [
+  "địt",
+  "đéo",
+  "đm",
+  "đcm",
+  "đkm",
+  "đmm",
+  "đmmm",
+  "địt mẹ",
+  "địt con mẹ",
   "cc",
   "cl",
   "fuck",
@@ -7,7 +16,9 @@ const banWords = [
   "dmm",
   "fucker",
   "đụ",
+  "cái lồn",
   "lồn",
+  "con cặc",
   "cặc",
 ];
 
