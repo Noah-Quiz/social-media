@@ -61,7 +61,6 @@ class MemberGroupController {
   async deleteMemberGroupController(req, res, next) {
     const requester = req.userId;
     const { ownerId } = req.params;
-    console.log("Controller: ", ownerId);
     try {
       const result = await deleteMemberGroupService(requester, ownerId);
       if (!result) {

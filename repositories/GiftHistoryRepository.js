@@ -70,7 +70,7 @@ class GiftHistoryRepository {
               0
             ) * rate.ReceivePercentage,
         });
-        console.log();
+
         // Save the new gift history
         const savedHistory = await newGiftHistory.save();
 
@@ -158,7 +158,6 @@ class GiftHistoryRepository {
         ? result[0].totalAmount * rate.exchangeRateCoinToBalance
         : 0;
     } catch (error) {
-      console.log(error);
       throw new Error("Error counting total revenue: ", error.message);
     }
   }

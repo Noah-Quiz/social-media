@@ -14,7 +14,6 @@ const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const getBunnyStreamVideoService = async (libraryId, videoId) => {
   try {
     const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${libraryId}/videos/${videoId}`;
-    console.log(url);
     const res = await axios.get(url, {
       headers: {
         AccessKey: process.env.BUNNY_STREAM_API_KEY,
@@ -89,7 +88,7 @@ const uploadBunnyStorageFileService = async ({
     let uploadedFilesCount = 0; // Count of successfully uploaded files
     for (const file of filteredFiles) {
       const filePath = `${videoFolderPath}/${file}`;
-      console.log(filePath);
+
       const fileStream = fs.createReadStream(filePath);
       const fileName = await extractFilenameFromPath(filePath);
 
@@ -178,7 +177,6 @@ const uploadBunnyStreamVideoService = async (userId, videoId, filePath) => {
       maxBodyLength: Infinity,
       onUploadProgress: (progressEvent) => {
         const progress = ((progressEvent.loaded / fileSize) * 100).toFixed(2);
-        console.log(`Uploading: ${progress}%`);
         eventEmitter.emit("upload_progress", {
           videoId,
           progress,

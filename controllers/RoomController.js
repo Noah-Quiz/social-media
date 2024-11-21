@@ -20,7 +20,6 @@ const {
 const mongoose = require("mongoose");
 
 class RoomController {
-
   // Direct Message Room
   async DirectMessageController(req, res, next) {
     const currentUserId = req.userId;
@@ -62,7 +61,10 @@ class RoomController {
     const userId = req.userId;
 
     try {
-      const createPrivateRoomDto = new CreatePrivateRoomDto(userId, recipientId);
+      const createPrivateRoomDto = new CreatePrivateRoomDto(
+        userId,
+        recipientId
+      );
       await createPrivateRoomDto.validate();
 
       const data = { enumMode: "private", recipientId };
@@ -171,7 +173,7 @@ class RoomController {
     const { name } = req.body;
 
     try {
-      const roomData = { name, avatar }
+      const roomData = { name, avatar };
       const room = await updateRoomService(roomId, roomData);
 
       return res
@@ -189,9 +191,7 @@ class RoomController {
     try {
       await deleteRoomService(roomId);
 
-      return res
-        .status(StatusCodeEnums.OK_200)
-        .json({ message: "Success" });
+      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
       next(error);
     }
@@ -213,7 +213,7 @@ class RoomController {
   async handleMemberGroupChatController(req, res, next) {
     const { roomId, memberId, action } = req.body;
     const room = await getRoom(roomId);
-    console.log(room);
+
     if (
       !mongoose.Types.ObjectId.isValid(roomId) ||
       !mongoose.Types.ObjectId.isValid(memberId)

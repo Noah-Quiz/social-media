@@ -46,7 +46,6 @@ class ExchangeRateController {
     try {
       // const { id } = req.params;
       const { id, name } = req.query;
-      console.log(name);
       if (!name) {
         throw new CoreException(
           StatusCodeEnums.BadRequest_400,
