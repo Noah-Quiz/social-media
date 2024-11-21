@@ -12,8 +12,6 @@ const findMessageService = async (messageId) => {
       messageId
     );
 
-    console.log(message);
-
     if (!message) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
