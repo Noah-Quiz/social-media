@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose");
 const AdvertisementPackage = require("../entities/AdvertisementPackage");
 const CreateAPackageDto = require("../dtos/AdvertisementPackage/CreateAPackageDto");
 const UpdateAPackageDto = require("../dtos/AdvertisementPackage/UpdateAPackageDto");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 class AdvertisementPackageRepository {
   async createAdvertisementPackageRepository(coin, dateUnit, numberOfDateUnit) {
     try {
@@ -18,7 +19,10 @@ class AdvertisementPackageRepository {
       });
       return advertisementPackage;
     } catch (error) {
-      throw new Error(error.message);
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        `Error creating advertisement package: ${error.message}`
+      );
     }
   }
 
@@ -38,7 +42,10 @@ class AdvertisementPackageRepository {
       );
       return advertisementPackage;
     } catch (error) {
-      throw new Error(error.message);
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        `Error updating advertisement package: ${error.message}`
+      );
     }
   }
 
@@ -50,7 +57,10 @@ class AdvertisementPackageRepository {
       });
       return advertisementPackages;
     } catch (error) {
-      throw new Error(error.message);
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        `Error getting all advertisement packages: ${error.message}`
+      );
     }
   }
 
@@ -63,7 +73,10 @@ class AdvertisementPackageRepository {
       );
       return advertisementPackage;
     } catch (error) {
-      throw new Error(error.message);
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        `Error deleting advertisement package: ${error.message}`
+      );
     }
   }
 
@@ -75,7 +88,10 @@ class AdvertisementPackageRepository {
       });
       return advertisementPackage;
     } catch (error) {
-      throw new Error(error.message);
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        `Error getting advertisement package: ${error.message}`
+      );
     }
   }
 }
