@@ -53,14 +53,17 @@ class StreamController {
         order: req.query.order?.toLowerCase(),
       };
 
-      const getStreamsDto = new GetStreamsDto(query.size, query.page, query.status, query.sortBy, query.order);
+      const getStreamsDto = new GetStreamsDto(
+        query.size,
+        query.page,
+        query.status,
+        query.sortBy,
+        query.order
+      );
       await getStreamsDto.validate();
 
-      const { streams, total, page, totalPages } = await getStreamsByUserIdService(
-        query,
-        requesterId,
-        userId,
-      );
+      const { streams, total, page, totalPages } =
+        await getStreamsByUserIdService(query, requesterId, userId);
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -83,12 +86,18 @@ class StreamController {
         order: req.query.order?.toLowerCase(),
       };
 
-      const getStreamsDto = new GetStreamsDto(query.size, query.page, query.status, query.sortBy, query.order);
+      const getStreamsDto = new GetStreamsDto(
+        query.size,
+        query.page,
+        query.status,
+        query.sortBy,
+        query.order
+      );
       await getStreamsDto.validate();
 
       const { streams, total, page, totalPages } = await getStreamsService(
         query,
-        requesterId,
+        requesterId
       );
 
       return res
@@ -120,7 +129,7 @@ class StreamController {
         title,
         description,
         categoryIds,
-        enumMode,
+        enumMode
       );
       await updateStreamDto.validate();
 
@@ -196,7 +205,10 @@ class StreamController {
           }
         );
       } catch (error) {
-        throw new CoreException(StatusCodeEnums.InternalServerError_500, "Failed to create live stream, stream server doesn't return any responses");
+        throw new CoreException(
+          StatusCodeEnums.InternalServerError_500,
+          "Failed to create live stream, stream server doesn't return any responses"
+        );
       }
 
       const cloudflareStream = response.data?.liveInput;
@@ -241,7 +253,13 @@ class StreamController {
 
       const action = await toggleLikeStreamService(streamId, userId);
 
-      return res.status(StatusCodeEnums.OK_200).json({ message: `${action?.charAt(0)?.toUpperCase() + action?.slice(1)} stream successfully` });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({
+          message: `${
+            action?.charAt(0)?.toUpperCase() + action?.slice(1)
+          } stream successfully`,
+        });
     } catch (error) {
       next(error);
     }
@@ -255,10 +273,15 @@ class StreamController {
     };
 
     try {
-      const getRecommendedStreamsDto = new GetRecommendedStreamsDto(query.page, query.size, requesterId);
+      const getRecommendedStreamsDto = new GetRecommendedStreamsDto(
+        query.page,
+        query.size,
+        requesterId
+      );
       const validatedData = await getRecommendedStreamsDto.validate();
 
-      const { streams, total, page, totalPages } = await getRecommendedStreamsService(validatedData);
+      const { streams, total, page, totalPages } =
+        await getRecommendedStreamsService(validatedData);
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -275,13 +298,19 @@ class StreamController {
       size: req.query.size,
       categoryIds: req.query.categoryIds,
       requesterId,
-    }
-    
+    };
+
     try {
-      const getRelevantStreamsDto = new GetRelevantStreamsDto(query.page, query.size, query.categoryIds, requesterId);
+      const getRelevantStreamsDto = new GetRelevantStreamsDto(
+        query.page,
+        query.size,
+        query.categoryIds,
+        requesterId
+      );
       const validatedData = await getRelevantStreamsDto.validate();
 
-      const { streams, total, page, totalPages } = await getRelevantStreamsService(validatedData);
+      const { streams, total, page, totalPages } =
+        await getRelevantStreamsService(validatedData);
 
       return res
         .status(StatusCodeEnums.OK_200)
