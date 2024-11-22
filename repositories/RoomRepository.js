@@ -5,7 +5,7 @@ class RoomRepository {
   // Create a new room
   async createRoomRepository(roomData, session) {
     try {
-      const room = await Room.create([roomData], { session })
+      const room = await Room.create([roomData], { session });
 
       return room[0];
     } catch (error) {
@@ -77,7 +77,12 @@ class RoomRepository {
                               $filter: {
                                 input: "$participantDetails",
                                 as: "userDetail",
-                                cond: { $eq: ["$$userDetail._id", "$$participant.userId"] },
+                                cond: {
+                                  $eq: [
+                                    "$$userDetail._id",
+                                    "$$participant.userId",
+                                  ],
+                                },
                               },
                             },
                             0,
@@ -130,7 +135,6 @@ class RoomRepository {
       );
     }
   }
-
 
   // Update room by ID
   async updateRoomByIdRepository(roomId, updateData) {
@@ -217,31 +221,79 @@ class RoomRepository {
     try {
       const updateOperation = isAdding
         ? {
-          $addToSet: {
-            participants: {
-              userId: new mongoose.Types.ObjectId(participantId),
-              joinedDate: new Date(),
+            $addToSet: {
+              participants: {
+                userId: new mongoose.Types.ObjectId(participantId),
+                joinedDate: new Date(),
+              },
             },
-          },
-        }
+          }
         : {
-          $pull: {
-            participants: {
-              userId: new mongoose.Types.ObjectId(participantId),
+            $pull: {
+              participants: {
+                userId: new mongoose.Types.ObjectId(participantId),
+              },
             },
-          },
-        };
+          };
 
-      const updatedRoom = await Room.findByIdAndUpdate(roomId, updateOperation, {
-        new: true,
-        runValidators: true,
-      });
+      const updatedRoom = await Room.findByIdAndUpdate(
+        roomId,
+        updateOperation,
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
 
       return isAdding
         ? `User has been added to the room successfully`
         : `User has been removed from the room successfully`;
     } catch (error) {
-      throw new Error(`Failed to update participants for room ${roomId}: ${error.message}`);
+      throw new Error(
+        `Failed to update participants for room ${roomId}: ${error.message}`
+      );
+    }
+  }
+
+  async assignGroupChatAdminRepository(roomId, participantId) {
+    try {
+      const newAdminRoom = await Room.findOneAndUpdate(
+        {
+          _id: roomId,
+          "participants.userId": participantId,
+        },
+        {
+          $set: {
+            "participants.$.isAdmin": true,
+          },
+        },
+        { new: true }
+      );
+
+      return newAdminRoom;
+    } catch (error) {
+      throw new Error(`Error assigning group chat admin: ${error.message}`);
+    }
+  }
+
+  async removeGroupChatAdminRepository(roomId, participantId) {
+    try {
+      const newAdminRoom = await Room.findOneAndUpdate(
+        {
+          _id: roomId,
+          "participants.userId": participantId,
+        },
+        {
+          $set: {
+            "participants.$.isAdmin": false,
+          },
+        },
+        { new: true }
+      );
+
+      return newAdminRoom;
+    } catch (error) {
+      throw new Error(`Error removing group chat admin: ${error.message}`);
     }
   }
 }
