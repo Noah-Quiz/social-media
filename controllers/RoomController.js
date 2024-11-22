@@ -3,9 +3,9 @@ const CreatePrivateRoomDto = require("../dtos/Room/CreatePrivateRoomDto");
 const DeleteRoomDto = require("../dtos/Room/DeleteRoomDto");
 const GetRoomDto = require("../dtos/Room/GetRoomDto");
 const GetUserRoomsDto = require("../dtos/Room/GetUserRoomsDto");
-const UpdateRoomParticipantsDto = require("../dtos/Room/UdpdateRoomParticpantsDto");
+const UpdateRoomParticipantsDto = require("../dtos/Room/UpdateRoomParticpantsDto");
+const UpdateRoomDto = require("../dtos/Room/UpdateRoomDto");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
-const CoreException = require("../exceptions/CoreException");
 const { checkFileSuccess, deleteFile } = require("../middlewares/storeFile");
 const {
   createRoomService,
@@ -13,7 +13,6 @@ const {
   getRoomService,
   updateRoomService,
   getUserRoomsService,
-  updateRoomParticipantsService,
   addRoomParticipantService,
   removeRoomParticipantService,
 } = require("../services/RoomService");
@@ -143,7 +142,7 @@ class RoomController {
   async getRoomController(req, res, next) {
     const { roomId } = req.params;
     const userId = req.userId;
-    console.log("test")
+
     try {
       const getRoomDto = new GetRoomDto(roomId);
       await getRoomDto.validate();
@@ -192,17 +191,28 @@ class RoomController {
   // Update a Room by ID
   async updateRoomController(req, res, next) {
     const { roomId } = req.params;
+    const userId = req.userId;
     let avatar = req.file ? req.file.path : null;
     const { name } = req.body;
 
     try {
+      const updateRoomDto = new UpdateRoomDto(roomId);
+      await updateRoomDto.validate();
+
       const roomData = { name, avatar };
-      const room = await updateRoomService(roomId, roomData);
+      const room = await updateRoomService(roomId, userId, roomData);
+
+      if (req.file) {
+        await checkFileSuccess(avatar);
+      }
 
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ room, message: "Success" });
     } catch (error) {
+      if (req.file) {
+        await deleteFile(req.file.path);
+      }
       next(error);
     }
   }

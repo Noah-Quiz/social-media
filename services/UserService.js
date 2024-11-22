@@ -154,8 +154,10 @@ module.exports = {
         throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
       }
 
-      if (data.avatar) {
+      if (data.avatar !== null) {
         data.avatar = `${process.env.APP_BASE_URL}/${data.avatar}`;
+      } else {
+        delete data.avatar;
       }
 
       const result = await connection.userRepository.updateAnUserByIdRepository(
