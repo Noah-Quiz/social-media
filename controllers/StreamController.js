@@ -203,10 +203,7 @@ class StreamController {
             creatorId,
             streamName,
              recording: {
-              hideLiveViewerCount: false, 
-              mode: "automatic", 
-              requireSignedURLs: false, 
-              timeoutSeconds: 10,
+              mode: "automatic"
             },
           }
         );
