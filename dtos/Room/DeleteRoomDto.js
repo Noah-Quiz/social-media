@@ -2,7 +2,7 @@ const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
 const { validMongooseObjectId } = require("../../utils/validator");
 
-class GetRoomDto {
+class DeleteRoomDto {
     constructor(roomId) {
         this.roomId = roomId;
     }
@@ -25,4 +25,4 @@ class GetRoomDto {
     }
 }
 
-module.exports = GetRoomDto;
+module.exports = DeleteRoomDto;

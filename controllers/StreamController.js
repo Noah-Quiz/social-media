@@ -202,6 +202,9 @@ class StreamController {
           {
             creatorId,
             streamName,
+             recording: {
+              mode: "automatic"
+            },
           }
         );
       } catch (error) {
