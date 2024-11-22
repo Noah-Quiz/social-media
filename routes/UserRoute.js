@@ -69,12 +69,20 @@ route.put(
 
 /**
  * @swagger
- * /api/users/point:
+ * /api/users/point/{userId}:
  *   put:
  *     security:
  *       - bearerAuth: []
  *     summary: Update user points
  *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         description: The ID of the user whose points are being updated
+ *         schema:
+ *           type: string
+ *           example: "12345"
  *     requestBody:
  *       required: true
  *       content:
@@ -122,7 +130,8 @@ route.put(
  *       500:
  *         description: Internal server error
  */
-route.put("/point", userController.updatePointController);
+
+route.put("/point/:userId", userController.updatePointController);
 /**
  * @swagger
  * /api/users/follower/{userId}:
