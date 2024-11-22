@@ -351,12 +351,249 @@ route.post(
     roomController.createMemberRoomController
 );
 
+/**
+ * @swagger
+ * /api/rooms/user:
+ *   get:
+ *     summary: Get all rooms of the authenticated user
+ *     tags: [Rooms]
+ *     parameters:
+ *      - in: query
+ *        name: page
+ *        schema:
+ *          type: integer
+ *          example: 1
+ *        description: Page number for pagination
+ *      - in: query
+ *        name: size
+ *        schema:
+ *          type: integer
+ *          example: 20
+ *        description: Number of messages per page
+ *      - in: query
+ *        name: title
+ *        schema:
+ *          type: string
+ *        description: Search for rooms containing this string in the title
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved rooms
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalPages:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 total:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Invalid input or missing parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Room name and participantIds are required"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
+ */
 route.get("/user", roomController.getUserRoomsController);
 
+/**
+ * @swagger
+ * /api/rooms/{roomId}/add-participant:
+ *   put:
+ *     summary: 
+ *     tags: [Rooms]
+ *     parameters:
+ *      - in: path
+ *        name: roomId
+ *        schema:
+ *          type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               participantIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   description: "ID of a participant in the member room."
+ *                   example: "60d5f60d18b3a645edaf3b6d"
+ *     responses:
+ *       201:
+ *         description: member room created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 room:
+ *                   type: object
+ *                   properties:
+ *                     participantIds:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                         description: "IDs of participants"
+ *                         example: "60d5f60d18b3a645edaf3b6d"
+ *                 message:
+ *                   type: string
+ *                   description: "A success message"
+ *                   example: "Success"
+ *       400:
+ *         description: Invalid input or missing parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Room name and participantIds are required"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
+ */
 route.put("/:roomId/add-participant", roomController.addRoomParticipantController);
 
+/**
+ * @swagger
+ * /api/rooms/{roomId}/remove-participant:
+ *   put:
+ *     summary: 
+ *     tags: [Rooms]
+ *     parameters:
+ *      - in: path
+ *        name: roomId
+ *        schema:
+ *          type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               participantIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   description: "ID of a participant in the member room."
+ *                   example: "60d5f60d18b3a645edaf3b6d"
+ *     responses:
+ *       201:
+ *         description: member room created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 room:
+ *                   type: object
+ *                   properties:
+ *                     participantIds:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                         description: "IDs of participants"
+ *                         example: "60d5f60d18b3a645edaf3b6d"
+ *                 message:
+ *                   type: string
+ *                   description: "A success message"
+ *                   example: "Success"
+ *       400:
+ *         description: Invalid input or missing parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Room name and participantIds are required"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
+ */
 route.put("/:roomId/remove-participant", roomController.removeRoomParticipantController);
 
+/**
+ * @swagger
+ * /api/rooms/{roomId}:
+ *   get:
+ *     summary: Get a specific room by ID
+ *     tags: [Rooms]
+ *     parameters:
+ *      - in: path
+ *        name: roomId
+ *        schema:
+ *          type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved room
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Invalid input or missing parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Room name and participantIds are required"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
+ */
 route.get("/:roomId", roomController.getRoomController);
 
 /**
@@ -462,6 +699,49 @@ route.put(
     roomController.updateRoomController
 );
 
+/**
+ * @swagger
+ * /api/rooms/{roomId}:
+ *   delete:
+ *     summary: Get a specific room by ID
+ *     tags: [Rooms]
+ *     parameters:
+ *      - in: path
+ *        name: roomId
+ *        schema:
+ *          type: string
+ *     responses:
+ *       200:
+ *         description: Successfully delete room
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *       400:
+ *         description: Invalid input or missing parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Room name and participantIds are required"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
+ */
 route.delete("/:roomId", roomController.deleteRoomController);
 
 module.exports = route;
