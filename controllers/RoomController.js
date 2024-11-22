@@ -15,9 +15,12 @@ const {
   getUserRoomsService,
   addRoomParticipantService,
   removeRoomParticipantService,
+  assignGroupChatAdminService,
+  removeGroupChatAdminService,
 } = require("../services/RoomService");
 
 const mongoose = require("mongoose");
+const AssignGroupChatAdminDto = require("../dtos/Room/AssignGroupChatAdminDto");
 
 class RoomController {
   // Create a Room
@@ -238,13 +241,16 @@ class RoomController {
     const { roomId } = req.params;
     const { participantId } = req.body;
     const userId = req.userId;
-  
+
     try {
-      const addParticipantDto = new UpdateRoomParticipantsDto(roomId, participantId);
+      const addParticipantDto = new UpdateRoomParticipantsDto(
+        roomId,
+        participantId
+      );
       await addParticipantDto.validate();
-      
+
       await addRoomParticipantService(roomId, userId, participantId);
-  
+
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ message: "User added successfully" });
@@ -252,25 +258,72 @@ class RoomController {
       next(error);
     }
   }
-  
+
   async removeRoomParticipantController(req, res, next) {
     const { roomId } = req.params;
     const { participantId } = req.body;
     const userId = req.userId;
-  
+
     try {
-      const removeParticipantDto = new UpdateRoomParticipantsDto(roomId, participantId);
+      const removeParticipantDto = new UpdateRoomParticipantsDto(
+        roomId,
+        participantId
+      );
       await removeParticipantDto.validate();
-  
+
       await removeRoomParticipantService(roomId, userId, participantId);
-  
+
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ message: "User removed successfully" });
     } catch (error) {
       next(error);
     }
-  }  
+  }
+
+  async assignGroupChatAdminController(req, res, next) {
+    try {
+      const { roomId } = req.params;
+      const { participantId } = req.body;
+      const userId = req.userId;
+
+      const assignGroupChatAdminDto = new AssignGroupChatAdminDto(
+        roomId,
+        participantId
+      );
+      await assignGroupChatAdminDto.validate();
+
+      await assignGroupChatAdminService(roomId, userId, participantId);
+
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Assign new admin successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async removeGroupChatAdminController(req, res, next) {
+    try {
+      const { roomId } = req.params;
+      const { participantId } = req.body;
+      const userId = req.userId;
+
+      const assignGroupChatAdminDto = new AssignGroupChatAdminDto(
+        roomId,
+        participantId
+      );
+      await assignGroupChatAdminDto.validate();
+
+      await removeGroupChatAdminService(roomId, userId, participantId);
+
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Remove admin successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = RoomController;
