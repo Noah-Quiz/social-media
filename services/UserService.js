@@ -473,9 +473,42 @@ module.exports = {
       throw error;
     }
   },
-  async updatePointService(userId, amount, type) {
+  async updatePointService(userId, requesterId, amount, type) {
     try {
       const connection = new DatabaseTransaction();
+      const checkUser = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
+      if (!checkUser || checkUser === false) {
+        throw new CoreException(StatusCodeEnum.NotFound_404, "User not found");
+      }
+      const checkRequester =
+        await connection.userRepository.getAnUserByIdRepository(requesterId);
+      if (!checkRequester || checkRequester === false) {
+        throw new CoreException(
+          StatusCodeEnum.NotFound_404,
+          "Requester not found"
+        );
+      }
+      //only admin can do this
+      if (
+        ["add", "remove"].includes(type) &&
+        checkRequester?.role !== UserEnum.ADMIN
+      ) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "You do not have permission to perform this action"
+        );
+      }
+      if (
+        type === "exchange" &&
+        userId?.toString() !== requesterId?.toString()
+      ) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "You can't exchange points for other people"
+        );
+      }
       const user = await connection.userRepository.updateUserPointRepository(
         userId,
         amount,
