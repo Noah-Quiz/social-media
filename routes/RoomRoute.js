@@ -274,13 +274,13 @@ route.post(
  *             properties:
  *               name:
  *                 type: string
- *                 description: The name of the group room.
+ *                 description: The name of the member room.
  *                 example: "Team A"
  *               participantIds:
  *                 type: array
  *                 items:
  *                   type: string
- *                   description: "ID of a participant in the group room."
+ *                   description: "ID of a participant in the member room."
  *                   example: "60d5f60d18b3a645edaf3b6d"
  *               roomCreateImg:
  *                 type: string
@@ -288,7 +288,7 @@ route.post(
  *                 description: The image file for the room avatar (optional).
  *     responses:
  *       201:
- *         description: Member room created successfully
+ *         description: member room created successfully
  *         content:
  *           application/json:
  *             schema:
@@ -308,12 +308,12 @@ route.post(
  *                     enumMode:
  *                       type: string
  *                       description: "Type of the room"
- *                       enum: ["group"]
- *                       example: "group"
+ *                       enum: ["member"]
+ *                       example: "member"
  *                     avatar:
  *                       type: string
  *                       description: "Avatar image URL for the room (if uploaded)"
- *                       example: "uploads/group-avatar.png"
+ *                       example: "uploads/member-avatar.png"
  *                     participantIds:
  *                       type: array
  *                       items:
@@ -415,6 +415,14 @@ route.post(
  */
 route.get("/user", roomController.getUserRoomsController);
 
+route.put("/:roomId/add-participant", roomController.addRoomParticipantController);
+
+route.put("/:roomId/remove-participant", roomController.removeRoomParticipantController);
+
+route.put("/:roomId/add-participant", roomController.addRoomParticipantController);
+
+route.put("/:roomId/remove-participant", roomController.removeRoomParticipantController);
+
 /**
  * @swagger
  * /api/rooms/{roomId}:
@@ -460,7 +468,108 @@ route.get("/user", roomController.getUserRoomsController);
  */
 route.get("/:roomId", roomController.getRoomController);
 
-route.put("/:roomId", roomController.updateRoomController);
+/**
+ * @swagger
+ * /api/rooms/{roomId}:
+ *   put:
+ *     summary: Update a room by ID
+ *     description: Updates a room's name and avatar image. The user must be authenticated and authorized to update the room.
+ *     tags: [Rooms]
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the room to update.
+ *         example: "60d5f60d18b3a645edaf3b6d"
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The updated name of the room.
+ *                 example: "Team A Updated"
+ *               roomUpdateImg:
+ *                 type: string
+ *                 format: binary
+ *                 description: The updated image file for the room avatar (optional).
+ *     responses:
+ *       200:
+ *         description: Room updated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 room:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       description: ID of the updated room.
+ *                       example: "60d5f60d18b3a645edaf3b6d"
+ *                     name:
+ *                       type: string
+ *                       description: Name of the room.
+ *                       example: "Team A Updated"
+ *                     avatar:
+ *                       type: string
+ *                       description: Avatar image URL for the room (if updated).
+ *                       example: "uploads/team-a-updated.png"
+ *                 message:
+ *                   type: string
+ *                   description: A success message.
+ *                   example: "Success"
+ *       400:
+ *         description: Invalid input or missing parameters.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid roomId or input data."
+ *       401:
+ *         description: Unauthorized access.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Unauthorized access."
+ *       404:
+ *         description: Room not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Room not found."
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Server error."
+ */
+route.put(
+    "/:roomId", 
+    uploadFile.single("roomUpdateImg"),
+    roomController.updateRoomController
+);
 
 /**
  * @swagger

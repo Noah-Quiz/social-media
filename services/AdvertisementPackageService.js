@@ -14,7 +14,7 @@ module.exports = {
         );
       return advertisementPackage;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 
@@ -95,7 +95,7 @@ module.exports = {
         );
       return package;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 };
