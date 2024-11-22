@@ -5,7 +5,7 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const logger = getLogger("AUTH_MIDDLEWARE");
 const { match } = require("path-to-regexp");
 const publicRoutes = require("../routes/PublicRoute");
-const { validMongooseObjectId } = require("../utils/validator");
+require("dotenv").config();
 
 const isUnprotectedRoute = (path, method) => {
   const pathname = path.split("?")[0];
