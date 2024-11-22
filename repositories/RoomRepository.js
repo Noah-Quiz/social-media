@@ -15,7 +15,7 @@ class RoomRepository {
 
   async getRoomByEnumModeRepository(enumMode) {
     try {
-      const rooms = await Room.findOne({ 
+      const rooms = await Room.findOne({
         enumMode,
         isDeleted: false,
       });
@@ -36,13 +36,13 @@ class RoomRepository {
           },
         },
       });
-  
+
       return room || null;
     } catch (error) {
       throw new Error(`Error retrieving private room: ${error.message}`);
     }
-  }  
-  
+  }
+
   // Get a room by its ID
   async getRoomByIdRepository(roomId) {
     try {
@@ -50,6 +50,7 @@ class RoomRepository {
         {
           $match: {
             _id: new mongoose.Types.ObjectId(roomId),
+            isDeleted: false,
           },
         },
         {
@@ -121,7 +122,7 @@ class RoomRepository {
           },
         },
       ]);
-  
+
       return room[0];
     } catch (error) {
       throw new Error(
@@ -129,7 +130,7 @@ class RoomRepository {
       );
     }
   }
-   
+
 
   // Update room by ID
   async updateRoomByIdRepository(roomId, updateData) {
@@ -155,7 +156,7 @@ class RoomRepository {
         },
         { new: true }
       );
-      
+
       return deletedRoom;
     } catch (error) {
       throw new Error(
@@ -170,14 +171,14 @@ class RoomRepository {
       const page = query.page || 1;
       const size = parseInt(query.size, 10) || 10;
       const skip = (page - 1) * size;
-  
+
       const searchQuery = {
         isDeleted: false,
         participants: { $elemMatch: { userId: userId } },
       };
-  
+
       const totalRooms = await Room.countDocuments(searchQuery);
-  
+
       const rooms = await Room.find(
         searchQuery,
         { __v: 0, isDeleted: 0 },
@@ -187,7 +188,7 @@ class RoomRepository {
           limit: size,
         }
       );
-  
+
       return {
         rooms,
         total: totalRooms,
@@ -199,54 +200,6 @@ class RoomRepository {
     }
   }
 
-  //find room for DirectMessage
-  async findDMRoom(user1, user2) {
-    try {
-      return await Room.findOne({
-        type: "private",
-        participants: { $all: [user1, user2] }, // Check for rooms with both users as participants
-        isDeleted: false,
-      }).populate({
-        path: "participants",
-        select:
-          "fullName nickName role avatar email phoneNumber follow followBy _id",
-      });
-    } catch (error) {
-      throw new Error(`Error finding DM room between users: ${error.message}`);
-    }
-  }
-
-  //find room for userId
-  async findChatRoomUserId(userId) {
-    try {
-      return await Room.find({
-        participants: userId,
-        isDeleted: false,
-      }).populate({
-        path: "participants",
-        select:
-          "fullName nickName role avatar email phoneNumber follow followBy _id",
-      });
-    } catch (error) {
-      throw new Error(
-        `Error finding chat room for user with ID ${userId}: ${error.message}`
-      );
-    }
-  }
-
-  //find room for videoId
-  async findChatRoomVideoId(videoId) {
-    try {
-      return await Room.findOne({
-        videoId: videoId,
-        isDeleted: false,
-      }).populate("videoId");
-    } catch (error) {
-      throw new Error(
-        `Error finding chat room for video with ID ${videoId}: ${error.message}`
-      );
-    }
-  }
   async findPublicChatRoom() {
     try {
       const existingRoom = await Room.findOne({
@@ -260,32 +213,35 @@ class RoomRepository {
     }
   }
 
-  async handleMemberGroupChatRepository(roomId, memberId, action) {
+  async updateRoomParticipantsRepository(roomId, participantId, isAdding) {
     try {
-      let updateQuery;
+      const updateOperation = isAdding
+        ? {
+          $addToSet: {
+            participants: {
+              userId: new mongoose.Types.ObjectId(participantId),
+              joinedDate: new Date(),
+            },
+          },
+        }
+        : {
+          $pull: {
+            participants: {
+              userId: new mongoose.Types.ObjectId(participantId),
+            },
+          },
+        };
 
-      if (action === "DELETE") {
-        updateQuery = { $pull: { participants: memberId } };
-      } else if (action === "ADD") {
-        updateQuery = { $addToSet: { participants: memberId } };
-      } else {
-        throw new Error("Invalid action. Only 'ADD' and 'DELETE' are allowed.");
-      }
-
-      // Update the room document
-      const room = await Room.findByIdAndUpdate(roomId, updateQuery, {
+      const updatedRoom = await Room.findByIdAndUpdate(roomId, updateOperation, {
         new: true,
+        runValidators: true,
       });
 
-      if (!room) {
-        throw new Error(`Room with id ${roomId} not found.`);
-      }
-
-      return room;
+      return isAdding
+        ? `User has been added to the room successfully`
+        : `User has been removed from the room successfully`;
     } catch (error) {
-      throw new Error(
-        `Error handling members for room ${roomId}: ${error.message}`
-      );
+      throw new Error(`Failed to update participants for room ${roomId}: ${error.message}`);
     }
   }
 }

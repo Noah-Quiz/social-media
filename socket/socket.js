@@ -1,6 +1,5 @@
 const {
   updateStreamViewsService,
-  getStreamService,
 } = require("../services/StreamService");
 const {
   createAMessageService,
@@ -9,20 +8,19 @@ const {
 const { getUserByIdService } = require("../services/UserService");
 const getLogger = require("../utils/logger.js");
 const { getRoomService } = require("../services/RoomService.js");
-const { getVideoService } = require("../services/VideoService.js");
-const {
-  getBunnyStreamVideoService,
-} = require("../services/BunnyStreamService.js");
 const eventEmitter = require("./events.js");
-
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
+
 const logger = getLogger("SOCKET");
 
 module.exports = (io) => {
   const socketPath = io.opts.path;
+  
   logger.info(
     `Socket server started: ${process.env.APP_BASE_URL}${socketPath}`
   );
+
   io.on("connection", (socket) => {
     const userStreams = new Set();
     logger.info(`User connected: ${socket.id}`);
@@ -33,83 +31,63 @@ module.exports = (io) => {
         socket.join(streamId);
         userStreams.add(streamId);
         await updateViewersCount(streamId);
-        logger.info(`${socket.id} joined live room: ${streamId}`);
+        logger.info(`${socket.id} joined live stream room: ${streamId}`);
       } catch (error) {
-        logger.error(`Fail to join live room`);
+        logger.error(`Failed to join live stream room: ${error.message}`);
       }
     });
 
-    socket.on("join_video_chat", async ({ videoId }) => {
+    socket.on("join_conversation_chat", async ({ roomId }) => {
       try {
-        socket.join(videoId);
-        userStreams.add(streamId);
-        logger.info(`${socket.id} joined video room: ${videoId}`);
+        const token = socket.handshake.headers['authorization']
+        const userId = await validateAndExtractToken(token);
+        await getUserByIdService(userId);
+        
+        await getRoomService(userId, roomId);
+    
+        socket.join(roomId);
+        userStreams.add(roomId);
+        logger.info(`${socket.id} joined conversation room: ${roomId}`);
       } catch (error) {
-        logger.error(`Fail to join video room`);
+        logger.error(`Failed to join conversation room: ${error.message}`);
+        socket.emit("join_conversation_chat_error", { message: error.message });
       }
     });
+    
 
     if (socketPath == "/socket/chat") {
-      socket.on("join_room", (room) => {
-        socket.join(room);
-        console.log(`${socket.id} joined room: ${room}`);
-      });
-      // Handle sending messages in rooms
-      socket.on("send_message", async ({ roomId, userId, message, role }) => {
+      socket.on("send_message", async ({ roomId, token, message, role }) => {
         try {
-          const newMessage = await createAMessageService(
-            userId,
-            roomId,
-            message
-          );
+          const userId = await validateAndExtractToken(token);
           const user = await getUserByIdService(userId);
+
+          if (!socket.rooms.has(roomId)) {
+            logger.info(`${socket.id} is not in room ${roomId}, cannot send message`);
+            socket.emit("send_message_error", { error: `${socket.id} is not in room ${roomId}, cannot send message` });
+            return;
+          }
+
+          try {
+            await createAMessageService(userId, roomId, message);
+          } catch (error) {
+            logger.warn(error.message);
+          }
+
           io.to(roomId).emit("receive_message", {
-            id: newMessage._id,
             userId,
             sender: user.nickName,
             message,
             avatar: user.avatar,
             role,
           });
-          logger.info(`Message sent to room ${roomId}`);
+          
+          logger.info(`Message sent to room: ${roomId}`);
         } catch (error) {
-          io.to(roomId).emit("receive_message", {
-            error: `Fail to send message ${error.message}`,
+          socket.emit("send_message_error", {
+            error: `Failed to send message: ${error.message}`,
           }); 
         }
       });
-
-      // Handle updating a message
-      socket.on(
-        "update_message",
-        async ({ userId, messageId, roomId, newMessage }) => {
-          try {
-            // Update the message in the database
-            const updatedMessage = await updateMessageService(
-              userId,
-              messageId,
-              newMessage
-            );
-
-            if (updatedMessage) {
-              io.to(roomId).emit("message_updated", {
-                id: messageId,
-                message: newMessage,
-              });
-              logger.info(`Message ${messageId} updated in stream ${roomId}`);
-            } else {
-              socket.emit("update_message_error", {
-                error: `Message not found`,
-              });
-            }
-          } catch (error) {
-            socket.emit("update_message_error", {
-              error: `Failed to update message ${error.message} `,
-            });
-            logger.error("Error updating message", error);
-          }
-        }
-      );
     }
 
     // Handle leaving a livestream
@@ -123,7 +101,7 @@ module.exports = (io) => {
       }
     });
 
-    socket.on("leave_room", (roomId) => {
+    socket.on("leave_conversation", (roomId) => {
       logger.info(`${socket.id} left room: ${roomId}`);
     });
 
@@ -165,5 +143,17 @@ module.exports = (io) => {
   async function handleLeaveLiveStream(socket, streamId) {
     socket.leave(streamId);
     await updateViewersCount(streamId);
+  }
+  
+  async function validateAndExtractToken(token) {
+    try {
+      if (!token) throw new Error("Authorization token required")
+
+      const { _id } = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+      return _id;
+    } catch (error) {
+      throw error
+    }
   }
 };
