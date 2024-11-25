@@ -56,7 +56,6 @@ const convertMp4ToHls = async (filePath) => {
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-
     // Spawn FFmpeg process
     const ffmpeg = spawn(
       "ffmpeg",

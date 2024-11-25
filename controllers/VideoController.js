@@ -58,7 +58,6 @@ class VideoController {
         );
       }
       const newFilePath = await changeFileName(videoFile.path, video._id);
-      console.log("loi 1");
       const m3u8 = await convertMp4ToHls(newFilePath);
       const folderPath = await removeFileName(newFilePath);
 
@@ -71,10 +70,15 @@ class VideoController {
         );
         await deleteFile(newFilePath);
 
-        await updateAVideoByIdService(video._id, userId, {
-          title: title,
-          duration: closestTsFile.duration,
-        });
+        await updateAVideoByIdService(
+          video._id,
+          userId,
+          {
+            title: title,
+            duration: closestTsFile.duration,
+          },
+          thumbnail
+        );
       } catch (error) {
         await deleteFolder(folderPath);
         throw error;

@@ -49,9 +49,12 @@ const auditLogError = async (err, req, res, next) => {
         .status(StatusCodeEnums.InternalServerError_500)
         .json({ message: `Database Error: ${err.message}` });
     }
-    return res
-      .status(StatusCodeEnums.InternalServerError_500)
-      .json({ message: err.message });
+
+    const statusCode = Object.values(StatusCodeEnums).includes(err.code)
+      ? err.code
+      : StatusCodeEnums.InternalServerError_500;
+
+    return res.status(statusCode).json({ message: err.message });
   }
 };
 
