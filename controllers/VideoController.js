@@ -77,7 +77,6 @@ class VideoController {
             title: title,
             duration: closestTsFile.duration,
           },
-          thumbnail
         );
       } catch (error) {
         await deleteFolder(folderPath);
