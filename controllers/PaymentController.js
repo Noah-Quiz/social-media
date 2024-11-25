@@ -39,7 +39,9 @@ class PaymentController {
       await processPaymentQueue(userId, amountInVnd, paymentParams);
       await consumePaymentQueue();
       await consumeResponseQueue();
-      res.redirect("http://localhost:3001/popout/payment/success");
+      res.status(StatusCodeEnums.OK_200).json({
+        message: "Payment successful",
+      });
     } catch (error) {
       next(error);
     }
