@@ -426,16 +426,12 @@ route.get("/user", roomController.getUserRoomsController);
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
- *               participantIds:
- *                 type: array
- *                 items:
- *                   type: string
- *                   description: "ID of a participant in the member room."
- *                   example: "60d5f60d18b3a645edaf3b6d"
+ *               participantId:
+ *                 type: string
  *     responses:
  *       201:
  *         description: member room created successfully
@@ -444,15 +440,10 @@ route.get("/user", roomController.getUserRoomsController);
  *             schema:
  *               type: object
  *               properties:
- *                 room:
- *                   type: object
- *                   properties:
- *                     participantIds:
- *                       type: array
- *                       items:
- *                         type: string
- *                         description: "IDs of participants"
- *                         example: "60d5f60d18b3a645edaf3b6d"
+ *                 participantId:
+ *                   type: string
+ *                   description: "ID of the participant"
+ *                   example: "60d5f60d18b3a645edaf3b6d"
  *                 message:
  *                   type: string
  *                   description: "A success message"
@@ -497,16 +488,12 @@ route.put(
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
- *               participantIds:
- *                 type: array
- *                 items:
- *                   type: string
- *                   description: "ID of a participant in the member room."
- *                   example: "60d5f60d18b3a645edaf3b6d"
+ *               participantId:
+ *                 type: string
  *     responses:
  *       201:
  *         description: member room created successfully
@@ -515,15 +502,6 @@ route.put(
  *             schema:
  *               type: object
  *               properties:
- *                 room:
- *                   type: object
- *                   properties:
- *                     participantIds:
- *                       type: array
- *                       items:
- *                         type: string
- *                         description: "IDs of participants"
- *                         example: "60d5f60d18b3a645edaf3b6d"
  *                 message:
  *                   type: string
  *                   description: "A success message"
