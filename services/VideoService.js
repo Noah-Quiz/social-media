@@ -69,7 +69,7 @@ const updateAVideoByIdService = async (
     //   );
     // }
 
-    if (thumbnailFile !== null) {
+    if (thumbnailFile) {
       data.thumbnailUrl = `${process.env.APP_BASE_URL}/${thumbnailFile.path}`;
     } else {
       delete data.thumbnailUrl;
