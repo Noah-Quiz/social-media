@@ -57,8 +57,10 @@ class VideoController {
           "Create video failed"
         );
       }
-
+      console.log("loi 1");
       const newFilePath = await changeFileName(videoFile.path, video._id);
+      console.log("loi 2");
+
       const m3u8 = await convertMp4ToHls(newFilePath);
       const folderPath = await removeFileName(newFilePath);
       try {
