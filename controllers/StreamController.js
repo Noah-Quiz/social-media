@@ -201,10 +201,7 @@ class StreamController {
           `${streamServerBaseUrl}/api/cloudflare/live-input`,
           {
             creatorId,
-            streamName,
-             recording: {
-              mode: "automatic"
-            },
+            streamName         
           }
         );
       } catch (error) {

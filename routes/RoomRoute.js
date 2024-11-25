@@ -87,10 +87,7 @@ route.use(AuthMiddleware);
  *                   type: string
  *                   example: "Server error"
  */
-route.post(
-    "/private", 
-    roomController.createPrivateRoomController
-);
+route.post("/private", roomController.createPrivateRoomController);
 
 /**
  * @swagger
@@ -160,9 +157,9 @@ route.post(
  *                   example: "Server error"
  */
 route.post(
-    "/public",
-    requireRole(UserEnum.ADMIN),
-    roomController.createPublicRoomController
+  "/public",
+  requireRole(UserEnum.ADMIN),
+  roomController.createPublicRoomController
 );
 
 /**
@@ -253,9 +250,9 @@ route.post(
  *                   example: "Server error"
  */
 route.post(
-    "/group", 
-    uploadFile.single("roomCreateImg"),
-    roomController.createGroupRoomController
+  "/group",
+  uploadFile.single("roomCreateImg"),
+  roomController.createGroupRoomController
 );
 
 /**
@@ -346,9 +343,9 @@ route.post(
  *                   example: "Server error"
  */
 route.post(
-    "/member", 
-    uploadFile.single("roomCreateImg"),
-    roomController.createMemberRoomController
+  "/member",
+  uploadFile.single("roomCreateImg"),
+  roomController.createMemberRoomController
 );
 
 /**
@@ -419,13 +416,13 @@ route.get("/user", roomController.getUserRoomsController);
  * @swagger
  * /api/rooms/{roomId}/add-participant:
  *   put:
- *     summary: 
+ *     summary:
  *     tags: [Rooms]
  *     parameters:
  *      - in: path
  *        name: roomId
  *        schema:
- *          type: string 
+ *          type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -481,19 +478,22 @@ route.get("/user", roomController.getUserRoomsController);
  *                   type: string
  *                   example: "Server error"
  */
-route.put("/:roomId/add-participant", roomController.addRoomParticipantController);
+route.put(
+  "/:roomId/add-participant",
+  roomController.addRoomParticipantController
+);
 
 /**
  * @swagger
  * /api/rooms/{roomId}/remove-participant:
  *   put:
- *     summary: 
+ *     summary:
  *     tags: [Rooms]
  *     parameters:
  *      - in: path
  *        name: roomId
  *        schema:
- *          type: string 
+ *          type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -549,7 +549,10 @@ route.put("/:roomId/add-participant", roomController.addRoomParticipantControlle
  *                   type: string
  *                   example: "Server error"
  */
-route.put("/:roomId/remove-participant", roomController.removeRoomParticipantController);
+route.put(
+  "/:roomId/remove-participant",
+  roomController.removeRoomParticipantController
+);
 
 /**
  * @swagger
@@ -694,9 +697,9 @@ route.get("/:roomId", roomController.getRoomController);
  *                   example: "Server error."
  */
 route.put(
-    "/:roomId", 
-    uploadFile.single("roomUpdateImg"),
-    roomController.updateRoomController
+  "/:roomId",
+  uploadFile.single("roomUpdateImg"),
+  roomController.updateRoomController
 );
 
 /**
@@ -743,5 +746,167 @@ route.put(
  *                   example: "Server error"
  */
 route.delete("/:roomId", roomController.deleteRoomController);
+
+/**
+ * @swagger
+ * /api/rooms/{roomId}/group/admin/add:
+ *   put:
+ *     summary: Assign a group chat admin
+ *     tags: [Rooms]
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the room to update.
+ *         example: "60d5f60d18b3a645edaf3b6d"
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               participantId:
+ *                 type: string
+ *                 description: The ID of the participant to assign as admin.
+ *     responses:
+ *       200:
+ *         description: Room updated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: A success message.
+ *                   example: "Success"
+ *       400:
+ *         description: Invalid input or missing parameters.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid roomId or input data."
+ *       401:
+ *         description: Unauthorized access.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Unauthorized access."
+ *       404:
+ *         description: Room not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Room not found."
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Server error."
+ */
+route.put(
+  "/:roomId/group/admin/add",
+  roomController.assignGroupChatAdminController
+);
+
+/**
+ * @swagger
+ * /api/rooms/{roomId}/group/admin/remove:
+ *   put:
+ *     summary: Remove a group chat admin
+ *     tags: [Rooms]
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the room to update.
+ *         example: "60d5f60d18b3a645edaf3b6d"
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               participantId:
+ *                 type: string
+ *                 description: The ID of the participant to assign as admin.
+ *     responses:
+ *       200:
+ *         description: Room updated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: A success message.
+ *                   example: "Success"
+ *       400:
+ *         description: Invalid input or missing parameters.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid roomId or input data."
+ *       401:
+ *         description: Unauthorized access.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Unauthorized access."
+ *       404:
+ *         description: Room not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Room not found."
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Server error."
+ */
+route.put(
+  "/:roomId/group/admin/remove",
+  roomController.removeGroupChatAdminController
+);
 
 module.exports = route;
