@@ -201,7 +201,7 @@ class StreamController {
           `${streamServerBaseUrl}/api/cloudflare/live-input`,
           {
             creatorId,
-            streamName,
+            streamName         
           }
         );
       } catch (error) {

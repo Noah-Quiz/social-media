@@ -1,3 +1,5 @@
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
 const getReceiptService = async (id) => {
@@ -6,7 +8,7 @@ const getReceiptService = async (id) => {
     const receipt = await connection.receiptRepository.findByIdRepository(id);
     return receipt;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const getAllUserReceiptService = async (userId) => {
@@ -16,14 +18,14 @@ const getAllUserReceiptService = async (userId) => {
       userId
     );
     if (!user || user === false) {
-      throw new Error("User not found");
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
     }
     const receipts = await connection.receiptRepository.findByUserIdRepository(
       userId
     );
     return receipts;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -34,12 +36,15 @@ const deleteReceiptService = async (id) => {
       id
     );
     if (!checkReceipt) {
-      throw new Error("Receipt not found");
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Receipt not found"
+      );
     }
     const receipt = await connection.receiptRepository.softDeleteRepository(id);
     return receipt;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const createReceiptService = async ({
@@ -66,7 +71,7 @@ const createReceiptService = async ({
     );
     return receipt;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 module.exports = {
