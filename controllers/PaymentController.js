@@ -11,6 +11,7 @@ const {
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const PayWithPaypalDto = require("../dtos/Payment/PayWithPaypalDto");
 const CoreException = require("../exceptions/CoreException");
+const PayWithGooglePayDto = require("../dtos/Payment/PayWithGooglePayDto");
 const stripe = require("stripe")(
   "sk_test_51QMPvpP6v9wlQoaXtVPNg2OnszQ5KT5yheeJnV4M7I08EjHPQtmeIsmswPNfgNZhPhWX7joJfwJ8DszG3gpc17hG00rhkHZFeI"
 );
@@ -22,38 +23,26 @@ paypal.configure({
 });
 
 class PaymentController {
-  async payWithStripeController(req, res, next) {
-    req.session.amount = 3000;
+  async payWithGooglePayController(req, res, next) {
+    try {
+      const userId = req.userId;
+      const { id, price, method } = req.body;
+      const payWithGooglePayDto = new PayWithGooglePayDto(id, price, method);
+      await payWithGooglePayDto.validate();
 
-    const session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: "T-shirt",
-            },
-            unit_amount: 2000,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: "payment",
-      success_url: "http://localhost:4000/api/payments/stripe/success",
-      cancel_url: "http://localhost:4000/api/payments/stripe/cancel",
-    });
-    return res.status(StatusCodeEnums.OK_200).json({ url: session.url });
-  }
-
-  async successStripeController(req, res) {
-    res
-      .status(StatusCodeEnums.OK_200)
-      .json({
-        body: req.body,
-        query: req.query,
-        params: req.params,
-        amount: req.session.amount,
-      });
+      const paymentParams = {
+        id: id,
+        paymentMethod: method,
+        paymentPort: "Google Pay",
+      };
+      const amountInVnd = await convertMoney(Number(price), "USD", "VND");
+      await processPaymentQueue(userId, amountInVnd, paymentParams);
+      await consumePaymentQueue();
+      await consumeResponseQueue();
+      res.redirect("http://localhost:3001/popout/payment/success");
+    } catch (error) {
+      next(error);
+    }
   }
 
   async payWithPayPalController(req, res, next) {
