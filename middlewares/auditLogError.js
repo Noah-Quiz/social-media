@@ -3,7 +3,9 @@ const getLogger = require("../utils/logger");
 const logger = getLogger("AUDIT_LOG_ERROR");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
-const { LegacyContentPage } = require("twilio/lib/rest/content/v1/legacyContent");
+const {
+  LegacyContentPage,
+} = require("twilio/lib/rest/content/v1/legacyContent");
 const auditLogError = async (err, req, res, next) => {
   // Get the stack trace
   const stack = err.stack || "";
@@ -48,7 +50,7 @@ const auditLogError = async (err, req, res, next) => {
         .json({ message: `Database Error: ${err.message}` });
     }
     return res
-      .status(err.code || StatusCodeEnums.InternalServerError_500)
+      .status(StatusCodeEnums.InternalServerError_500)
       .json({ message: err.message });
   }
 };

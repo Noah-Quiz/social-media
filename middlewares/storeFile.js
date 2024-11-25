@@ -52,7 +52,6 @@ const convertMp4ToHls = async (filePath) => {
     const outputDir = dirPath; // Directory to save the output
     const m3u8File = path.join(outputDir, `output_${baseName}.m3u8`); // M3U8 playlist file
     const segmentPath = path.join(outputDir, `${baseName}_%03d.ts`); // TS segment path
-
     // Ensure the output directory exists
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });

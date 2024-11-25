@@ -57,12 +57,11 @@ class VideoController {
           "Create video failed"
         );
       }
-      console.log("loi 1");
       const newFilePath = await changeFileName(videoFile.path, video._id);
-      console.log("loi 2");
-
+      console.log("loi 1");
       const m3u8 = await convertMp4ToHls(newFilePath);
       const folderPath = await removeFileName(newFilePath);
+
       try {
         await replaceTsSegmentLinksInM3u8(m3u8, video._id);
         const closestTsFile = await findClosetTsFile(folderPath);
