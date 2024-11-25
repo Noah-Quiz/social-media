@@ -13,7 +13,7 @@ const createExchangeRateService = async (name, value, description) => {
       });
     return exchangeRate;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -24,7 +24,7 @@ const getExchangeRateService = async () => {
       await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
     return exchangeRates;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -56,7 +56,7 @@ const updateExchangeRateService = async (id, name, value, description) => {
       );
     return exchangeRate;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -87,7 +87,7 @@ const deleteExchangeRateService = async (id, name) => {
       });
     return exchangeRate;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const getSingleExchangeRateService = async (id, name) => {

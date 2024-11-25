@@ -43,7 +43,7 @@ class MessageController {
       await getMessagesDto.validate();
 
       const { messages, totalPages, page, totalMessages } =
-        await findMessagesByRoomIdService(roomId, query.page, query.size);
+        await findMessagesByRoomIdService(roomId, query.page, query.size, query.content);
       if (!messages || messages.length === 0) {
         throw new CoreException(
           StatusCodeEnums.NotFound_404,
@@ -77,7 +77,6 @@ class MessageController {
         .status(StatusCodeEnums.OK_200)
         .json({ data: message, message: "Success" });
     } catch (error) {
-      s;
       next(error);
     }
   }

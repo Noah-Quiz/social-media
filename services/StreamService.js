@@ -303,7 +303,11 @@ const updateStreamService = async (userId, streamId, updateData) => {
       );
     }
 
-    updateData.thumbnailUrl = `${process.env.APP_BASE_URL}/${updateData.thumbnailUrl}`;
+    if (updateData.thumbnailUrl !== null) {
+      updateData.thumbnailUrl = `${process.env.APP_BASE_URL}/${updateData.thumbnailUrl}`;
+    } else {
+      delete updateData.thumbnailUrl;
+    }
 
     const updatedData =
       await connection.streamRepository.updateStreamRepository(

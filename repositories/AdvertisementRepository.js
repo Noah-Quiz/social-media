@@ -3,6 +3,8 @@ const Advertisement = require("../entities/Advertisement");
 const AdvertisementPackage = require("../entities/AdvertisementPackage");
 const cron = require("node-cron");
 const User = require("../entities/UserEntity");
+const CoreException = require("../exceptions/CoreException");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 
 cron.schedule("* * * * *", async () => {
   const advertisements = await Advertisement.find({
@@ -58,7 +60,10 @@ class AdvertisementRepository {
       }
       const user = await User.findById(userId);
       if (user.wallet.coin < advertisementPackage.coin) {
-        throw new Error("Your coin is not enough");
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Error creating advertisement: Your coin is not enough"
+        );
       }
 
       user.wallet.coin -= advertisementPackage.coin;
@@ -73,7 +78,7 @@ class AdvertisementRepository {
       });
       return advertisement;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   }
 
@@ -90,7 +95,10 @@ class AdvertisementRepository {
       );
       return advertisement;
     } catch (error) {
-      throw new Error(error.message);
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        `Error extending advertisement: ${error.message}`
+      );
     }
   }
 
@@ -101,7 +109,10 @@ class AdvertisementRepository {
       }).sort("-coin");
       return advertisements;
     } catch (error) {
-      throw new Error(error.message);
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        error.message
+      );
     }
   }
 
@@ -121,7 +132,10 @@ class AdvertisementRepository {
       );
       return advertisement;
     } catch (error) {
-      throw new Error(error.message);
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        error.message
+      );
     }
   }
 
@@ -130,7 +144,10 @@ class AdvertisementRepository {
       const advertisement = await Advertisement.findById(adsId);
       return advertisement;
     } catch (error) {
-      throw new Error(error.message);
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        error.message
+      );
     }
   }
 
@@ -146,7 +163,10 @@ class AdvertisementRepository {
       );
       return advertisement;
     } catch (error) {
-      throw new Error(error.message);
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        error.message
+      );
     }
   }
 }

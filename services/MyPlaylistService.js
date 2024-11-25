@@ -31,7 +31,10 @@ const createAPlaylistService = async (
 
     if (data.thumbnail !== null) {
       data.thumbnail = `${process.env.APP_BASE_URL}/${data.thumbnail}`;
+    } else {
+      delete data.thumbnail;
     }
+    
     //validate name
     validLength(2, 100, playlistName, "Name of playlist");
     contentModeration(playlistName, "name of playlist");
