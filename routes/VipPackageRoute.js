@@ -1,9 +1,11 @@
 const express = require("express");
 const VipPackageController = require("../controllers/VipPackageController");
-
+const AuthMiddleware = require("../middlewares/AuthMiddleware");
+const requireRole = require("../middlewares/requireRole");
+const UserEnum = require("../enums/UserEnum");
 const router = express.Router();
 const vipPackageController = new VipPackageController();
-
+router.use(AuthMiddleware);
 /**
  * @swagger
  * tags:
@@ -221,7 +223,7 @@ router.get("/:id", (req, res, next) =>
  *               error: "An unexpected error occurred on the server"
  */
 
-router.post("/", (req, res, next) =>
+router.post("/", requireRole(UserEnum.ADMIN), (req, res, next) =>
   vipPackageController.createVipPackageController(req, res, next)
 );
 
@@ -261,7 +263,7 @@ router.post("/", (req, res, next) =>
  *       404:
  *         description: VIP package not found
  */
-router.put("/:id", (req, res, next) =>
+router.put("/:id", requireRole(UserEnum.ADMIN), (req, res, next) =>
   vipPackageController.updateVipPackageController(req, res, next)
 );
 
@@ -293,7 +295,7 @@ router.put("/:id", (req, res, next) =>
  *       404:
  *         description: VIP package not found
  */
-router.delete("/:id", (req, res, next) =>
+router.delete("/:id", requireRole(UserEnum.ADMIN), (req, res, next) =>
   vipPackageController.deleteVipPackageController(req, res, next)
 );
 

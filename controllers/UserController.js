@@ -325,11 +325,17 @@ class UserController {
   async updatePointController(req, res, next) {
     try {
       const { amount, type } = req.body;
-      const userId = req.userId;
+      const { userId } = req.params;
+      const requesterId = req.userId;
       const updateUserPointDto = new UpdateUserPointDto(amount, type);
       await updateUserPointDto.validate();
 
-      const result = await updatePointService(userId, parseInt(amount), type);
+      const result = await updatePointService(
+        userId,
+        requesterId,
+        parseInt(amount),
+        type
+      );
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ data: result, message: "Success" });
