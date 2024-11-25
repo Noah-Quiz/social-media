@@ -219,6 +219,13 @@ class RoomRepository {
 
   async updateRoomParticipantsRepository(roomId, participantId, isAdding) {
     try {
+      const room = await Room.findById(roomId);
+      const isParticipantAdmin = room.participants.some(
+        (participant) =>
+          participant.userId?.toString() === participantId?.toString() &&
+          participant.isAdmin
+      );
+
       const updateOperation = isAdding
         ? {
             $addToSet: {
@@ -244,6 +251,27 @@ class RoomRepository {
           runValidators: true,
         }
       );
+
+      if (
+        !isAdding &&
+        isParticipantAdmin &&
+        updatedRoom.participants.length > 1
+      ) {
+        await this.removeGroupChatAdminRepository(roomId, participantId);
+        const remainingParticipants = room.participants.filter(
+          (p) => p.userId.toString() !== participantId.toString()
+        );
+        const randomIndex = Math.floor(
+          Math.random() * remainingParticipants.length
+        );
+        const newAdminId = remainingParticipants[randomIndex].userId;
+
+        await this.assignGroupChatAdminRepository(roomId, newAdminId);
+      }
+
+      if (!isAdding && updatedRoom.participants.length === 0) {
+        await this.deleteRoomByIdRepository(roomId);
+      }
 
       return isAdding
         ? `User has been added to the room successfully`
