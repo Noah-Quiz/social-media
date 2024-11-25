@@ -26,9 +26,10 @@ class MemberGroupController {
     }
   }
   async getMemberGroupController(req, res, next) {
-    const ownerId = req.userId;
+    const requesterId = req.userId;
+    const { ownerId } = req.params;
     try {
-      const result = await getMemberGroupService(ownerId);
+      const result = await getMemberGroupService(ownerId, requesterId);
       if (!result) {
         throw new CoreException(
           StatusCodeEnums.NotFound_404,
