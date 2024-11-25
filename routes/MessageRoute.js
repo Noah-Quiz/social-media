@@ -6,65 +6,6 @@ const messageController = new MessageController();
 const messageRoutes = express.Router();
 messageRoutes.use(AuthMiddleware);
 
-/**
- * @swagger
- * /api/messages:
- *   post:
- *     security:
- *      - bearerAuth: []
- *     summary: Create a new message
- *     tags: [Messages]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/CreateMessageDto'
- *     responses:
- *       201:
- *         description: Create a message successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   type: object
- *                   properties:
- *                     content:
- *                       type: string
- *                       example: "Hello global"
- *                     roomId:
- *                       type: string
- *                       example: "6705fe54a94dffa584e0dbe7"
- *                     userId:
- *                       type: string
- *                       example: "66f6577eb4ffd9ae01870e72"
- *                     isDeleted:
- *                       type: boolean
- *                       example: false
- *                     _id:
- *                       type: string
- *                       example: "6729cf0c414f24486d055012"
- *                     dateCreated:
- *                       type: string
- *                       format: date-time
- *                       example: "2024-11-05T07:53:48.253Z"
- *                     lastUpdated:
- *                       type: string
- *                       format: date-time
- *                       example: "2024-11-05T07:53:48.253Z"
- *                     __v:
- *                       type: integer
- *                       example: 0
- *                 message:
- *                   type: string
- *                   example: "Success"
- *       400:
- *         description: Bad request
- *       500:
- *         description: Internal server error
- */
 messageRoutes.post("/", messageController.createAMessageController);
 
 /**
