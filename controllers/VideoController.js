@@ -57,10 +57,10 @@ class VideoController {
           "Create video failed"
         );
       }
-
       const newFilePath = await changeFileName(videoFile.path, video._id);
       const m3u8 = await convertMp4ToHls(newFilePath);
       const folderPath = await removeFileName(newFilePath);
+
       try {
         await replaceTsSegmentLinksInM3u8(m3u8, video._id);
         const closestTsFile = await findClosetTsFile(folderPath);
@@ -70,10 +70,14 @@ class VideoController {
         );
         await deleteFile(newFilePath);
 
-        await updateAVideoByIdService(video._id, userId, {
-          title: title,
-          duration: closestTsFile.duration,
-        });
+        await updateAVideoByIdService(
+          video._id,
+          userId,
+          {
+            title: title,
+            duration: closestTsFile.duration,
+          },
+        );
       } catch (error) {
         await deleteFolder(folderPath);
         throw error;
