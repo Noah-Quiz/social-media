@@ -741,7 +741,7 @@ route.delete("/:roomId", roomController.deleteRoomController);
  *         example: "60d5f60d18b3a645edaf3b6d"
  *     requestBody:
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
@@ -822,7 +822,7 @@ route.put(
  *         example: "60d5f60d18b3a645edaf3b6d"
  *     requestBody:
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
