@@ -1,6 +1,6 @@
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
-
+const { hasSpecialCharacters } = require("../../utils/validator");
 /**
  * @swagger
  * components:
@@ -47,11 +47,12 @@ class CreateVipPackageDto {
       !this.name ||
       typeof this.name !== "string" ||
       this.name.length < 1 ||
-      this.name.length > 100
+      this.name.length > 100 ||
+      hasSpecialCharacters(this.name)
     ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid field: name must be a non-empty string with a length between 1 and 100 characters."
+        "Invalid field: name must be a non-empty string with a length between 1 and 100 characters not containing special character."
       );
     }
 
