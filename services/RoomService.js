@@ -92,7 +92,7 @@ const createRoomService = async (userId, data) => {
             if (!groupParticipant) {
               throw new CoreException(
                 StatusCodeEnums.NotFound_404,
-                `User not found for ID: ${id}`
+                `User not found`
               );
             }
 
@@ -125,7 +125,7 @@ const createRoomService = async (userId, data) => {
             if (!memberParticipant) {
               throw new CoreException(
                 StatusCodeEnums.NotFound_404,
-                `User not found for ID: ${id}`
+                `User not found`
               );
             }
 
@@ -412,7 +412,7 @@ const addRoomParticipantService = async (roomId, userId, participantId) => {
     if (!user) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
-        `User not found for ID ${userId}`
+        `User not found`
       );
     }
 
@@ -422,7 +422,7 @@ const addRoomParticipantService = async (roomId, userId, participantId) => {
     if (!participant) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
-        `User not found for ID ${participantId}`
+        `User not found`
       );
     }
 
@@ -473,7 +473,7 @@ const removeRoomParticipantService = async (roomId, userId, participantId) => {
     if (!user) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
-        `User not found for ID ${userId}`
+        `User not found`
       );
     }
 
@@ -483,7 +483,7 @@ const removeRoomParticipantService = async (roomId, userId, participantId) => {
     if (!participant) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
-        `User not found for ID ${participantId}`
+        `User not found`
       );
     }
 
@@ -534,7 +534,7 @@ const assignGroupChatAdminService = async (roomId, userId, participantId) => {
     if (!user) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
-        `User not found for ID ${userId}`
+        `User not found`
       );
     }
 
@@ -544,7 +544,7 @@ const assignGroupChatAdminService = async (roomId, userId, participantId) => {
     if (!participant) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
-        `User not found for ID ${participantId}`
+        `User not found for`
       );
     }
 
@@ -619,7 +619,7 @@ const removeGroupChatAdminService = async (roomId, userId, participantId) => {
     if (!user) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
-        `User not found for ID ${userId}`
+        `User not found`
       );
     }
 
@@ -629,7 +629,7 @@ const removeGroupChatAdminService = async (roomId, userId, participantId) => {
     if (!participant) {
       throw new CoreException(
         StatusCodeEnums.NotFound_404,
-        `User not found for ID ${participantId}`
+        `User not found`
       );
     }
 
