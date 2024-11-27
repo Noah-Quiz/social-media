@@ -96,8 +96,5 @@ statisticRoutes.get(
  */
 statisticRoutes.get("/videos", statisticController.countTotalVideosController);
 
-statisticRoutes.get(
-  "/statistic/:ownerId",
-  historyController.getViewStatisticController
-);
+statisticRoutes.get("/:ownerId", historyController.getViewStatisticController);
 module.exports = statisticRoutes;
