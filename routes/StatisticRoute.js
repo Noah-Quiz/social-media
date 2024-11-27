@@ -7,8 +7,9 @@ const requireRole = require("../middlewares/requireRole");
 const UserEnum = require("../enums/UserEnum");
 
 const StatisticController = require("../controllers/StatisticController");
+const HistoryController = require("../controllers/HistoryController");
 const statisticController = new StatisticController();
-
+const historyController = new HistoryController();
 statisticRoutes.use(AuthMiddleware);
 statisticRoutes.use(requireRole(UserEnum.ADMIN));
 
@@ -95,4 +96,8 @@ statisticRoutes.get(
  */
 statisticRoutes.get("/videos", statisticController.countTotalVideosController);
 
+statisticRoutes.get(
+  "/statistic/:ownerId",
+  historyController.getViewStatisticController
+);
 module.exports = statisticRoutes;
