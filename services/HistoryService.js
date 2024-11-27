@@ -103,10 +103,30 @@ const getAllHistoryRecordsService = async (userId, query) => {
     throw error;
   }
 };
+const getViewStatisticService = async (ownerId, TimeUnit, value) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const checkUser = await connection.userRepository.getAnUserByIdRepository(
+      ownerId
+    );
+    if (!checkUser) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
+    const data = await connection.historyRepository.getViewStatisticRepository(
+      ownerId,
+      TimeUnit,
+      value
+    );
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 module.exports = {
   createHistoryRecordService,
   clearAllHistoryRecordsService,
   getAllHistoryRecordsService,
   deleteHistoryRecordService,
+  getViewStatisticService,
 };
