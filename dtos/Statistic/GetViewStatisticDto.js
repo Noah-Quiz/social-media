@@ -46,9 +46,14 @@ class GetViewStatisticDto {
     if (this.TimeUnit === "YEAR" && this.value !== undefined) {
       if (
         isNaN(this.value) || // Must be a number
-        !Number.isInteger(this.value) || // Must be an integer
+        !Number.isInteger(Number(this.value)) || // Must be an integer
         this.value < 2024 // Must be 2024 or greater
       ) {
+        console.log(
+          isNaN(this.value),
+          !Number.isInteger(this.value),
+          this.value < 2024
+        );
         throw new CoreException(
           StatusCodeEnums.BadRequest_400,
           "Invalid value in year case: year must be a positive integer starting from 2024"
