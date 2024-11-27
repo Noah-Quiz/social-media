@@ -20,6 +20,7 @@
     "crypto": "^1.0.1",
     "currency-converter-lt": "^2.0.1",
     "custom-passport-apple": "git+https://github.com/gs4lthung/passport-apple",
+    "dayjs": "^1.11.13",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "express-rate-limit": "^7.4.1",
