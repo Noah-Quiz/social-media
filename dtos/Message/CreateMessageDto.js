@@ -54,6 +54,12 @@ class CreateMessageDto {
         "Invalid Room ID"
       );
     }
+    if (!this.content) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Content is required"
+      );
+    }
   }
 }
 
