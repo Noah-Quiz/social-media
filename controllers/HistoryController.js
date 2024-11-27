@@ -102,6 +102,7 @@ class HistoryController {
         TimeUnit,
         value
       );
+
       await getViewStatisticDto.validate();
       const result = await getViewStatisticService(ownerId, TimeUnit, value);
       res
