@@ -10,6 +10,10 @@ const historyController = new HistoryController();
 const userController = new UserController();
 videoRoutes.use(AuthMiddleware);
 
+videoRoutes.get(
+  "/statistic/:ownerId",
+  historyController.getViewStatisticController
+);
 /**
  * @swagger
  * /api/videos/relevant:
@@ -1272,4 +1276,5 @@ videoRoutes.get(
   "/my-playlist/:playlistId",
   videoController.getVideosByPlaylistIdController
 );
+
 module.exports = videoRoutes;

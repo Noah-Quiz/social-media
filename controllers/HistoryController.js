@@ -4,13 +4,15 @@ const {
   getAllHistoryRecordsService,
   clearAllHistoryRecordsService,
   deleteHistoryRecordService,
+  getViewStatisticService,
 } = require("../services/HistoryService");
 const CoreException = require("../exceptions/CoreException");
 const CreateHistoryRecordDto = require("../dtos/History/CreateHistoryRecordDto");
 const GetHistoryRecordsDto = require("../dtos/History/GetHistoryRecordsDto");
 const DeleteHistoryRecordsDto = require("../dtos/History/DeleteHistoryRecordsDto");
 const DeleteHistoryRecordDto = require("../dtos/History/DeleteHistoryRecordDto");
-
+const { json } = require("express/lib/response");
+const GetViewStatisticDto = require("../dtos/Statistic/GetViewStatisticDto");
 class HistoryController {
   async createHistoryRecordController(req, res, next) {
     try {
@@ -87,6 +89,24 @@ class HistoryController {
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ historyRecords, total, page, totalPages, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async getViewStatisticController(req, res, next) {
+    try {
+      const { ownerId } = req.params;
+      const { TimeUnit, value } = req.query;
+      const getViewStatisticDto = new GetViewStatisticDto(
+        ownerId,
+        TimeUnit,
+        value
+      );
+      await getViewStatisticDto.validate();
+      const result = await getViewStatisticService(ownerId, TimeUnit, value);
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({ statistic: result, message: "This method is called" });
     } catch (error) {
       next(error);
     }
