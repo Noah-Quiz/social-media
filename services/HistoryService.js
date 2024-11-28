@@ -103,14 +103,35 @@ const getAllHistoryRecordsService = async (userId, query) => {
     throw error;
   }
 };
-const getViewStatisticService = async (ownerId, TimeUnit, value) => {
+
+const getViewStatisticService = async (ownerId, userId, TimeUnit, value) => {
   try {
     const connection = new DatabaseTransaction();
-    const checkUser = await connection.userRepository.getAnUserByIdRepository(
+    const checkOwner = await connection.userRepository.getAnUserByIdRepository(
       ownerId
     );
-    if (!checkUser) {
-      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    if (!checkOwner || checkOwner === false) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Owner not found");
+    }
+    const checkRequester =
+      await connection.userRepository.getAnUserByIdRepository(userId);
+    if (!checkRequester || checkRequester === false) {
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Requester not found"
+      );
+    }
+
+    const isOwner = ownerId?.toString() === userId?.toString();
+    const isAdmin = checkRequester.role === UserEnum.ADMIN;
+
+    // console.log("Owner: ", isOwner, "Admin: ", isAdmin);
+
+    if (!isOwner && !isAdmin) {
+      throw new CoreException(
+        StatusCodeEnums.Forbidden_403,
+        "You do not have permission to perform this action"
+      );
     }
     const data = await connection.historyRepository.getViewStatisticRepository(
       ownerId,
