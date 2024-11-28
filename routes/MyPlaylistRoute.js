@@ -140,6 +140,10 @@ myPlaylistRoutes.post(
  *               description:
  *                 type: string
  *                 example: "testCreate3 then update 2"
+ *               enumMode:
+ *                 type: string
+ *                 enum: [public, private]
+ *                 description: Enum mode of playlist ([public, private])
  *               playlistUpdate:
  *                 type: string
  *                 format: binary

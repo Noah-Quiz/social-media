@@ -38,6 +38,7 @@ class MyPlaylistRepository {
           $project: {
             _id: 1,
             playlistName: 1,
+            description: 1,
             dateCreated: 1,
             lastUpdated: 1,
             thumbnail: 1,
