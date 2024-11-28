@@ -94,9 +94,11 @@ class HistoryController {
     }
   }
   async getViewStatisticController(req, res, next) {
+    const userId = req.userId;
+    const { ownerId } = req.params;
+
+    const { TimeUnit, value } = req.query;
     try {
-      const { ownerId } = req.params;
-      const { TimeUnit, value } = req.query;
       const getViewStatisticDto = new GetViewStatisticDto(
         ownerId,
         TimeUnit,
@@ -104,10 +106,18 @@ class HistoryController {
       );
 
       await getViewStatisticDto.validate();
-      const result = await getViewStatisticService(ownerId, TimeUnit, value);
+      const result = await getViewStatisticService(
+        ownerId,
+        userId,
+        TimeUnit,
+        value
+      );
       res
         .status(StatusCodeEnums.OK_200)
-        .json({ statistic: result, message: "This method is called" });
+        .json({
+          statistic: result,
+          message: "Get video view statistic successfully",
+        });
     } catch (error) {
       next(error);
     }
