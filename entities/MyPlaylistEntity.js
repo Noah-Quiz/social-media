@@ -10,7 +10,11 @@ const myPlaylistSchema = new mongoose.Schema({
     enum: ["public", "private"],
     default: "private"
   },
-  thumbnail: { type: String, required: false },
+  thumbnail: { 
+    type: String, 
+    required: false,
+    default: null,
+  },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   videoIds: [
     {
