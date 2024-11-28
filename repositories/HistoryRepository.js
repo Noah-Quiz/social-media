@@ -182,6 +182,7 @@ class HistoryRepository {
       throw new Error(`Error deleting history record: ${error.message}`);
     }
   }
+
   async getViewStatisticRepository(ownerId, TimeUnit, value) {
     try {
       const today = dayjs().utc(); // Ensure UTC reference
@@ -263,10 +264,10 @@ class HistoryRepository {
             value != null &&
             value != undefined &&
             !isNaN(value) &&
-            Number.isInteger(value) &&
+            Number.isInteger(Number(value)) &&
             value > 0 &&
             value < 13
-              ? value
+              ? Number(value) - 1
               : today.month();
           // console.log("This month: ", targetMonth);
           const currentMonthStart = today
@@ -300,13 +301,13 @@ class HistoryRepository {
             value != null &&
             value != undefined &&
             !isNaN(value) &&
-            Number.isInteger(value) &&
+            Number.isInteger(Number(value)) &&
             value > 2024
               ? value
               : today.year();
           const currentYearStart = dayjs(`${targetYear}-01-01`).utc();
           const previousYearStart = currentYearStart.subtract(1, "year");
-          console.log("This year: ", targetYear);
+          // console.log("This year: ", targetYear);
           currentIntervals = generateIntervals(
             "month",
             currentYearStart,
