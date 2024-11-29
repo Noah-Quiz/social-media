@@ -1,3 +1,9 @@
+const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
+dayjs.extend(utc);
+const isoWeek = require("dayjs/plugin/isoWeek");
+dayjs.extend(isoWeek);
+
 const { default: mongoose } = require("mongoose");
 const User = require("../entities/UserEntity");
 const Video = require("../entities/VideoEntity");
@@ -680,6 +686,218 @@ class UserRepository {
       return { point: user.point, wallet: user.wallet };
     } catch (error) {
       throw new Error(`Error updating user point: ${error.message}`);
+    }
+  }
+  async getUserFollowerStatisticRepository(userId, TimeUnit, value) {
+    console.log(value);
+    try {
+      const today = dayjs().utc();
+      const user = await User.findOne({
+        _id: new mongoose.Types.ObjectId(userId),
+      });
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      let currentIntervals = [];
+      let previousIntervals = [];
+      let unit = {};
+
+      // Helper function to generate intervals
+      const generateIntervals = (
+        timeUnit,
+        currentStart,
+        duration,
+        incrementMethod
+      ) => {
+        const intervals = [];
+        if (timeUnit === "month") {
+          for (let i = 1; i < duration + 1; i++) {
+            const start = currentStart
+              .add(i, incrementMethod)
+              .startOf(timeUnit);
+            const end = currentStart.add(i, incrementMethod).endOf(timeUnit);
+            intervals.push({
+              startDate: start.toDate(), // Convert to native Date
+              endDate: end.toDate(),
+            });
+          }
+        } else {
+          for (let i = 0; i < duration; i++) {
+            const start = currentStart
+              .add(i, incrementMethod)
+              .startOf(timeUnit);
+            const end = currentStart.add(i, incrementMethod).endOf(timeUnit);
+            intervals.push({
+              startDate: start.toDate(), // Convert to native Date
+              endDate: end.toDate(),
+            });
+          }
+        }
+        return intervals;
+      };
+
+      switch (TimeUnit) {
+        case "DAY":
+          currentIntervals.push({
+            startDate: today.startOf("day").toDate(),
+            endDate: today.endOf("day").toDate(),
+          });
+          unit = {
+            xCollumn: "Days",
+            yCollumn: "Followers",
+            name: "Today's followers",
+            previous: "Yesterday",
+          };
+          previousIntervals.push({
+            startDate: today.subtract(1, "day").startOf("day").toDate(),
+            endDate: today.subtract(1, "day").endOf("day").toDate(),
+          });
+          break;
+
+        case "WEEK":
+          const weekStart = today.startOf("isoWeek");
+          const prevWeekStart = weekStart.subtract(1, "week");
+          currentIntervals = generateIntervals("day", weekStart, 7, "day");
+          previousIntervals = generateIntervals("day", prevWeekStart, 7, "day");
+          unit = {
+            xCollumn: "Days",
+            yCollumn: "Followers",
+            name: "This week's followers",
+            previous: "Last week",
+          };
+          break;
+
+        case "MONTH":
+          const targetMonth =
+            value != null &&
+            !isNaN(value) &&
+            Number.isInteger(Number(value)) &&
+            value > 0 &&
+            value < 13
+              ? Number(value) - 1
+              : today.month();
+          const currentMonthStart = today
+            .year(today.year())
+            .month(targetMonth)
+            .startOf("month");
+          const previousMonthStart = currentMonthStart.subtract(1, "month");
+          const daysInCurrentMonth = currentMonthStart.daysInMonth();
+          const daysInPreviousMonth = previousMonthStart.daysInMonth();
+
+          currentIntervals = generateIntervals(
+            "day",
+            currentMonthStart,
+            daysInCurrentMonth,
+            "day"
+          );
+          previousIntervals = generateIntervals(
+            "day",
+            previousMonthStart,
+            daysInPreviousMonth,
+            "day"
+          );
+          unit = {
+            xCollumn: "Days",
+            yCollumn: "Followers",
+            name: "This month's followers",
+            previous: "Last month",
+          };
+          break;
+
+        case "YEAR":
+          const targetYear =
+            value != null &&
+            !isNaN(value) &&
+            Number.isInteger(Number(value)) &&
+            value > 2024
+              ? value
+              : today.year();
+          const currentYearStart = dayjs(`${targetYear}-01-01`).utc();
+          const previousYearStart = currentYearStart.subtract(1, "year");
+
+          currentIntervals = generateIntervals(
+            "month",
+            currentYearStart,
+            12,
+            "month"
+          );
+          previousIntervals = generateIntervals(
+            "month",
+            previousYearStart,
+            12,
+            "month"
+          );
+          unit = {
+            xCollumn: "Months",
+            yCollumn: "Followers",
+            name: "This year's followers",
+            previous: "Last year",
+          };
+          break;
+
+        default:
+          throw new Error(`Invalid TimeUnit: ${TimeUnit}`);
+      }
+
+      // MongoDB query for follower count in intervals
+      const processIntervals = async (intervals) => {
+        const results = [];
+        for (const { startDate, endDate } of intervals) {
+          const count = await User.aggregate([
+            { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+            { $unwind: "$followBy" }, // Decompose the followBy array
+            {
+              $match: {
+                "followBy.followByDate": { $gte: startDate, $lte: endDate },
+              },
+            },
+            { $count: "count" },
+          ]);
+
+          results.push({
+            date: dayjs(startDate).format("YYYY-MM-DD"), // Format for consistency
+            followerCount: count[0]?.count || 0, // Handle cases where no matches are found
+          });
+        }
+        return results;
+      };
+
+      // Get current and previous data
+      const currentData = await processIntervals(currentIntervals);
+      const previousData = await processIntervals(previousIntervals);
+
+      // Calculate total followers for comparison
+      const currentTotal = currentData.reduce(
+        (sum, interval) => sum + interval.followerCount,
+        0
+      );
+      const previousTotal = previousData.reduce(
+        (sum, interval) => sum + interval.followerCount,
+        0
+      );
+
+      // Generate a description string
+      const descriptionString =
+        currentTotal >= previousTotal
+          ? `Increased by ${
+              currentTotal - previousTotal
+            } followers compared to ${unit.previous}`
+          : `Decreased by ${
+              previousTotal - currentTotal
+            } followers compared to ${unit.previous}`;
+
+      // Format the result
+      return {
+        title: unit.name,
+        xAxis: unit.xCollumn,
+        yAxis: unit.yCollumn,
+        data: currentData,
+        total: currentTotal,
+        description: descriptionString,
+      };
+    } catch (error) {
+      throw new Error(`Error retrieving follower statistics: ${error.message}`);
     }
   }
 }

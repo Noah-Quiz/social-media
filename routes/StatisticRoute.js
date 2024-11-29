@@ -8,8 +8,10 @@ const UserEnum = require("../enums/UserEnum");
 
 const StatisticController = require("../controllers/StatisticController");
 const HistoryController = require("../controllers/HistoryController");
+const UserController = require("../controllers/UserController");
 const statisticController = new StatisticController();
 const historyController = new HistoryController();
+const userController = new UserController();
 statisticRoutes.use(AuthMiddleware);
 
 /**
@@ -256,5 +258,10 @@ statisticRoutes.get(
 statisticRoutes.get(
   "/video-views/:ownerId",
   historyController.getViewStatisticController
+);
+
+statisticRoutes.get(
+  "/user-followers/:ownerId",
+  userController.getUserFollowerStatisticController
 );
 module.exports = statisticRoutes;

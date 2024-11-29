@@ -18,6 +18,7 @@ const {
   getFollowingService,
   updatePointService,
   checkUserAuthorizationService,
+  getUserFollowerStatisticService,
 } = require("../services/UserService");
 const { registerPremiumService } = require("../services/VipService");
 const mongoose = require("mongoose");
@@ -351,6 +352,24 @@ class UserController {
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ message: "Register premium success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async getUserFollowerStatisticController(req, res, next) {
+    try {
+      const { ownerId } = req.params;
+      const userId = req.userId;
+      const { TimeUnit, value } = req.query;
+      const data = await getUserFollowerStatisticService(
+        ownerId,
+        userId,
+        TimeUnit,
+        value
+      );
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ data, message: "Success" });
     } catch (error) {
       next(error);
     }
