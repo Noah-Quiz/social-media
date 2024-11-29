@@ -299,4 +299,33 @@ authRoutes.post(
   authController.resetPasswordController
 );
 
+/**
+ * @swagger
+ * /api/auth/check-access-token:
+ *   post:
+ *     summary: Check access token expired
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               accessToken:
+ *                 type: string
+ *                 required: true
+ *     responses:
+ *       200:
+ *         description: Access token is valid
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
+authRoutes.post(
+  "/check-access-token",
+  authController.checkAccessTokenExpiredController
+);
+
 module.exports = authRoutes;
