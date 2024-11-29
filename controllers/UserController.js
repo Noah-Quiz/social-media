@@ -18,6 +18,7 @@ const {
   getFollowingService,
   updatePointService,
   checkUserAuthorizationService,
+  getUserFollowerStatisticService,
 } = require("../services/UserService");
 const { registerPremiumService } = require("../services/VipService");
 const mongoose = require("mongoose");
@@ -32,7 +33,7 @@ const UpdateUserPointDto = require("../dtos/User/UpdateUserPointDto");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const UserEnum = require("../enums/UserEnum");
 const GetUserDto = require("../dtos/User/GetUserDto");
-
+const GetUserFollowerStatisticDto = require("../dtos/Statistic/GetUserFollowerStatisticDto");
 class UserController {
   async getAllUsersController(req, res, next) {
     try {
@@ -351,6 +352,31 @@ class UserController {
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ message: "Register premium success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async getUserFollowerStatisticController(req, res, next) {
+    try {
+      const { ownerId } = req.params;
+      const userId = req.userId;
+      const { TimeUnit, value } = req.query;
+      const getUserFollowerStatisticDto = new GetUserFollowerStatisticDto(
+        ownerId,
+        TimeUnit,
+        value
+      );
+      const data = await getUserFollowerStatisticService(
+        ownerId,
+        userId,
+        TimeUnit,
+        value
+      );
+
+      await getUserFollowerStatisticDto.validate();
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ data, message: "Success" });
     } catch (error) {
       next(error);
     }

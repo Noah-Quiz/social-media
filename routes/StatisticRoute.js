@@ -8,8 +8,10 @@ const UserEnum = require("../enums/UserEnum");
 
 const StatisticController = require("../controllers/StatisticController");
 const HistoryController = require("../controllers/HistoryController");
+const UserController = require("../controllers/UserController");
 const statisticController = new StatisticController();
 const historyController = new HistoryController();
+const userController = new UserController();
 statisticRoutes.use(AuthMiddleware);
 
 /**
@@ -256,5 +258,154 @@ statisticRoutes.get(
 statisticRoutes.get(
   "/video-views/:ownerId",
   historyController.getViewStatisticController
+);
+
+/**
+ * @swagger
+ * /api/statistics/user-followers/{ownerId}:
+ *   get:
+ *     security:
+ *       - bearerAuth: []  # Bearer token authentication
+ *     summary: Get user follower statistics
+ *     description: Retrieves follower statistics for a specific owner based on the specified time unit and optional interval value.
+ *     tags:
+ *       - Statistics
+ *     parameters:
+ *       - name: ownerId
+ *         in: path
+ *         description: ID of the user whose follower statistics are to be retrieved
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - name: TimeUnit
+ *         in: query
+ *         description: The time unit for the statistics (DAY, WEEK, MONTH, YEAR)
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum:
+ *             - DAY
+ *             - WEEK
+ *             - MONTH
+ *             - YEAR
+ *       - name: value
+ *         in: query
+ *         description: Optional interval value (e.g., month index or year). For example, `value=1` for January.
+ *         required: false
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved follower statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   description: The statistical data for the requested user followers
+ *                   properties:
+ *                     title:
+ *                       type: string
+ *                       description: The title of the statistics (e.g., "This week's followers")
+ *                     xAxis:
+ *                       type: string
+ *                       description: The x-axis label (e.g., "Days")
+ *                     yAxis:
+ *                       type: string
+ *                       description: The y-axis label (e.g., "Followers")
+ *                     data:
+ *                       type: array
+ *                       description: Data points for the graph
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           date:
+ *                             type: string
+ *                             format: date
+ *                             description: The date of the data point
+ *                           followerCount:
+ *                             type: integer
+ *                             description: Number of followers for the date
+ *                     total:
+ *                       type: integer
+ *                       description: Total followers in the current interval
+ *                     description:
+ *                       type: string
+ *                       description: Summary of follower statistics comparison
+ *                 message:
+ *                   type: string
+ *                   description: Informational message
+ *             examples:
+ *               example-response:
+ *                 value:
+ *                   data:
+ *                     title: "This week's followers"
+ *                     xAxis: "Days"
+ *                     yAxis: "Followers"
+ *                     data:
+ *                       - date: "2024-11-25"
+ *                         followerCount: 0
+ *                       - date: "2024-11-26"
+ *                         followerCount: 5
+ *                       - date: "2024-11-27"
+ *                         followerCount: 1
+ *                       - date: "2024-11-28"
+ *                         followerCount: 0
+ *                       - date: "2024-11-29"
+ *                         followerCount: 0
+ *                       - date: "2024-11-30"
+ *                         followerCount: 0
+ *                       - date: "2024-12-01"
+ *                         followerCount: 0
+ *                     total: 6
+ *                     description: "Increased 6 followers compared to the previous week"
+ *                   message: "Success"
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid query parameters
+ *       403:
+ *         description: Forbidden
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: You do not have permission to perform this action
+ *       404:
+ *         description: Resource not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: An unexpected error occurred
+ */
+
+statisticRoutes.get(
+  "/user-followers/:ownerId",
+  userController.getUserFollowerStatisticController
 );
 module.exports = statisticRoutes;
