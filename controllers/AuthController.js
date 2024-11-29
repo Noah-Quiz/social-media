@@ -9,6 +9,7 @@ const {
   verifyPhoneService,
   createResetPasswordTokenService,
   resetPasswordService,
+  checkAccessTokenExpiredService,
 } = require("../services/AuthService");
 const createAccessToken = require("../utils/createAccessToken");
 const passport = require("passport");
@@ -56,7 +57,6 @@ class AuthController {
       const { email, password } = req.body;
       const ipAddress = req.ip?.replace(/^.*:/, ""); //->192.168.0.101
 
-
       const loginDto = new LoginDto(email, password);
       await loginDto.validate();
 
@@ -79,7 +79,6 @@ class AuthController {
       const googleUser = req.user._json;
       const ipAddress = req.ip?.replace(/^.*:/, ""); //->192.168.0.101
 
-
       const user = await loginGoogleService(googleUser, ipAddress);
       const accessToken = createAccessToken(
         { _id: user._id, ip: ipAddress },
@@ -98,7 +97,6 @@ class AuthController {
     try {
       const googleUser = req.body;
       const ipAddress = req.ip?.replace(/^.*:/, ""); //->192.168.0.101
-
 
       const user = await loginGoogleService(googleUser, ipAddress);
       const accessToken = createAccessToken(
@@ -247,6 +245,18 @@ class AuthController {
           .status(StatusCodeEnums.OK_200)
           .json({ message: "Reset password successfully!" });
       }
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async checkAccessTokenExpiredController(req, res, next) {
+    try {
+      const { accessToken } = req.body;
+      await checkAccessTokenExpiredService(accessToken);
+      res.status(StatusCodeEnums.OK_200).json({
+        message: "Access token is valid",
+      });
     } catch (error) {
       next(error);
     }
