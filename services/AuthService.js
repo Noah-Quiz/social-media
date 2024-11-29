@@ -475,6 +475,37 @@ const resetPasswordService = async (token, newPassword) => {
   }
 };
 
+const checkAccessTokenExpiredService = async (accessToken) => {
+  try {
+    const decodedToken = jwt.verify(
+      accessToken,
+      process.env.ACCESS_TOKEN_SECRET
+    );
+    const email = decodedToken._id;
+
+    const connection = new DatabaseTransaction();
+    const user = await connection.userRepository.findUserById(userId);
+    if (!user)
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+
+    return user;
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new CoreException(
+        StatusCodeEnums.Unauthorized_401,
+        "Access token has expired"
+      );
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new CoreException(
+        StatusCodeEnums.Unauthorized_401,
+        "Invalid access token"
+      );
+    }
+    throw error;
+  }
+};
+
 module.exports = {
   signUpService,
   loginService,
@@ -486,4 +517,5 @@ module.exports = {
   verifyEmailService,
   createResetPasswordTokenService,
   resetPasswordService,
+  checkAccessTokenExpiredService,
 };
