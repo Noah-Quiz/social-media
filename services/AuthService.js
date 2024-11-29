@@ -481,7 +481,9 @@ const checkAccessTokenExpiredService = async (accessToken) => {
       accessToken,
       process.env.ACCESS_TOKEN_SECRET
     );
-    const email = decodedToken._id;
+    const userId = decodedToken._id;
+
+    console.log(userId);
 
     const connection = new DatabaseTransaction();
     const user = await connection.userRepository.findUserById(userId);
