@@ -1,9 +1,10 @@
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
+
 const { validMongooseObjectId } = require("../../utils/validator");
 const dayjs = require("dayjs");
 
-class GetViewStatisticDto {
+class getUserFollowerStatisticDto {
   constructor(ownerId, TimeUnit, value) {
     this.ownerId = ownerId;
     this.TimeUnit = TimeUnit;
@@ -83,4 +84,4 @@ class GetViewStatisticDto {
   }
 }
 
-module.exports = GetViewStatisticDto;
+module.exports = getUserFollowerStatisticDto;
