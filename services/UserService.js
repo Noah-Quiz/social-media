@@ -540,4 +540,46 @@ module.exports = {
       throw error;
     }
   },
+  async getUserFollowerStatisticService(ownerId, userId, TimeUnit, value) {
+    try {
+      const connection = new DatabaseTransaction();
+      const checkOwner =
+        await connection.userRepository.getAnUserByIdRepository(ownerId);
+      if (!checkOwner || checkOwner === false) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Owner not found"
+        );
+      }
+      const checkRequester =
+        await connection.userRepository.getAnUserByIdRepository(userId);
+      if (!checkRequester || checkRequester === false) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Requester not found"
+        );
+      }
+
+      const isOwner = ownerId?.toString() === userId?.toString();
+      const isAdmin = checkRequester.role === UserEnum.ADMIN;
+
+      console.log("Owner: ", isOwner, "Admin: ", isAdmin);
+
+      if (!isOwner && !isAdmin) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "You do not have permission to perform this action"
+        );
+      }
+      const followerStatistic =
+        await connection.userRepository.getUserFollowerStatisticRepository(
+          ownerId,
+          TimeUnit,
+          value
+        );
+      return followerStatistic;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
