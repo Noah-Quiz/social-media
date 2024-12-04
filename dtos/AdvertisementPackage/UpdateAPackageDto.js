@@ -49,7 +49,9 @@ class UpdateAPackageDto {
         "ID is required."
       );
     }
-    if (!validMongooseObjectId(this.id)) {
+    try {
+      await validMongooseObjectId(this.id);
+    } catch (error) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid package ID: ID must be a valid MongoDB ObjectId."
