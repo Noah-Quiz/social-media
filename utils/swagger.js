@@ -27,7 +27,7 @@ const options = {
         description: "Development server",
       },
       {
-        url: "https://social-media-z5a2.onrender.com",
+        url: "https://manistreamapi.tuniapp.cc",
         description: "Production server",
       },
       {
