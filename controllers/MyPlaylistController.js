@@ -13,14 +13,23 @@ const {
   addToPlaylistService,
   removeFromPlaylist,
 } = require("../services/MyPlaylistService");
+const GetPlaylistByUserIdDto = require("../dtos/MyPlaylist/GetPlaylistByUserIdDto");
+const GetPlaylistByIdDto = require("../dtos/MyPlaylist/GetPlaylistByIdDto");
 
 class MyPlaylistController {
   // get a playlist
   async getAPlaylistController(req, res, next) {
     const { playlistId } = req.params;
-
+    const requesterId = req.requesterId;
+    
     try {
-      const playlist = await getAPlaylistService(playlistId);
+      const getPlaylistByIdDto = new GetPlaylistByIdDto(
+        playlistId,
+        requesterId
+      );
+      await getPlaylistByIdDto.validate();
+
+      const playlist = await getAPlaylistService(playlistId, requesterId);
 
       res.status(StatusCodeEnums.OK_200).json({ playlist, message: "Success" });
     } catch (error) {
@@ -31,16 +40,33 @@ class MyPlaylistController {
   // get all playlists
   async getAllMyPlaylistsController(req, res, next) {
     try {
-      const query = {};
-      const userId = req.userId;
+      const { userId } = req.params;
+      const query = {
+        page: req.query.page,
+        size: req.query.size,
+        enumMode: req.query.enumMode?.toLowerCase(),
+        name: req.query.name,
+      }
+      const requesterId = req.requesterId;
 
-      const data = { query, userId };
+      const getPlaylistByUserIdDto = new GetPlaylistByUserIdDto(
+        requesterId,
+        query.enumMode,
+        query.page,
+        query.size,
+        query.name,
+      );
+      const validatedQuery = await getPlaylistByUserIdDto.validate();
 
-      const playlists = await getAllMyPlaylistsService(data);
+      const { playlists, total, page, totalPages } = await getAllMyPlaylistsService(
+        userId,
+        requesterId,
+        validatedQuery
+      );
 
       res
         .status(StatusCodeEnums.OK_200)
-        .json({ playlists, message: "Success" });
+        .json({ playlists, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }
@@ -49,7 +75,7 @@ class MyPlaylistController {
   //update playlist
   async updatePlaylistController(req, res, next) {
     try {
-      const { playlistName, description } = req.body;
+      const { playlistName, description, enumMode } = req.body;
       const { playlistId } = req.params;
       const userId = req.userId;
 
@@ -60,17 +86,21 @@ class MyPlaylistController {
         playlistId,
         playlistName,
         description,
-        thumbnail
+        thumbnail,
+        enumMode
       );
       await updatePlaylistDto.validate();
 
-      const updatedPlaylist = await updatePlaylistService(
+      const data = {
         userId,
         playlistId,
         playlistName,
         description,
-        thumbnail
-      );
+        thumbnail,
+        enumMode,
+      };
+
+      const updatedPlaylist = await updatePlaylistService(data);
 
       res
         .status(StatusCodeEnums.OK_200)
@@ -101,7 +131,7 @@ class MyPlaylistController {
 
   async createAPlaylist(req, res, next) {
     try {
-      const { playlistName, description } = req.body;
+      const { playlistName, description, enumMode } = req.body;
       const userId = req.userId;
 
       // Check if a thumbnail file is provided
@@ -110,6 +140,7 @@ class MyPlaylistController {
       const createPlaylistDto = new CreatePlaylistDto(
         userId,
         playlistName,
+        enumMode,
         description,
         thumbnail
       );
@@ -119,7 +150,8 @@ class MyPlaylistController {
         userId,
         playlistName,
         description,
-        thumbnail
+        thumbnail,
+        enumMode
       );
 
       res.status(StatusCodeEnums.OK_200).json({ playlist, message: "Success" });
@@ -127,6 +159,7 @@ class MyPlaylistController {
       next(error);
     }
   }
+
   async addToPlaylistController(req, res, next) {
     try {
       const { playlistId } = req.params;
@@ -144,6 +177,7 @@ class MyPlaylistController {
       next(error);
     }
   }
+
   async removeFromPlaylist(req, res, next) {
     try {
       const { playlistId } = req.params;

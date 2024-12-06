@@ -8,7 +8,7 @@ const {
 } = require("../services/MemberGroupService");
 
 class MemberGroupController {
-  async updateVipController(req, res, next) {
+  async updateMembershipController(req, res, next) {
     try {
       const { userId, ownerId, packId } = req.body;
       if (!userId || !ownerId || !packId) {
@@ -26,9 +26,10 @@ class MemberGroupController {
     }
   }
   async getMemberGroupController(req, res, next) {
-    const ownerId = req.userId;
+    const requesterId = req.userId;
+    const { ownerId } = req.params;
     try {
-      const result = await getMemberGroupService(ownerId);
+      const result = await getMemberGroupService(ownerId, requesterId);
       if (!result) {
         throw new CoreException(
           StatusCodeEnums.NotFound_404,
@@ -58,10 +59,9 @@ class MemberGroupController {
       next(error);
     }
   }
-  async deleteMemberGroupController(req, res) {
+  async deleteMemberGroupController(req, res, next) {
     const requester = req.userId;
     const { ownerId } = req.params;
-    console.log("Controller: ", ownerId);
     try {
       const result = await deleteMemberGroupService(requester, ownerId);
       if (!result) {

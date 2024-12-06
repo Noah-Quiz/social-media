@@ -1,5 +1,7 @@
-require("dotenv").config();
+// controllers/PaymentController.js
+
 const paypal = require("paypal-rest-sdk");
+const paypalConfig = require("../configs/paypal.config");
 const { convertMoney } = require("../services/PaymentService");
 const {
   processPaymentQueue,
@@ -9,12 +11,42 @@ const {
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const PayWithPaypalDto = require("../dtos/Payment/PayWithPaypalDto");
 const CoreException = require("../exceptions/CoreException");
+const PayWithGooglePayDto = require("../dtos/Payment/PayWithGooglePayDto");
+const stripe = require("stripe")(
+  "sk_test_51QMPvpP6v9wlQoaXtVPNg2OnszQ5KT5yheeJnV4M7I08EjHPQtmeIsmswPNfgNZhPhWX7joJfwJ8DszG3gpc17hG00rhkHZFeI"
+);
+
 paypal.configure({
-  mode: "sandbox",
-  client_id: process.env.PAYPAL_CLIENT_ID,
-  client_secret: process.env.PAYPAL_SECRET_KEY,
+  mode: paypalConfig.mode,
+  client_id: paypalConfig.client_id,
+  client_secret: paypalConfig.client_secret,
 });
+
 class PaymentController {
+  async payWithGooglePayController(req, res, next) {
+    try {
+      const userId = req.userId;
+      const { id, price, method } = req.body;
+      const payWithGooglePayDto = new PayWithGooglePayDto(id, price, method);
+      await payWithGooglePayDto.validate();
+
+      const paymentParams = {
+        id: id,
+        paymentMethod: method,
+        paymentPort: "Google Pay",
+      };
+      const amountInVnd = await convertMoney(Number(price), "USD", "VND");
+      await processPaymentQueue(userId, amountInVnd, paymentParams);
+      await consumePaymentQueue();
+      await consumeResponseQueue();
+      res.status(StatusCodeEnums.OK_200).json({
+        message: "Payment successful",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async payWithPayPalController(req, res, next) {
     try {
       const userId = req.userId;
@@ -29,10 +61,7 @@ class PaymentController {
         payer: {
           payment_method: "paypal",
         },
-        redirect_urls: {
-          return_url: process.env.PAYPAL_SUCCESS_URL,
-          cancel_url: process.env.PAYPAL_CANCEL_URL,
-        },
+        redirect_urls: paypalConfig.redirect_urls, // Use dynamic URLs from config
         transactions: [
           {
             item_list: {
@@ -54,6 +83,7 @@ class PaymentController {
           },
         ],
       };
+
       paypal.payment.create(create_payment_json, function (error, payment) {
         if (error) {
           throw error;
@@ -85,7 +115,6 @@ class PaymentController {
       execute_payment_json,
       async function (error, payment) {
         if (error) {
-          console.log(error.response);
           throw error;
         } else {
           const amountInVnd = await convertMoney(
@@ -101,9 +130,7 @@ class PaymentController {
           await processPaymentQueue(userId, amountInVnd, paymentParams);
           await consumePaymentQueue();
           await consumeResponseQueue();
-          res
-            .status(StatusCodeEnums.OK_200)
-            .json({ message: "Payment successfully." });
+          res.redirect("http://localhost:3001/popout/payment/success");
         }
       }
     );

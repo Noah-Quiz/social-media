@@ -13,15 +13,16 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *       properties:
  *         title:
  *            type: string
- *            description: The stream's title.
+ *            description: The stream's title. Must be a minimum of 2 characters and a maximum of 100 characters.
  *         description:
  *            type: string
- *            description: The stream's description. 
+ *            description: The stream's description. Must be a minimum of 1 characters and a maximum of 2000 characters.
  *         categoryIds:
  *           type: array
  *           items:
  *            type: string
- *           description: The category ids.
+ *            example: 671a01672a386fca99c73c02
+ *           description: The array of category ID (optional)
  */
 class CreateStreamDto {
   constructor(title, description, categoryIds) {

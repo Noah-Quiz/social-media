@@ -3,6 +3,7 @@ const logger = getLogger("RABBITMQ");
 const amqp = require("amqplib");
 require("dotenv").config();
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const eventEmitter = require("../socket/events");
 
 async function sendMessageToQueue(queue, message) {
   try {
@@ -108,6 +109,12 @@ async function consumeMessageFromQueue(queue, callback) {
                       null,
                       session
                     );
+                  if (result) {
+                    eventEmitter.emit("live_stream_connected", {
+                      streamId: result._id.toString(),
+                      streamServerUrl: result.streamServerUrl,
+                    });
+                  }
 
                   connection.commitTransaction();
                 } catch (error) {

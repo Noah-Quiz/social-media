@@ -9,6 +9,7 @@ const {
   verifyPhoneService,
   createResetPasswordTokenService,
   resetPasswordService,
+  checkAccessTokenExpiredService,
 } = require("../services/AuthService");
 const createAccessToken = require("../utils/createAccessToken");
 const passport = require("passport");
@@ -24,6 +25,7 @@ const CreateResetPasswordTokenDto = require("../dtos/Auth/CreateResetPasswordTok
 const LoginGoogleDto = require("../dtos/Auth/LoginGoogleDto");
 const LoginAppleDto = require("../dtos/Auth/LoginAppleDto");
 const VerifyEmailDto = require("../dtos/Auth/VerifyEmailDto");
+const ResetPasswordDto = require("../dtos/Auth/ResetPasswordDto");
 require("dotenv").config();
 
 class AuthController {
@@ -33,8 +35,7 @@ class AuthController {
       const signupDto = new SignupDto(fullName, email, phoneNumber, password);
       await signupDto.validate();
 
-      const ipAddress =
-        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+      const ipAddress = req.ip?.replace(/^.*:/, ""); //->192.168.0.101
 
       const user = await signUpService(
         fullName,
@@ -54,8 +55,7 @@ class AuthController {
   async loginController(req, res, next) {
     try {
       const { email, password } = req.body;
-      const ipAddress =
-        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+      const ipAddress = req.ip?.replace(/^.*:/, ""); //->192.168.0.101
 
       const loginDto = new LoginDto(email, password);
       await loginDto.validate();
@@ -66,7 +66,6 @@ class AuthController {
         process.env.ACCESS_TOKEN_SECRET,
         process.env.ACCESS_TOKEN_EXPIRE
       );
-      console.log(accessToken);
       res
         .status(StatusCodeEnums.OK_200)
         .json({ accessToken, userId: user._id, message: "Login successfully" });
@@ -78,9 +77,7 @@ class AuthController {
   async loginGoogleController(req, res, next) {
     try {
       const googleUser = req.user._json;
-      console.log(googleUser);
-      const ipAddress =
-        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+      const ipAddress = req.ip?.replace(/^.*:/, ""); //->192.168.0.101
 
       const user = await loginGoogleService(googleUser, ipAddress);
       const accessToken = createAccessToken(
@@ -99,8 +96,7 @@ class AuthController {
   async loginGoogleFromMobileController(req, res, next) {
     try {
       const googleUser = req.body;
-      const ipAddress =
-        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+      const ipAddress = req.ip?.replace(/^.*:/, ""); //->192.168.0.101
 
       const user = await loginGoogleService(googleUser, ipAddress);
       const accessToken = createAccessToken(
@@ -237,13 +233,30 @@ class AuthController {
     try {
       const { token } = req.params;
       const { newPassword } = req.body;
-
+      const resetPasswordDto = new ResetPasswordDto(newPassword);
+      try {
+        await resetPasswordDto.validate();
+      } catch (error) {
+        throw new Error(error.message);
+      }
       const user = await resetPasswordService(token, newPassword);
       if (user) {
         res
           .status(StatusCodeEnums.OK_200)
           .json({ message: "Reset password successfully!" });
       }
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async checkAccessTokenExpiredController(req, res, next) {
+    try {
+      const { accessToken } = req.body;
+      await checkAccessTokenExpiredService(accessToken);
+      res.status(StatusCodeEnums.OK_200).json({
+        message: "Access token is valid",
+      });
     } catch (error) {
       next(error);
     }

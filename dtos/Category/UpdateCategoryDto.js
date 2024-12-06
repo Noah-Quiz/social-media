@@ -11,7 +11,7 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *       properties:
  *         name:
  *           type: string
- *           description: The category's name.
+ *           description: The category's name. Must be a minimum of 2 characters and a maximum of 100 characters.
 
  */
 class UpdateCategoryDto {
@@ -21,13 +21,20 @@ class UpdateCategoryDto {
   }
 
   async validate() {
+    if (this.name === "") {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Name must not be an empty string"
+      );
+    }
+
+    if (!this.categoryId) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Category ID is required"
+      );
+    }
     try {
-      if (!this.categoryId) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Category ID is required"
-        );
-      }
       await validMongooseObjectId(this.categoryId);
     } catch (error) {
       throw new CoreException(

@@ -27,14 +27,17 @@ class MessageRepository {
     }
   }
 
-  async updateMessage(messageId, updateData, session) {
-    updateData.lastUpdated = new Date();
+  async updateMessage(messageId, newMessage, session) {
     try {
-      const message = await Message.findByIdAndUpdate(messageId, updateData, {
-        new: true,
-        runValidators: true,
-        session,
-      });
+      const message = await Message.findByIdAndUpdate(
+        messageId,
+        { content: newMessage, lastUpdated: Date.now() },
+        {
+          new: true,
+          runValidators: true,
+          session,
+        }
+      );
 
       if (!message) {
         throw new Error("Message not found");
@@ -65,19 +68,37 @@ class MessageRepository {
     }
   }
 
-  async getMessagesByRoomId(id, page, size) {
+  async deleteMessagesByRoomId(roomId, session) {
+    try {
+      const messages = await Message.updateMany(
+        { roomId: roomId, isDeleted: false },
+        { isDeleted: true, lastUpdated: new Date() },
+        { session }
+      );
+
+      return messages;
+    } catch (error) {
+      throw new Error(`Error deleting messages: ${error.message}`);
+    }
+  }
+
+  async getMessagesByRoomId(id, page, size, content) {
     try {
       const skip = (page - 1) * size || 0;
-      const searchQuery = { roomId: id, isDeleted: false };
-
+      const searchQuery = {
+        roomId: id,
+        content: { $regex: content || "", $options: "i" },
+      };
       const totalMessages = await Message.countDocuments(searchQuery);
-      const messages = await Message.find({
-        roomId: new mongoose.Types.ObjectId(id),
-        isDeleted: false,
-      })
+      const messages = await Message.find(searchQuery)
         .sort({ dateCreated: -1 })
         .limit(size)
         .skip(skip);
+      messages.forEach((message) => {
+        if (message.isDeleted) {
+          message.content = "This message has been deleted";
+        }
+      });
       return {
         messages,
         totalPages: Math.ceil(totalMessages / size),

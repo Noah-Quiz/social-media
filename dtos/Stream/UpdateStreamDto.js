@@ -15,26 +15,31 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *       properties:
  *         title:
  *           type: string
- *           description: The stream's title.
+ *           description: The stream's title. Must be a minimum of 2 characters and a maximum of 100 characters.
  *         description:
  *           type: string
- *           description: The stream's description.
+ *           description: The stream's description. Must be a minimum of 1 characters and a maximum of 2000 characters.
  *         categoryIds:
  *           type: array
  *           items:
  *             type: string
- *           description: The added category IDs.
+ *           description: The array of category ID. If devs don't want to update, the same categoryIds array still need to include their existing categories. If array is empty, the stream categories will be empty.
  *         streamThumbnail:
  *           type: string
  *           format: binary
  *           description: The thumbnail file for the stream.
+ *         enumMode:
+ *           type: string
+ *           enum: [public, private]
+ *           description: Stream accessibility
  */
 class UpdateStreamDto {
-  constructor(streamId, title, description, categoryIds) {
+  constructor(streamId, title, description, categoryIds, enumMode) {
     this.streamId = streamId;
     this.title = title;
     this.description = description;
     this.categoryIds = categoryIds;
+    this.enumMode = enumMode;
   }
   async validate() {
     if (!this.streamId) {
@@ -51,10 +56,15 @@ class UpdateStreamDto {
         "Invalid Stream ID"
       );
     }
-    if (!this.title) {
+    if (
+      this.enumMode != null &&
+      !["public", "private", "unlisted", "member", "draft"].includes(
+        this.enumMode
+      )
+    ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Title is required"
+        "Invalid enum mode, must be in ['public', 'private', 'unlisted', 'member', 'draft']"
       );
     }
     if (this.categoryIds !== null && !Array.isArray(this.categoryIds)) {

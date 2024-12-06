@@ -1,12 +1,6 @@
-const GetVideosByPlaylistIdDto = require("../dtos/Video/GetVideosByPlaylistId");
 const path = require("path");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
-const {
-  createBunnyStreamVideoService,
-  updateBunnyStreamVideoService,
-  getBunnyStreamVideoService,
-} = require("../services/BunnyStreamService");
 const {
   createVideoService,
   toggleLikeVideoService,
@@ -18,6 +12,8 @@ const {
   getVideoService,
   getVideosService,
   getVideoLikeHistoryService,
+  getRelevantVideosService,
+  getRecommendedVideosService,
 } = require("../services/VideoService");
 const { default: mongoose } = require("mongoose");
 const {
@@ -38,6 +34,11 @@ require("dotenv").config();
 const getLogger = require("../utils/logger");
 const UpdateVideoDto = require("../dtos/Video/UpdateVideoDto");
 const GetVideosDto = require("../dtos/Video/GetVideosDto");
+const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const UserEnum = require("../enums/UserEnum");
+const GetRelevantVideosDto = require("../dtos/Video/GetRelevantVideosDto");
+const GetRecommendedVideosDto = require("../dtos/Video/GetRecommendedVideosDto");
+const GetVideoLikeHistoryDto = require("../dtos/Video/GetVideoLikeHistoryDto");
 const logger = getLogger("VIDEO_CONTROLLER");
 class VideoController {
   async createVideoController(req, res, next) {
@@ -48,10 +49,6 @@ class VideoController {
 
       const video = await createVideoService(userId, {
         title,
-        // bunnyId: bunnyVideo.guid,
-        // videoUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/playlist.m3u8`,
-        // videoEmbedUrl: `https://iframe.mediadelivery.net/embed/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/${bunnyVideo.guid}`,
-        // thumbnailUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${bunnyVideo.guid}/thumbnail.jpg`,
       });
 
       if (!video) {
@@ -60,10 +57,10 @@ class VideoController {
           "Create video failed"
         );
       }
-
       const newFilePath = await changeFileName(videoFile.path, video._id);
       const m3u8 = await convertMp4ToHls(newFilePath);
       const folderPath = await removeFileName(newFilePath);
+
       try {
         await replaceTsSegmentLinksInM3u8(m3u8, video._id);
         const closestTsFile = await findClosetTsFile(folderPath);
@@ -73,9 +70,14 @@ class VideoController {
         );
         await deleteFile(newFilePath);
 
-        await updateAVideoByIdService(video._id, {
-          duration: closestTsFile.duration,
-        });
+        await updateAVideoByIdService(
+          video._id,
+          userId,
+          {
+            title: title,
+            duration: closestTsFile.duration,
+          },
+        );
       } catch (error) {
         await deleteFolder(folderPath);
         throw error;
@@ -114,7 +116,11 @@ class VideoController {
 
       const action = await toggleLikeVideoService(videoId, userId);
 
-      return res.status(StatusCodeEnums.OK_200).json({ message: `${action?.charAt(0)?.toUpperCase() + action?.slice(1)} video successfully` });
+      return res.status(StatusCodeEnums.OK_200).json({
+        message: `${
+          action?.charAt(0)?.toUpperCase() + action?.slice(1)
+        } video successfully`,
+      });
     } catch (error) {
       next(error);
     }
@@ -143,8 +149,34 @@ class VideoController {
 
   async updateAVideoByIdController(req, res, next) {
     try {
-      const { videoId } = req.params;
+      const userId = req.userId;
 
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
+      if (!user) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+      }
+      const { videoId } = req.params;
+      const existVideo =
+        await connection.videoRepository.getVideoByIdRepository(videoId);
+      if (!existVideo) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Video not found"
+        );
+      }
+
+      if (
+        user.role !== UserEnum.ADMIN &&
+        existVideo.userId?.toString() !== userId?.toString()
+      ) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "You do not have permission to perform this action"
+        );
+      }
       let thumbnailFile = null;
       if (req.files && req.files.videoThumbnail) {
         thumbnailFile = req.files.videoThumbnail[0];
@@ -178,7 +210,7 @@ class VideoController {
       const updateData = {
         title: data.title,
         description: data.description,
-        enumMode: data.enumMode?.toLowerCase(),
+        enumMode: data.enumMode?.toLowerCase() || "public",
         categoryIds: data.categoryIds,
       };
       if (updateData.categoryIds && updateData.categoryIds.length > 0) {
@@ -193,6 +225,7 @@ class VideoController {
       }
       const video = await updateAVideoByIdService(
         videoId,
+        userId,
         updateData,
         thumbnailFile
       );
@@ -219,6 +252,31 @@ class VideoController {
       const deleteVideoDto = new DeleteVideoDto(videoId, userId);
       await deleteVideoDto.validate();
 
+      const connection = new DatabaseTransaction();
+      const user = await connection.userRepository.getAnUserByIdRepository(
+        userId
+      );
+      if (!user) {
+        throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+      }
+      const existVideo =
+        await connection.videoRepository.getVideoByIdRepository(videoId);
+      if (!existVideo) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Video not found"
+        );
+      }
+
+      if (
+        user.role !== UserEnum.ADMIN &&
+        existVideo.userId?.toString() !== userId?.toString()
+      ) {
+        throw new CoreException(
+          StatusCodeEnums.Forbidden_403,
+          "You do not have permission to perform this action"
+        );
+      }
       const video = await deleteVideoService(videoId, userId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
@@ -230,7 +288,7 @@ class VideoController {
   async getVideosByUserIdController(req, res, next) {
     try {
       const { userId } = req.params;
-      const { requesterId } = req.query;
+      const requesterId = req.requesterId;
 
       const query = {
         size: req.query.size,
@@ -240,11 +298,18 @@ class VideoController {
         order: req.query.order?.toLowerCase(),
         enumMode: req.query.enumMode?.toLowerCase(),
       };
-      
-      const getVideosDto = new GetVideosDto(query.size, query.page, query.enumMode, query.sortBy, query.order, query.title);
-      const validatedQuery =  await getVideosDto.validate();
 
-      const { videos, total, page, totalPages } = await getVideosByUserIdService(userId, validatedQuery, requesterId);
+      const getVideosDto = new GetVideosDto(
+        query.size,
+        query.page,
+        query.enumMode,
+        query.sortBy,
+        query.order,
+        query.title
+      );
+      const validatedQuery = await getVideosDto.validate();
+      const { videos, total, page, totalPages } =
+        await getVideosByUserIdService(userId, validatedQuery, requesterId);
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -257,7 +322,7 @@ class VideoController {
   async getVideoController(req, res, next) {
     try {
       const { videoId } = req.params;
-      const { requesterId } = req.query;
+      const requesterId = req.requesterId;
 
       const video = await getVideoService(videoId, requesterId);
       // const bunnyVideo = await getBunnyStreamVideoService(
@@ -283,12 +348,22 @@ class VideoController {
         order: req.query.order?.toLowerCase(),
         enumMode: req.query.enumMode?.toLowerCase(),
       };
-      const { requesterId } = req.query;
+      const requesterId = req.requesterId;
 
-      const getVideosDto = new GetVideosDto(query.size, query.page, query.enumMode, query.sortBy, query.order, query.title);
-      const validatedQuery =  await getVideosDto.validate();
+      const getVideosDto = new GetVideosDto(
+        query.size,
+        query.page,
+        query.enumMode,
+        query.sortBy,
+        query.order,
+        query.title
+      );
+      const validatedQuery = await getVideosDto.validate();
 
-      const { videos, total, page, totalPages } = await getVideosService(validatedQuery, requesterId);
+      const { videos, total, page, totalPages } = await getVideosService(
+        validatedQuery,
+        requesterId
+      );
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -309,20 +384,28 @@ class VideoController {
         order: req.query.order?.toLowerCase(),
         enumMode: req.query.enumMode?.toLowerCase(),
       };
-      const { requesterId } = req.query;
+      const requesterId = req.requesterId;
 
-      const getVideosDto = new GetVideosDto(query.size, query.page, query.enumMode, query.sortBy, query.order, query.title);
-      const validatedQuery =  await getVideosDto.validate();
-
-      const videos = await getVideosByPlaylistIdService(
-        playlistId,
-        validatedQuery,
-        requesterId,
+      const getVideosDto = new GetVideosDto(
+        query.size,
+        query.page,
+        query.enumMode,
+        query.sortBy,
+        query.order,
+        query.title
       );
+      const validatedQuery = await getVideosDto.validate();
+
+      const { videos, total, page, totalPages } =
+        await getVideosByPlaylistIdService(
+          playlistId,
+          validatedQuery,
+          requesterId
+        );
 
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ videos, message: "Success" });
+        .json({ videos, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }
@@ -330,13 +413,82 @@ class VideoController {
 
   async getVideoLikeHistoryController(req, res, next) {
     const userId = req.userId;
-    
+    const query = {
+      size: req.query.size,
+      page: req.query.page,
+      title: req.query.title,
+    };
+
     try {
-      const videos = await getVideoLikeHistoryService(userId);
-      
+      const getVideoLikeHistoryDto = new GetVideoLikeHistoryDto(
+        query.page,
+        query.size,
+        query.title,
+        userId
+      );
+      const validatedData = await getVideoLikeHistoryDto.validate();
+
+      const { videos, total, page, totalPages } =
+        await getVideoLikeHistoryService(validatedData);
+
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ videos, message: "Get videos like history successfully" });
+        .json({ videos, total, page, totalPages, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getRecommendedVideosController(req, res, next) {
+    const requesterId = req.requesterId;
+    const query = {
+      size: req.query.size,
+      page: req.query.page,
+    };
+
+    try {
+      const getRecommendedVideosDto = new GetRecommendedVideosDto(
+        query.page,
+        query.size,
+        requesterId
+      );
+      const validatedData = await getRecommendedVideosDto.validate();
+
+      const { videos, total, page, totalPages } =
+        await getRecommendedVideosService(validatedData);
+
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ videos, total, page, totalPages, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getRelevantVideosController(req, res, next) {
+    const requesterId = req.requesterId;
+    const query = {
+      page: req.query.page,
+      size: req.query.size,
+      categoryIds: req.query.categoryIds,
+      requesterId,
+    };
+
+    try {
+      const getRelevantVideosDto = new GetRelevantVideosDto(
+        query.page,
+        query.size,
+        query.categoryIds,
+        requesterId
+      );
+      const validatedData = await getRelevantVideosDto.validate();
+
+      const { videos, total, page, totalPages } =
+        await getRelevantVideosService(validatedData);
+
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ videos, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }

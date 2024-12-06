@@ -8,13 +8,13 @@ class GetCategoryDto {
   }
 
   async validate() {
+    if (!this.categoryId) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Category ID is required"
+      );
+    }
     try {
-      if (!this.categoryId) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Valid category ID is required"
-        );
-      }
       await validMongooseObjectId(this.categoryId);
     } catch (error) {
       throw new CoreException(

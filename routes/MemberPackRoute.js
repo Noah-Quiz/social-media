@@ -6,7 +6,6 @@ const UserEnum = require("../enums/UserEnum");
 const memberPackController = new MemberPackController();
 
 const route = express.Router();
-route.use(AuthMiddleware);
 
 /**
  * @swagger
@@ -40,7 +39,7 @@ route.use(AuthMiddleware);
  *       404:
  *         description: No MemberPack found
  */
-route.get("/", memberPackController.getAllMemberPackController);
+route.get("/", AuthMiddleware, memberPackController.getAllMemberPackController);
 /**
  * @swagger
  * /api/member-pack/{id}:
@@ -73,7 +72,7 @@ route.get("/", memberPackController.getAllMemberPackController);
  *         description: Server error
  */
 
-route.get("/:id", memberPackController.getMemberPackController);
+route.get("/:id", AuthMiddleware, memberPackController.getMemberPackController);
 
 /**
  * @swagger
@@ -118,6 +117,7 @@ route.get("/:id", memberPackController.getMemberPackController);
  */
 route.post(
   "/",
+  AuthMiddleware,
   requireRole(UserEnum.ADMIN),
   memberPackController.createMemberPackController
 );
@@ -173,6 +173,7 @@ route.post(
 
 route.put(
   "/:id",
+  AuthMiddleware,
   requireRole(UserEnum.ADMIN),
   memberPackController.updateMemberPackController
 );
@@ -225,6 +226,7 @@ route.put(
 
 route.delete(
   "/:id",
+  AuthMiddleware,
   requireRole(UserEnum.ADMIN),
   memberPackController.deleteMemberPackController
 );

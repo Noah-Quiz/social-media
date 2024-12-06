@@ -13,7 +13,7 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *       properties:
  *         content:
  *           type: string
- *           description: The message content.
+ *           description: The message content. Must be a minimum of 1 characters and a maximum of 200 characters.
  */
 class UpdateMessageDto {
   constructor(messageId, content, userId) {

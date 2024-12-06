@@ -1,13 +1,32 @@
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const {
+  capitalizeWords,
+  validLength,
+  contentModeration,
+  hasSpecialCharacters,
+} = require("../utils/validator");
 
 const createCategoryService = async (categoryData) => {
+  const connection = new DatabaseTransaction();
+  categoryData.name = capitalizeWords(categoryData.name);
+
+  //validate name
+  validLength(2, 100, categoryData.name, "Name of category");
+  contentModeration(categoryData.name, "name of category");
+
   try {
-    const connection = new DatabaseTransaction();
-
     const session = await connection.startTransaction();
-
+    const checkCate = await connection.categoryRepository.getCategoryByName(
+      categoryData.name
+    );
+    if (checkCate) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Category name has been taken"
+      );
+    }
     categoryData.imageUrl = `${process.env.APP_BASE_URL}/${categoryData.imageUrl}`;
     const category =
       await connection.categoryRepository.createCategoryRepository(
@@ -55,9 +74,8 @@ const getAllCategoryService = async (query) => {
 };
 
 const updateCategoryService = async (categoryId, categoryData) => {
+  const connection = new DatabaseTransaction();
   try {
-    const connection = new DatabaseTransaction();
-
     const category = await connection.categoryRepository.getCategoryRepository(
       categoryId
     );
@@ -68,7 +86,28 @@ const updateCategoryService = async (categoryId, categoryData) => {
       );
     }
 
-    categoryData.imageUrl = `${process.env.APP_BASE_URL}/${categoryData.imageUrl}`;
+    const checkCate = await connection.categoryRepository.getCategoryByName(
+      categoryData.name
+    );
+
+    if (checkCate) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Category name has been taken"
+      );
+    }
+    validLength(2, 100, categoryData.name, "Name of category");
+    contentModeration(categoryData.name, "update name of category");
+    const hasSpecial = hasSpecialCharacters(categoryData.name);
+    if (hasSpecial) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Category name contains special character"
+      );
+    }
+
+    if (categoryData.imageUrl)
+      categoryData.imageUrl = `${process.env.APP_BASE_URL}/${categoryData.imageUrl}`;
 
     const updatedCategory =
       await connection.categoryRepository.updateCategoryRepository(
@@ -105,7 +144,13 @@ const deleteCategoryService = async (categoryId) => {
       );
 
     await connection.commitTransaction();
-    return deletedCategory;
+    if (deletedCategory.isDeleted == false) {
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        "Category not deleted"
+      );
+    }
+    return deletedCategory.isDeleted === true;
   } catch (error) {
     await connection.abortTransaction();
     throw error;

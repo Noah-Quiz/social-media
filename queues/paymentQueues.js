@@ -110,7 +110,7 @@ exports.consumePaymentQueue = async () => {
               amount: amount,
               transactionId: params.id,
               type: "TopUpBalance",
-              exchangeRate: rate.topUpCoinRate,
+              exchangeRate: rate.topUpBalanceRate,
             });
 
             if (!coin) {

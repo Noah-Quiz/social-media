@@ -2,6 +2,7 @@
 
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
+const { hasSpecialCharacters } = require("../../utils/validator");
 
 /**
  * @swagger
@@ -50,10 +51,16 @@ class UpdateMemberPackDto {
   async validate() {
     const allowedDurationUnits = ["DAY", "MONTH", "YEAR"];
 
-    if (this.name !== undefined && typeof this.name !== "string") {
+    if (
+      this.name !== undefined &&
+      (typeof this.name !== "string" ||
+        this.name.length < 1 ||
+        this.name.length > 50 ||
+        hasSpecialCharacters(this.name))
+    ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid field: name must be a string."
+        "Invalid field: name must be a string with a length between 1 and 50 characters not containing special character.."
       );
     }
 
@@ -69,11 +76,14 @@ class UpdateMemberPackDto {
 
     if (
       this.price !== undefined &&
-      (typeof this.price !== "number" || isNaN(this.price) || this.price < 0)
+      (typeof this.price !== "number" ||
+        isNaN(this.price) ||
+        this.price <= 0 ||
+        !Number.isInteger(this.price))
     ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid field: price must be a valid non-negative number."
+        "Invalid field: price must be a positive integer."
       );
     }
 
@@ -91,7 +101,9 @@ class UpdateMemberPackDto {
 
     if (
       this.durationNumber !== undefined &&
-      (typeof this.durationNumber !== "number" || this.durationNumber <= 0)
+      (typeof this.durationNumber !== "number" ||
+        this.durationNumber <= 0 ||
+        !Number.isInteger(this.durationNumber))
     ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,

@@ -17,7 +17,10 @@ const {
   getFollowerService,
   getFollowingService,
   updatePointService,
+  checkUserAuthorizationService,
+  getUserFollowerStatisticService,
 } = require("../services/UserService");
+const { registerPremiumService } = require("../services/VipService");
 const mongoose = require("mongoose");
 const { deleteFile, checkFileSuccess } = require("../middlewares/storeFile");
 const UpdateUserPasswordDto = require("../dtos/User/UpdateUserPasswordDto");
@@ -26,7 +29,11 @@ const GetUserWalletDto = require("../dtos/User/GetUserWalletDto");
 const UpdateUserWalletDto = require("../dtos/User/UpdateUserWalletDto");
 const DeleteUserDto = require("../dtos/User/DeleteUserDto");
 const GetUsersDto = require("../dtos/User/GetUsersDto");
-
+const UpdateUserPointDto = require("../dtos/User/UpdateUserPointDto");
+const DatabaseTransaction = require("../repositories/DatabaseTransaction");
+const UserEnum = require("../enums/UserEnum");
+const GetUserDto = require("../dtos/User/GetUserDto");
+const GetUserFollowerStatisticDto = require("../dtos/Statistic/GetUserFollowerStatisticDto");
 class UserController {
   async getAllUsersController(req, res, next) {
     try {
@@ -34,9 +41,10 @@ class UserController {
         page: req.query.page || 1,
         size: req.query.size || 10,
         search: req.query.search,
-        order: req.query.order,
-        sortBy: req.query.sortBy,
+        order: req.query.order?.toLowerCase(),
+        sortBy: req.query.sortBy?.toLowerCase(),
       };
+      const requesterId = req.requesterId;
 
       const getUsersDto = new GetUsersDto(
         query.page,
@@ -47,7 +55,8 @@ class UserController {
       await getUsersDto.validate();
 
       const { users, total, page, totalPages } = await getAllUsersService(
-        query
+        query,
+        requesterId
       );
 
       return res
@@ -74,17 +83,13 @@ class UserController {
 
   async getUserByIdController(req, res, next) {
     const { userId } = req.params;
-    const requester = req.userId;
+    const requesterId = req.requesterId;
 
     try {
-      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-        throw new CoreException(
-          StatusCodeEnums.BadRequest_400,
-          "Invalid user ID"
-        );
-      }
+      const getUserDto = new GetUserDto(userId, requesterId);
+      await getUserDto.validate();
 
-      const user = await getUserByIdService(userId, requester);
+      const user = await getUserByIdService(userId, requesterId);
 
       return res
         .status(StatusCodeEnums.OK_200)
@@ -99,24 +104,22 @@ class UserController {
       const { userId } = req.params;
       const { fullName, nickName } = req.body;
       let avatar = req.file ? req.file.path : null;
+
+      await checkUserAuthorizationService(userId, req.userId);
+
       const updateUserProfileDto = new UpdateUserProfileDto(
         userId,
         fullName,
         nickName
       );
       await updateUserProfileDto.validate();
-      if (req.userId !== userId) {
-        throw new CoreException(
-          StatusCodeEnums.Forbidden_403,
-          "Forbidden access"
-        );
+
+      let updateData = { fullName, nickName };
+      if (avatar) {
+        updateData.avatar = avatar;
       }
 
-      const result = await updateUserProfileByIdService(userId, {
-        fullName,
-        nickName,
-        avatar,
-      });
+      const result = await updateUserProfileByIdService(userId, updateData);
       if (req.file) {
         await checkFileSuccess(avatar);
       }
@@ -136,12 +139,7 @@ class UserController {
       const { userId } = req.params;
       const { email } = req.body;
 
-      if (req.userId !== userId) {
-        throw new CoreException(
-          StatusCodeEnums.Forbidden_403,
-          "Forbidden access"
-        );
-      }
+      await checkUserAuthorizationService(userId, req.userId);
 
       const updateUserEmailDto = new UpdateUserEmailDto(userId, email);
       await updateUserEmailDto.validate();
@@ -162,12 +160,8 @@ class UserController {
       const { userId } = req.params;
       const { oldPassword, newPassword } = req.body;
 
-      if (req.userId !== userId) {
-        throw new CoreException(
-          StatusCodeEnums.Forbidden_403,
-          "Forbidden access"
-        );
-      }
+      await checkUserAuthorizationService(userId, req.userId);
+
       const updateUserPasswordDto = new UpdateUserPasswordDto(
         userId,
         oldPassword,
@@ -225,15 +219,10 @@ class UserController {
   async getUserWalletController(req, res, next) {
     try {
       const { userId } = req.params;
-      if (userId !== req.userId) {
-        throw new CoreException(
-          StatusCodeEnums.Forbidden_403,
-          "Forbidden access"
-        );
-      }
+      const requester = req.userId;
       const getUserWalletDto = new GetUserWalletDto(userId);
       await getUserWalletDto.validate();
-      const wallet = await getUserWalletService(userId);
+      const wallet = await getUserWalletService(userId, requester);
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ wallet: wallet, message: "Success" });
@@ -281,7 +270,9 @@ class UserController {
           "Invalid user ID"
         );
       }
+
       const result = await updateTotalWatchTimeService(userId, watchTime);
+
       return res.status(StatusCodeEnums.OK_200).json({
         message: "Update watch time successfully",
       });
@@ -335,20 +326,57 @@ class UserController {
   async updatePointController(req, res, next) {
     try {
       const { amount, type } = req.body;
-      const userId = req.userId;
-      if (!amount || !type || !userId) {
-        throw new CoreException(StatusCodes.BadRequest_400, "Missing fields");
-      }
-      if (isNaN(amount) || amount < 0) {
-        throw new CoreException(StatusCodes.BadRequest_400, "Invalid amount");
-      }
-      if (!["add", "remove", "exchange"].includes(type)) {
-        throw new CoreException(StatusCodes.BadRequest_400, "Invalid type");
-      }
-      const result = await updatePointService(userId, amount, type);
+      const { userId } = req.params;
+      const requesterId = req.userId;
+      const updateUserPointDto = new UpdateUserPointDto(amount, type);
+      await updateUserPointDto.validate();
+
+      const result = await updatePointService(
+        userId,
+        requesterId,
+        parseInt(amount),
+        type
+      );
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ data: result, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async registerPremiumController(req, res, next) {
+    try {
+      const userId = req.userId;
+      const { packageId } = req.body;
+      await registerPremiumService(userId, packageId);
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ message: "Register premium success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async getUserFollowerStatisticController(req, res, next) {
+    try {
+      const { ownerId } = req.params;
+      const userId = req.userId;
+      const { TimeUnit, value } = req.query;
+      const getUserFollowerStatisticDto = new GetUserFollowerStatisticDto(
+        ownerId,
+        TimeUnit,
+        value
+      );
+      const data = await getUserFollowerStatisticService(
+        ownerId,
+        userId,
+        TimeUnit,
+        value
+      );
+
+      await getUserFollowerStatisticDto.validate();
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ data, message: "Success" });
     } catch (error) {
       next(error);
     }

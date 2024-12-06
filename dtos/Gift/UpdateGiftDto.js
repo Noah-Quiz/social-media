@@ -44,7 +44,36 @@ class UpdateGiftDto {
         "Invalid gift ID"
       );
     }
-    if (!isFloat(this.valuePerUnit?.toString())) {
+    let count = 0;
+    if (!this.name || this.name === "" || this.name === null) {
+      count++;
+    }
+    if (!this.image || this.image === "" || this.image === null) {
+      count++;
+    }
+    if (
+      !this.valuePerUnit ||
+      this.valuePerUnit === "" ||
+      this.valuePerUnit === null ||
+      count <= 0
+    ) {
+      count++;
+    }
+    if (count === 3) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "At least 1 field in name, image, valuePerUnit  is required to update"
+      );
+    }
+    if (this.name && (this.name.length < 1 || this.name.length > 50)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Name must be between 1 and 50 characters."
+      );
+    }
+
+    if (!this.valuePerUnit) {
+    } else if (!isFloat(this.valuePerUnit?.toString())) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid price format"

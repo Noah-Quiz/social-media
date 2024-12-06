@@ -1,3 +1,25 @@
-const banWords = ["cc", "cl", "fuck", "nigga", "dm", "dmm", "fucker"];
+const banWords = [
+  "địt",
+  "đéo",
+  "đm",
+  "đcm",
+  "đkm",
+  "đmm",
+  "đmmm",
+  "địt mẹ",
+  "địt con mẹ",
+  "cc",
+  "cl",
+  "fuck",
+  "nigga",
+  "dm",
+  "dmm",
+  "fucker",
+  "đụ",
+  "cái lồn",
+  "lồn",
+  "con cặc",
+  "cặc",
+];
 
 module.exports = banWords;

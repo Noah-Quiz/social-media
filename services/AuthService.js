@@ -30,7 +30,9 @@ const signUpService = async (
         "Email is already registered"
       );
 
-    const formattedPhoneNumber = phoneNumber.replace(/^0/, "+84");
+    const formattedPhoneNumber = phoneNumber
+      .replace(/^0/, "+84")
+      .replace(/^84/, "+84");
     const existingPhone = await connection.userRepository.findUserByPhoneNumber(
       formattedPhoneNumber
     );
@@ -46,6 +48,7 @@ const signUpService = async (
       await connection.exchangeRateRepository.getAllRatesAsObjectRepository();
     const user = await connection.userRepository.createUser({
       fullName: fullName,
+      nickName: fullName,
       email: email,
       phoneNumber: formattedPhoneNumber,
       password: hashedPassword,
@@ -141,10 +144,10 @@ const loginGoogleService = async (user, ipAddress) => {
         existingUser.verify = true;
       }
       if (existingUser.googleId === "") {
-        existingUser.googleId = user.sub||user.id;
+        existingUser.googleId = user.sub || user.id;
       }
       if (existingUser.avatar === "") {
-        existingUser.avatar =  user.picture||user.photo;
+        existingUser.avatar = user.picture || user.photo;
       }
       await handleLoginStreakService(existingUser, rate);
 
@@ -156,8 +159,8 @@ const loginGoogleService = async (user, ipAddress) => {
     const newUser = await connection.userRepository.createUser({
       fullName: user.name,
       email: user.email,
-      googleId: user.sub||user.id,
-      avatar: user.picture||user.photo,
+      googleId: user.sub || user.id,
+      avatar: user.picture || user.photo,
       verify: true,
       lastLogin: Date.now(),
       streak: 1,
@@ -243,7 +246,10 @@ const sendVerificationEmailService = async (email) => {
 
     const user = await connection.userRepository.findUserByEmail(email);
     if (!user)
-      throw new CoreException(StatusCodeEnums.NotFound_404, "User with email not found");
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "User with email not found"
+      );
     if (user.verify === true)
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
@@ -325,8 +331,12 @@ const sendVerificationPhoneService = async (phoneNumber) => {
   try {
     const connection = new DatabaseTransaction();
 
+    const formattedPhoneNumber = phoneNumber
+      .replace(/^0/, "+84")
+      .replace(/^84/, "+84");
+
     const user = await connection.userRepository.findUserByPhoneNumber(
-      phoneNumber
+      formattedPhoneNumber
     );
     if (!user)
       throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
@@ -336,7 +346,7 @@ const sendVerificationPhoneService = async (phoneNumber) => {
         "User is already verified"
       );
 
-    const status = await sendVerificationCode(phoneNumber);
+    const status = await sendVerificationCode(formattedPhoneNumber);
     if (status !== "pending") {
       throw new CoreException(StatusCodeEnums.BadRequest_400, "SMS failed");
     }
@@ -445,7 +455,13 @@ const resetPasswordService = async (token, newPassword) => {
     if (!user || user.passwordResetToken !== token) {
       throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid token");
     }
-
+    const isPasswordMath = await bcrypt.compare(newPassword, user.password);
+    if (isPasswordMath) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Password is same as previous one"
+      );
+    }
     const salt = 10;
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
@@ -455,6 +471,39 @@ const resetPasswordService = async (token, newPassword) => {
 
     return user;
   } catch (error) {
+    throw error;
+  }
+};
+
+const checkAccessTokenExpiredService = async (accessToken) => {
+  try {
+    const decodedToken = jwt.verify(
+      accessToken,
+      process.env.ACCESS_TOKEN_SECRET
+    );
+    const userId = decodedToken._id;
+
+    console.log(userId);
+
+    const connection = new DatabaseTransaction();
+    const user = await connection.userRepository.findUserById(userId);
+    if (!user)
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+
+    return user;
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new CoreException(
+        StatusCodeEnums.Unauthorized_401,
+        "Access token has expired"
+      );
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new CoreException(
+        StatusCodeEnums.Unauthorized_401,
+        "Invalid access token"
+      );
+    }
     throw error;
   }
 };
@@ -470,4 +519,5 @@ module.exports = {
   verifyEmailService,
   createResetPasswordTokenService,
   resetPasswordService,
+  checkAccessTokenExpiredService,
 };

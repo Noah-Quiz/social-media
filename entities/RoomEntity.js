@@ -3,32 +3,52 @@ const baseEntitySchema = require("./BaseEntity");
 
 const Schema = mongoose.Schema;
 
-const roomSchema = new Schema({
-  name: {
-    type: String,
-    minlength: [1, "Room name must be at least 1 character long"],
-    maxlength: [100, "Room name cannot exceed 100 characters"],
-  },
-  streamId: {
-    type: mongoose.Types.ObjectId,
-    ref: "Stream",
-  },
-  type: {
-    type: String,
-    enum: ["private", "member", "public", "group"],
-    required: true,
-  },
-  participants: [
-    {
-      type: mongoose.Types.ObjectId,
-      ref: "User",
+const roomSchema = new Schema(
+  {
+    name: {
+      type: String,
+      minlength: [1, "Room name must be at least 1 character long"],
+      maxlength: [100, "Room name cannot exceed 100 characters"],
       required: function () {
-        return this.type === "private";
-      }, // Only required if the room type is private (DM)
+        return this.enumMode !== "private";
+      },
     },
-  ],
-
-  ...baseEntitySchema.obj,
-});
+    enumMode: {
+      type: String,
+      enum: ["private", "member", "public", "group"],
+      required: true,
+    },
+    avatar: {
+      type: String,
+      default: "",
+    },
+    participants: {
+      type: [
+        {
+          _id: false,
+          userId: {
+            type: mongoose.Types.ObjectId,
+            ref: "User",
+            required: true,
+          },
+          joinedDate: {
+            type: Date,
+            default: Date.now,
+          },
+          isAdmin: {
+            type: Boolean,
+            default: false,
+          },
+          assignedDate: {
+            type: Date,
+            default: null,
+          },
+        },
+      ],
+      default: [],
+    },
+    ...baseEntitySchema.obj,
+  },
+);
 
 module.exports = mongoose.model("Room", roomSchema);

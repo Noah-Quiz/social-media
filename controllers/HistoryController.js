@@ -4,22 +4,22 @@ const {
   getAllHistoryRecordsService,
   clearAllHistoryRecordsService,
   deleteHistoryRecordService,
+  getViewStatisticService,
 } = require("../services/HistoryService");
 const CoreException = require("../exceptions/CoreException");
 const CreateHistoryRecordDto = require("../dtos/History/CreateHistoryRecordDto");
 const GetHistoryRecordsDto = require("../dtos/History/GetHistoryRecordsDto");
 const DeleteHistoryRecordsDto = require("../dtos/History/DeleteHistoryRecordsDto");
 const DeleteHistoryRecordDto = require("../dtos/History/DeleteHistoryRecordDto");
-
+const { json } = require("express/lib/response");
+const GetViewStatisticDto = require("../dtos/Statistic/GetViewStatisticDto");
 class HistoryController {
   async createHistoryRecordController(req, res, next) {
     try {
       const { videoId } = req.body;
       const userId = req.userId;
 
-      const createHistoryRecordDto = new CreateHistoryRecordDto(
-        videoId
-      );
+      const createHistoryRecordDto = new CreateHistoryRecordDto(videoId);
       await createHistoryRecordDto.validate();
 
       const data = { videoId, userId };
@@ -40,8 +40,12 @@ class HistoryController {
       const deleteHistoryRecordsDto = new DeleteHistoryRecordsDto(userId);
       await deleteHistoryRecordsDto.validate();
 
-      await clearAllHistoryRecordsService(userId);
-
+      const result = await clearAllHistoryRecordsService(userId);
+      if (result !== true) {
+        return res
+          .status(StatusCodeEnums.NotFound_404)
+          .json({ message: "No history record exist" });
+      }
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
       next(error);
@@ -50,11 +54,12 @@ class HistoryController {
 
   async deleteHistoryRecordController(req, res, next) {
     try {
+      const userId = req.userId;
       const { historyId } = req.params;
       const deleteHistoryRecordDto = new DeleteHistoryRecordDto(historyId);
       await deleteHistoryRecordDto.validate();
 
-      await deleteHistoryRecordService(historyId);
+      await deleteHistoryRecordService(historyId, userId);
 
       return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
@@ -65,7 +70,12 @@ class HistoryController {
   async getAllHistoryRecordsController(req, res, next) {
     try {
       const userId = req.userId;
-      const query = req.query;
+      const query = {
+        page: req.query.page,
+        size: req.query.size,
+        title: req.query.title,
+      };
+
       const getHistoryRecordsDto = new GetHistoryRecordsDto(
         userId,
         query.page,
@@ -73,19 +83,41 @@ class HistoryController {
       );
       await getHistoryRecordsDto.validate();
 
-      if (!query.page) query.page = 1;
-      if (!query.size) query.size = 10;
-      
-    if (query.title) {
-      query.title = { $regex: query.title, $options: "i" };
-    }
-    
       const { historyRecords, total, page, totalPages } =
         await getAllHistoryRecordsService(userId, query);
 
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ historyRecords, total, page, totalPages, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async getViewStatisticController(req, res, next) {
+    const userId = req.userId;
+    const { ownerId } = req.params;
+
+    const { TimeUnit, value } = req.query;
+    try {
+      const getViewStatisticDto = new GetViewStatisticDto(
+        ownerId,
+        TimeUnit,
+        value
+      );
+
+      await getViewStatisticDto.validate();
+      const result = await getViewStatisticService(
+        ownerId,
+        userId,
+        TimeUnit,
+        value
+      );
+      res
+        .status(StatusCodeEnums.OK_200)
+        .json({
+          statistic: result,
+          message: "Get video view statistic successfully",
+        });
     } catch (error) {
       next(error);
     }

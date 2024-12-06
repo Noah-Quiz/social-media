@@ -17,6 +17,8 @@ const AdvertisementPackageRepository = require("./AdvertisementPackageRepository
 const MemberPackRepository = require("./MemberPackRepository.js");
 const MemberGroupRepository = require("./MemberGroupRepository.js");
 const ErrorRepository = require("./ErrorRepository.js");
+const VipPackageRepository = require("./VipPackageRepository.js");
+const VipRepository = require("./VipRepository.js");
 class DatabaseTransaction extends BaseDatabaseTransaction {
   constructor() {
     super();
@@ -38,6 +40,8 @@ class DatabaseTransaction extends BaseDatabaseTransaction {
     this.memberPackRepository = new MemberPackRepository();
     this.memberGroupRepository = new MemberGroupRepository();
     this.errorRepository = new ErrorRepository();
+    this.vipPackageRepository = new VipPackageRepository();
+    this.vipRepository = new VipRepository();
   }
 }
 

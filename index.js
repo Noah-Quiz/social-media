@@ -27,18 +27,36 @@ const memberPackRoutes = require("./routes/MemberPackRoute.js");
 const memberGroupRoutes = require("./routes/MemberGroupRoute.js");
 const paymentRouters = require("./routes/PaymentRoute.js");
 const statisticRoutes = require("./routes/StatisticRoute.js");
+const vipPackageRoutes = require("./routes/VipPackageRoute.js");
 const socket = require("./socket/socket.js");
 process.env.TZ = "Asia/Ho_Chi_Minh";
 
 const app = express();
 const server = require("http").createServer(app);
-const io = require("socket.io")(server, {
+const uploadIo = require("socket.io")(server, {
+  path: "/socket/upload",
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
 });
-socket(io);
+const chatIo = require("socket.io")(server, {
+  path: "/socket/chat",
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+const streamIo = require("socket.io")(server, {
+  path: "/socket/stream",
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+socket(uploadIo);
+socket(chatIo);
+socket(streamIo);
 
 const {
   uploadBunnyStreamVideoService,
@@ -62,7 +80,7 @@ consumeMessageFromQueue("bunny_livestream_thumbnail");
 app.use(helmet());
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
-app.use(limiter(15, 100));
+app.use(limiter(15, 100000));
 
 // Middleware
 app.use(
@@ -85,6 +103,7 @@ app.use(
   })
 );
 app.use("/", express.static(__dirname));
+app.use("/.well-known", express.static(".well-known"));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -99,7 +118,21 @@ app.get("/", (req, res) => {
 // Log API requests
 app.use((req, res, next) => {
   const logger = getLogger("API");
-  logger.info(req.method + " " + req.path);
+
+  // Capture the start time to calculate response time later
+  const startTime = new Date();
+
+  // Listen for the response to finish so we can log details after it's sent
+  res.on("finish", () => {
+    const duration = new Date() - startTime;
+    const logMessage = `${req.ip} ${req.method} ${
+      req.originalUrl
+    } ${req.protocol.toUpperCase()}/${req.httpVersion} ${res.statusCode} ${
+      res.get("Content-Length") || 0
+    } ${req.get("User-Agent")} ${duration}ms`;
+    logger.info(logMessage);
+  });
+
   next();
 });
 
@@ -124,9 +157,9 @@ app.use("/api/member-pack", memberPackRoutes);
 app.use("/api/member-group", memberGroupRoutes);
 app.use("/api/statistics", statisticRoutes);
 app.use("/api/advertisement-packages", packageRoutes);
+app.use("/api/vip-packages", vipPackageRoutes);
 
 app.use(auditLogError);
-
 
 // Start server
 const port = process.env.DEVELOPMENT_PORT || 4000;

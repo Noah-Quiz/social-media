@@ -1,3 +1,5 @@
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const mongoose = require("mongoose");
 
@@ -5,7 +7,16 @@ module.exports = {
   async createAnAdvertisementService(userId, videoId, packageId) {
     try {
       const connection = new DatabaseTransaction();
-
+      const checkPackage =
+        await connection.advertisementPackageRepository.getAPackageByIdRepository(
+          packageId
+        );
+      if (!checkPackage) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Advertisement package not found"
+        );
+      }
       const advertisement =
         await connection.advertisementRepository.createAnAdvertisementRepository(
           userId,
@@ -14,13 +25,33 @@ module.exports = {
         );
       return advertisement;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 
   async extendAdvertisementService(adsId, packageId) {
     try {
       const connection = new DatabaseTransaction();
+      const checkAd =
+        await connection.advertisementRepository.getAnAdvertisementByIdRepository(
+          adsId
+        );
+      if (!checkAd) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Advertisement not found"
+        );
+      }
+      const checkPackage =
+        await connection.advertisementPackageRepository.getAPackageByIdRepository(
+          packageId
+        );
+      if (!checkPackage) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Advertisement package not found"
+        );
+      }
       const advertisement =
         await connection.advertisementRepository.extendAdvertisementRepository(
           adsId,
@@ -28,7 +59,7 @@ module.exports = {
         );
       return advertisement;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 
@@ -37,9 +68,15 @@ module.exports = {
       const connection = new DatabaseTransaction();
       const advertisements =
         await connection.advertisementRepository.getAllAvailableAdvertisementsRepository();
+      if (!advertisements) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "No advertisement found"
+        );
+      }
       return advertisements;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 
@@ -54,7 +91,7 @@ module.exports = {
         );
       return advertisement;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 
@@ -65,22 +102,38 @@ module.exports = {
         await connection.advertisementRepository.getAnAdvertisementByIdRepository(
           adsId
         );
+      if (!advertisement) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Advertisement not found"
+        );
+      }
       return advertisement;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 
   async deleteAnAdvertisementByIdService(adsId) {
     try {
       const connection = new DatabaseTransaction();
+      const checkAdvertisement =
+        await connection.advertisementRepository.getAnAdvertisementByIdRepository(
+          adsId
+        );
+      if (!checkAdvertisement) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Advertisement not found"
+        );
+      }
       const advertisement =
         await connection.advertisementRepository.deleteAnAdvertisementByIdRepository(
           adsId
         );
       return advertisement;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 };
