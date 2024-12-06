@@ -6,6 +6,8 @@ const fs = require("fs");
 const getLogger = require("../utils/logger");
 const logger = getLogger("FILE_UPLOAD");
 const { spawn } = require("child_process");
+const CoreException = require("../exceptions/CoreException");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 require("dotenv").config();
 const removeFileName = async (filePath) => {
   // Get the directory name by removing the file name
@@ -50,12 +52,10 @@ const convertMp4ToHls = async (filePath) => {
     const outputDir = dirPath; // Directory to save the output
     const m3u8File = path.join(outputDir, `output_${baseName}.m3u8`); // M3U8 playlist file
     const segmentPath = path.join(outputDir, `${baseName}_%03d.ts`); // TS segment path
-
     // Ensure the output directory exists
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-
     // Spawn FFmpeg process
     const ffmpeg = spawn(
       "ffmpeg",
@@ -502,12 +502,30 @@ const storage = multer.diskStorage({
         const { streamId } = req.params;
         dir = path.join(`assets/images/streams/${streamId}`);
         break;
+      case "roomCreateImg":
+        dir = path.join(`assets/images/room/create`);
+        break;
+      case "roomUpdateImg":
+        const { roomId } = req.params;
+        dir = path.join(`assets/images/room/${roomId}`);
+        break;
       case "playlistCreate":
         dir = path.join(`assets/images/playlist/create`);
         break;
       case "playlistUpdate":
         const { playlistId } = req.params;
         dir = path.join(`assets/images/playlist/${playlistId}`);
+        break;
+      case "giftCreateImg":
+        dir = path.join(`assets/images/gifts/create`);
+        break;
+      case "giftUpdateImg":
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          logger.error(`Invalid gift ID: ${id}`);
+          return cb("Error: Invalid gift ID");
+        }
+        dir = path.join(`assets/images/gifts/${id}`);
         break;
       default:
         logger.error(`Unknown field name: ${file.fieldname}`);
@@ -523,7 +541,7 @@ const storage = multer.diskStorage({
     });
   },
   filename: async (req, file, cb) => {
-    let baseName = req.headers["content-length"] + "_" + Date.now(); // the file is nane by the size of the file
+    let baseName = req.headers["content-length"] + "_" + Date.now(); // the file is named by the size of the file
     const ext = path.extname(file.originalname);
     let fileName = "";
     let dirPath = "";
@@ -583,6 +601,32 @@ const storage = multer.diskStorage({
         fileName = `${baseName}${ext}`;
         dirPath = path.join(`assets/images/playlist/${playlistId}`);
         break;
+      case "roomCreateImg":
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/rooms/create`);
+        break;
+      case "roomUpdateImg":
+        const { roomId } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(roomId)) {
+          logger.error(`Invalid room ID: ${roomId}`);
+          return cb("Error: Invalid room ID");
+        }
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/rooms/${roomId}`);
+        break;
+      case "giftCreateImg":
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/gifts/create`);
+        break;
+      case "giftUpdateImg":
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          logger.error(`Invalid gift ID: ${id}`);
+          return cb("Error: Invalid gift ID");
+        }
+        fileName = `${baseName}${ext}`;
+        dirPath = path.join(`assets/images/gifts/${id}`);
+        break;
       default:
         logger.error(`Unknown field name: ${file.fieldname}`);
         return cb(`Error: Unknown field name '${file.fieldname}'`);
@@ -593,22 +637,31 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  let allowedTypes = /jpeg|jpg|png|gif/;
+  const allowedImageTypes = /jpeg|jpg|png|gif/;
+  const allowedVideoTypes = /mp4|avi|flv|wmv/;
+
+  let allowedTypes, formatMessage;
+
   if (file.fieldname === "video") {
-    allowedTypes = /mp4|avi|flv|wmv/;
+    allowedTypes = allowedVideoTypes;
+    formatMessage = "Allowed formats: mp4, avi, flv, wmv";
+  } else {
+    allowedTypes = allowedImageTypes;
+    formatMessage = "Allowed formats: jpeg, jpg, png, gif";
   }
-  const mimeType = allowedTypes.test(file.mimetype);
-  const extName = allowedTypes.test(
+
+  const isMimeTypeValid = allowedTypes.test(file.mimetype);
+  const isExtensionValid = allowedTypes.test(
     path.extname(file.originalname).toLowerCase()
   );
 
-  if (mimeType && extName) {
+  if (isMimeTypeValid && isExtensionValid) {
     return cb(null, true);
   }
-  if (file.fieldname === "video") logger.error("Error: Videos Only!");
-  else {
-    logger.error("Error: Images Only!");
-  }
+
+  const errorMessage = `Invalid format. ${formatMessage}`;
+
+  cb(new CoreException(StatusCodeEnums.BadRequest_400, errorMessage), false);
 };
 
 const videoFilter = (req, file, cb) => {

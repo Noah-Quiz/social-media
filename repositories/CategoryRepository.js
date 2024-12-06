@@ -15,7 +15,14 @@ class CategoryRepository {
       throw new Error(`Error creating category: ${error.message}`);
     }
   }
-
+  async getCategoryByName(name) {
+    try {
+      const category = await Category.findOne({ name: name, isDeleted: false });
+      return category;
+    } catch (error) {
+      throw new Error(`Error getting category by name: ${error.message}`);
+    }
+  }
   async getCategoryRepository(id) {
     try {
       const category = await Category.findOne({ _id: id, isDeleted: false });
@@ -25,10 +32,9 @@ class CategoryRepository {
 
       const result = category.toObject();
 
-      // Remove unwanted fields
       delete result.__v;
-      delete result.lastUpdated;
       delete result.isDeleted;
+
       return result;
     } catch (error) {
       throw new Error(`Error getting category: ${error.message}`);
@@ -93,7 +99,7 @@ class CategoryRepository {
             lastUpdated: new Date(),
           },
         },
-        { session }
+        { session, new: true }
       );
       if (!category) {
         return null;

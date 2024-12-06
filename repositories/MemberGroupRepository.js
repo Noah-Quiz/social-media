@@ -6,6 +6,8 @@ const getLogger = require("../utils/logger");
 const logger = getLogger("MEMBERSHIP");
 const DatabaseTransaction = require("./DatabaseTransaction");
 const ExchangeRateRepository = require("./ExchangeRateRepository");
+const CoreException = require("../exceptions/CoreException");
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
 class MemberGroupRepository {
   constructor() {
     this.exchangeRateRepository = new ExchangeRateRepository();
@@ -22,7 +24,10 @@ class MemberGroupRepository {
       }
       return memberGroup;
     } catch (error) {
-      throw new Error(`Error getting member group: ${error.message}`);
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        `Error getting member group: ${error.message}`
+      );
     }
   }
 
@@ -31,7 +36,10 @@ class MemberGroupRepository {
       const memberGroup = await MemberGroup.find({ isDeleted: false });
       return memberGroup;
     } catch (error) {
-      throw new Error(`Error getting all member group: ${error.message}`);
+      throw new CoreException(
+        StatusCodeEnums.InternalServerError_500,
+        `Error getting all member group: ${error.message}`
+      );
     }
   }
   async deleteMemberGroupRepository(id) {
@@ -40,16 +48,22 @@ class MemberGroupRepository {
         _id: id,
       });
       if (!memberGroup) {
-        throw new Error("No member group found");
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Error deleting member group: No member group found"
+        );
       }
       if (memberGroup && memberGroup.members?.length > 0) {
-        throw new Error("Can't delete when there's still member");
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Error deleting member group: Can't delete when there's still member"
+        );
       }
       memberGroup.isDeleted = true;
       await memberGroup.save();
       return memberGroup;
     } catch (error) {
-      throw new Error(`Error deleting member group: ${error.message}`);
+      throw error;
     }
   }
 
@@ -62,7 +76,10 @@ class MemberGroupRepository {
     try {
       // Prevent owner from buying membership for themselves
       if (userId === ownerId) {
-        throw new Error("Cannot buy membership for yourself");
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Error updating membership: Cannot buy membership for yourself"
+        );
       }
 
       // Check if a MemberGroup for the owner exists, or create one
@@ -80,7 +97,10 @@ class MemberGroupRepository {
         isDeleted: false,
       }).session(session);
       if (!memberPack) {
-        throw new Error("Invalid packId");
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Error updating membership: Package not found"
+        );
       }
 
       // Find the user
@@ -89,10 +109,16 @@ class MemberGroupRepository {
         isDeleted: false,
       }).session(session);
       if (!user) {
-        throw new Error("User not found");
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Error updating membership: User not found"
+        );
       }
       if (user.wallet.coin < memberPack.price) {
-        throw new Error("Insufficient coin");
+        throw new CoreException(
+          StatusCodeEnums.BadRequest_400,
+          "Error updating membership: Insufficient coin"
+        );
       }
       // Deduct the price from the user's wallet
       user.wallet.coin -= memberPack.price;
@@ -104,7 +130,10 @@ class MemberGroupRepository {
         isDeleted: false,
       }).session(session);
       if (!owner) {
-        throw new Error("Owner not found");
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Error updating membership: Owner not found"
+        );
       }
 
       // Add the price to the owner's wallet
@@ -124,7 +153,10 @@ class MemberGroupRepository {
           time = 86400000 * 365 * memberPack.durationNumber;
           break;
         default:
-          throw new Error("Invalid duration unit");
+          throw new CoreException(
+            StatusCodeEnums.InternalServerError_500,
+            "Error updating membership: Invalid duration unit in the package, please report this to admin for support"
+          );
       }
 
       // Calculate the end date based on the current date + duration
@@ -164,7 +196,7 @@ class MemberGroupRepository {
       // Step 5: Abort the transaction if anything goes wrong
       await session.abortTransaction();
       await session.endSession(); // Ensure session is ended
-      throw new Error(`Error updating VIP: ${error.message}`);
+      throw error;
     }
   }
 

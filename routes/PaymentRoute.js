@@ -116,4 +116,30 @@ paymentRouters.get(
 
 paymentRouters.get("/paypal/cancel", paymentController.cancelPayPalController);
 
+/**
+ * @swagger
+ * /api/payments/googlepay:
+ *   post:
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Pay with Google Pay
+ *     tags: [Payments]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PayWithGooglePayDto'
+ *     responses:
+ *       200:
+ *         description: Pay with Google Pay successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
+paymentRouters.post(
+  "/googlepay",
+  AuthMiddleware,
+  paymentController.payWithGooglePayController
+);
 module.exports = paymentRouters;

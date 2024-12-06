@@ -27,6 +27,12 @@ class PayWithPaypalDto {
         "Price is required"
       );
     }
+    if (this.price && (isNaN(this.price) || this.price <= 0)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Price must be a positive number"
+      );
+    }
   }
 }
 

@@ -10,14 +10,15 @@ const CoreException = require("../../exceptions/CoreException");
  *       type: object
  *       required:
  *         - name
- *         - image
  *         - valuePerUnit
+ *         - giftCreateImg
  *       properties:
  *         name:
  *           type: string
  *           description: The gift's name.
- *         image:
+ *         giftCreateImg:
  *           type: string
+ *           format: binary
  *           description: The gift's image.
  *         valuePerUnit:
  *           type: number
@@ -31,12 +32,13 @@ class CreateGiftDto {
   }
 
   async validate() {
-    if (!this.name) {
+    if (!this.name || this.name.length < 1 || this.name.length > 50) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Name is required"
+        "Name is required and must be between 1 and 50 characters."
       );
     }
+
     if (!this.image) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
@@ -49,7 +51,7 @@ class CreateGiftDto {
         "Value per unit is required and must be a number"
       );
     }
-    if (!isFloat(this.valuePerUnit?.toString(), { min: 0 })) {
+    if (!isFloat(this.valuePerUnit?.toString(), { min: 1 })) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid price format"

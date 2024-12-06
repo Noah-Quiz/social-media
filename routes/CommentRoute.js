@@ -4,6 +4,7 @@ const AuthMiddleware = require("../middlewares/AuthMiddleware");
 
 const router = express.Router();
 const commentController = new CommentController();
+
 router.use(AuthMiddleware);
 
 /**
@@ -51,7 +52,7 @@ router.use(AuthMiddleware);
  *                     responseTo:
  *                       type: string
  *                       example: "607d1b2f9f1b2c0017f9d2e5"
- *                     likeBy:
+ *                     likedBy:
  *                       type: array
  *                       items:
  *                          type: string
@@ -72,11 +73,26 @@ router.use(AuthMiddleware);
  *                 message:
  *                   type: string
  *                   example: "Validation failed: 'userId' is required."
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: string
- *                   example: ["'userId' is required."]
+ *      403:
+ *       description: Creating comment on a draft video
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Comments are disabled on draft video"
+ *      404:
+ *       description: Video not found
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Video not found"
  *      500:
  *       description: Internal server error
  *       content:
@@ -106,48 +122,132 @@ router.post("/", commentController.createCommentController);
  *         type: string
  *         required: true
  *      - in: query
- *        name: limit
+ *        name: size
  *        schema:
- *         type: string
+ *          type: integer
+ *          default: 10
+ *        description: The number of comments to return per page (minimum is 1)
+ *      - in: query
+ *        name: page
+ *        schema:
+ *          type: integer
+ *          default: 1
+ *        description: The page number to retrieve (minimum is 1)
  *     responses:
  *      200:
  *       description: Get children comments successfully
  *       content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                  type: object
- *                  properties:
+ *               type: object
+ *               properties:
+ *                 comments:
+ *                   type: object
+ *                   properties:
  *                     _id:
  *                       type: string
- *                       example: "607d1b2f9f1b2c0017f9d2e5"
- *                     content:
- *                       type: string
- *                       example: "Hello everybody"
- *                     userId:
- *                       type: string
- *                       example: "607d1b2f9f1b2c0017f9d2e5"
+ *                       example: "67334ad12c0594e3bae7091b"
  *                     videoId:
  *                       type: string
- *                       example: "607d1b2f9f1b2c0017f9d2e5"
- *                     level:
- *                       type: number
- *                       example: 2
+ *                       example: "67334a7e2c0594e3bae7090e"
+ *                     content:
+ *                       type: string
+ *                       example: "hello"
  *                     responseTo:
  *                       type: string
- *                       example: "607d1b2f9f1b2c0017f9d2e5"
- *                     likeBy:
- *                       type: array
- *                       items:
- *                          type: string
- *                       example: []
+ *                       example: null
+ *                     level:
+ *                       type: integer
+ *                       example: 0
  *                     dateCreated:
  *                       type: string
- *                       example: "2024-10-25T02:29:35.346+00:00"
+ *                       example: "2024-11-12T12:32:17.220Z"
  *                     lastUpdated:
  *                       type: string
- *                       example: "2024-10-25T02:29:35.346+00:00"
+ *                       example: "2024-11-12T12:32:17.220Z"
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         _id:
+ *                           type: string
+ *                           example: "66e14623eec8efa60b44d7bd"
+ *                         fullName:
+ *                           type: string
+ *                           example: "Tam Tam"
+ *                         avatar:
+ *                           type: string
+ *                           nullable: true
+ *                         nickName:
+ *                           type: string
+ *                           example: ""
+ *                     repliesCount:
+ *                       type: integer
+ *                       example: 2
+ *                     children:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                             example: "673352820ead970f75a8ee90"
+ *                           videoId:
+ *                             type: string
+ *                             example: "67334a7e2c0594e3bae7090e"
+ *                           content:
+ *                             type: string
+ *                             example: "@Tam Tam hello"
+ *                           responseTo:
+ *                             type: string
+ *                             example: "67334ad12c0594e3bae7091b"
+ *                           level:
+ *                             type: integer
+ *                             example: 1
+ *                           dateCreated:
+ *                             type: string
+ *                             example: "2024-11-12T13:05:06.071Z"
+ *                           lastUpdated:
+ *                             type: string
+ *                             example: "2024-11-12T13:05:06.071Z"
+ *                           user:
+ *                             type: object
+ *                             properties:
+ *                               _id:
+ *                                 type: string
+ *                                 example: "671a14f46d05088423eeab91"
+ *                               fullName:
+ *                                 type: string
+ *                                 example: "administrator"
+ *                               avatar:
+ *                                 type: string
+ *                                 example: "https://social-media-z5a2.onrender.com/assets/images/users/671a14f46d05088423eeab91/62771_1731119584763.png"
+ *                               nickName:
+ *                                 type: string
+ *                                 example: ""
+ *                           repliesCount:
+ *                             type: integer
+ *                             example: 1
+ *                           likesCount:
+ *                             type: integer
+ *                             example: 0
+ *                           isLiked:
+ *                             type: boolean
+ *                             example: false
+ *                 total:
+ *                   type: integer
+ *                   example: 2
+ *                 page:
+ *                   type: integer
+ *                   example: 1
+ *                 totalPages:
+ *                   type: integer
+ *                   example: 1
+ *                 likesCount:
+ *                   type: integer
+ *                   example: 1
+ *                 isLiked:
+ *                   type: boolean
+ *                   example: false
  *      400:
  *       description: Bad request
  *       content:
@@ -158,6 +258,16 @@ router.post("/", commentController.createCommentController);
  *                 message:
  *                   type: string
  *                   example: "Invalid request parameters."
+ *      404:
+ *       description: Comment not found
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Comment not found"
  *      500:
  *       description: Internal server error
  *       content:
@@ -191,7 +301,29 @@ router.get(
  *      - in: query
  *        name: sortBy
  *        schema:
- *         type: string
+ *          type: string
+ *          enum: [like, date]
+ *          default: date
+ *        description: Sort the comments by number of likes, or date created
+ *      - in: query
+ *        name: order
+ *        schema:
+ *          type: string
+ *          enum: [ascending, descending]
+ *          default: descending
+ *        description: Specify the order of sorting (either ascending or descending)
+ *      - in: query
+ *        name: size
+ *        schema:
+ *          type: integer
+ *          default: 10
+ *        description: The number of comments to return per page (minimum is 1)
+ *      - in: query
+ *        name: page
+ *        schema:
+ *          type: integer
+ *          default: 1
+ *        description: The page number to retrieve (minimum is 1)
  *     responses:
  *      200:
  *       description: Get comments of a video successfully
@@ -220,7 +352,7 @@ router.get(
  *                     responseTo:
  *                       type: string
  *                       example: "607d1b2f9f1b2c0017f9d2e5"
- *                     likeBy:
+ *                     likedBy:
  *                       type: array
  *                       items:
  *                          type: string
@@ -241,6 +373,16 @@ router.get(
  *                 message:
  *                   type: string
  *                   example: "Invalid request parameters."
+ *      404:
+ *       description: Video not found
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Video not found"
  *      500:
  *       description: Internal server error
  *       content:
@@ -258,118 +400,120 @@ router.get("/video/:videoId", commentController.getVideoCommentsController);
 /**
  * @swagger
  * /api/comments/{commentId}/like:
- *   put:
+ *   post:
  *     security:
  *      - bearerAuth: []
- *     summary: Like a video
+ *     summary: Toggle like/unlike a comment
  *     tags: [Comments]
  *     parameters:
  *      - in: path
  *        name: commentId
  *        schema:
  *         type: string
- *         required: true
+ *        required: true
+ *        description: ID of the comment to like or unlike
  *     responses:
  *      200:
- *       description: Like video successfully
+ *       description: Successfully toggled like status of the comment
  *       content:
  *         application/json:
- *           example:
- *             comments:
- *               _id: "string"
- *               videoId: "string"
- *               userId: "string"
- *               content: "string"
- *               likeBy: ["string"]
- *               level: 0
- *               isDeleted: false
- *               dateCreated: "2024-10-18T06:22:49.307Z"
- *               lastUpdated: "2024-10-18T06:22:49.307Z"
- *               __v: 0
- *             message: "Success"
+ *           example: message "Like comment successfully" or "Unlike comment successfully" based on action
  *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
- *
- */
-router.put("/:commentId/like", commentController.likeCommentController);
-
-/**
- * @swagger
- * /api/comments/{commentId}/unlike:
- *   put:
- *     security:
- *      - bearerAuth: []
- *     summary: Unlike a video
- *     tags: [Comments]
- *     parameters:
- *      - in: path
- *        name: commentId
- *        schema:
- *         type: string
- *         required: true
- *     responses:
- *      200:
- *       description: Unlike video successfully
+ *       description: Video not found / Comment not found
  *       content:
- *         application/json:
- *           example:
- *             comments:
- *               _id: "string"
- *               videoId: "string"
- *               userId: "string"
- *               content: "aaaa"
- *               likeBy: []
- *               level: 0
- *               isDeleted: false
- *               dateCreated: "2024-10-18T06:22:49.307Z"
- *               lastUpdated: "2024-10-18T06:22:49.307Z"
- *               __v: 0
- *             message: "Success"
- *      400:
- *       description: Bad request
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *      404:
+ *       description: Video not found / Comment not found
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Video not found / Comment not found"
  *      500:
  *       description: Internal server error
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
-router.put("/:commentId/unlike", commentController.unlikeCommentController);
+router.post("/:commentId/like", commentController.toggleLikeCommentController);
 
 /**
  * @swagger
  * /api/comments/{commentId}:
  *   get:
  *     security:
- *      - bearerAuth: []
+ *       - bearerAuth: []
  *     summary: Get a comment by id
  *     tags: [Comments]
  *     parameters:
- *      - in: path
- *        name: commentId
- *        schema:
- *         type: string
+ *       - in: path
+ *         name: commentId
+ *         schema:
+ *           type: string
  *         required: true
+ *         description: ID of the comment to fetch
  *     responses:
- *      200:
- *       description: Get comment successfully
- *       content:
- *         application/json:
- *           example:
- *             comments:
- *               _id: "string"
- *               videoId: "string"
- *               userId: "string"
- *               content: "string"
- *               level: 0
- *               dateCreated: "2024-10-18T06:22:49.307Z"
- *               user:
- *                 fullName: "string"
- *                 nickName: "string"
- *                 avatar: "string"
- *             message: "Success"
- *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
+ *       200:
+ *         description: Get comment successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               comment:
+ *                 _id: "67334ad12c0594e3bae7091b"
+ *                 videoId: "67334a7e2c0594e3bae7090e"
+ *                 content: "hello"
+ *                 level: 0
+ *                 dateCreated: "2024-11-12T12:32:17.220Z"
+ *                 lastUpdated: "2024-11-12T12:32:17.220Z"
+ *                 user:
+ *                   _id: "66e14623eec8efa60b44d7bd"
+ *                   fullName: "Tam Tam"
+ *                   nickName: ""
+ *                   avatar: null
+ *                 repliesCount: 3
+ *                 likesCount: 1
+ *                 isLiked: true
+ *               message: "Success"
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Video not found / Comment not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Video not found / Comment not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 router.get("/:commentId", commentController.getCommentController);
 
@@ -399,30 +543,54 @@ router.get("/:commentId", commentController.getCommentController);
  *                 type: string
  *                 description: The new content of the comment
  *             required:
- *               - commentId
  *               - content
  *     responses:
- *      200:
- *       description: Update comment successfully
- *       content:
- *         application/json:
- *           example:
- *             comments:
- *               _id: "string"
- *               videoId: "string"
- *               userId: "string"
- *               content: "string"
- *               likeBy: []
- *               level: 0
- *               isDeleted: false
- *               dateCreated: "2024-10-18T06:22:49.307Z"
- *               lastUpdated: "2024-10-18T06:22:49.307Z"
- *               __v: 0
- *             message: "Success"
- *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
+ *       200:
+ *         description: Update comment successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               comment:
+ *                 _id: "67334ad12c0594e3bae7091b"
+ *                 videoId: "67334a7e2c0594e3bae7090e"
+ *                 userId: "66e14623eec8efa60b44d7bd"
+ *                 content: "Updated comment content"
+ *                 likedBy: ["66e14623eec8efa60b44d7bd"]
+ *                 responseTo: null
+ *                 level: 0
+ *                 isDeleted: false
+ *                 dateCreated: "2024-11-12T12:32:17.220Z"
+ *                 lastUpdated: "2024-11-12T17:06:18.622Z"
+ *                 __v: 0
+ *               message: "Success"
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Video not found / Comment not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Video not found / Comment not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 router.put("/:commentId", commentController.updateCommentController);
 
@@ -451,7 +619,7 @@ router.put("/:commentId", commentController.updateCommentController);
  *               videoId: "string"
  *               userId: "string"
  *               content: "string"
- *               likeBy: []
+ *               likedBy: []
  *               level: 0
  *               isDeleted: true
  *               dateCreated: "2024-11-04T03:02:02.965Z"
@@ -460,8 +628,32 @@ router.put("/:commentId", commentController.updateCommentController);
  *             message: "Delete successfully"
  *      400:
  *       description: Bad request
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *      404:
+ *       description: Video not found / Comment not found
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Video not found / Comment not found"
  *      500:
  *       description: Internal server error
+ *       content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 router.delete("/:commentId", commentController.deleteCommentController);
 

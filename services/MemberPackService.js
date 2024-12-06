@@ -1,3 +1,5 @@
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 
 const createMemberPackService = async (
@@ -9,11 +11,22 @@ const createMemberPackService = async (
 ) => {
   const connection = new DatabaseTransaction();
   if (isNaN(price) || isNaN(durationNumber)) {
-    throw new Error("Invalid price or duration number");
+    throw new CoreException(
+      StatusCodeEnums.BadRequest_400,
+      "Invalid price or duration number"
+    );
   }
   try {
+    const checkMemberPack =
+      await connection.memberPackRepository.findMemberPackByName(name);
+    if (checkMemberPack) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "This name has already been taken"
+      );
+    }
     const memberPack =
-      connection.memberPackRepository.createMemberPackRepository({
+      await connection.memberPackRepository.createMemberPackRepository({
         name,
         description,
         price,
@@ -22,7 +35,7 @@ const createMemberPackService = async (
       });
     return memberPack;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 const updateMemberPackService = async (
@@ -35,8 +48,16 @@ const updateMemberPackService = async (
 ) => {
   const connection = new DatabaseTransaction();
   try {
+    const checkMemberPack =
+      await connection.memberPackRepository.findMemberPackByName(name);
+    if (checkMemberPack) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "This name has already been taken"
+      );
+    }
     const memberPack =
-      connection.memberPackRepository.updateMemberPackRepository(
+      await connection.memberPackRepository.updateMemberPackRepository(
         id,
         name,
         description,
@@ -46,36 +67,45 @@ const updateMemberPackService = async (
       );
     return memberPack;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
-const getMemberPackService = (id) => {
+const getMemberPackService = async (id) => {
   const connection = new DatabaseTransaction();
   try {
     const memberPack =
-      connection.memberPackRepository.getMemberPackRepository(id);
+      await connection.memberPackRepository.getMemberPackRepository(id);
     return memberPack;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
-const getAllMemberPackService = () => {
+const getAllMemberPackService = async () => {
   const connection = new DatabaseTransaction();
   try {
-    const memberPacks = connection.memberPackRepository.getAllPackRepository();
+    const memberPacks =
+      await connection.memberPackRepository.getAllPackRepository();
     return memberPacks;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
-const deleteMemberPackService = (id) => {
+const deleteMemberPackService = async (id) => {
   const connection = new DatabaseTransaction();
   try {
+    const checkMemberPack =
+      await connection.memberPackRepository.getMemberPackRepository(id);
+    if (!checkMemberPack) {
+      throw new CoreException(
+        StatusCodeEnums.NotFound_404,
+        "Memberpack not found"
+      );
+    }
     const memberPack =
-      connection.memberPackRepository.deleteMemberPackRepository(id);
+      await connection.memberPackRepository.deleteMemberPackRepository(id);
     return memberPack;
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 module.exports = {

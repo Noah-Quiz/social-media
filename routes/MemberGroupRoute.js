@@ -64,7 +64,7 @@ route.use(AuthMiddleware);
  *       500:
  *         description: Internal server error
  */
-route.put("/upgrade-vip", memberGroupController.updateVipController);
+route.put("/upgrade-vip", memberGroupController.updateMembershipController);
 
 /**
  * @swagger
@@ -109,10 +109,17 @@ route.get(
 
 /**
  * @swagger
- * /api/member-group/my-group:
+ * /api/member-group/{ownerId}:
  *   get:
  *     summary: Get the member group of the authenticated user
  *     tags: [Member Group]
+ *     parameters:
+ *       - in: path
+ *         name: ownerId
+ *         required: true
+ *         description: The ID of the group owner
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Success
@@ -136,7 +143,7 @@ route.get(
  *       500:
  *         description: Internal server error
  */
-route.get("/my-group", memberGroupController.getMemberGroupController);
+route.get("/:ownerId", memberGroupController.getMemberGroupController);
 
 /**
  * @swagger

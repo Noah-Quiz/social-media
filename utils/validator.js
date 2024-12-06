@@ -4,7 +4,7 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum");
 const mongoose = require("mongoose");
 const banWords = require("../enums/BanWords");
 
-const validMongooseObjectId = async (id) => {
+const validMongooseObjectId =  (id) => {
   if (!mongoose.Types.ObjectId.isValid(id))
     throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid ID");
 };
@@ -19,6 +19,28 @@ const validFullName = async (fullName) => {
       StatusCodeEnums.BadRequest_400,
       "Full name is invalid, must be a minimum of 6 characters and a maximum of 50 characters."
     );
+  const regex = /^[a-zA-Z0-9]+$/;
+  if (!regex.test(fullName)) {
+    throw new CoreException(
+      StatusCodeEnums.BadRequest_400,
+      "Full name is invalid, full name just contains alphanumeric"
+    );
+  }
+};
+
+const validNickName = async (nickName) => {
+  if (!validator.isLength(nickName, { min: 6, max: 50 }))
+    throw new CoreException(
+      StatusCodeEnums.BadRequest_400,
+      "Nick name is invalid, must be a minimum of 6 characters and a maximum of 50 characters."
+    );
+  const regex = /^[a-zA-Z0-9_.-]+$/;
+  if (!regex.test(nickName)) {
+    throw new CoreException(
+      StatusCodeEnums.BadRequest_400,
+      "Nick name is invalid, nick name just contains alphanumeric, /./, /-/ and /_/"
+    );
+  }
 };
 
 const validEmail = async (email) => {
@@ -61,24 +83,77 @@ const validPhoneNumber = async (phoneNumber) => {
     );
 };
 
-const contentModeration = (content) => {
+const contentModeration = (content, type) => {
   try {
-    const words = content.trim().replace(/\s+/g, " ");
+    const words = content.trim().replace(/\s+/g, " ").toLowerCase();
     const eachWord = words.split(" ");
     for (const word of eachWord) {
       if (banWords.includes(word)) {
-        throw new Error("This content violates community guidelines");
+        throw new Error(`This ${type} violates community guidelines`);
       }
     }
   } catch (error) {
-    throw new Error("This content violates community guidelines");
+    throw new Error(error.message);
   }
 };
+
+const hasSpecialCharacters = (content) => {
+  const regex = /^[a-zA-Z0-9\s]+$/;
+  if (regex.test(content)) {
+    return false;
+  }
+  return true;
+};
+
+const capitalizeWords = (str) => {
+  const newString = str.trim().replace(/\s+/g, " ").toLowerCase();
+
+  return newString
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
+const validLength = async (min, max, string, type) => {
+  // Trim the string to remove leading and trailing whitespace
+  const trimmedString = string.trim();
+
+  // Check if the trimmed string is within the length limits
+  if (!validator.isLength(trimmedString, { min, max })) {
+    throw new CoreException(
+      StatusCodeEnums.BadRequest_400,
+      `${type} is invalid, must be a minimum of ${min} characters and a maximum of ${max} characters.`
+    );
+  }
+
+  // Additional check for blank (empty or whitespace-only) strings
+  if (trimmedString.length === 0) {
+    throw new CoreException(
+      StatusCodeEnums.BadRequest_400,
+      `${type} cannot be blank.`
+    );
+  }
+};
+
+const convertToMongoObjectId = (id) => {
+  return new mongoose.Types.ObjectId(id);
+};
+
+const checkExistById = async (model, id) => {
+  return await model.findOne({ _id: convertToMongoObjectId(id) });
+};
+
 module.exports = {
+  validNickName,
   validMongooseObjectId,
   validFullName,
   validEmail,
   validPassword,
   validPhoneNumber,
   contentModeration,
+  hasSpecialCharacters,
+  capitalizeWords,
+  validLength,
+  checkExistById,
+  convertToMongoObjectId,
 };

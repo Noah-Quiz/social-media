@@ -14,12 +14,75 @@ route.use(AuthMiddleware);
 
 /**
  * @swagger
- * /api/users/point:
+ * /api/users/{userId}/profile:
+ *   put:
+ *     security:
+ *      - bearerAuth: []
+ *     summary: Update user profile by ID
+ *     description: Update user profile by ID, including fullName, nickName, avatar.
+ *     tags: [Users]
+ *     consumes:
+ *      - multipart/form-data
+ *     parameters:
+ *      - in: path
+ *        name: userId
+ *        schema:
+ *         type: string
+ *         required: true
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUserProfileDto'
+ *     responses:
+ *      200:
+ *         description: Update user profile successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                 message:
+ *                   type: string
+ *                   example: "Update user profile successfully"
+ *      400:
+ *       description: Bad request
+ *      500:
+ *       description: Internal server error
+ *
+ */
+route.put(
+  "/:userId/profile",
+  uploadFile.single("avatar"),
+  userController.updateUserProfileByIdController
+);
+
+/**
+ * @swagger
+ * /api/users/point/{userId}:
  *   put:
  *     security:
  *       - bearerAuth: []
  *     summary: Update user points
  *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         description: The ID of the user whose points are being updated
+ *         schema:
+ *           type: string
+ *           example: "12345"
  *     requestBody:
  *       required: true
  *       content:
@@ -67,7 +130,8 @@ route.use(AuthMiddleware);
  *       500:
  *         description: Internal server error
  */
-route.put("/point", userController.updatePointController);
+
+route.put("/point/:userId", userController.updatePointController);
 /**
  * @swagger
  * /api/users/follower/{userId}:
@@ -359,289 +423,44 @@ route.post("/follow", userController.toggleFollowController);
 
 /**
  * @swagger
- * /api/users/history:
+ * /api/users:
  *   get:
  *     security:
  *       - bearerAuth: []
- *     summary: Get all history records
+ *     summary: Get all users
  *     tags: [Users]
  *     parameters:
  *       - in: query
  *         name: page
  *         schema:
- *           type: number
+ *           type: integer
  *           default: 1
- *           description: Page number
+ *         description: Page number
  *       - in: query
  *         name: size
  *         schema:
- *           type: number
+ *           type: integer
  *           default: 10
- *           description: Number of items per page
+ *         description: Number of items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by full name or nickname
  *       - in: query
  *         name: order
+ *         required: false
  *         schema:
  *           type: string
  *           enum: [ascending, descending]
- *           default: descending
- *         description: Specify the order of sorting (either ascending or descending)
+ *         description: Sort order (default is descending)
  *       - in: query
- *         name: title
+ *         name: sortBy
+ *         required: false
  *         schema:
  *           type: string
- *         description: Search videos by title (case-insensitive)
- *     responses:
- *       200:
- *         description: Get all history records successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 historyRecords:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                         example: "string"
- *                       userId:
- *                         type: string
- *                         example: "string"
- *                       videoId:
- *                         type: string
- *                         example: "string"
- *                       dateCreated:
- *                         type: string
- *                         format: date-time
- *                         example: "2024-10-29T08:59:12.203Z"
- *                       isDeleted:
- *                         type: boolean
- *                         example: false
- *                       lastUpdated:
- *                         type: string
- *                         format: date-time
- *                         example: "2024-10-29T08:59:12.201Z"
- *                 total:
- *                   type: number
- *                   example: 1
- *                 page:
- *                   type: number
- *                   example: 1
- *                 totalPages:
- *                   type: number
- *                   example: 1
- *                 message:
- *                   type: string
- *                   example: "Success"
- *       400:
- *         description: Bad request
- *       500:
- *         description: Internal server error
- */
-route.get("/history", historyController.getAllHistoryRecordsController);
-
-/**
- * @swagger
- * /api/users/history:
- *   post:
- *     security:
- *      - bearerAuth: []
- *     summary: Create history record
- *     tags: [Users]
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/CreateHistoryRecordDto'
- *     responses:
- *      200:
- *         description: Create history record successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 historyRecord:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                       example: "string"
- *                     userId:
- *                       type: string
- *                       example: "string"
- *                     videoId:
- *                       type: string
- *                       example: "string"
- *                     dateCreated:
- *                       type: string
- *                       format: date-time
- *                       example: "2024-10-29T08:59:12.203Z"
- *                     isDeleted:
- *                       type: boolean
- *                       example: false
- *                     lastUpdated:
- *                       type: string
- *                       format: date-time
- *                       example: "2024-10-29T08:59:12.201Z"
- *                 message:
- *                   type: string
- *                   example: "Success"
- *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
- *
- */
-route.post("/history", historyController.createHistoryRecordController);
-
-/**
- * @swagger
- * /api/users/history:
- *   delete:
- *     security:
- *       - bearerAuth: []
- *     summary: Delete history records of a user
- *     tags: [Users]
- *     responses:
- *       200:
- *         description: Delete all history records successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Success"
- *       400:
- *         description: Bad request
- *       500:
- *         description: Internal server error
- */
-
-route.delete("/history", historyController.clearAllHistoryRecordsController);
-
-/**
- * @swagger
- * /api/users/history/{historyId}:
- *   delete:
- *     security:
- *       - bearerAuth: []
- *     summary: Delete history record by ID
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: historyId
- *         required: true
- *         schema:
- *           type: string
- *         description: The history record's ID
- *     responses:
- *       200:
- *         description: Delete history record successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Success"
- *       400:
- *         description: Bad request
- *       404:
- *         description: History record not found
- *       500:
- *         description: Internal server error
- */
-
-route.delete(
-  "/history/:historyId",
-  historyController.deleteHistoryRecordController
-);
-/**
- * @swagger
- * /api/users/watch-time:
- *   put:
- *     summary: Update total watch time
- *     description: Update the total watch time for the authenticated user.
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userId:
- *                 type: string
- *                 example: "string"
- *               watchTime:
- *                 type: number
- *                 example: 120
- *     responses:
- *       200:
- *         description: Successfully updated watch time
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Update watch time successfully"
- *       400:
- *         description: Bad request
- *       404:
- *         description: User not found
- *       500:
- *         description: Internal server error
- */
-route.put("/watch-time", userController.updateTotalWatchTimeController);
-
-/**
- * @swagger
- * /api/users:
- *   get:
- *     security:
- *      - bearerAuth: []
- *     summary: Get all users
- *     tags: [Users]
- *     parameters:
- *      - in: query
- *        name: page
- *        schema:
- *          type: integer
- *          default: 1
- *        description: Page number
- *      - in: query
- *        name: size
- *        schema:
- *          type: integer
- *          default: 10
- *        description: Number of items per page
- *      - in: query
- *        name: search
- *        schema:
- *          type: string
- *        description: Search by full name or nickname
- *      - in: query
- *        name: order
- *        required: false
- *        schema:
- *          type: string
- *          enum: [ascending, descending]
- *        description: Filter for sort order (default descending)
- *      - in: query
- *        name: sortBy
- *        required: false
- *        schema:
- *          type: string
- *          enum: [date, follower]
- *        description: Filter for sort criteria (default date)
+ *           enum: [date, follower]
+ *         description: Sort criteria (default is date)
  *     responses:
  *       200:
  *         description: Get all users successfully
@@ -650,7 +469,10 @@ route.put("/watch-time", userController.updateTotalWatchTimeController);
  *             schema:
  *               type: object
  *               properties:
- *                 data:
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *                 users:
  *                   type: array
  *                   items:
  *                     type: object
@@ -658,82 +480,85 @@ route.put("/watch-time", userController.updateTotalWatchTimeController);
  *                       _id:
  *                         type: string
  *                         example: "66e1185472404e6811cf15bc"
- *                       email:
- *                         type: string
- *                         example: "user@example.com"
  *                       fullName:
  *                         type: string
- *                         example: "string"
- *                       avatar:
- *                         type: string
- *                         example: "string"
+ *                         example: "Hoang Tam"
  *                       nickName:
  *                         type: string
- *                         example: "string"
- *                       phoneNumber:
+ *                         example: "Tam Tam"
+ *                       role:
+ *                         type: integer
+ *                         example: 1
+ *                       avatar:
  *                         type: string
- *                         example: "string"
- *                       follow:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             followId:
- *                               type: string
- *                               example: "66f6577eb4ffd9ae01870e52"
- *                             followDate:
- *                               type: string
- *                               format: date-time
- *                               example: "2024-10-18T02:31:33.735Z"
- *                       followBy:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             followById:
- *                               type: string
- *                               example: "66f6577eb4ffd9ae01870e52"
- *                             followByDate:
- *                               type: string
- *                               format: date-time
- *                               example: "2024-10-18T02:36:17.291Z"
- *                 message:
- *                   type: string
- *                   example: "Get all users successfully"
+ *                         nullable: true
+ *                         example: null
+ *                       point:
+ *                         type: integer
+ *                         example: 15103
+ *                       followCount:
+ *                         type: integer
+ *                         example: 2
+ *                       followByCount:
+ *                         type: integer
+ *                         example: 1
+ *                       lastLogin:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-11-12T13:08:04.015Z"
+ *                       dateCreated:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-10-08T08:52:21.724Z"
+ *                       lastUpdated:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-11-05T07:06:45.221Z"
+ *                 total:
+ *                   type: integer
+ *                   example: 4
  *                 page:
  *                   type: integer
  *                   example: 1
- *                 total:
- *                   type: integer
- *                   example: 10
  *                 totalPages:
  *                   type: integer
  *                   example: 1
  *       400:
  *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
-route.get(
-  "/",
-  requireRole(UserEnum.ADMIN),
-  userController.getAllUsersController
-);
+route.get("/", userController.getAllUsersController);
 
 /**
  * @swagger
  * /api/users/{userId}:
  *   get:
  *     security:
- *      - bearerAuth: []
+ *       - bearerAuth: []
  *     summary: Get user by ID
  *     tags: [Users]
  *     parameters:
- *      - in: path
- *        name: userId
- *        schema:
- *         type: string
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
  *         required: true
+ *         description: ID of the user to fetch
  *     responses:
  *       200:
  *         description: Get user successfully
@@ -762,6 +587,22 @@ route.get(
  *                     phoneNumber:
  *                       type: string
  *                       nullable: true
+ *                     lastLogin:
+ *                       type: string
+ *                       format: date-time
+ *                     streak:
+ *                       type: integer
+ *                     point:
+ *                       type: integer
+ *                     wallet:
+ *                       type: object
+ *                       properties:
+ *                         balance:
+ *                           type: number
+ *                         coin:
+ *                           type: integer
+ *                     totalWatchTime:
+ *                       type: integer
  *                     follow:
  *                       type: array
  *                       items:
@@ -776,76 +617,55 @@ route.get(
  *                       type: array
  *                       items:
  *                         type: object
- *                         properties: {}
+ *                         properties:
+ *                           followById:
+ *                             type: string
+ *                           followByDate:
+ *                             type: string
+ *                             format: date-time
+ *                     dateCreated:
+ *                       type: string
+ *                       format: date-time
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *                     followCount:
+ *                       type: integer
+ *                     followerCount:
+ *                       type: integer
  *                 message:
  *                   type: string
- *                   example: "Get user successfully"
+ *                   example: "Success"
  *       400:
  *         description: Bad request
- *       500:
- *         description: Internal server error
- */
-route.get("/:userId", userController.getUserByIdController);
-
-/**
- * @swagger
- * /api/users/{userId}/profile:
- *   put:
- *     security:
- *      - bearerAuth: []
- *     summary: Update user profile by ID
- *     description: Update user profile by ID, including fullName, nickName, avatar.
- *     tags: [Users]
- *     consumes:
- *      - multipart/form-data
- *     parameters:
- *      - in: path
- *        name: userId
- *        schema:
- *         type: string
- *         required: true
- *      - in: formData
- *        name: avatar
- *        schema:
- *         type: file
- *        description: The user's avatar image file
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UpdateUserProfileDto'
- *     responses:
- *      200:
- *         description: Update user profile successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 user:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                     fullName:
- *                       type: string
- *                     email:
- *                       type: string
- *                       format: email
  *                 message:
  *                   type: string
- *                   example: "Update user profile successfully"
- *      400:
- *       description: Bad request
- *      500:
- *       description: Internal server error
- *
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "User not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
-route.put(
-  "/:userId/profile",
-  uploadFile.single("avatar"),
-  userController.updateUserProfileByIdController
-);
+route.get("/:userId", userController.getUserByIdController);
 
 /**
  * @swagger
@@ -969,5 +789,42 @@ route.delete(
   requireRole(UserEnum.ADMIN),
   userController.deleteUserByIdController
 );
+/**
+ * @swagger
+ * /api/users/register-premium:
+ *   post:
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Register for a premium package
+ *     description: Registers the authenticated user for a selected premium package.
+ *     tags: [Premium]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               packageId:
+ *                 type: string
+ *                 description: The ID of the premium package to register for.
+ *                 example: "premium_package_123"
+ *     responses:
+ *       200:
+ *         description: Registration successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Register premium success"
+ *       400:
+ *         description: Bad request - Invalid input
+ *       500:
+ *         description: Internal server error
+ */
+route.post("/register-premium", userController.registerPremiumController);
 
 module.exports = route;

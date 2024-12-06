@@ -13,7 +13,7 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           type: array
  *           items:
  *            type: string
- *           description: The added video ids.
+ *           description: The added video ids. Must be a minimum of 1 characters and a maximum of 2000 characters.
  *         removedVideoIds:
  *           type: array
  *           items:
@@ -21,15 +21,23 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           description: The removed video ids.
  *         playlistName:
  *            type: string
- *            description: The playlist's name.
+ *            description: The playlist's name. Must be a minimum of 2 characters and a maximum of 100 characters.
  */
 class UpdatePlaylistDto {
-  constructor(userId, playlistId, playlistName, description, thumbnail) {
+  constructor(
+    userId,
+    playlistId,
+    playlistName,
+    description,
+    thumbnail,
+    enumMode
+  ) {
     this.userId = userId;
     this.playlistName = playlistName;
     this.description = description;
     this.thumbnail = thumbnail;
     this.playlistId = playlistId;
+    this.enumMode = enumMode;
   }
 
   async validate() {
@@ -47,11 +55,13 @@ class UpdatePlaylistDto {
         "Invalid Playlist ID"
       );
     }
-
-    if (!this.playlistName) {
+    if (
+      this.enumMode != null &&
+      !["public", "private"].includes(this.enumMode)
+    ) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Playlist name is required"
+        "Invalid enum mode, must be in ['public', 'private']"
       );
     }
   }

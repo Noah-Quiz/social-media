@@ -10,21 +10,23 @@ const {
   toggleLikeStreamService,
   getRecommendedStreamsService,
   getRelevantStreamsService,
+  getStreamsByUserIdService,
 } = require("../services/StreamService");
 const { deleteFile, checkFileSuccess } = require("../middlewares/storeFile");
 const CreateStreamDto = require("../dtos/Stream/CreateStreamDto");
 const DeleteStreamDto = require("../dtos/Stream/DeleteStreamDto");
 const UpdateStreamDto = require("../dtos/Stream/UpdateStreamDto");
-const StreamRecommendationDto = require("../dtos/Stream/StreamRecommendationDto");
 const { default: axios } = require("axios");
 const GetStreamsDto = require("../dtos/Stream/GetStreamsDto");
+const GetRelevantStreamsDto = require("../dtos/Stream/GetRelevantStreamsDto");
+const GetRecommendedStreamsDto = require("../dtos/Stream/GetRecommendedStreamsDto");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
 class StreamController {
   async getStreamController(req, res, next) {
     const { streamId } = req.params;
-    const { requesterId } = req.query;
+    const requesterId = req.requesterId;
 
     try {
       const stream = await getStreamService(streamId, requesterId);
@@ -37,9 +39,10 @@ class StreamController {
     }
   }
 
-  async getStreamsController(req, res, next) {
+  async getStreamsByUserIdController(req, res, next) {
     try {
-      const { requesterId } = req.query;
+      const requesterId = req.requesterId;
+      const { userId } = req.params;
 
       const query = {
         size: req.query.size || 10,
@@ -50,12 +53,51 @@ class StreamController {
         order: req.query.order?.toLowerCase(),
       };
 
-      const getStreamsDto = new GetStreamsDto(query.size, query.page, query.status, query.sortBy, query.order);
+      const getStreamsDto = new GetStreamsDto(
+        query.size,
+        query.page,
+        query.status,
+        query.sortBy,
+        query.order
+      );
+      await getStreamsDto.validate();
+
+      const { streams, total, page, totalPages } =
+        await getStreamsByUserIdService(query, requesterId, userId);
+
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({ streams, total, page, totalPages, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getStreamsController(req, res, next) {
+    try {
+      const requesterId = req.requesterId;
+
+      const query = {
+        size: req.query.size || 10,
+        page: req.query.page || 1,
+        title: req.query.title,
+        status: req.query.status?.toLowerCase(),
+        sortBy: req.query.sortBy?.toLowerCase(),
+        order: req.query.order?.toLowerCase(),
+      };
+
+      const getStreamsDto = new GetStreamsDto(
+        query.size,
+        query.page,
+        query.status,
+        query.sortBy,
+        query.order
+      );
       await getStreamsDto.validate();
 
       const { streams, total, page, totalPages } = await getStreamsService(
         query,
-        requesterId,
+        requesterId
       );
 
       return res
@@ -68,7 +110,7 @@ class StreamController {
 
   async updateStreamController(req, res, next) {
     const { streamId } = req.params;
-    let { title, description, categoryIds } = req.body;
+    let { title, description, categoryIds, enumMode } = req.body;
     let thumbnailFile = req.file ? req.file.path : null;
     const userId = req.userId;
 
@@ -86,7 +128,8 @@ class StreamController {
         streamId,
         title,
         description,
-        categoryIds
+        categoryIds,
+        enumMode
       );
       await updateStreamDto.validate();
 
@@ -95,6 +138,7 @@ class StreamController {
         description,
         categoryIds: categoryIds,
         thumbnailUrl: thumbnailFile,
+        enumMode,
       };
 
       if (updateData.categoryIds && updateData.categoryIds.length > 0) {
@@ -157,11 +201,14 @@ class StreamController {
           `${streamServerBaseUrl}/api/cloudflare/live-input`,
           {
             creatorId,
-            streamName,
+            streamName         
           }
         );
       } catch (error) {
-        throw new CoreException(StatusCodeEnums.InternalServerError_500, "Failed to create live stream, stream server doesn't return any responses");
+        throw new CoreException(
+          StatusCodeEnums.InternalServerError_500,
+          "Failed to create live stream, stream server doesn't return any responses"
+        );
       }
 
       const cloudflareStream = response.data?.liveInput;
@@ -195,7 +242,6 @@ class StreamController {
 
   async toggleLikeStreamController(req, res, next) {
     const { streamId } = req.params;
-    const { action } = req.query;
     const userId = req.userId;
 
     try {
@@ -205,47 +251,70 @@ class StreamController {
         });
       }
 
-      await toggleLikeStreamService(streamId, userId, action);
+      const action = await toggleLikeStreamService(streamId, userId);
 
-      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
+      return res
+        .status(StatusCodeEnums.OK_200)
+        .json({
+          message: `${
+            action?.charAt(0)?.toUpperCase() + action?.slice(1)
+          } stream successfully`,
+        });
     } catch (error) {
       next(error);
     }
   }
 
   async getRecommendedStreamsController(req, res, next) {
-    const userId = req.userId;
-    const data = { userId };
+    const requesterId = req.requesterId;
+    const query = {
+      size: req.query.size,
+      page: req.query.page,
+    };
 
     try {
-      const streams = await getRecommendedStreamsService(data);
+      const getRecommendedStreamsDto = new GetRecommendedStreamsDto(
+        query.page,
+        query.size,
+        requesterId
+      );
+      const validatedData = await getRecommendedStreamsDto.validate();
+
+      const { streams, total, page, totalPages } =
+        await getRecommendedStreamsService(validatedData);
 
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ streams, message: "Success" });
+        .json({ streams, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }
   }
 
   async getRelevantStreamsController(req, res, next) {
-    const { categoryIds } = req.body;
-    
+    const requesterId = req.requesterId;
+    const query = {
+      page: req.query.page,
+      size: req.query.size,
+      categoryIds: req.query.categoryIds,
+      requesterId,
+    };
+
     try {
-      const streamRecommendationDto = new StreamRecommendationDto(
-        categoryIds
+      const getRelevantStreamsDto = new GetRelevantStreamsDto(
+        query.page,
+        query.size,
+        query.categoryIds,
+        requesterId
       );
-      await streamRecommendationDto.validate();
+      const validatedData = await getRelevantStreamsDto.validate();
 
-      const data = {
-        categoryIds
-      };
-
-      const streams = await getRelevantStreamsService(data);
+      const { streams, total, page, totalPages } =
+        await getRelevantStreamsService(validatedData);
 
       return res
         .status(StatusCodeEnums.OK_200)
-        .json({ streams, message: "Success" });
+        .json({ streams, total, page, totalPages, message: "Success" });
     } catch (error) {
       next(error);
     }

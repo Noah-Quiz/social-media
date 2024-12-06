@@ -38,7 +38,12 @@ exports.createPaymentUrl = (req, res) => {
       message: "Please fill in the required fields: amount",
     });
   }
-
+  if (isNaN(amount) || amount < 10000 || amount > 1000000000) {
+    return res.status(400).json({
+      message:
+        "Số tiền giao dịch không hợp lệ. Số tiền hợp lệ từ 10,000 đến dưới 1 tỷ đồng",
+    });
+  }
   const ipAddr = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
   const ReturnInfo = `${userId},${amount}`;
   let vnp_Params = {
@@ -146,14 +151,8 @@ exports.vnpayReturn = async (req, res) => {
       //     vnp_Params: vnp_Params,
       //   });
       // }
-      console.log(
-        `Top-up successful for User ID: ${userId}, Amount: ${amount} VND`
-      );
-      res.status(200).json({
-        success: true,
-        message: "Payment successful and processed.",
-        vnp_Params: vnp_Params,
-      });
+
+      res.redirect("http://localhost:3001/popout/payment/success");
     } catch (error) {
       console.error("Error processing payment:", error);
 

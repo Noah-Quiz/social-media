@@ -4,6 +4,13 @@ const StatusCodeEnums = require("../enums/StatusCodeEnum.js");
 const CoreException = require("../exceptions/CoreException.js");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction.js");
 const { default: mongoose } = require("mongoose");
+const UserEnum = require("../enums/UserEnum.js");
+const {
+  validLength,
+  contentModeration,
+  convertToMongoObjectId,
+} = require("../utils/validator.js");
+const Category = require("../entities/CategoryEntity.js");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
@@ -12,17 +19,28 @@ const getStreamService = async (streamId, requesterId) => {
     const connection = new DatabaseTransaction();
 
     if (!streamId || !mongoose.Types.ObjectId.isValid(streamId)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid stream ID is required");
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Valid stream ID is required"
+      );
     }
 
     if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid requester ID is required");
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Valid requester ID is required"
+      );
     }
     // If requester is admin, return stream
     if (requesterId) {
-      const requester =  await connection.userRepository.findUserById(requesterId);
+      const requester = await connection.userRepository.findUserById(
+        requesterId
+      );
       if (!requester) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, `Requester not found`);
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          `Requester not found`
+        );
       }
       if (requester.role === 1) {
         const stream = await connection.streamRepository.getStreamRepository(
@@ -67,7 +85,91 @@ const getStreamService = async (streamId, requesterId) => {
       return result.length === 1 ? result[0] : result;
     }
 
+    if (process) {
+      process.isLiked = (process.likedBy || []).some(
+        (userId) => userId?.toString() === requesterId?.toString()
+      );
+      delete process.likedBy;
+      delete process.userId;
+    }
+
     return process;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getStreamsByUserIdService = async (query, requesterId, userId) => {
+  try {
+    const connection = new DatabaseTransaction();
+
+    if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid requester ID"
+      );
+    }
+
+    // If requester is admin, return all streams
+    if (requesterId) {
+      const requester = await connection.userRepository.findUserById(
+        requesterId
+      );
+      if (!requester) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          `Requester not found`
+        );
+      }
+      if (requester.role === 1) {
+        const streams =
+          await connection.streamRepository.getStreamsByUserIdRepository(
+            query,
+            userId
+          );
+        return streams;
+      }
+    }
+
+    const data = await connection.streamRepository.getStreamsByUserIdRepository(
+      query,
+      userId
+    );
+
+    let streams = data.streams.map(async (stream) => {
+      const isOwner = stream.user?._id?.toString() === requesterId?.toString();
+      if (isOwner) {
+        return stream;
+      }
+
+      let cleanedStream = cleanStreamFromNonOwner(stream);
+
+      if (stream.enumMode === "member") {
+        const isMember = await checkMemberShip(requesterId, stream.user?._id);
+        if (isMember) {
+          return cleanedStream;
+        }
+
+        return updateStreamForNonMembership(
+          [cleanedStream],
+          [cleanedStream._id],
+          "member"
+        )[0];
+      }
+
+      cleanedStream.isLiked = requesterId
+        ? (stream.likedBy || []).some(
+            (userId) => userId?.toString() === requesterId?.toString()
+          )
+        : false;
+      delete cleanedStream.likedBy;
+
+      return cleanedStream;
+    });
+
+    const processedStreams = await Promise.all(streams);
+
+    return { ...data, streams: processedStreams };
   } catch (error) {
     throw error;
   }
@@ -78,47 +180,63 @@ const getStreamsService = async (query, requesterId) => {
     const connection = new DatabaseTransaction();
 
     if (requesterId && !mongoose.Types.ObjectId.isValid(requesterId)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Valid requester ID is required");
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid requester ID"
+      );
     }
 
     // If requester is admin, return all streams
     if (requesterId) {
-      const requester =  await connection.userRepository.findUserById(requesterId);
+      const requester = await connection.userRepository.findUserById(
+        requesterId
+      );
       if (!requester) {
-        throw new CoreException(StatusCodeEnums.NotFound_404, `Requester not found`);
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          `Requester not found`
+        );
       }
       if (requester.role === 1) {
-        const streams = await connection.streamRepository.getStreamsRepository(query);
+        const streams = await connection.streamRepository.getStreamsRepository(
+          query
+        );
         return streams;
       }
     }
 
     const data = await connection.streamRepository.getStreamsRepository(query);
 
-    let streams = data.streams
-      .map(async (stream) => {
-        const isOwner = stream.user?._id?.toString() === requesterId?.toString();
-        if (isOwner) {
-          return stream; 
+    let streams = data.streams.map(async (stream) => {
+      const isOwner = stream.user?._id?.toString() === requesterId?.toString();
+      if (isOwner) {
+        return stream;
+      }
+
+      let cleanedStream = cleanStreamFromNonOwner(stream);
+
+      if (stream.enumMode === "member") {
+        const isMember = await checkMemberShip(requesterId, stream.user?._id);
+        if (isMember) {
+          return cleanedStream;
         }
 
-        let cleanedStream = cleanStreamFromNonOwner(stream);
+        return updateStreamForNonMembership(
+          [cleanedStream],
+          [cleanedStream._id],
+          "member"
+        )[0];
+      }
 
-        if (stream.enumMode === "member") {
-          const isMember = await checkMemberShip(requesterId, stream.user?._id);
-          if (isMember) {
-            return cleanedStream;
-          }
+      cleanedStream.isLiked = requesterId
+        ? (stream.likedBy || []).some(
+            (userId) => userId?.toString() === requesterId?.toString()
+          )
+        : false;
+      delete cleanedStream.likedBy;
 
-          return updateStreamForNonMembership(
-            [cleanedStream],
-            [cleanedStream._id],
-            "member"
-          )[0];
-        }
-
-        return cleanedStream; 
-      });
+      return cleanedStream;
+    });
 
     const processedStreams = await Promise.all(streams);
 
@@ -147,6 +265,33 @@ const updateStreamService = async (userId, streamId, updateData) => {
       streamId
     );
 
+    //valid title
+    if (updateData.title) {
+      validLength(2, 100, updateData.title, "Title of stream");
+      contentModeration(updateData.title, "update title of stream");
+    }
+
+    //valid description
+    if (updateData.description) {
+      validLength(1, 2000, updateData.description, "Description of stream");
+      contentModeration(updateData.description, "update description of stream");
+    }
+
+    if (updateData.categoryIds) {
+      for (const categoryId of updateData.categoryIds) {
+        const category = await Category.findOne({
+          _id: convertToMongoObjectId(categoryId),
+          isDeleted: false,
+        });
+        if (!category) {
+          throw new CoreException(
+            StatusCodeEnums.NotFound_404,
+            `Category with ID ${categoryId} not found`
+          );
+        }
+      }
+    }
+
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
@@ -157,8 +302,12 @@ const updateStreamService = async (userId, streamId, updateData) => {
         "You do not have permission to perform this action"
       );
     }
-    console.log(updateData.thumbnailUrl);
-    updateData.thumbnailUrl = `${process.env.APP_BASE_URL}/${updateData.thumbnailUrl}`;
+
+    if (updateData.thumbnailUrl !== null) {
+      updateData.thumbnailUrl = `${process.env.APP_BASE_URL}/${updateData.thumbnailUrl}`;
+    } else {
+      delete updateData.thumbnailUrl;
+    }
 
     const updatedData =
       await connection.streamRepository.updateStreamRepository(
@@ -222,6 +371,32 @@ const createStreamService = async (data) => {
   const connection = new DatabaseTransaction();
   const session = await connection.startTransaction();
 
+  //valid title
+  if (data.title) {
+    validLength(2, 100, data.title, "Title of stream");
+    contentModeration(data.title, "title of stream");
+  }
+
+  //valid description
+  if (data.description) {
+    validLength(1, 2000, data.description, "Description of stream");
+    contentModeration(data.description, "description of stream");
+  }
+
+  if (data.categoryIds) {
+    for (const categoryId of data.categoryIds) {
+      const category = await Category.findOne({
+        _id: convertToMongoObjectId(categoryId),
+        isDeleted: false,
+      });
+      if (!category) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          `Category with ID ${categoryId} not found`
+        );
+      }
+    }
+  }
   try {
     const stream = await connection.streamRepository.createStreamRepository(
       data,
@@ -239,30 +414,28 @@ const createStreamService = async (data) => {
   }
 };
 
-const toggleLikeStreamService = async (streamId, userId, action) => {
+const toggleLikeStreamService = async (streamId, userId) => {
   try {
     const connection = new DatabaseTransaction();
+
+    const user = await connection.userRepository.findUserById(userId);
+    if (!user) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "User not found");
+    }
 
     const stream = await connection.streamRepository.getStreamRepository(
       streamId
     );
-
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
 
-    const allowedActions = ["like", "unlike"];
-    if (!allowedActions.includes(action)) {
-      throw new CoreException(StatusCodeEnums.BadRequest_400, "Invalid action");
-    }
-
-    const result = await connection.streamRepository.toggleLikeStreamRepository(
+    const action = await connection.streamRepository.toggleLikeStreamRepository(
       streamId,
-      userId,
-      action
+      userId
     );
 
-    return result;
+    return action;
   } catch (error) {
     throw error;
   }
@@ -271,6 +444,20 @@ const toggleLikeStreamService = async (streamId, userId, action) => {
 const getRecommendedStreamsService = async (data) => {
   try {
     const connection = new DatabaseTransaction();
+
+    const { requesterId } = data;
+
+    if (requesterId) {
+      const requester = await connection.userRepository.findUserById(
+        requesterId
+      );
+      if (!requester) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "Requester not found"
+        );
+      }
+    }
 
     const result =
       await connection.streamRepository.getRecommendedStreamsRepository(data);
@@ -293,6 +480,7 @@ const getRelevantStreamsService = async (data) => {
     throw error;
   }
 };
+
 const cleanStreamFromNonOwner = (obj) => {
   const {
     uid,
@@ -361,4 +549,5 @@ module.exports = {
   updateStreamViewsService,
   getRecommendedStreamsService,
   getRelevantStreamsService,
+  getStreamsByUserIdService,
 };

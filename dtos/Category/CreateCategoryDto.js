@@ -1,6 +1,6 @@
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
-
+const { hasSpecialCharacters } = require("../../utils/validator");
 /**
  * @swagger
  * components:
@@ -12,7 +12,7 @@ const CoreException = require("../../exceptions/CoreException");
  *       properties:
  *         name:
  *           type: string
- *           description: The category's name.
+ *           description: The category's name. Must be a minimum of 2 characters and a maximum of 100 characters.
  */
 class CreateCategoryDto {
   constructor(name) {
@@ -23,6 +23,13 @@ class CreateCategoryDto {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Name is required"
+      );
+    }
+
+    if (hasSpecialCharacters(this.name)) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Name cannot contain special characters"
       );
     }
   }

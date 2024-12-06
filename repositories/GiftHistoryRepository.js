@@ -5,7 +5,13 @@ class GiftHistoryRepository {
   constructor() {
     this.exchangeRateRepository = new ExchangeRateRepository();
   }
-  async createGiftHistoryRepository(streamId, userId, gifts) {
+  async createGiftHistoryRepository(
+    streamId,
+    streamTitle,
+    streamThumbnail,
+    userId,
+    gifts
+  ) {
     try {
       const existingHistory = await this.findExistingHistory(streamId, userId);
       const rate =
@@ -41,11 +47,17 @@ class GiftHistoryRepository {
             0
           ) * rate.ReceivePercentage;
         // Save the updated history
-        return await history.save();
+        await history.save();
+        return await GiftHistory.findOne({
+          _id: history._id,
+          isDeleted: false,
+        }).lean();
       } else {
         // Create new gift history if none exists
         const newGiftHistory = new GiftHistory({
           streamId,
+          streamTitle,
+          streamThumbnail,
           userId,
           gifts,
           total: gifts.reduce(
@@ -58,9 +70,12 @@ class GiftHistoryRepository {
               0
             ) * rate.ReceivePercentage,
         });
-        console.log();
 
-        return await newGiftHistory.save();
+        // Save the new gift history
+        const savedHistory = await newGiftHistory.save();
+
+        // Retrieve the new document as a plain object
+        return await GiftHistory.findById(savedHistory._id).lean(); // Returning the plain object
       }
     } catch (error) {
       throw new Error(
@@ -82,7 +97,10 @@ class GiftHistoryRepository {
   }
   async getGiftHistoryRepository(id) {
     try {
-      const giftHistory = await GiftHistory.find({ _id: id, isDeleted: false });
+      const giftHistory = await GiftHistory.findOne({
+        _id: id,
+        isDeleted: false,
+      }).lean();
       return giftHistory;
     } catch (error) {
       throw new Error("Error getting gift history:", error.message);
@@ -93,7 +111,7 @@ class GiftHistoryRepository {
       const giftHistories = await GiftHistory.find({
         streamId: streamId,
         isDeleted: false,
-      });
+      }).lean();
       return giftHistories;
     } catch (error) {
       throw new Error(
@@ -107,7 +125,7 @@ class GiftHistoryRepository {
       const giftHistories = await GiftHistory.find({
         userId: userId,
         isDeleted: false,
-      });
+      }).lean();
       return giftHistories;
     } catch (error) {
       throw new Error("Error getting gift history by user id:", error.message);
@@ -117,7 +135,7 @@ class GiftHistoryRepository {
     try {
       const giftHistory = await GiftHistory.findByIdAndUpdate(id, {
         $set: { isDeleted: true },
-      });
+      }).lean();
       return giftHistory;
     } catch (error) {
       throw new Error("Error deleting gift history:", error.message);
@@ -140,7 +158,6 @@ class GiftHistoryRepository {
         ? result[0].totalAmount * rate.exchangeRateCoinToBalance
         : 0;
     } catch (error) {
-      console.log(error);
       throw new Error("Error counting total revenue: ", error.message);
     }
   }

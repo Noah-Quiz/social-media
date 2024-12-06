@@ -1,3 +1,5 @@
+const StatusCodeEnums = require("../enums/StatusCodeEnum");
+const CoreException = require("../exceptions/CoreException");
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const mongoose = require("mongoose");
 const connection = new DatabaseTransaction();
@@ -12,7 +14,7 @@ module.exports = {
         );
       return advertisementPackage;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 
@@ -20,14 +22,30 @@ module.exports = {
     try {
       const packages =
         await connection.advertisementPackageRepository.getAllAvailablePackagesRepository();
+      if (!packages || packages?.length === 0) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "No packages available"
+        );
+      }
       return packages;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 
   updateAPackageByIdService: async (id, coin, dateUnit, numberOfDateUnit) => {
     try {
+      const checkPakage =
+        await connection.advertisementPackageRepository.getAPackageByIdRepository(
+          id
+        );
+      if (!checkPakage) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "No advertisement package found"
+        );
+      }
       const package =
         await connection.advertisementPackageRepository.updateAPackageByIdRepository(
           id,
@@ -37,7 +55,7 @@ module.exports = {
         );
       return package;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 
@@ -47,21 +65,37 @@ module.exports = {
         await connection.advertisementPackageRepository.getAPackageByIdRepository(
           id
         );
+      if (!package) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "No advertisement package found"
+        );
+      }
       return package;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 
   deleteAPackageByIdService: async (id) => {
     try {
+      const checkPakage =
+        await connection.advertisementPackageRepository.getAPackageByIdRepository(
+          id
+        );
+      if (!checkPakage) {
+        throw new CoreException(
+          StatusCodeEnums.NotFound_404,
+          "No advertisement package found"
+        );
+      }
       const package =
         await connection.advertisementPackageRepository.deleteAPackageByIdRepository(
           id
         );
       return package;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   },
 };

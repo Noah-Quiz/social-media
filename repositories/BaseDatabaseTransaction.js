@@ -2,9 +2,7 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 const getLoggers = require("../utils/logger");
 const logger = getLoggers("MONGOOSE");
-const URI =
-  process.env.DATABASE_URI ||
-  "mongodb+srv://tamlqhse182931:6Pikk8NHRgL2RcZ7@cluster0.dielg.mongodb.net/";
+const URI = process.env.DATABASE_URI;
 
 const DBName = process.env.DATABASE_NAME || "Cluster0";
 

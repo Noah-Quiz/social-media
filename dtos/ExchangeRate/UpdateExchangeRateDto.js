@@ -59,11 +59,20 @@ class UpdateExchangeRateDto {
         `Invalid field: name must be one of ${allowedNames.join(", ")}.`
       );
     }
-
-    if (typeof this.value !== "number" || isNaN(this.value)) {
+    if (!this.value && !this.description) {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
-        "Invalid field: value must be a valid number."
+        `Invalid field: value or description need to be provided to perform update.`
+      );
+    }
+
+    if (
+      this.value &&
+      (typeof this.value !== "number" || isNaN(this.value) || this.value <= 0)
+    ) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Invalid field: value must be a valid positive number."
       );
     }
   }

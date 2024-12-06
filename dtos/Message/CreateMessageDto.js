@@ -16,7 +16,7 @@ const { validMongooseObjectId } = require("../../utils/validator");
  *           description: The room's id.
  *         content:
  *           type: string
- *           description: The message content.
+ *           description: The message content. Must be a minimum of 1 characters and a maximum of 200 characters.
  */
 class CreateMessageDto {
   constructor(userId, roomId, content) {
@@ -52,6 +52,12 @@ class CreateMessageDto {
       throw new CoreException(
         StatusCodeEnums.BadRequest_400,
         "Invalid Room ID"
+      );
+    }
+    if (!this.content) {
+      throw new CoreException(
+        StatusCodeEnums.BadRequest_400,
+        "Content is required"
       );
     }
   }

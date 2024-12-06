@@ -37,6 +37,19 @@ class ReceiptController {
       next(error);
     }
   }
+  async getAllUserReceiptByAdminController(req, res, next) {
+    const { userId } = req.params;
+    try {
+      const receipts = await getAllUserReceiptService(userId);
+      return res.status(StatusCodeEnums.OK_200).json({
+        receipts: receipts,
+        size: receipts.length,
+        message: "Success",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
   async deleteReceiptController(req, res, next) {
     try {
       const { id } = req.params;
