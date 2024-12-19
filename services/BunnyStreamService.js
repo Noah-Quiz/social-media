@@ -99,7 +99,130 @@ const deleteBunnyStorageFileService = async (videoId) => {
   }
 };
 
+const getBunnyStreamVideoService = async (videoId) => {
+  try {
+    const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/videos/${videoId}`;
+    const res = await axios.get(url, {
+      headers: {
+        AccessKey: process.env.BUNNY_STREAM_API_KEY,
+      },
+    });
+    logger.info(`Get video response: ${JSON.stringify(res.data)}`);
+    return JSON.parse(JSON.stringify(res.data));
+  } catch (error) {
+    logger.error(`Get video error: ${error}`);
+    throw error;
+  }
+};
+
+const getAllBunnyStreamVideosService = async (
+  page,
+  itemsPerPage,
+  search,
+  collection,
+  orderBy
+) => {
+  try {
+    const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/videos?page=${page}&itemsPerPage=${itemsPerPage}&search=${search}&collection=${collection}&orderBy=${orderBy}`;
+    const res = await axios.get(url, {
+      headers: {
+        AccessKey: process.env.BUNNY_STREAM_API_KEY,
+      },
+    });
+    return JSON.parse(JSON.stringify(res.data));
+  } catch (error) {
+    logger.error(`Get videos error: ${error}`);
+    throw error;
+  }
+};
+
+const createBunnyStreamVideoService = async (
+  title,
+  thumbnailTime // Video time in ms to extract the main video thumbnail.
+) => {
+  try {
+    const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/videos`;
+    const formData = new FormData();
+    formData.append("title", title);
+    if (thumbnailTime) formData.append("thumbnailTime", thumbnailTime);
+
+    const res = await axios.post(url, formData, {
+      headers: {
+        AccessKey: process.env.BUNNY_STREAM_API_KEY,
+        "Content-Type": "application/json",
+      },
+    });
+    return JSON.parse(JSON.stringify(res.data));
+  } catch (error) {
+    logger.error(`Create video error: ${error}`);
+    throw error;
+  }
+};
+const uploadBunnyStreamVideoService = async (videoId, filePath) => {
+  try {
+    const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/videos/${videoId}`;
+    logger.info(`Uploading video to Bunny Stream: ${url}`);
+    const fileStream = fs.createReadStream(filePath);
+    const fileSize = fs.statSync(filePath).size;
+    const res = await axios.put(url, fileStream, {
+      headers: {
+        AccessKey: process.env.BUNNY_STREAM_API_KEY,
+        "Content-Type": "application/octet-stream",
+      },
+      maxBodyLength: Infinity,
+    });
+    logger.info(`Upload video response: ${JSON.stringify(res.data)}`);
+    await deleteFile(filePath);
+    return JSON.parse(JSON.stringify(res.data));
+  } catch (error) {
+    logger.error(`Upload video error: ${error}`);
+    throw error;
+  }
+};
+
+const updateBunnyStreamVideoService = async (libraryId, videoId, title) => {
+  try {
+    logger.info(`Updating video: ${videoId}`);
+    const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${libraryId}/videos/${videoId}`;
+    const formData = new FormData();
+    formData.append("title", title);
+    const res = await axios.post(url, formData, {
+      headers: {
+        AccessKey: process.env.BUNNY_STREAM_API_KEY,
+        "Content-Type": "application/json",
+      },
+    });
+    logger.info(`Update video response: ${JSON.stringify(res.data)}`);
+    return JSON.parse(JSON.stringify(res.data));
+  } catch (error) {
+    logger.error(`Update video error: ${error}`);
+    throw error;
+  }
+};
+
+const deleteBunnyStreamVideoService = async (videoId) => {
+  try {
+    const url = `${process.env.BUNNY_STREAM_VIDEO_API_URL}/library/${process.env.BUNNY_STREAM_VIDEO_LIBRARY_ID}/videos/${videoId}`;
+    const res = await axios.delete(url, {
+      headers: {
+        AccessKey: process.env.BUNNY_STREAM_API_KEY,
+      },
+    });
+    logger.info(`Get video response: ${JSON.stringify(res.data)}`);
+    return JSON.parse(JSON.stringify(res.data));
+  } catch (error) {
+    logger.error(`Get video error: ${error}`);
+    throw error;
+  }
+};
+
 module.exports = {
   deleteBunnyStorageFileService,
   uploadBunnyStorageFileService,
+  createBunnyStreamVideoService,
+  uploadBunnyStreamVideoService,
+  updateBunnyStreamVideoService,
+  getAllBunnyStreamVideosService,
+  getBunnyStreamVideoService,
+  deleteBunnyStreamVideoService
 };

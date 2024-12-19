@@ -49,6 +49,7 @@ class VideoController {
 
       const video = await createVideoService(userId, {
         title,
+        videoUrl: videoFile.path,
       });
 
       if (!video) {
@@ -57,36 +58,45 @@ class VideoController {
           "Create video failed"
         );
       }
-      const newFilePath = await changeFileName(videoFile.path, video._id);
-      const m3u8 = await convertMp4ToHls(newFilePath);
-      const folderPath = await removeFileName(newFilePath);
+      // const newFilePath = await changeFileName(videoFile.path, video._id);
+      // const m3u8 = await convertMp4ToHls(newFilePath);
+      // const folderPath = await removeFileName(newFilePath);
 
-      try {
-        await replaceTsSegmentLinksInM3u8(m3u8, video._id);
-        const closestTsFile = await findClosetTsFile(folderPath);
-        const thumbnail = await createThumbnailFromTsFile(
-          path.join(folderPath, closestTsFile.selectedFile.file),
-          folderPath
-        );
-        await deleteFile(newFilePath);
+      // try {
+      //   await replaceTsSegmentLinksInM3u8(m3u8, video._id);
+      //   const closestTsFile = await findClosetTsFile(folderPath);
+      //   const thumbnail = await createThumbnailFromTsFile(
+      //     path.join(folderPath, closestTsFile.selectedFile.file),
+      //     folderPath
+      //   );
+      //   await deleteFile(newFilePath);
 
-        await updateAVideoByIdService(
-          video._id,
-          userId,
-          {
-            title: title,
-            duration: closestTsFile.duration,
-          },
-        );
-      } catch (error) {
-        await deleteFolder(folderPath);
-        throw error;
-      }
+      //   await updateAVideoByIdService(
+      //     video._id,
+      //     userId,
+      //     {
+      //       title: title,
+      //       duration: closestTsFile.duration,
+      //     },
+      //   );
+      // } catch (error) {
+      //   await deleteFolder(folderPath);
+      //   throw error;
+      // }
+
+      // const queueMessage = {
+      //   userId: userId,
+      //   videoId: video._id,
+      //   videoFolderPath: folderPath,
+      // };
+
+      // await sendMessageToQueue(
+      //   process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE,
+      //   queueMessage
+      // );
 
       const queueMessage = {
-        userId: userId,
         videoId: video._id,
-        videoFolderPath: folderPath,
       };
 
       await sendMessageToQueue(
@@ -97,6 +107,16 @@ class VideoController {
       return res
         .status(StatusCodeEnums.OK_200)
         .json({ video, message: "Success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async uploadVideoController(req, res, next) {
+    try {
+      const videoId = req.params.videoId;
+
+      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
       next(error);
     }

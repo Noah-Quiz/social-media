@@ -2,11 +2,13 @@ const mongoose = require("mongoose");
 const baseEntitySchema = require("./BaseEntity.js");
 
 const videoSchema = new mongoose.Schema({
+  bunnyId: { type: String },
   title: { type: String, required: true },
   description: { type: String, default: "" },
   videoUrl: { type: String, default: "" },
   numOfViews: { type: Number, default: 0 },
   duration: { type: Number, default: 0 },
+  isUploaded: { type: Boolean, default: false },
   enumMode: {
     type: String,
     enum: ["public", "private", "unlisted", "member", "draft"],
