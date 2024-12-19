@@ -168,9 +168,11 @@ class VideoRepository {
             dateCreated: 1,
             lastUpdated: 1,
             numOfViews: 1,
+            duration: 1,
             likesCount: 1,
             commentsCount: 1,
             isLiked: 1,
+            isUploaded: 1,
             user: {
               _id: 1,
               fullName: "$user.fullName",
@@ -378,6 +380,7 @@ class VideoRepository {
       throw new Error(`Error when fetching video by videoId: ${error.message}`);
     }
   }
+
 
   async getVideosByPlaylistIdRepository(playlistId, query, requesterId) {
     try {

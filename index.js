@@ -64,10 +64,11 @@ const {
 } = require("./services/BunnyStreamService");
 const { consumeMessageFromQueue } = require("./utils/rabbitMq");
 const auditLogError = require("./middlewares/auditLogError.js");
+const { uploadVideoByIdService } = require("./services/VideoService.js");
 
 consumeMessageFromQueue(
   process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE,
-  uploadBunnyStorageFileService
+  uploadVideoByIdService
 );
 
 consumeMessageFromQueue("live_stream.connected");
