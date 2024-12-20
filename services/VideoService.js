@@ -2,7 +2,13 @@ const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const mongoose = require("mongoose");
 const CoreException = require("../exceptions/CoreException");
 const StatusCodeEnums = require("../enums/StatusCodeEnum");
-const { deleteBunnyStorageFileService } = require("./BunnyStreamService");
+const {
+  deleteBunnyStorageFileService,
+  createBunnyStreamVideoService,
+  uploadBunnyStreamVideoService,
+  deleteBunnyStreamVideoService,
+  getBunnyStreamVideoService,
+} = require("./BunnyStreamService");
 const UserEnum = require("../enums/UserEnum");
 const {
   validLength,
@@ -11,21 +17,45 @@ const {
 } = require("../utils/validator");
 const User = require("../entities/UserEntity");
 const Category = require("../entities/CategoryEntity");
-const createVideoService = async (
-  userId,
-  { title, videoUrl, videoEmbedUrl, thumbnailUrl }
-) => {
+
+const createVideoService = async (userId, { title, videoUrl }) => {
   try {
     const connection = new DatabaseTransaction();
     //validate title
     await validLength(2, 500, title, "Title of video");
+
+    const bunnyVideo = await createBunnyStreamVideoService(title);
+
     const video = await connection.videoRepository.createVideoRepository({
       userId,
       title,
+      bunnyId: bunnyVideo.guid,
+      videoUrl: videoUrl,
       enumMode: "draft",
     });
 
     return video;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const uploadVideoByIdService = async ({ videoId: videoId }) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const video = await connection.videoRepository.getVideoByIdRepository(
+      videoId
+    );
+    if (!video) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Video not found");
+    }
+
+    await uploadBunnyStreamVideoService(video.bunnyId, video.videoUrl);
+
+    await connection.videoRepository.updateAVideoByIdRepository(videoId, {
+      videoUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${video.bunnyId}/playlist.m3u8`,
+      thumbnailUrl: `https://${process.env.BUNNY_STREAM_CDN_HOST_NAME}/${video.bunnyId}/thumbnail.jpg`,
+    });
   } catch (error) {
     throw error;
   }
@@ -342,6 +372,19 @@ const getVideoService = async (videoId, requesterId) => {
     if (!video) {
       throw new CoreException(StatusCodeEnums.NotFound_404, `Video not found`);
     }
+    const videoBunnyId =
+      await connection.videoRepository.getVideoByIdRepository(videoId);
+    const bunnyVideo = await getBunnyStreamVideoService(videoBunnyId.bunnyId);
+    if (
+      (bunnyVideo.status === 3 || bunnyVideo.status === 4) &&
+      video.isUploaded === false
+    ) {
+      await connection.videoRepository.updateAVideoByIdRepository(videoId, {
+        duration: bunnyVideo.length,
+        isUploaded: true,
+        numOfViews: bunnyVideo.views,
+      });
+    }
 
     if (video.enumMode === "private") {
       if (requesterId?.toString() !== video.user?._id?.toString()) {
@@ -591,7 +634,10 @@ const deleteVideoService = async (videoId, userId) => {
       );
     }
 
-    await deleteBunnyStorageFileService(videoId);
+    const bunnyVideo = await connection.videoRepository.getVideoByIdRepository(
+      videoId
+    );
+    await deleteBunnyStreamVideoService(bunnyVideo.bunnyId);
 
     await connection.commitTransaction();
 
@@ -813,4 +859,5 @@ module.exports = {
   getRecommendedVideosService,
   getRelevantVideosService,
   checkMemberShip,
+  uploadVideoByIdService,
 };
