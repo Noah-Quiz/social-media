@@ -20,6 +20,9 @@ const { default: axios } = require("axios");
 const GetStreamsDto = require("../dtos/Stream/GetStreamsDto");
 const GetRelevantStreamsDto = require("../dtos/Stream/GetRelevantStreamsDto");
 const GetRecommendedStreamsDto = require("../dtos/Stream/GetRecommendedStreamsDto");
+const {
+  createCloudFlareStreamLiveInput,
+} = require("../services/CloudflareStreamService");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
@@ -195,23 +198,24 @@ class StreamController {
       const creatorId = userId;
       const streamName = title;
 
-      let response = null;
-      try {
-        response = await axios.post(
-          `${streamServerBaseUrl}/api/cloudflare/live-input`,
-          {
-            creatorId,
-            streamName         
-          }
-        );
-      } catch (error) {
-        throw new CoreException(
-          StatusCodeEnums.InternalServerError_500,
-          "Failed to create live stream, stream server doesn't return any responses"
-        );
-      }
-
-      const cloudflareStream = response.data?.liveInput;
+      // try {
+      //   response = await axios.post(
+      //     `${streamServerBaseUrl}/api/cloudflare/live-input`,
+      //     {
+      //       creatorId,
+      //       streamName
+      //     }
+      //   );
+      // } catch (error) {
+      //   throw new CoreException(
+      //     StatusCodeEnums.InternalServerError_500,
+      //     "Failed to create live stream, stream server doesn't return any responses"
+      //   );
+      // }
+      const cloudflareStream = await createCloudFlareStreamLiveInput(
+        creatorId,
+        streamName
+      );
 
       // Prepare stream data with live input details
       const streamData = {
@@ -253,13 +257,11 @@ class StreamController {
 
       const action = await toggleLikeStreamService(streamId, userId);
 
-      return res
-        .status(StatusCodeEnums.OK_200)
-        .json({
-          message: `${
-            action?.charAt(0)?.toUpperCase() + action?.slice(1)
-          } stream successfully`,
-        });
+      return res.status(StatusCodeEnums.OK_200).json({
+        message: `${
+          action?.charAt(0)?.toUpperCase() + action?.slice(1)
+        } stream successfully`,
+      });
     } catch (error) {
       next(error);
     }

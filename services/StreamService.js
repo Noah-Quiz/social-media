@@ -11,6 +11,9 @@ const {
   convertToMongoObjectId,
 } = require("../utils/validator.js");
 const Category = require("../entities/CategoryEntity.js");
+const {
+  retrieveCloudFlareStreamLiveInput,
+} = require("./CloudflareStreamService.js");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
@@ -57,6 +60,14 @@ const getStreamService = async (streamId, requesterId) => {
     if (!stream) {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
+
+    const cloudflareStream = await retrieveCloudFlareStreamLiveInput(
+      stream.uid
+    );
+    await connection.streamRepository.updateStreamRepository(streamId, {
+      streamOnlineUrl: cloudflareStream[0].playback.hls,
+      thumbnailUrl: cloudflareStream[0].thumbnail,
+    });
 
     let process = stream;
     const isOwner = stream.user?._id?.toString() === requesterId?.toString();
