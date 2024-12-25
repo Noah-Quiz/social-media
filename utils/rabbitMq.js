@@ -4,6 +4,7 @@ const amqp = require("amqplib");
 require("dotenv").config();
 const DatabaseTransaction = require("../repositories/DatabaseTransaction");
 const eventEmitter = require("../socket/events");
+const { uploadVideoByIdService } = require("../services/VideoService.js");
 
 async function sendMessageToQueue(queue, message) {
   try {
@@ -38,7 +39,15 @@ async function consumeMessageFromQueue(queue, callback) {
     });
     connection.on("close", async () => {
       logger.warn("RabbitMQ connection closed, attempting reconnection...");
-      setTimeout(consumeMessageFromQueue, 5000); // Retry connection after delay
+      setTimeout(() => {
+        consumeMessageFromQueue(
+          process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE,
+          uploadVideoByIdService
+        );
+        consumeMessageFromQueue("live_stream.connected");
+        consumeMessageFromQueue("live_stream.disconnected");
+        consumeMessageFromQueue("bunny_livestream_thumbnail");
+      }, 5000); // Retry connection after delay
     });
 
     channel = await connection.createChannel();
@@ -50,7 +59,15 @@ async function consumeMessageFromQueue(queue, callback) {
       // Reconnect the channel if it closes unexpectedly
       channel.on("close", async () => {
         logger.warn("Channel closed, attempting to recreate...");
-        setTimeout(consumeMessageFromQueue, 5000); // Retry connection after delay
+        setTimeout(() => {
+          consumeMessageFromQueue(
+            process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE,
+            uploadVideoByIdService
+          );
+          consumeMessageFromQueue("live_stream.connected");
+          consumeMessageFromQueue("live_stream.disconnected");
+          consumeMessageFromQueue("bunny_livestream_thumbnail");
+        }, 5000); // Retry connection after delay
       });
     });
     await channel.assertQueue(queue, { durable: true });
@@ -69,13 +86,13 @@ async function consumeMessageFromQueue(queue, callback) {
 
             switch (queue) {
               case process.env.RABBITMQ_UPLOAD_VIDEO_QUEUE:
-                const {videoId} = JSON.parse(msg.content?.toString());
+                const { videoId } = JSON.parse(msg.content?.toString());
                 logger.info(
                   `Message received from queue ${queue}: ${msg.content?.toString()}`
                 );
                 await callback({
                   // userId: userId,
-                 videoId: videoId,
+                  videoId: videoId,
                   // videoFolderPath: videoFolderPath,
                 });
                 logger.info(`Message processed successfully`);
