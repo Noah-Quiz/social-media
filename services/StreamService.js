@@ -68,6 +68,8 @@ const getStreamService = async (streamId, requesterId) => {
       streamOnlineUrl: cloudflareStream[0].playback.hls,
       thumbnailUrl: cloudflareStream[0].thumbnail,
     });
+    stream.streamOnlineUrl = cloudflareStream[0].playback.hls;
+    stream.thumbnailUrl = cloudflareStream[0].thumbnail;
 
     let process = stream;
     const isOwner = stream.user?._id?.toString() === requesterId?.toString();
