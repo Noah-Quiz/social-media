@@ -7,7 +7,12 @@ const checkUserSuspended = require("../middlewares/checkUserSuspended");
 const streamController = new StreamController();
 const streamRoutes = express.Router();
 
-streamRoutes.use(AuthMiddleware);
+streamRoutes.use(AuthMiddleware); 
+
+streamRoutes.get("/webhook",(req,res)=>{
+  console.log(req.body);
+  res.status(200).send("success");
+})
 
 /**
  * @swagger
