@@ -64,12 +64,15 @@ const getStreamService = async (streamId, requesterId) => {
     const cloudflareStream = await retrieveCloudFlareStreamLiveInput(
       stream.uid
     );
+    const streamOnlineUrl =
+      `${cloudflareStream[0]?.playback.hls}?protocol=llhls` || "";
+    const thumbnailUrl = cloudflareStream[0]?.thumbnail || "";
     await connection.streamRepository.updateStreamRepository(streamId, {
-      streamOnlineUrl: cloudflareStream[0].playback.hls,
-      thumbnailUrl: cloudflareStream[0].thumbnail,
+      streamOnlineUrl: streamOnlineUrl,
+      thumbnailUrl: thumbnailUrl,
     });
-    stream.streamOnlineUrl = cloudflareStream[0].playback.hls;
-    stream.thumbnailUrl = cloudflareStream[0].thumbnail;
+    stream.streamOnlineUrl = streamOnlineUrl;
+    stream.thumbnailUrl = thumbnailUrl;
 
     let process = stream;
     const isOwner = stream.user?._id?.toString() === requesterId?.toString();
