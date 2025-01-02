@@ -65,8 +65,9 @@ const getStreamService = async (streamId, requesterId) => {
       stream.uid
     );
 
-    const streamOnlineUrl =
+    let streamOnlineUrl =
       `${cloudflareStream[0]?.playback.hls}?protocol=llhls` || "";
+    if (streamOnlineUrl.includes("undefined")) streamOnlineUrl = "";
     const thumbnailUrl = cloudflareStream[0]?.thumbnail || "";
     await connection.streamRepository.updateStreamRepository(streamId, {
       streamOnlineUrl: streamOnlineUrl,
