@@ -9,11 +9,6 @@ const streamRoutes = express.Router();
 
 streamRoutes.use(AuthMiddleware); 
 
-streamRoutes.get("/webhook",(req,res)=>{
-  console.log(req.body);
-  res.status(200).send("success");
-})
-
 /**
  * @swagger
  * /api/streams/relevant:
