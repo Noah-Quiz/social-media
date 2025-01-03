@@ -49,6 +49,20 @@ const getStreamService = async (streamId, requesterId) => {
         const stream = await connection.streamRepository.getStreamRepository(
           streamId
         );
+        const cloudflareStream = await retrieveCloudFlareStreamLiveInput(
+          stream.uid
+        );
+        let streamOnlineUrl =
+          `${cloudflareStream[0]?.playback.hls}?protocol=llhls` || "";
+        if (streamOnlineUrl.includes("undefined")) streamOnlineUrl = "";
+        const thumbnailUrl = cloudflareStream[0]?.thumbnail || "";
+        await connection.streamRepository.updateStreamRepository(streamId, {
+          streamOnlineUrl: streamOnlineUrl,
+          thumbnailUrl: thumbnailUrl,
+        });
+
+        stream.streamOnlineUrl = streamOnlineUrl;
+        stream.thumbnailUrl = thumbnailUrl;
         return stream;
       }
     }
@@ -64,7 +78,6 @@ const getStreamService = async (streamId, requesterId) => {
     const cloudflareStream = await retrieveCloudFlareStreamLiveInput(
       stream.uid
     );
-
     let streamOnlineUrl =
       `${cloudflareStream[0]?.playback.hls}?protocol=llhls` || "";
     if (streamOnlineUrl.includes("undefined")) streamOnlineUrl = "";
@@ -73,6 +86,7 @@ const getStreamService = async (streamId, requesterId) => {
       streamOnlineUrl: streamOnlineUrl,
       thumbnailUrl: thumbnailUrl,
     });
+
     stream.streamOnlineUrl = streamOnlineUrl;
     stream.thumbnailUrl = thumbnailUrl;
 
