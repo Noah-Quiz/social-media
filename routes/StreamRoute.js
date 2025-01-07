@@ -7,7 +7,9 @@ const checkUserSuspended = require("../middlewares/checkUserSuspended");
 const streamController = new StreamController();
 const streamRoutes = express.Router();
 
-streamRoutes.use(AuthMiddleware); 
+streamRoutes.post("/webhook", (req, res) => {
+  res.status(200).send("Webhook received");
+});
 
 /**
  * @swagger
@@ -109,6 +111,7 @@ streamRoutes.use(AuthMiddleware);
  */
 streamRoutes.get(
   "/relevant",
+  AuthMiddleware,
   streamController.getRelevantStreamsController
 );
 
@@ -205,6 +208,7 @@ streamRoutes.get(
  */
 streamRoutes.get(
   "/recommendation",
+  AuthMiddleware,
   streamController.getRecommendedStreamsController
 );
 
@@ -342,7 +346,7 @@ streamRoutes.get(
  *                 message:
  *                   type: string
  */
-streamRoutes.get("/", streamController.getStreamsController);
+streamRoutes.get("/", AuthMiddleware, streamController.getStreamsController);
 
 /**
  * @swagger
@@ -483,7 +487,11 @@ streamRoutes.get("/", streamController.getStreamsController);
  *                 message:
  *                   type: string
  */
-streamRoutes.get("/user/:userId", streamController.getStreamsByUserIdController);
+streamRoutes.get(
+  "/user/:userId",
+  AuthMiddleware,
+  streamController.getStreamsByUserIdController
+);
 
 /**
  * @swagger
@@ -492,7 +500,7 @@ streamRoutes.get("/user/:userId", streamController.getStreamsByUserIdController)
  *     security:
  *       - bearerAuth: []
  *     summary: Create a stream
- *     description: Socket connect http://API_BASE_URL/socket/stream?streamId=     Event Listener live_stream_connected   Emit live_stream_connected 
+ *     description: Socket connect http://API_BASE_URL/socket/stream?streamId=     Event Listener live_stream_connected   Emit live_stream_connected
  *     tags: [Streams]
  *     requestBody:
  *       content:
@@ -612,6 +620,7 @@ streamRoutes.get("/user/:userId", streamController.getStreamsByUserIdController)
  */
 streamRoutes.post(
   "/",
+  AuthMiddleware,
   checkUserSuspended,
   streamController.createStreamController
 );
@@ -672,6 +681,7 @@ streamRoutes.post(
  */
 streamRoutes.delete(
   "/:streamId",
+  AuthMiddleware,
   streamController.deleteStreamController
 );
 
@@ -785,6 +795,7 @@ streamRoutes.delete(
  */
 streamRoutes.get(
   "/:streamId",
+  AuthMiddleware,
   streamController.getStreamController
 );
 
@@ -903,6 +914,7 @@ streamRoutes.get(
  */
 streamRoutes.patch(
   "/:streamId",
+  AuthMiddleware,
   uploadFile.single("streamThumbnail"),
   streamController.updateStreamController
 );
@@ -964,6 +976,7 @@ streamRoutes.patch(
  */
 streamRoutes.post(
   "/:streamId/like",
+  AuthMiddleware,
   streamController.toggleLikeStreamController
 );
 
