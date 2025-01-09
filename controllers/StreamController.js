@@ -42,6 +42,14 @@ class StreamController {
     }
   }
 
+  async receiveStreamWebhookController(req,res,next){
+    try {
+      
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getStreamsByUserIdController(req, res, next) {
     try {
       const requesterId = req.requesterId;

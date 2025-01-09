@@ -261,7 +261,7 @@ class MemberGroupRepository {
           number++;
         }
       }
-      logger.info(`Number of people expired and removed: ${number}`);
+      // logger.info(`Number of people expired and removed: ${number}`);
     } catch (error) {
       console.log(`Error handling expired users: ${error.message}`);
     }

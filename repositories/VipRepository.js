@@ -118,7 +118,7 @@ class VipRepository {
         });
       }
       logger.info(
-        `Number of people expired and removed: ${(ExpList || []).length}`
+        // `Number of people expired and removed: ${(ExpList || []).length}`
       );
     } catch (error) {
       console.log(
