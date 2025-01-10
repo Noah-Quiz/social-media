@@ -83,7 +83,7 @@ const validPhoneNumber = async (phoneNumber) => {
     );
 };
 
-const contentModeration = (content, type) => {
+const contentModeration = async(content, type) => {
   try {
     const words = content.trim().replace(/\s+/g, " ").toLowerCase();
     const eachWord = words.split(" ");

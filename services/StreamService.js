@@ -434,35 +434,23 @@ const deleteStreamService = async (userId, streamId) => {
 
 const createStreamService = async (data) => {
   const connection = new DatabaseTransaction();
-  const session = await connection.startTransaction();
+  try {
+    const session = await connection.startTransaction();
 
-  //valid title
-  if (data.title) {
-    validLength(2, 100, data.title, "Title of stream");
-    contentModeration(data.title, "title of stream");
-  }
-
-  //valid description
-  if (data.description) {
-    validLength(1, 2000, data.description, "Description of stream");
-    contentModeration(data.description, "description of stream");
-  }
-
-  if (data.categoryIds) {
-    for (const categoryId of data.categoryIds) {
-      const category = await Category.findOne({
-        _id: convertToMongoObjectId(categoryId),
-        isDeleted: false,
-      });
-      if (!category) {
-        throw new CoreException(
-          StatusCodeEnums.NotFound_404,
-          `Category with ID ${categoryId} not found`
-        );
+    if (data.categoryIds) {
+      for (const categoryId of data.categoryIds) {
+        const category = await Category.findOne({
+          _id: convertToMongoObjectId(categoryId),
+          isDeleted: false,
+        });
+        if (!category) {
+          throw new CoreException(
+            StatusCodeEnums.NotFound_404,
+            `Category with ID ${categoryId} not found`
+          );
+        }
       }
     }
-  }
-  try {
     const stream = await connection.streamRepository.createStreamRepository(
       data,
       session

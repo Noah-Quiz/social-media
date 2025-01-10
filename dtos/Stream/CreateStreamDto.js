@@ -1,6 +1,6 @@
 const StatusCodeEnums = require("../../enums/StatusCodeEnum");
 const CoreException = require("../../exceptions/CoreException");
-const { validMongooseObjectId } = require("../../utils/validator");
+const { validMongooseObjectId, validLength, contentModeration } = require("../../utils/validator");
 
 /**
  * @swagger
@@ -37,6 +37,15 @@ class CreateStreamDto {
         StatusCodeEnums.BadRequest_400,
         "Title is required"
       );
+    }
+    if (this.title) {
+      await validLength(2, 100, this.title, "Title");
+      await contentModeration(this.title, "Title");
+    }
+
+    if (this.description) {
+      await validLength(1, 2000, this.description, "Description");
+      await contentModeration(this.description, "Description");
     }
     if (this.categoryIds && !Array.isArray(this.categoryIds)) {
       throw new CoreException(
