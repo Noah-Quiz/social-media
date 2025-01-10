@@ -11,6 +11,7 @@ const {
   getRecommendedStreamsService,
   getRelevantStreamsService,
   getStreamsByUserIdService,
+  receiveLiveStreamWebhook,
 } = require("../services/StreamService");
 const { deleteFile, checkFileSuccess } = require("../middlewares/storeFile");
 const CreateStreamDto = require("../dtos/Stream/CreateStreamDto");
@@ -42,9 +43,11 @@ class StreamController {
     }
   }
 
-  async receiveStreamWebhookController(req,res,next){
+  async receiveStreamWebhookController(req, res, next) {
     try {
-      
+      const { input_id, event_type } = req.body.data;
+      await receiveLiveStreamWebhook({ input_id, event_type });
+      return res.status(StatusCodeEnums.OK_200).json({ message: "Success" });
     } catch (error) {
       next(error);
     }
@@ -266,9 +269,8 @@ class StreamController {
       const action = await toggleLikeStreamService(streamId, userId);
 
       return res.status(StatusCodeEnums.OK_200).json({
-        message: `${
-          action?.charAt(0)?.toUpperCase() + action?.slice(1)
-        } stream successfully`,
+        message: `${action?.charAt(0)?.toUpperCase() + action?.slice(1)
+          } stream successfully`,
       });
     } catch (error) {
       next(error);

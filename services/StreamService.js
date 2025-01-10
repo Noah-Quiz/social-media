@@ -17,6 +17,39 @@ const {
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
+const receiveLiveStreamWebhook = async ({ input_id, event_type }) => {
+  try {
+    const connection = new DatabaseTransaction();
+    const stream = await connection.streamRepository.getStreamByCloudflareId(
+      input_id
+    );
+    if (!stream) {
+      throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
+    }
+    if (event_type === "live_input.connected") {
+      const cloudflareStream = await retrieveCloudFlareStreamLiveInput(
+        stream.uid
+      );
+      let streamOnlineUrl =
+        `${cloudflareStream[0]?.playback.hls}?protocol=llhls` || "";
+      if (streamOnlineUrl.includes("undefined")) streamOnlineUrl = "";
+      const thumbnailUrl = cloudflareStream[0]?.thumbnail || "";
+      await connection.streamRepository.updateStreamRepository(stream._id, {
+        streamOnlineUrl: streamOnlineUrl,
+        thumbnailUrl: thumbnailUrl,
+        status: "live",
+      });
+    } else if (event_type === "live_input.disconnected") {
+      await connection.streamRepository.updateStreamRepository(stream._id, {
+        status: "offline",
+      });
+    } else if (event_type === "live_input.errored") {
+      throw new CoreException(StatusCodeEnums.BadRequest_400, "Stream errored");
+    }
+  } catch (error) {
+    throw error;
+  }
+};
 const getStreamService = async (streamId, requesterId) => {
   try {
     const connection = new DatabaseTransaction();
@@ -49,20 +82,20 @@ const getStreamService = async (streamId, requesterId) => {
         const stream = await connection.streamRepository.getStreamRepository(
           streamId
         );
-        const cloudflareStream = await retrieveCloudFlareStreamLiveInput(
-          stream.uid
-        );
-        let streamOnlineUrl =
-          `${cloudflareStream[0]?.playback.hls}?protocol=llhls` || "";
-        if (streamOnlineUrl.includes("undefined")) streamOnlineUrl = "";
-        const thumbnailUrl = cloudflareStream[0]?.thumbnail || "";
-        await connection.streamRepository.updateStreamRepository(streamId, {
-          streamOnlineUrl: streamOnlineUrl,
-          thumbnailUrl: thumbnailUrl,
-        });
+        // const cloudflareStream = await retrieveCloudFlareStreamLiveInput(
+        //   stream.uid
+        // );
+        // let streamOnlineUrl =
+        //   `${cloudflareStream[0]?.playback.hls}?protocol=llhls` || "";
+        // if (streamOnlineUrl.includes("undefined")) streamOnlineUrl = "";
+        // const thumbnailUrl = cloudflareStream[0]?.thumbnail || "";
+        // await connection.streamRepository.updateStreamRepository(streamId, {
+        //   streamOnlineUrl: streamOnlineUrl,
+        //   thumbnailUrl: thumbnailUrl,
+        // });
 
-        stream.streamOnlineUrl = streamOnlineUrl;
-        stream.thumbnailUrl = thumbnailUrl;
+        // stream.streamOnlineUrl = streamOnlineUrl;
+        // stream.thumbnailUrl = thumbnailUrl;
         return stream;
       }
     }
@@ -75,20 +108,20 @@ const getStreamService = async (streamId, requesterId) => {
       throw new CoreException(StatusCodeEnums.NotFound_404, "Stream not found");
     }
 
-    const cloudflareStream = await retrieveCloudFlareStreamLiveInput(
-      stream.uid
-    );
-    let streamOnlineUrl =
-      `${cloudflareStream[0]?.playback.hls}?protocol=llhls` || "";
-    if (streamOnlineUrl.includes("undefined")) streamOnlineUrl = "";
-    const thumbnailUrl = cloudflareStream[0]?.thumbnail || "";
-    await connection.streamRepository.updateStreamRepository(streamId, {
-      streamOnlineUrl: streamOnlineUrl,
-      thumbnailUrl: thumbnailUrl,
-    });
+    // const cloudflareStream = await retrieveCloudFlareStreamLiveInput(
+    //   stream.uid
+    // );
+    // let streamOnlineUrl =
+    //   `${cloudflareStream[0]?.playback.hls}?protocol=llhls` || "";
+    // if (streamOnlineUrl.includes("undefined")) streamOnlineUrl = "";
+    // const thumbnailUrl = cloudflareStream[0]?.thumbnail || "";
+    // await connection.streamRepository.updateStreamRepository(streamId, {
+    //   streamOnlineUrl: streamOnlineUrl,
+    //   thumbnailUrl: thumbnailUrl,
+    // });
 
-    stream.streamOnlineUrl = streamOnlineUrl;
-    stream.thumbnailUrl = thumbnailUrl;
+    // stream.streamOnlineUrl = streamOnlineUrl;
+    // stream.thumbnailUrl = thumbnailUrl;
 
     let process = stream;
     const isOwner = stream.user?._id?.toString() === requesterId?.toString();
@@ -191,8 +224,8 @@ const getStreamsByUserIdService = async (query, requesterId, userId) => {
 
       cleanedStream.isLiked = requesterId
         ? (stream.likedBy || []).some(
-            (userId) => userId?.toString() === requesterId?.toString()
-          )
+          (userId) => userId?.toString() === requesterId?.toString()
+        )
         : false;
       delete cleanedStream.likedBy;
 
@@ -262,8 +295,8 @@ const getStreamsService = async (query, requesterId) => {
 
       cleanedStream.isLiked = requesterId
         ? (stream.likedBy || []).some(
-            (userId) => userId?.toString() === requesterId?.toString()
-          )
+          (userId) => userId?.toString() === requesterId?.toString()
+        )
         : false;
       delete cleanedStream.likedBy;
 
@@ -572,6 +605,7 @@ const checkMemberShip = async (requester, userId) => {
   }
 };
 module.exports = {
+  receiveLiveStreamWebhook,
   getStreamService,
   getStreamsService,
   updateStreamService,
