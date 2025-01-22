@@ -39,9 +39,9 @@ module.exports = (io) => {
         isVip(user);
 
         socket.join(roomId);
-        
+
         userStreamMap.set(socket.id, roomId);
-        
+
         roomId = roomId.split("_")[0];
         await updateViewersCount(roomId);
 
@@ -61,9 +61,9 @@ module.exports = (io) => {
         await getUserByIdService(userId);
 
         socket.join(roomId);
-        
+
         userStreamMap.set(socket.id, roomId);
-        
+
         roomId = roomId.split("_")[0];
         await updateViewersCount(roomId);
 
@@ -150,7 +150,7 @@ module.exports = (io) => {
 
     // Handle disconnect event
     socket.on("disconnect", async () => {
-      const streamId = userStreamMap.get(socket.id); 
+      const streamId = userStreamMap.get(socket.id);
       if (streamId) {
         await updateViewersCount(streamId);
         userStreamMap.delete(socket.id);
@@ -170,10 +170,10 @@ module.exports = (io) => {
     if (socketPath == "/socket/stream") {
       eventEmitter.on(
         "live_stream_connected",
-        ({ streamId, streamServerUrl }) => {
+        ({ streamId, streamOnlineUrl }) => {
           const queryStreamId = socket.handshake.query.streamId;
           if (queryStreamId === streamId) {
-            io.to(socket.id).emit("live_stream_connected", streamServerUrl);
+            io.to(socket.id).emit("live_stream_connected", streamOnlineUrl);
           }
         }
       );

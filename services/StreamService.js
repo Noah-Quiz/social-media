@@ -14,6 +14,7 @@ const Category = require("../entities/CategoryEntity.js");
 const {
   retrieveCloudFlareStreamLiveInput,
 } = require("./CloudflareStreamService.js");
+const eventEmitter = require("../socket/events.js");
 
 const streamServerBaseUrl = process.env.STREAM_SERVER_BASE_URL;
 
@@ -39,6 +40,10 @@ const receiveLiveStreamWebhook = async ({ input_id, event_type }) => {
         thumbnailUrl: thumbnailUrl,
         status: "live",
       });
+      eventEmitter.emit("live_stream_connected", {
+        streamId: stream._id.toString(),
+        streamOnlineUrl: streamOnlineUrl,
+      })
     } else if (event_type === "live_input.disconnected") {
       await connection.streamRepository.updateStreamRepository(stream._id, {
         status: "offline",
