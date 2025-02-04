@@ -19,11 +19,11 @@ const validFullName = async (fullName) => {
       StatusCodeEnums.BadRequest_400,
       "Full name is invalid, must be a minimum of 6 characters and a maximum of 50 characters."
     );
-  const regex = /^[a-zA-Z0-9]+$/;
+  const regex = /^[A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ][a-zàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]*(?:[ ][A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ][a-zàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]*)*$/;
   if (!regex.test(fullName)) {
     throw new CoreException(
       StatusCodeEnums.BadRequest_400,
-      "Full name is invalid, full name just contains alphanumeric"
+      "Full name is invalid, full name just contains characters and space"
     );
   }
 };

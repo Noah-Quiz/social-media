@@ -56,6 +56,9 @@ const signUpService = async (
       streak: 1,
       point: rate.dailyPoint + rate.streakBonus * 1,
     });
+    if(user) {
+      await sendVerificationEmailService(email);
+    }
     logger.info(
       `[LOGIN]: new user signup successfully, receive ${
         rate.dailyPoint + rate.streakBonus * 1

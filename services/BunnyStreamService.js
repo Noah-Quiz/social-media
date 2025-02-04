@@ -173,6 +173,7 @@ const uploadBunnyStreamVideoService = async (videoId, filePath) => {
     });
     logger.info(`Upload video response: ${JSON.stringify(res.data)}`);
     await deleteFile(filePath);
+    
     return JSON.parse(JSON.stringify(res.data));
   } catch (error) {
     logger.error(`Upload video error: ${error}`);

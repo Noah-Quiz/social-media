@@ -205,24 +205,9 @@ class StreamController {
       );
       await createStreamDto.validate();
 
-      // Create live input using Cloudflare service
       const creatorId = userId;
       const streamName = title;
 
-      // try {
-      //   response = await axios.post(
-      //     `${streamServerBaseUrl}/api/cloudflare/live-input`,
-      //     {
-      //       creatorId,
-      //       streamName
-      //     }
-      //   );
-      // } catch (error) {
-      //   throw new CoreException(
-      //     StatusCodeEnums.InternalServerError_500,
-      //     "Failed to create live stream, stream server doesn't return any responses"
-      //   );
-      // }
       const cloudflareStream = await createCloudFlareStreamLiveInput(
         creatorId,
         streamName
