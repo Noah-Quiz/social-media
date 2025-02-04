@@ -53,6 +53,7 @@ jobs:
             docker stop serverstreamchinh || true
             docker rm serverstreamchinh || true
             docker run -d -p 3102:4000 --name serverstreamchinh --env-file /root/.env t9780561/serverstreamchinh:${{ github.sha }}
-
+            #Clean up old Docker images
+            docker images --filter "reference=t9780561/serverstreamchinh" | grep -v "${{ github.sha }}" | awk '{print $3}' | xargs --no-run-if-empty docker rmi || true
 
             #docker run -d -p 3101:3101 --name serverstreamchinh --env-file /root/.env t9780561/serverstreamchinh:7406594190128601b597e6253d81274d3343e767
