@@ -638,13 +638,13 @@ const storage = multer.diskStorage({
 
 const fileFilter = (req, file, cb) => {
   const allowedImageTypes = /jpeg|jpg|png|gif/;
-  const allowedVideoTypes = /mp4|avi|flv|wmv/;
+  const allowedVideoTypes = /mp4|avi|flv|wmv|mp3|mov|mkv/;
 
   let allowedTypes, formatMessage;
 
   if (file.fieldname === "video") {
     allowedTypes = allowedVideoTypes;
-    formatMessage = "Allowed formats: mp4, avi, flv, wmv";
+    formatMessage = "Allowed formats: mp3, mp4, avi, flv, wmv, mov, mkv";
   } else {
     allowedTypes = allowedImageTypes;
     formatMessage = "Allowed formats: jpeg, jpg, png, gif";
@@ -665,7 +665,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 const videoFilter = (req, file, cb) => {
-  const allowedTypes = /mp4|avi|flv|wmv/;
+  const allowedTypes = /mp4|avi|flv|wmv|mov|mp3/;
   const mimeType = allowedTypes.test(file.mimetype);
   const extName = allowedTypes.test(
     path.extname(file.originalname).toLowerCase()
