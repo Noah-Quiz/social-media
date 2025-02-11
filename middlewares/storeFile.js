@@ -638,7 +638,7 @@ const storage = multer.diskStorage({
 
 const fileFilter = (req, file, cb) => {
   const allowedImageTypes = /jpeg|jpg|png|gif/;
-  const allowedVideoTypes = /mp4|avi|flv|wmv|mp3|mov|mkv/;
+  const allowedVideoTypes = /mp4|avi|flv|wmv|mp3|quicktime|mov|x-matroska|mkv/;
 
   let allowedTypes, formatMessage;
 
